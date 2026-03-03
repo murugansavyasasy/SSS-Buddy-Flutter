@@ -260,6 +260,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         color: Colors.white,
                                       ),
                                     ),
+
                                   ),
                                 ),
                               ),
@@ -267,6 +268,19 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ],
                       ),
+                    ),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 20.0),
+                child: Center(
+                  child: Text(
+                    "Powered by Savyasasy",
+                    style: TextStyle(
+                      color:Colors.grey,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w400,
                     ),
                   ),
                 ),
