@@ -26,12 +26,12 @@ class _SplashState extends State<Splash> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset("assets/images/buddy_logo.png", width: 120),
-
             SizedBox(height: 20),
           ],
         ),

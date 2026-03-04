@@ -37,6 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
         statusBarIconBrightness: Brightness.light,
       ),
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         backgroundColor: Colors.grey[100],
         body: SafeArea(
           top: false,
@@ -164,11 +165,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Image.asset(
-                      //   "assets/images/buddy_logo.jpeg",
-                      //   height: 40,
-                      //   fit: BoxFit.contain,
-                      // ),
+                      Image.asset(
+                        "assets/images/buddy_logo.png",
+                        width: 50,
+                        height: 50,
+                        fit: BoxFit.contain,
+                      ),
                       const SizedBox(width: 8),
                       const Text(
                         Strings.poweredbySavyasasy,
