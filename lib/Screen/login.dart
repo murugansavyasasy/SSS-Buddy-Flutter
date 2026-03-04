@@ -8,14 +8,11 @@ import '../Widgets/CustomTextField.dart';
 import '../Widgets/header_container.dart';
 
 class MyLogin extends StatelessWidget {
-  const MyLogin ({super.key});
+  const MyLogin({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home : LoginScreen(),
-    );
+    return MaterialApp(debugShowCheckedModeBanner: false, home: LoginScreen());
   }
 }
 
@@ -60,10 +57,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     SizedBox(height: 8),
                     Text(
                       Strings.logintocontinue,
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.white70,
-                      ),
+                      style: TextStyle(fontSize: 16, color: Colors.white70),
                     ),
                   ],
                 ),
@@ -143,9 +137,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                   text: Strings.login,
                                   onPressed: () {
                                     if (_formKey.currentState!.validate()) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
                                         const SnackBar(
-                                          content: Text(Strings.loginSuccessful),
+                                          content: Text(
+                                            Strings.loginSuccessful,
+                                          ),
                                         ),
                                       );
                                     }
@@ -167,7 +165,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       // Image.asset(
-                      //   "assets/images/logo.png",
+                      //   "assets/images/profile.jpeg",
                       //   height: 40,
                       //   fit: BoxFit.contain,
                       // ),
