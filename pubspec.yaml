@@ -21,6 +21,7 @@ version: 1.0.0+1
 environment:
   sdk: ^3.11.0
 
+
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
 # consider running `flutter pub upgrade --major-versions`. Alternatively,
@@ -45,7 +46,7 @@ assets:
 flutter_launcher_icons:
     android: true
     ios: true
-    image_path: "assets/images/buddy_logo.png"
+    image_path: "lib/assets/images/buddy_logo.png"
     flutter_launcher_icons: ^0.14.4
     remove_alpha_ios: true
 
