@@ -164,11 +164,20 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+<<<<<<< HEAD
                       // Image.asset(
                       //   "assets/images/profile.jpeg",
                       //   height: 40,
                       //   fit: BoxFit.contain,
                       // ),
+=======
+                      Image.asset(
+                        "assets/images/buddy_logo.png",
+                        width: 50,
+                        height: 50,
+                        fit: BoxFit.contain,
+                      ),
+>>>>>>> 3b82199 (by muru)
                       const SizedBox(width: 8),
                       const Text(
                         Strings.poweredbySavyasasy,
