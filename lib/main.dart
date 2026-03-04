@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sssbuddy/Auth/Splash.dart';
+import 'package:sssbuddy/Screen/Splash.dart';
 import 'Screen/login.dart';
 
 void main() {

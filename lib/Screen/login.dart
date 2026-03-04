@@ -165,7 +165,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       // Image.asset(
-                      //   "assets/images/profile.jpeg",
+                      //   "assets/images/buddy_logo.jpeg",
                       //   height: 40,
                       //   fit: BoxFit.contain,
                       // ),

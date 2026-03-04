@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../Screen/login.dart';
+import 'login.dart';
 
 class Splash extends StatefulWidget {
   @override
@@ -15,7 +15,7 @@ class _SplashState extends State<Splash> {
   }
 
   Future<void> loadData() async {
-    await Future.delayed(Duration(seconds: 3));
+    await Future.delayed(Duration(seconds: 2));
 
     Navigator.pushReplacement(
       context,
