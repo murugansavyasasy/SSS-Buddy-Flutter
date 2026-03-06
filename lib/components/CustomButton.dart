@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../Values/Colors/app_colors.dart';
+
+
 
 class CustomButton extends StatelessWidget {
   final String text;
@@ -22,7 +23,7 @@ class CustomButton extends StatelessWidget {
         height: height,
         child: OutlinedButton(
           style: OutlinedButton.styleFrom(
-            side: BorderSide(color: AppColors.primary),
+            side: BorderSide(color: Color(0xFF4085EF)),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
@@ -31,7 +32,7 @@ class CustomButton extends StatelessWidget {
           child: Text(
             text,
             style: TextStyle(
-              color: AppColors.primary,
+              color: Color(0xFF4085EF),
               fontSize: 15,
             ),
           ),
@@ -43,7 +44,7 @@ class CustomButton extends StatelessWidget {
       height: height,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
+          backgroundColor: Color(0xFF4085EF),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),

@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sssbuddy/Values/Strings/strings_value.dart';
-import 'package:sssbuddy/Widgets/CustomPasswordField.dart';
+import 'package:sssbuddy/Components/CustomPasswordField.dart';
+import 'package:sssbuddy/utils/routes/routes_name.dart';
 import '../Values/Colors/app_colors.dart';
-import '../Widgets/CustomButton.dart';
-import '../Widgets/CustomTextField.dart';
-import '../Widgets/header_container.dart';
+import '../Components//CustomButton.dart';
+import '../Components/CustomTextField.dart';
+import '../Components/header_container.dart';
 
 class MyLogin extends StatelessWidget {
   const MyLogin({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(debugShowCheckedModeBanner: false, home: LoginScreen());
+    return LoginScreen();
   }
 }
 
@@ -148,6 +149,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         ),
                                       );
                                     }
+                                    Navigator.pushNamed(context, RoutesName.dashboard);
                                   },
                                 ),
                               ),
