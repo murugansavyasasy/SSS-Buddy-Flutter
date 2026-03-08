@@ -1,33 +1,45 @@
 import 'package:flutter/cupertino.dart';
 import 'package:sssbuddy/model/Versioncheck.dart';
 import 'package:sssbuddy/repository/clientrepository.dart';
+import 'package:flutter/foundation.dart';
+
 
 class AuthViewModel extends ChangeNotifier {
-
-  final Clientrepository _clientrepository = Clientrepository();
+  final ClientRepository _repository = ClientRepository();
 
   Versioncheck? _versioncheck;
-
-  bool fetchingData = false;
+  bool _fetchingData = false;
+  String? _error;
 
   Versioncheck? get versioncheck => _versioncheck;
+  bool get fetchingData => _fetchingData;
+  String? get error => _error;
+  bool get hasError => _error != null;
 
-  Future<void> getVersionCheckApiData() async {
-
-    fetchingData = true;
+  Future<Versioncheck?> getVersionCheckApiData() async {
+    _fetchingData = true;
+    _error = null;
     notifyListeners();
 
     try {
-      _versioncheck = await _clientrepository.getversioncheckdetails();
-      print("Update Available: ${_versioncheck?.IsVersionUpdateAvailable}");
-      print("Force Update: ${_versioncheck?.IsForceUpdateRequired}");
-      print("School URL: ${_versioncheck?.SchoolURL}");
-
+      _versioncheck = await _repository.getVersionCheckDetails();
+      if (kDebugMode) {
+        print("Update Available: ${_versioncheck?.IsVersionUpdateAvailable}");
+      }
+      return _versioncheck;
     } catch (e) {
-      print("API ERROR : $e");
+      _error = e.toString();
+      if (kDebugMode) print("API ERROR: $_error");
+      notifyListeners();
+      rethrow;
+    } finally {
+      _fetchingData = false;
+      notifyListeners();
     }
+  }
 
-    fetchingData = false;
+  void clearError() {
+    _error = null;
     notifyListeners();
   }
 }

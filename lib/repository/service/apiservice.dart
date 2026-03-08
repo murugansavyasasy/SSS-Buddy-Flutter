@@ -3,10 +3,16 @@ import 'package:sssbuddy/components/app_url.dart';
 
 class Apiservice {
 
-  final String apiUrl = AppUrl.versioncheckendpoint;
+  static const Duration _timeout = Duration(seconds: 10);
 
-  Future<http.Response> getVersionCheckApiData() async {
-    final response = await http.get(Uri.parse(apiUrl));
-    return response;
+  Future<http.Response> get(String endpoint) async {
+    final url = Uri.parse(endpoint.startsWith('http') ? endpoint : '${AppUrl.baseUrl}$endpoint');
+    print("API Call: $url");
+    try {
+      final response = await http.get(url).timeout(_timeout);
+      return response;
+    } catch (e) {
+      rethrow;
+    }
   }
 }
