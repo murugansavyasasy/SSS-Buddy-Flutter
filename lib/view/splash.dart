@@ -18,6 +18,8 @@ class _SplashState extends State<Splash> {
     });
   }
 
+  //// The below function is for testing purpose .
+
   Future<void> _checkVersion() async {
     final viewModel = Provider.of<AuthViewModel>(context, listen: false);
     await viewModel.getVersionCheckApiData();

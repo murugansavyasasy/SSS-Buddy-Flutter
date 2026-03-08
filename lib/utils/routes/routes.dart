@@ -10,16 +10,16 @@ class Routes {
       case RoutesName.splashscreen:
         return MaterialPageRoute(builder: (context) => Splash());
 
-      case RoutesName.login:
-        return MaterialPageRoute(builder: (context) => const MyLogin());
-
       case RoutesName.dashboard:
         return MaterialPageRoute(builder: (context) => Dashboard());
+
+      case RoutesName.login:
+        return MaterialPageRoute(builder: (context) => MyLogin());
 
       default:
         return MaterialPageRoute(
           builder: (_) =>
-              const Scaffold(body: Center(child: Text("No routes found"))),
+              Scaffold(body: Center(child: Text("No routes found"))),
         );
     }
   }

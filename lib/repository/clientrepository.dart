@@ -10,16 +10,23 @@ class ClientRepository {
 
   Future<Versioncheck> getVersionCheckDetails() async {
     try {
-      final response = await _service.get(AppUrl.versioncheckendpoint);
-      if (response.statusCode == 200 || response.body.isNotEmpty) {
+
+      final response = await _service.getversioncheck(
+        AppUrl.versioncheckendpoint,
+        queryParams: {
+          "VersionID": "55"
+        },
+      );
+
+      if (response.body.isNotEmpty) {
         final data = json.decode(response.body);
         return Versioncheck.fromJson(data);
       } else {
         throw Exception('Server error: ${response.statusCode}');
       }
+
     } catch (e) {
       throw Exception('Failed to load version details: $e');
     }
   }
-
 }
