@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:sssbuddy/Values/Strings/strings_value.dart';
 import 'package:sssbuddy/Components/CustomPasswordField.dart';
 import 'package:sssbuddy/utils/routes/routes_name.dart';
@@ -7,6 +8,7 @@ import '../Values/Colors/app_colors.dart';
 import '../Components//CustomButton.dart';
 import '../Components/CustomTextField.dart';
 import '../Components/header_container.dart';
+import '../viewModel/login_view_model.dart';
 
 class MyLogin extends StatelessWidget {
   const MyLogin({super.key});
@@ -139,17 +141,16 @@ class _LoginScreenState extends State<LoginScreen> {
                                   text: Strings.login,
                                   onPressed: () {
                                     if (_formKey.currentState!.validate()) {
-                                      ScaffoldMessenger.of(
+                                      Provider.of<LoginViewModel>(
                                         context,
-                                      ).showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                            Strings.loginSuccessful,
-                                          ),
-                                        ),
+                                        listen: false,
+                                      ).apilogin(
+                                        emailController.text,
+                                        passwordController.text,
+                                        context,
                                       );
+
                                     }
-                                    Navigator.pushNamed(context, RoutesName.dashboard);
                                   },
                                 ),
                               ),
