@@ -8,7 +8,9 @@ import '../utils/secure_storage.dart';
 import '../utils/routes/routes_name.dart';
 
 class LoginViewModel extends ChangeNotifier {
-  final ClientRepository _clientRepository = ClientRepository();
+  final ClientRepository repository;
+
+  LoginViewModel(this.repository);
 
   bool _loginloading = false;
 
@@ -16,6 +18,7 @@ class LoginViewModel extends ChangeNotifier {
 
   void setLoginLoading(bool value) {
     _loginloading = value;
+    notifyListeners();
   }
 
   Future<void> apilogin(
@@ -27,9 +30,9 @@ class LoginViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await _clientRepository.apilogin(employeeId, password);
+      final response = await repository.apilogin(employeeId, password);
 
-      if (response.result == 1){
+      if (response.result == 1) {
         await SecureStorage.saveLoginData(
           employeeId,
           password,

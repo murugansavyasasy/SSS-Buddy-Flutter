@@ -5,7 +5,9 @@ import 'package:flutter/foundation.dart';
 
 
 class AuthViewModel extends ChangeNotifier {
-  final ClientRepository _repository = ClientRepository();
+  final ClientRepository repository;
+
+  AuthViewModel(this.repository);
 
   Versioncheck? _versioncheck;
   bool _fetchingData = false;
@@ -22,7 +24,7 @@ class AuthViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _versioncheck = await _repository.getVersionCheckDetails();
+      _versioncheck = await repository.getVersionCheckDetails();
       if (kDebugMode) {
         print("Update Available: ${_versioncheck?.IsVersionUpdateAvailable}");
       }

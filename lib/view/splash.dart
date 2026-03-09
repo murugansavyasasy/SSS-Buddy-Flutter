@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sssbuddy/components/app_url.dart';
+import 'package:sssbuddy/repository/app_url.dart';
 import '../utils/routes/routes_name.dart';
 import '../viewModel/auth_view_model.dart';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../components/app_url.dart';
+import '../repository/app_url.dart';
 import '../utils/routes/routes_name.dart';
 import '../viewModel/auth_view_model.dart';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../components/app_url.dart';
+import '../repository/app_url.dart';
 import '../utils/routes/routes_name.dart';
 import '../viewModel/auth_view_model.dart';
 
@@ -29,7 +29,7 @@ class _SplashState extends State<Splash> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      viewModel = Provider.of<AuthViewModel>(context, listen: false);
+      viewModel = context.read<AuthViewModel>();
       _checkVersion();
     });
   }
