@@ -94,9 +94,6 @@ class _LoginScreenState extends State<LoginScreen> {
                               if (value == null || value.isEmpty) {
                                 return Strings.enteryourpassword;
                               }
-                              if (value.length < 6) {
-                                return Strings.passwordmustbeatleastcharacters;
-                              }
                               return null;
                             },
                           ),
@@ -169,7 +166,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Image.asset(
-                        "assets/images/buddy_logo.png",
+                        "assets/images/logo.png",
                         width: 50,
                         height: 50,
                         fit: BoxFit.contain,

@@ -4,18 +4,6 @@ import 'package:sssbuddy/repository/app_url.dart';
 import '../utils/routes/routes_name.dart';
 import '../viewModel/auth_view_model.dart';
 
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../repository/app_url.dart';
-import '../utils/routes/routes_name.dart';
-import '../viewModel/auth_view_model.dart';
-
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../repository/app_url.dart';
-import '../utils/routes/routes_name.dart';
-import '../viewModel/auth_view_model.dart';
-
 class Splash extends StatefulWidget {
   @override
   State<Splash> createState() => _SplashState();
@@ -40,8 +28,7 @@ class _SplashState extends State<Splash> {
     AppUrl.vimsUrl = viewModel.versioncheck?.VimsURL ?? "";
     AppUrl.schoolUrl = viewModel.versioncheck?.SchoolURL ?? "";
 
-    final versionAvailable =
-        viewModel.versioncheck?.IsVersionUpdateAvailable ?? 0;
+    final versionAvailable = viewModel.versioncheck?.IsVersionUpdateAvailable ?? 0;
     final forceUpdate = viewModel.versioncheck?.IsForceUpdateRequired ?? 0;
 
     if (versionAvailable == 0 && forceUpdate == 0) {
@@ -74,7 +61,7 @@ class _SplashState extends State<Splash> {
                   Navigator.pop(context);
                   _goToLogin();
                 },
-                child: const Text("Cancel"),
+                child: const Text("Later"),
               ),
 
             /// Update button
