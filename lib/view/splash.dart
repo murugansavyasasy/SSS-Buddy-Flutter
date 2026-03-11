@@ -4,6 +4,7 @@ import '../repository/app_url.dart';
 import '../utils/routes/routes_name.dart';
 import '../viewModel/auth_view_model.dart';
 
+
 class Splash extends ConsumerWidget {
   const Splash({super.key});
 
@@ -11,15 +12,17 @@ class Splash extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final versionState = ref.watch(authProvider);
     return versionState.when(
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      loading: () => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      ),
 
-      error: (error, stack) =>
-          Scaffold(body: Center(child: Text(error.toString()))),
+      error: (error, stack) => Scaffold(
+        body: Center(
+          child: Text(error.toString()),
+        ),
+      ),
 
       data: (version) {
-        AppUrl.vimsUrl = version.VimsURL;
-        AppUrl.schoolUrl = version.SchoolURL;
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (version.IsVersionUpdateAvailable == 0 &&
               version.IsForceUpdateRequired == 0) {
@@ -36,7 +39,9 @@ class Splash extends ConsumerWidget {
         return const Scaffold(
           backgroundColor: Colors.white,
           body: Center(
-            child: Image(image: AssetImage("assets/images/buddy_logo.png")),
+            child: Image(
+              image: AssetImage("assets/images/buddy_logo.png"),
+            ),
           ),
         );
       },
@@ -48,10 +53,10 @@ class Splash extends ConsumerWidget {
   }
 
   void _showUpdateDialog(
-    BuildContext context,
-    int versionAvailable,
-    int forceUpdate,
-  ) {
+      BuildContext context,
+      int versionAvailable,
+      int forceUpdate,
+      ) {
     bool isForceUpdate = (versionAvailable == 1 && forceUpdate == 1);
 
     showDialog(

@@ -51,6 +51,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           top: false,
           child: Column(
             children: [
+
               /// HEADER
               HeaderContainer(
                 child: Column(
@@ -67,7 +68,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     SizedBox(height: 8),
                     Text(
                       Strings.logintocontinue,
-                      style: TextStyle(fontSize: 16, color: Colors.white70),
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.white70,
+                      ),
                     ),
                   ],
                 ),
@@ -84,13 +88,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
+
                           /// EMAIL
                           CustomTextField(
                             controller: emailController,
                             labelText: Strings.empIDMobileNumber,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return Strings.enterIdMobileNumber;
+                                return Strings.empIDMobileNumber;
                               }
                               return null;
                             },
@@ -140,6 +145,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           /// BUTTONS
                           Row(
                             children: [
+
                               /// CLEAR BUTTON
                               Expanded(
                                 child: CustomButton(
@@ -173,58 +179,53 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     onPressed: loginState.isLoading
                                         ? null
                                         : () async {
-                                            if (_formKey.currentState!
-                                                .validate()) {
-                                              final success = await ref
-                                                  .read(loginProvider.notifier)
-                                                  .login(
-                                                    emailController.text,
-                                                    passwordController.text,
-                                                  );
 
-                                              if (success && context.mounted) {
-                                                Navigator.pushReplacementNamed(
-                                                  context,
-                                                  RoutesName.dashboard,
-                                                );
-                                              }
+                                      if (_formKey.currentState!.validate()) {
 
-                                              if (!success && context.mounted) {
-                                                final error = ref
-                                                    .read(loginProvider)
-                                                    .error;
+                                        final success = await ref
+                                            .read(loginProvider.notifier)
+                                            .login(
+                                          emailController.text,
+                                          passwordController.text,
+                                        );
 
-                                                if (error != null) {
-                                                  ScaffoldMessenger.of(
-                                                    context,
-                                                  ).showSnackBar(
-                                                    SnackBar(
-                                                      content: Text(
-                                                        error.toString(),
-                                                      ),
-                                                    ),
-                                                  );
-                                                }
-                                              }
-                                            }
-                                          },
+                                        if (success && context.mounted) {
+                                          Navigator.pushReplacementNamed(
+                                            context,
+                                            RoutesName.dashboard,
+                                          );
+                                        }
+
+                                        if (!success && context.mounted) {
+                                          final error = ref.read(loginProvider).error;
+
+                                          if (error != null) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(content: Text(error.toString())),
+                                            );
+                                          }
+                                        }
+
+                                      }
+
+                                    },
 
                                     child: loginState.isLoading
                                         ? const SizedBox(
-                                            height: 18,
-                                            width: 18,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              color: Colors.white,
-                                            ),
-                                          )
+                                      height: 18,
+                                      width: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
                                         : const Text(
-                                            Strings.login,
-                                            style: TextStyle(
-                                              fontSize: 15,
-                                              color: Colors.white,
-                                            ),
-                                          ),
+                                      Strings.login,
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        color: Colors.white,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
@@ -251,7 +252,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     const SizedBox(width: 8),
                     const Text(
                       Strings.poweredbySavyasasy,
-                      style: TextStyle(color: Colors.grey, fontSize: 15),
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 15,
+                      ),
                     ),
                   ],
                 ),

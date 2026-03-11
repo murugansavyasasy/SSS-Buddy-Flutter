@@ -5,15 +5,12 @@ import '../core/network/DioClient.dart';
 
 class ClientRepository {
   final Dioclient client;
-
   ClientRepository(this.client);
-
   Future<Versioncheck> getVersionCheckDetails() async {
     final response = await client.get(
       AppEndpoint.versioncheckendpoint,
       query: {"VersionID": "55"},
     );
-
     return Versioncheck.fromJson(response.data);
   }
 
@@ -22,7 +19,6 @@ class ClientRepository {
       AppEndpoint.validateloginendpoint,
       body: {"EmployeeId": employeeId, "Password": password},
     );
-
     return Validatelogin.fromJson(response.data);
   }
 }

@@ -19,6 +19,7 @@ class LoginViewModel extends AsyncNotifier<bool> {
         throw Exception(response.resultMessage);
       }
 
+
       state = const AsyncData(true);
 
       return true;
