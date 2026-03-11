@@ -15,16 +15,21 @@ class ClientRepository {
       endpoint: AppEndpoint.versioncheckendpoint,
       queryParams: {"VersionID": "55"},
     );
-
+    print("Response Body: ${response.body}");
     final data = jsonDecode(response.body);
     return Versioncheck.fromJson(data);
   }
 
   Future<Validatelogin> apilogin(String employeeId, String password) async {
+    Map<String, String> body = {
+      "EmployeeId": employeeId,
+      "Password": password
+    };
+    print("Request Body: $body");
     final response = await service.request(
       endpoint: AppEndpoint.validateloginendpoint,
       method: "POST",
-      body: {"EmployeeId": employeeId, "Password": password},
+      body: body,
     );
 
     final data = jsonDecode(response.body);
