@@ -1,61 +1,57 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:sssbuddy/repository/app_url.dart';
-import '../utils/routes/routes_name.dart';
-import '../viewModel/auth_view_model.dart';
-
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../repository/app_url.dart';
 import '../utils/routes/routes_name.dart';
 import '../viewModel/auth_view_model.dart';
 
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../repository/app_url.dart';
-import '../utils/routes/routes_name.dart';
-import '../viewModel/auth_view_model.dart';
-
-class Splash extends StatefulWidget {
-  @override
-  State<Splash> createState() => _SplashState();
-}
-
-class _SplashState extends State<Splash> {
-  late AuthViewModel viewModel;
+class Splash extends ConsumerWidget {
+  const Splash({super.key});
 
   @override
-  void initState() {
-    super.initState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final versionState = ref.watch(authProvider);
+    return versionState.when(
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      viewModel = context.read<AuthViewModel>();
-      _checkVersion();
-    });
+      error: (error, stack) =>
+          Scaffold(body: Center(child: Text(error.toString()))),
+
+      data: (version) {
+        AppUrl.vimsUrl = version.VimsURL;
+        AppUrl.schoolUrl = version.SchoolURL;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (version.IsVersionUpdateAvailable == 0 &&
+              version.IsForceUpdateRequired == 0) {
+            _goToLogin(context);
+          } else {
+            _showUpdateDialog(
+              context,
+              version.IsVersionUpdateAvailable,
+              version.IsForceUpdateRequired,
+            );
+          }
+        });
+
+        return const Scaffold(
+          backgroundColor: Colors.white,
+          body: Center(
+            child: Image(image: AssetImage("assets/images/buddy_logo.png")),
+          ),
+        );
+      },
+    );
   }
 
-  Future<void> _checkVersion() async {
-    await viewModel.getVersionCheckApiData();
-
-    AppUrl.vimsUrl = viewModel.versioncheck?.VimsURL ?? "";
-    AppUrl.schoolUrl = viewModel.versioncheck?.SchoolURL ?? "";
-
-    final versionAvailable =
-        viewModel.versioncheck?.IsVersionUpdateAvailable ?? 0;
-    final forceUpdate = viewModel.versioncheck?.IsForceUpdateRequired ?? 0;
-
-    if (versionAvailable == 0 && forceUpdate == 0) {
-      _goToLogin();
-    } else {
-      _showUpdateDialog(versionAvailable, forceUpdate);
-    }
-  }
-
-  void _goToLogin() {
+  void _goToLogin(BuildContext context) {
     Navigator.pushReplacementNamed(context, RoutesName.login);
   }
 
-  void _showUpdateDialog(int versionAvailable, int forceUpdate) {
+  void _showUpdateDialog(
+    BuildContext context,
+    int versionAvailable,
+    int forceUpdate,
+  ) {
     bool isForceUpdate = (versionAvailable == 1 && forceUpdate == 1);
 
     showDialog(
@@ -72,57 +68,17 @@ class _SplashState extends State<Splash> {
               TextButton(
                 onPressed: () {
                   Navigator.pop(context);
-                  _goToLogin();
+                  _goToLogin(context);
                 },
-                child: const Text("Cancel"),
+                child: const Text("Later"),
               ),
-
-            /// Update button
             ElevatedButton(
               onPressed: () {
-                /// open playstore link
                 // launchUrl(Uri.parse(AppUrl.playStoreUrl));
               },
               child: const Text("Update"),
             ),
           ],
-        );
-      },
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<AuthViewModel>(
-      builder: (context, viewModel, child) {
-        if (viewModel.fetchingData) {
-          return const Scaffold(
-            backgroundColor: Colors.white,
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-
-        if (viewModel.hasError) {
-          return Scaffold(
-            backgroundColor: Colors.white,
-            body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('Error loading version'),
-                  ElevatedButton(
-                    onPressed: _checkVersion,
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-
-        return Scaffold(
-          backgroundColor: Colors.white,
-          body: Center(child: Image.asset("assets/images/buddy_logo.png")),
         );
       },
     );

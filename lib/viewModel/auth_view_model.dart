@@ -1,47 +1,16 @@
-import 'package:flutter/cupertino.dart';
-import 'package:sssbuddy/model/Versioncheck.dart';
-import 'package:sssbuddy/repository/clientrepository.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../auth/model/Versioncheck.dart';
+import '../provider/app_providers.dart';
 
+class AuthViewModel extends AsyncNotifier<Versioncheck> {
+  @override
+  Future<Versioncheck> build() async {
+    final repo = ref.read(repositoryProvider);
 
-class AuthViewModel extends ChangeNotifier {
-  final ClientRepository repository;
-
-  AuthViewModel(this.repository);
-
-  Versioncheck? _versioncheck;
-  bool _fetchingData = false;
-  String? _error;
-
-  Versioncheck? get versioncheck => _versioncheck;
-  bool get fetchingData => _fetchingData;
-  String? get error => _error;
-  bool get hasError => _error != null;
-
-  Future<Versioncheck?> getVersionCheckApiData() async {
-    _fetchingData = true;
-    _error = null;
-    notifyListeners();
-
-    try {
-      _versioncheck = await repository.getVersionCheckDetails();
-      if (kDebugMode) {
-        print("Update Available: ${_versioncheck?.IsVersionUpdateAvailable}");
-      }
-      return _versioncheck;
-    } catch (e) {
-      _error = e.toString();
-      if (kDebugMode) print("API ERROR: $_error");
-      notifyListeners();
-      rethrow;
-    } finally {
-      _fetchingData = false;
-      notifyListeners();
-    }
-  }
-
-  void clearError() {
-    _error = null;
-    notifyListeners();
+    return await repo.getVersionCheckDetails();
   }
 }
+
+final authProvider = AsyncNotifierProvider<AuthViewModel, Versioncheck>(
+  () => AuthViewModel(),
+);

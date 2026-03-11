@@ -1,63 +1,56 @@
 import 'package:flutter/material.dart';
 
-
-
 class CustomButton extends StatelessWidget {
   final String text;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed; // ← keep it nullable
   final bool isOutlined;
   final double height;
 
   const CustomButton({
     super.key,
     required this.text,
-    required this.onPressed,
+    this.onPressed,
     this.isOutlined = false,
-    this.height = 40,
+    this.height = 48,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (isOutlined) {
-      return SizedBox(
-        height: height,
-        child: OutlinedButton(
-          style: OutlinedButton.styleFrom(
-            side: BorderSide(color: Color(0xFF4085EF)),
+    final buttonStyle = isOutlined
+        ? OutlinedButton.styleFrom(
+            side: const BorderSide(color: Color(0xFF4085EF)),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
-          ),
-          onPressed: onPressed,
-          child: Text(
-            text,
-            style: TextStyle(
-              color: Color(0xFF4085EF),
-              fontSize: 15,
+          )
+        : ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF4085EF),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
-          ),
-        ),
-      );
-    }
+          );
+
+    final child = Text(
+      text,
+      style: TextStyle(
+        fontSize: 15,
+        color: isOutlined ? const Color(0xFF4085EF) : Colors.white,
+      ),
+    );
 
     return SizedBox(
       height: height,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Color(0xFF4085EF),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        onPressed: onPressed,
-        child: Text(
-          text,
-          style: const TextStyle(
-            fontSize: 15,
-            color: Colors.white,
-          ),
-        ),
-      ),
+      child: isOutlined
+          ? OutlinedButton(
+              onPressed: onPressed, // ← now safe (nullable → non-null coercion)
+              style: buttonStyle,
+              child: child,
+            )
+          : ElevatedButton(
+              onPressed: onPressed,
+              style: buttonStyle,
+              child: child,
+            ),
     );
   }
 }

@@ -1,34 +1,28 @@
-import 'dart:convert';
-
-import 'package:sssbuddy/model/Validatelogin.dart';
 import 'package:sssbuddy/repository/app_endpoint.dart';
-import 'package:sssbuddy/repository/service/apiservice.dart';
-import 'app_url.dart';
-import '../model/Versioncheck.dart';
+import '../auth/model/Validatelogin.dart';
+import '../auth/model/Versioncheck.dart';
+import '../core/network/DioClient.dart';
 
 class ClientRepository {
-  final ApiService service;
-  ClientRepository(this.service);
+  final Dioclient client;
+
+  ClientRepository(this.client);
 
   Future<Versioncheck> getVersionCheckDetails() async {
-    final response = await service.request(
-      endpoint: AppEndpoint.versioncheckendpoint,
-      queryParams: {"VersionID": "55"},
+    final response = await client.get(
+      AppEndpoint.versioncheckendpoint,
+      query: {"VersionID": "55"},
     );
 
-    final data = jsonDecode(response.body);
-    return Versioncheck.fromJson(data);
+    return Versioncheck.fromJson(response.data);
   }
 
   Future<Validatelogin> apilogin(String employeeId, String password) async {
-    final response = await service.request(
-      endpoint: AppEndpoint.validateloginendpoint,
-      method: "POST",
+    final response = await client.post(
+      AppEndpoint.validateloginendpoint,
       body: {"EmployeeId": employeeId, "Password": password},
     );
 
-    final data = jsonDecode(response.body);
-
-    return Validatelogin.fromJson(data);
+    return Validatelogin.fromJson(response.data);
   }
 }

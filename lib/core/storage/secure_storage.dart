@@ -3,7 +3,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SecureStorage {
-
   static const FlutterSecureStorage _storage = FlutterSecureStorage();
 
   static const String employeeIdKey = "employeeId";
@@ -11,11 +10,10 @@ class SecureStorage {
   static const String loginResponseKey = "loginResponse";
 
   static Future<void> saveLoginData(
-      String employeeId,
-      String password,
-      String responseJson,
-      ) async {
-
+    String employeeId,
+    String password,
+    String responseJson,
+  ) async {
     await _storage.write(key: employeeIdKey, value: employeeId);
     await _storage.write(key: passwordKey, value: password);
     await _storage.write(key: loginResponseKey, value: responseJson);

@@ -1,5 +1,3 @@
-import 'dart:ffi';
-
 class Validatelogin {
   String VimsIdUser;
   String VimsUserName;

@@ -1,41 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
-import 'package:sssbuddy/Values/Strings/strings_value.dart';
-import 'package:sssbuddy/Components/CustomPasswordField.dart';
-import 'package:sssbuddy/utils/routes/routes_name.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../Values/Strings/strings_value.dart';
 import '../Values/Colors/app_colors.dart';
-import '../Components//CustomButton.dart';
+
+import '../Components/CustomPasswordField.dart';
+import '../Components/CustomButton.dart';
 import '../Components/CustomTextField.dart';
 import '../Components/header_container.dart';
+
+import '../utils/routes/routes_name.dart';
 import '../viewModel/login_view_model.dart';
 
-class MyLogin extends StatelessWidget {
-  const MyLogin({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return LoginScreen();
-  }
-}
-
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
+
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
+
   bool isRememberMe = false;
+
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  bool isPasswordHidden = true;
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final loginState = ref.watch(loginProvider);
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle(
+      value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
       ),
@@ -46,6 +51,7 @@ class _LoginScreenState extends State<LoginScreen> {
           top: false,
           child: Column(
             children: [
+              /// HEADER
               HeaderContainer(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -66,7 +72,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
               ),
+
               const SizedBox(height: 40),
+
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -76,6 +84,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
+                          /// EMAIL
                           CustomTextField(
                             controller: emailController,
                             labelText: Strings.empIDMobileNumber,
@@ -86,7 +95,10 @@ class _LoginScreenState extends State<LoginScreen> {
                               return null;
                             },
                           ),
+
                           const SizedBox(height: 20),
+
+                          /// PASSWORD
                           CustomPasswordField(
                             controller: passwordController,
                             labelText: Strings.password,
@@ -100,7 +112,10 @@ class _LoginScreenState extends State<LoginScreen> {
                               return null;
                             },
                           ),
+
                           const SizedBox(height: 10),
+
+                          /// REMEMBER ME
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -119,9 +134,13 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ],
                           ),
+
                           const SizedBox(height: 20),
+
+                          /// BUTTONS
                           Row(
                             children: [
+                              /// CLEAR BUTTON
                               Expanded(
                                 child: CustomButton(
                                   text: Strings.clear,
@@ -129,29 +148,84 @@ class _LoginScreenState extends State<LoginScreen> {
                                   onPressed: () {
                                     emailController.clear();
                                     passwordController.clear();
+
                                     setState(() {
                                       isRememberMe = false;
                                     });
                                   },
                                 ),
                               ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: CustomButton(
-                                  text: Strings.login,
-                                  onPressed: () {
-                                    if (_formKey.currentState!.validate()) {
-                                      Provider.of<LoginViewModel>(
-                                        context,
-                                        listen: false,
-                                      ).apilogin(
-                                        emailController.text,
-                                        passwordController.text,
-                                        context,
-                                      );
 
-                                    }
-                                  },
+                              const SizedBox(width: 16),
+
+                              /// LOGIN BUTTON
+                              Expanded(
+                                child: SizedBox(
+                                  height: 40,
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF4085EF),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+
+                                    onPressed: loginState.isLoading
+                                        ? null
+                                        : () async {
+                                            if (_formKey.currentState!
+                                                .validate()) {
+                                              final success = await ref
+                                                  .read(loginProvider.notifier)
+                                                  .login(
+                                                    emailController.text,
+                                                    passwordController.text,
+                                                  );
+
+                                              if (success && context.mounted) {
+                                                Navigator.pushReplacementNamed(
+                                                  context,
+                                                  RoutesName.dashboard,
+                                                );
+                                              }
+
+                                              if (!success && context.mounted) {
+                                                final error = ref
+                                                    .read(loginProvider)
+                                                    .error;
+
+                                                if (error != null) {
+                                                  ScaffoldMessenger.of(
+                                                    context,
+                                                  ).showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(
+                                                        error.toString(),
+                                                      ),
+                                                    ),
+                                                  );
+                                                }
+                                              }
+                                            }
+                                          },
+
+                                    child: loginState.isLoading
+                                        ? const SizedBox(
+                                            height: 18,
+                                            width: 18,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                        : const Text(
+                                            Strings.login,
+                                            style: TextStyle(
+                                              fontSize: 15,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                  ),
                                 ),
                               ),
                             ],
@@ -162,29 +236,24 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ),
+
+              /// FOOTER
               Padding(
-                padding: const EdgeInsets.only(bottom: 20.0),
-                child: Center(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Image.asset(
-                        "assets/images/buddy_logo.png",
-                        width: 50,
-                        height: 50,
-                        fit: BoxFit.contain,
-                      ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        Strings.poweredbySavyasasy,
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ],
-                  ),
+                padding: const EdgeInsets.only(bottom: 20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset(
+                      "assets/images/buddy_logo.png",
+                      width: 50,
+                      height: 50,
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      Strings.poweredbySavyasasy,
+                      style: TextStyle(color: Colors.grey, fontSize: 15),
+                    ),
+                  ],
                 ),
               ),
             ],

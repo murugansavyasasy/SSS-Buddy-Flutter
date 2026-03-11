@@ -14,7 +14,7 @@ class Routes {
         return MaterialPageRoute(builder: (context) => Dashboard());
 
       case RoutesName.login:
-        return MaterialPageRoute(builder: (context) => MyLogin());
+        return MaterialPageRoute(builder: (context) => LoginScreen());
 
       default:
         return MaterialPageRoute(

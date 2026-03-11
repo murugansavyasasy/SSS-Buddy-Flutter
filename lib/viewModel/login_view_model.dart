@@ -1,57 +1,35 @@
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:sssbuddy/model/Validatelogin.dart';
-import 'package:sssbuddy/repository/clientrepository.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../provider/app_providers.dart';
 
-import '../utils/secure_storage.dart';
-import '../utils/routes/routes_name.dart';
-
-class LoginViewModel extends ChangeNotifier {
-  final ClientRepository repository;
-
-  LoginViewModel(this.repository);
-
-  bool _loginloading = false;
-
-  get loading => _loginloading;
-
-  void setLoginLoading(bool value) {
-    _loginloading = value;
-    notifyListeners();
+class LoginViewModel extends AsyncNotifier<bool> {
+  @override
+  Future<bool> build() async {
+    return false;
   }
 
-  Future<void> apilogin(
-    String employeeId,
-    String password,
-    BuildContext context,
-  ) async {
-    setLoginLoading(true);
-    notifyListeners();
+  Future<bool> login(String employeeId, String password) async {
+    state = const AsyncLoading();
 
     try {
-      final response = await repository.apilogin(employeeId, password);
+      final repo = ref.read(repositoryProvider);
 
-      if (response.result == 1) {
-        await SecureStorage.saveLoginData(
-          employeeId,
-          password,
-          response.toJson().toString(),
-        );
+      final response = await repo.apilogin(employeeId, password);
 
-        Navigator.pushReplacementNamed(context, RoutesName.dashboard);
-      } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(response.resultMessage)));
+      if (response.result != 1) {
+        throw Exception(response.resultMessage);
       }
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Login Failed")));
-    }
 
-    setLoginLoading(false);
-    notifyListeners();
+      state = const AsyncData(true);
+
+      return true;
+    } catch (e, stack) {
+      state = AsyncError(e, stack);
+
+      return false;
+    }
   }
 }
+
+final loginProvider = AsyncNotifierProvider<LoginViewModel, bool>(
+  () => LoginViewModel(),
+);

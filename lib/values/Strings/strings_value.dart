@@ -3,7 +3,7 @@
 class Strings {
 
   static const String welcometoSSSBuddy = "Welcome to SSS Buddy";
-  static const String logintocontinue = "Login to continue";
+  static const String logintocontinue = "Login to your account";
   static const String empIDMobileNumber = "Emp ID / Mobile Number";
   static const String enterIdMobileNumber = "Enter Id (or) Mobile Number";
   static const String password = "Password";

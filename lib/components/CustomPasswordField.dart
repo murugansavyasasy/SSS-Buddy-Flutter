@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../values/colors/app_colors.dart';
+
 class CustomPasswordField extends StatefulWidget {
   final TextEditingController controller;
   final String labelText;
@@ -28,17 +29,11 @@ class _CustomPasswordFieldState extends State<CustomPasswordField> {
       validator: widget.validator,
       decoration: InputDecoration(
         labelText: widget.labelText,
-        labelStyle: TextStyle(
-          color: AppColors.grey,
-        ),
-        floatingLabelStyle: TextStyle(
-          color: AppColors.primary,
-        ),
+        labelStyle: TextStyle(color: AppColors.grey),
+        floatingLabelStyle: TextStyle(color: AppColors.primary),
         suffixIcon: IconButton(
           icon: Icon(
-            isPasswordHidden
-                ? Icons.visibility
-                : Icons.visibility_off,
+            isPasswordHidden ? Icons.visibility : Icons.visibility_off,
           ),
           onPressed: () {
             setState(() {
@@ -46,21 +41,14 @@ class _CustomPasswordFieldState extends State<CustomPasswordField> {
             });
           },
         ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: AppColors.grey,
-          ),
+          borderSide: BorderSide(color: AppColors.grey),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: AppColors.primary,
-            width: 2,
-          ),
+          borderSide: BorderSide(color: AppColors.primary, width: 2),
         ),
       ),
     );
