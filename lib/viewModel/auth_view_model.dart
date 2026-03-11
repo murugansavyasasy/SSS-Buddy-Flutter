@@ -8,11 +8,9 @@ class AuthViewModel extends AsyncNotifier<Versioncheck> {
   Future<Versioncheck> build() async {
     final repo = ref.read(repositoryProvider);
     final dioClient = ref.read(dioProvider);
-
     final value = await repo.getVersionCheckDetails();
     AppUrl.vimsUrl = value.VimsURL;
     AppUrl.schoolUrl = value.SchoolURL;
-
     dioClient.dio.options.baseUrl = value.VimsURL;
     return value;
   }
