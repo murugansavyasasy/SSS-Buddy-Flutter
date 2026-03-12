@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:sssbuddy/repository/app_url.dart';
 
+
 class Dioclient {
   late final Dio dio;
 
@@ -24,3 +25,8 @@ class Dioclient {
     return await dio.post(path, data: body);
   }
 }
+
+
+
+
+

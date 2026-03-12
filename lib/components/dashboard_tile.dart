@@ -1,56 +1,59 @@
 import 'package:flutter/material.dart';
 
 
-import 'package:flutter/material.dart';
-
 class DashboardTile extends StatelessWidget {
-  final IconData icon;
   final String title;
+  final IconData icon;
   final Color color;
 
-  const DashboardTile(this.icon, this.title, this.color, {super.key});
+  const DashboardTile({
+    super.key,
+    required this.title,
+    required this.icon,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.grey.shade300,
-          width: 1.2,
-        ),
-      ),
-      child: Row(
+    return SizedBox(
+      width: 90, // controls tile width
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 4,
-            height: 30,
+            height: 70,
+            width: 70,
             decoration: BoxDecoration(
               color: color,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 4,
+                  offset: Offset(0, 2),
+                )
+              ],
+            ),
+            child: Icon(
+              icon,
+              color: Colors.white,
+              size: 32,
             ),
           ),
 
-          const SizedBox(width: 12),
+          const SizedBox(height: 6),
 
-          Icon(icon, color: color),
-
-          const SizedBox(width: 12),
-
-          Expanded(
-            child: Text(
-              title,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-              ),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            softWrap: true,
+            maxLines: 2, // allows wrapping to next line
+            overflow: TextOverflow.visible,
+            style: const TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w500,
             ),
-          ),
-
-          const Icon(Icons.chevron_right)
+          )
         ],
       ),
     );

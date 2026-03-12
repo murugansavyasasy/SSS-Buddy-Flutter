@@ -2,17 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:sssbuddy/Values/Colors/app_colors.dart';
+import 'package:sssbuddy/auth/Menulists.dart';
+import 'package:sssbuddy/components/header_toolbar.dart';
 import '../components/dashboard_card.dart';
 import '../components/dashboard_tile.dart';
+import '../components/upcoming_demo_card.dart';
 
 class Dashboard extends StatelessWidget {
+  const Dashboard({super.key});
+
   @override
   Widget build(BuildContext context) {
-    final double topPadding = MediaQuery.of(context).padding.top;
-    final double bottomPadding = MediaQuery.of(context).padding.bottom;
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle(
+      value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
         systemNavigationBarColor: Colors.white,
@@ -21,143 +23,138 @@ class Dashboard extends StatelessWidget {
       child: Scaffold(
         resizeToAvoidBottomInset: false,
         backgroundColor: AppColors.primary,
-        body: Padding(
-          padding: EdgeInsets.only(top: topPadding),
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 20,
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      height: 45,
-                      width: 45,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Center(
-                        child: Text(
-                          "BS",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Balu Saran",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                        SizedBox(height: 2),
-                        Text(
-                          "Admin",
-                          style: TextStyle(fontSize: 13, color: Colors.white70),
-                        ),
-                      ],
-                    ),
-                    Spacer(),
-                    Icon(Icons.search, color: Colors.white, size: 27),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(25),
-                      topRight: Radius.circular(25),
-                    ),
+        body: Column(
+          children: [
+            const HeaderToolbar(),
+
+            Expanded(
+              child: Container(
+                width: double.infinity,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(25),
+                    topRight: Radius.circular(25),
                   ),
-                  child: Padding(
-                    padding: EdgeInsets.only(
-                      bottom: bottomPadding,
-                      left: 16,
-                      right: 16,
-                    ),
-                    child: SingleChildScrollView(
+                ),
+                child: SingleChildScrollView(
+                  child: Container(
+                    color: Colors.grey.shade200,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          GridView.count(
-                            crossAxisCount: 2,
-                            shrinkWrap: true,
-                            physics: NeverScrollableScrollPhysics(),
-                            mainAxisSpacing: 12,
-                            crossAxisSpacing: 12,
-                            childAspectRatio: 1.3,
+
+                          /// Dashboard cards
+                          Row(
                             children: [
                               DashboardCard(
-                                Icons.person,
-                                "Create Demo",
-                                Colors.purple,
+                                title: "Active",
+                                subtitle: "Schools",
+                                count: "100",
+                                description: "Out of 150",
+                                color: const Color(0xff2E4F7D),
+                                icon: Icons.school_outlined,
                               ),
-
+                              const SizedBox(width: 12),
                               DashboardCard(
-                                Icons.account_balance_wallet,
-                                "Demo List",
-                                Colors.pink,
-                              ),
-
-                              DashboardCard(
-                                Icons.payments,
-                                "School List",
-                                Colors.blue,
-                              ),
-
-                              DashboardCard(
-                                Icons.folder,
-                                "Circular List",
-                                Colors.green,
+                                title: "Active",
+                                subtitle: "POC",
+                                count: "51",
+                                description: "Out of 100",
+                                color: Colors.green,
+                                icon: Icons.person_outline,
                               ),
                             ],
                           ),
 
-                          SizedBox(height: 20),
+                          const SizedBox(height: 20),
 
-                          DashboardTile(
-                            Icons.person,
-                            "Status Report",
-                            Colors.blue,
+                          /// Upcoming demos header
+                          Row(
+                            children: [
+                              const Text(
+                                "Upcoming Demos",
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const Spacer(),
+                              Text(
+                                "View all",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ],
                           ),
-                          DashboardTile(
-                            Icons.description,
-                            "Record Collection",
-                            Colors.orange,
+
+                          const SizedBox(height: 12),
+
+                          /// Upcoming demo list
+                          SizedBox(
+                            height: 95,
+                            child: ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: 5,
+                              separatorBuilder: (context, index) =>
+                              const SizedBox(width: 12),
+                              itemBuilder: (context, index) {
+                                return const UpcomingDemoCard();
+                              },
+                            ),
                           ),
-                          DashboardTile(
-                            Icons.campaign,
-                            "Important Info",
-                            Colors.green,
+
+                          const SizedBox(height: 16),
+
+                          /// Menu title
+                          const Text(
+                            "Menus",
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black,
+                            ),
                           ),
-                          DashboardTile(
-                            Icons.star,
-                            "Zero Activity",
-                            Colors.purple,
+
+                          const SizedBox(height: 15),
+
+                          /// Menu grid
+                          GridView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            padding: EdgeInsets.zero,
+                            itemCount: menuItems.length,
+                            gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 4,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                              mainAxisExtent: 100,
+                            ),
+                            itemBuilder: (context, index) {
+                              final item = menuItems[index];
+                              return DashboardTile(
+                                title: item.title,
+                                icon: item.icon,
+                                color: item.color,
+                              );
+                            },
                           ),
+
+                          const SizedBox(height: 20),
                         ],
                       ),
                     ),
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -166,5 +163,5 @@ class Dashboard extends StatelessWidget {
 
 @Preview()
 Widget mySampleText() {
-  return Dashboard();
+  return const Dashboard();
 }
