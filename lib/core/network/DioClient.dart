@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:sssbuddy/repository/app_url.dart';
 
-
 class Dioclient {
   late final Dio dio;
 
@@ -17,16 +16,23 @@ class Dioclient {
     dio.interceptors.add(LogInterceptor(requestBody: true, responseBody: true));
   }
 
-  Future<Response> get(String path, {Map<String, dynamic>? query}) async {
-    return await dio.get(path, queryParameters: query);
+  Future<Response> get(
+    String path, {
+    Map<String, dynamic>? query,
+    bool useSchoolApi = false,
+  }) async {
+    final url = useSchoolApi ? AppUrl.schoolUrl + path : path;
+
+    return await dio.get(url, queryParameters: query);
   }
 
-  Future<Response> post(String path, {Map<String, dynamic>? body}) async {
-    return await dio.post(path, data: body);
+  Future<Response> post(
+    String path, {
+    Map<String, dynamic>? body,
+    bool useSchoolApi = false,
+  }) async {
+    final url = useSchoolApi ? AppUrl.schoolUrl + path : path;
+
+    return await dio.post(url, data: body);
   }
 }
-
-
-
-
-

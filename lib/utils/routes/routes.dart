@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sssbuddy/View/splash.dart';
 import 'package:sssbuddy/View/login.dart';
 import 'package:sssbuddy/utils/routes/routes_name.dart';
+import 'package:sssbuddy/view/create_demo.dart';
 import 'package:sssbuddy/view/dashboard.dart';
 
 class Routes {
@@ -15,6 +16,9 @@ class Routes {
 
       case RoutesName.login:
         return MaterialPageRoute(builder: (context) => LoginScreen());
+
+      case RoutesName.createdemo:
+        return MaterialPageRoute(builder: (context) => CreateDemo());
 
       default:
         return MaterialPageRoute(

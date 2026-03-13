@@ -1,12 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sssbuddy/Values/Colors/app_colors.dart';
+import '../provider/user_session_provider.dart';
 
-class HeaderToolbar extends StatelessWidget {
+class HeaderToolbar extends ConsumerWidget {
   const HeaderToolbar({super.key});
 
+  String getInitials(String name) {
+    final words = name.trim().split(" ");
+    if (words.length >= 2) {
+      return (words.first[0] + words.last[0]).toUpperCase();
+    }
+    return words.first[0].toUpperCase();
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userSession = ref.watch(userSessionProvider);
+
     final double topPadding = MediaQuery.of(context).padding.top;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -24,60 +36,72 @@ class HeaderToolbar extends StatelessWidget {
           right: 16,
           bottom: 20,
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              height: 45,
-              width: 45,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Center(
-                child: Text(
-                  "BS",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-            ),
+        child: userSession.when(
+          loading: () => const SizedBox(),
 
-            const SizedBox(width: 12),
+          error: (error, stack) => const SizedBox(),
 
-            Column(
+          data: (user) {
+            final name = user?.employeeName ?? "";
+            final role = user?.employeerole ?? "";
+            final initials = getInitials(name);
+
+            return Row(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
-                  "Balu Saran",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+              children: [
+                Container(
+                  height: 45,
+                  width: 45,
+                  decoration: BoxDecoration(
                     color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Center(
+                    child: Text(
+                      initials,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                      ),
+                    ),
                   ),
                 ),
-                SizedBox(height: 2),
-                Text(
-                  "Admin",
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.white70,
-                  ),
+
+                const SizedBox(width: 12),
+
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      role,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const Spacer(),
+
+                const Icon(
+                  Icons.more_vert_rounded,
+                  color: Colors.white,
+                  size: 27,
                 ),
               ],
-            ),
-
-            const Spacer(),
-
-            const Icon(
-              Icons.search,
-              color: Colors.white,
-              size: 27,
-            ),
-          ],
+            );
+          },
         ),
       ),
     );

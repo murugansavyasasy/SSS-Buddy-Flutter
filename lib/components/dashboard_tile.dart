@@ -16,7 +16,7 @@ class DashboardTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 90, // controls tile width
+      width: 90,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -47,7 +47,7 @@ class DashboardTile extends StatelessWidget {
             title,
             textAlign: TextAlign.center,
             softWrap: true,
-            maxLines: 2, // allows wrapping to next line
+            maxLines: 2,
             overflow: TextOverflow.visible,
             style: const TextStyle(
               fontSize: 9,

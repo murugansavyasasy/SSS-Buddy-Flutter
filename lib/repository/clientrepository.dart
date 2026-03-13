@@ -1,4 +1,8 @@
+import 'dart:convert';
+
+import 'package:sssbuddy/auth/model/Schoollist.dart';
 import 'package:sssbuddy/repository/app_endpoint.dart';
+import '../auth/model/Demolist.dart';
 import '../auth/model/Validatelogin.dart';
 import '../auth/model/Versioncheck.dart';
 import '../core/network/DioClient.dart';
@@ -22,6 +26,26 @@ class ClientRepository {
     return Validatelogin.fromJson(response.data);
   }
 
+  Future<List<Demolist>> getdemolist(String schoolLoginId) async {
+    final response = await client.get(
+      AppEndpoint.demolistendpoint,
+      query: {"LoginID": schoolLoginId},
+      useSchoolApi: true,
+    );
+
+    final List data = response.data;
+
+    return data.map((e) => Demolist.fromJson(e)).toList();
+  }
 
 
+  Future<String> postschoollist(String schoolLoginId) async {
+    final response = await client.post(
+      AppEndpoint.schoollistendpoint,
+      body: {"LoginID": schoolLoginId},
+      useSchoolApi: true,
+    );
+
+    return jsonEncode(response.data);
+  }
 }

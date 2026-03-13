@@ -1,18 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widget_previews.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sssbuddy/Values/Colors/app_colors.dart';
 import 'package:sssbuddy/auth/Menulists.dart';
 import 'package:sssbuddy/components/header_toolbar.dart';
 import '../components/dashboard_card.dart';
 import '../components/dashboard_tile.dart';
 import '../components/upcoming_demo_card.dart';
+import '../viewModel/demolist_view_model.dart';
+import '../viewModel/schoollist_view_model.dart';
 
-class Dashboard extends StatelessWidget {
+class Dashboard extends ConsumerWidget {
   const Dashboard({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final demoState = ref.watch(demoviewProvider);
+    final schoolStats = ref.watch(schoolStatsProvider);
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -39,43 +44,76 @@ class Dashboard extends StatelessWidget {
                 ),
                 child: SingleChildScrollView(
                   child: Container(
-                    color: Colors.grey.shade200,
+                    color: Colors.grey.shade100,
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-
-                          /// Dashboard cards
                           Row(
                             children: [
-                              DashboardCard(
-                                title: "Active",
-                                subtitle: "Schools",
-                                count: "100",
-                                description: "Out of 150",
-                                color: const Color(0xff2E4F7D),
-                                icon: Icons.school_outlined,
+                              schoolStats.when(
+                                loading: () => const DashboardCard(
+                                  title: "Schools",
+                                  activeLabel: "Active",
+                                  inactiveLabel: "Inactive",
+                                  color: Color(0xff2E4F7D),
+                                  isLoading: true,
+                                ),
+                                error: (e, _) => const DashboardCard(
+                                  title: "Schools",
+                                  activeLabel: "Active",
+                                  inactiveLabel: "Inactive",
+                                  color: Color(0xff2E4F7D),
+                                ),
+                                data: (stats) {
+                                  return DashboardCard(
+                                    title: "Schools",
+                                    activeLabel: "Active",
+                                    inactiveLabel: "Inactive",
+                                    activeCount: stats.liveActive.toString(),
+                                    inactiveCount: stats.liveInactive.toString(),
+                                    color: const Color(0xff2E4F7D),
+                                  );
+                                },
                               ),
+
                               const SizedBox(width: 12),
-                              DashboardCard(
-                                title: "Active",
-                                subtitle: "POC",
-                                count: "51",
-                                description: "Out of 100",
-                                color: Colors.green,
-                                icon: Icons.person_outline,
+
+                              schoolStats.when(
+                                loading: () => const DashboardCard(
+                                  title: "POC",
+                                  activeLabel: "Active",
+                                  inactiveLabel: "Inactive",
+                                  color: Colors.green,
+                                  isLoading: true,
+                                ),
+                                error: (e, _) => const DashboardCard(
+                                  title: "POC",
+                                  activeLabel: "Active",
+                                  inactiveLabel: "Inactive",
+                                  color: Colors.green,
+                                ),
+                                data: (stats) {
+                                  return DashboardCard(
+                                    title: "POC",
+                                    activeLabel: "Active",
+                                    inactiveLabel: "Inactive",
+                                    activeCount: stats.pocActive.toString(),
+                                    inactiveCount: stats.pocInactive.toString(),
+                                    color: Colors.green,
+                                  );
+                                },
                               ),
                             ],
                           ),
 
                           const SizedBox(height: 20),
 
-                          /// Upcoming demos header
                           Row(
                             children: [
                               const Text(
-                                "Upcoming Demos",
+                                "Demo List",
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
@@ -95,47 +133,72 @@ class Dashboard extends StatelessWidget {
 
                           const SizedBox(height: 12),
 
-                          /// Upcoming demo list
                           SizedBox(
                             height: 95,
-                            child: ListView.separated(
-                              scrollDirection: Axis.horizontal,
-                              itemCount: 5,
-                              separatorBuilder: (context, index) =>
-                              const SizedBox(width: 12),
-                              itemBuilder: (context, index) {
-                                return const UpcomingDemoCard();
+                            child: demoState.when(
+                              loading: () => const Center(
+                                child: CircularProgressIndicator(),
+                              ),
+
+                              error: (e, _) =>
+                                  Center(child: Text(e.toString())),
+
+                              data: (demos) {
+                                if (demos.isEmpty) {
+                                  return const Center(
+                                    child: Text("No demo list found"),
+                                  );
+                                }
+                                return ListView.separated(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: demos.length,
+                                  separatorBuilder: (_, __) =>
+                                      const SizedBox(width: 12),
+                                  itemBuilder: (context, index) {
+                                    final demo = demos[index];
+
+                                    return UpcomingDemoCard(
+                                      demoId: demo.demoId.toString(),
+                                      schoolName: demo.schoolName,
+                                      principalNumber: demo.principalNumber,
+                                    );
+                                  },
+                                );
                               },
                             ),
                           ),
 
                           const SizedBox(height: 16),
 
-                          /// Menu title
-                          const Text(
-                            "Menus",
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black,
-                            ),
+                          Row(
+                            children: const [
+                              Text(
+                                "Menus",
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black,
+                                ),
+                              ),
+                              Spacer(),
+                              Icon(Icons.search, color: Colors.black, size: 20),
+                            ],
                           ),
 
                           const SizedBox(height: 15),
 
-                          /// Menu grid
                           GridView.builder(
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             padding: EdgeInsets.zero,
                             itemCount: menuItems.length,
                             gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 4,
-                              crossAxisSpacing: 16,
-                              mainAxisSpacing: 16,
-                              mainAxisExtent: 100,
-                            ),
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 4,
+                                  crossAxisSpacing: 16,
+                                  mainAxisSpacing: 16,
+                                  mainAxisExtent: 100,
+                                ),
                             itemBuilder: (context, index) {
                               final item = menuItems[index];
                               return DashboardTile(
@@ -159,9 +222,4 @@ class Dashboard extends StatelessWidget {
       ),
     );
   }
-}
-
-@Preview()
-Widget mySampleText() {
-  return const Dashboard();
 }

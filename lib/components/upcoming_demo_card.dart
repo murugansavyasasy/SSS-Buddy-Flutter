@@ -1,7 +1,17 @@
 import 'package:flutter/material.dart';
 
 class UpcomingDemoCard extends StatelessWidget {
-  const UpcomingDemoCard({super.key});
+
+  final String demoId;
+  final String schoolName;
+  final int principalNumber;
+
+  const UpcomingDemoCard({
+    super.key,
+    required this.demoId,
+    required this.schoolName,
+    required this.principalNumber,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -25,11 +35,9 @@ class UpcomingDemoCard extends StatelessWidget {
             child: const Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.keyboard_voice_rounded,
-                  size: 40,
-                  color: Colors.white,
-                ),
+                Icon(Icons.keyboard_voice_rounded,
+                    size: 40,
+                    color: Colors.white),
               ],
             ),
           ),
@@ -41,21 +49,29 @@ class UpcomingDemoCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  "241362",
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+
+                Text(
+                  demoId,
+                  style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600),
                 ),
 
                 const SizedBox(height: 4),
 
-                const Text(
-                  "Cambridge School",
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                Text(
+                  schoolName,
+                  style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600),
                 ),
 
                 const SizedBox(height: 4),
 
-                Row(children: [const Text("+91 6383904707",style: TextStyle(fontSize: 12),)]),
+                Text(
+                  "$principalNumber",
+                  style: const TextStyle(fontSize: 12),
+                ),
               ],
             ),
           ),
