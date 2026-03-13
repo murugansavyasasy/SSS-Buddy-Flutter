@@ -111,7 +111,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               if (value == null || value.isEmpty) {
                                 return Strings.enteryourpassword;
                               }
-                              if (value.length < 6) {
+                              if (value.length < 1) {
                                 return Strings.passwordmustbeatleastcharacters;
                               }
                               return null;
