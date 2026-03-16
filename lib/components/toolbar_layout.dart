@@ -5,7 +5,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../Values/Colors/app_colors.dart';
 
 class ToolbarLayout extends ConsumerWidget {
-  const ToolbarLayout({super.key});
+  final Widget? navigateTo;
+  final String title;
+
+  const ToolbarLayout({
+    super.key,
+    this.navigateTo,
+    required this.title,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -30,7 +37,14 @@ class ToolbarLayout extends ConsumerWidget {
           children: [
             GestureDetector(
               onTap: () {
-                Navigator.pop(context);
+                if (navigateTo != null) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => navigateTo!),
+                  );
+                } else {
+                  Navigator.pop(context);
+                }
               },
               child: Container(
                 height: 45,
@@ -42,6 +56,17 @@ class ToolbarLayout extends ConsumerWidget {
                 child: const Center(
                   child: Icon(Icons.arrow_back, color: Colors.black),
                 ),
+              ),
+            ),
+
+            const SizedBox(width: 12),
+
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
               ),
             ),
           ],
