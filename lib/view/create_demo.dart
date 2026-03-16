@@ -4,8 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:sssbuddy/Components/CustomButton.dart';
 import 'package:sssbuddy/components/custom_text_field.dart';
+import 'package:sssbuddy/viewModel/createdemo_view_model.dart';
 import '../Values/Colors/app_colors.dart';
+import '../components/common_dialog.dart';
 import '../components/toolbar_layout.dart';
+import '../provider/user_session_provider.dart';
+import '../utils/routes/routes_name.dart';
+import '../viewModel/login_view_model.dart';
 import 'dashboard.dart';
 
 class CreateDemo extends ConsumerStatefulWidget {
@@ -37,9 +42,7 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
           children: [
             const ToolbarLayout(title: "Create Demo", navigateTo: Dashboard()),
 
-
             Expanded(
-
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
@@ -50,8 +53,6 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
                     topRight: Radius.circular(25),
                   ),
                 ),
-
-
 
                 child: SingleChildScrollView(
                   child: Column(
@@ -81,22 +82,26 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
 
                       const SizedBox(height: 20),
 
-                      /// Dynamic Parent Number Fields
                       Column(
-                        children: List.generate(parentControllers.length, (index) {
+                        children: List.generate(parentControllers.length, (
+                          index,
+                        ) {
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 20),
                             child: Row(
                               children: [
                                 Expanded(
                                   child: CustomTextField(
-                                    label: index == 0 ? "Demo Parent Number" : "",
-                                    hint: index == 0 ? "Enter Mobile Number" : "",
+                                    label: index == 0
+                                        ? "Demo Parent Number"
+                                        : "",
+                                    hint: index == 0
+                                        ? "Enter Mobile Number"
+                                        : "",
                                     controller: parentControllers[index],
                                   ),
                                 ),
 
-                                /// Remove button (only for extra fields)
                                 if (index != 0)
                                   GestureDetector(
                                     onTap: () {
@@ -125,7 +130,6 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
                         }),
                       ),
 
-                      /// Add another number button
                       Align(
                         alignment: Alignment.centerRight,
                         child: GestureDetector(
@@ -147,17 +151,66 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
 
                       const SizedBox(height: 30),
 
-                      /// Create Demo Button
                       SizedBox(
                         width: double.infinity,
                         child: CustomButton(
                           text: "Create Demo",
-                          onPressed: () {
-                            print("Create Demo Clicked");
+                          onPressed: () async {
+                            final loginData = ref.read(loginProvider);
+                            final loginvalue = loginData.value;
 
-                            /// Example collecting numbers
-                            for (var controller in parentControllers) {
-                              print(controller.text);
+                            final loginId = loginvalue?.SchoolLoginId ?? "";
+
+                            final schoolName = titleController.text;
+                            final mobileNo = subjectController.text;
+                            final email = dateController.text;
+
+                            final parentNos = parentControllers
+                                .map((controller) => controller.text)
+                                .where((text) => text.isNotEmpty)
+                                .join(",");
+
+                            final success = await ref
+                                .read(createdemoProvider.notifier)
+                                .createdemo(
+                                  loginId,
+                                  schoolName,
+                                  mobileNo,
+                                  email,
+                                  parentNos,
+                                  "1",
+                                );
+
+                            if (!mounted) return;
+
+                            if (success) {
+                              final response = ref
+                                  .read(createdemoProvider)
+                                  .value;
+                              if (response?.status == 1) {
+                                titleController.clear();
+                                subjectController.clear();
+                                dateController.clear();
+                                parentControllers.clear();
+
+                                CommonDialog.showSuccessDialog(
+                                  context,
+                                  message: "Demo created successfully",
+                                  showRecordButton: true,
+                                );
+                              } else {
+                                CommonDialog.showSuccessDialog(
+                                  context,
+                                  message: "Demo created successfully",
+                                  showRecordButton: false,
+                                );
+                              }
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text("Failed to create demo"),
+                                ),
+                              );
                             }
                           },
                         ),

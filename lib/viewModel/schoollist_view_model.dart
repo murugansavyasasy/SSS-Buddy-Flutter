@@ -16,7 +16,7 @@ class SchoolStatsViewModel extends AsyncNotifier<SchoolStats> {
 
   Future<SchoolStats> loadSchoolStats() async {
 
-    final loginState = ref.watch(loginProvider);
+    final loginState = ref.read(loginProvider);
     final loginData = loginState.value;
 
     if (loginData == null) {

@@ -4,6 +4,7 @@ import 'package:sssbuddy/View/login.dart';
 import 'package:sssbuddy/utils/routes/routes_name.dart';
 import 'package:sssbuddy/view/create_demo.dart';
 import 'package:sssbuddy/view/dashboard.dart';
+import 'package:sssbuddy/view/record_voice.dart';
 
 class Routes {
   static Route<dynamic> generateRoutes(RouteSettings settings) {
@@ -19,6 +20,9 @@ class Routes {
 
       case RoutesName.createdemo:
         return MaterialPageRoute(builder: (context) => CreateDemo());
+
+      case RoutesName.recordvoice:
+        return MaterialPageRoute(builder: (context) => RecordVoice());
 
       default:
         return MaterialPageRoute(

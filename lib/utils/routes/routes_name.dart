@@ -7,5 +7,6 @@ class RoutesName {
   static const String dashboard = "dashboard_screen";
 
   static const String createdemo = "create_demo";
+  static const String recordvoice = "record_voice";
 
 }
