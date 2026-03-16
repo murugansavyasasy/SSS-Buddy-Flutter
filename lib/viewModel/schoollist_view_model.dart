@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../auth/model/SchoolStats.dart';
 import '../core/storage/secure_storage.dart';
 import '../provider/app_providers.dart';
+import 'login_view_model.dart';
 
 class SchoolStatsViewModel extends AsyncNotifier<SchoolStats> {
 
@@ -15,9 +16,10 @@ class SchoolStatsViewModel extends AsyncNotifier<SchoolStats> {
 
   Future<SchoolStats> loadSchoolStats() async {
 
-    final loginResponse = await SecureStorage.getLoginResponse();
+    final loginState = ref.watch(loginProvider);
+    final loginData = loginState.value;
 
-    if (loginResponse == null) {
+    if (loginData == null) {
       return SchoolStats(
         totalSchools: 0,
         liveActive: 0,
@@ -28,15 +30,13 @@ class SchoolStatsViewModel extends AsyncNotifier<SchoolStats> {
       );
     }
 
-    final decode = jsonDecode(loginResponse);
-    final schoolLoginId = decode["SchoolLoginId"].toString();
 
-    final repo = ref.read(repositoryProvider);
+    final schoolLoginId = loginData.SchoolLoginId;
+    final repo = ref.read(repositoryProvider);;
 
     final jsonResponse = await repo.postschoollist(schoolLoginId);
 
-    /// isolate handles everything
-    final stats = await compute(calculateSchoolStatsFromJson, jsonResponse);
+    final stats = calculateSchoolStatsFromJson(jsonResponse);
 
     return stats;
   }

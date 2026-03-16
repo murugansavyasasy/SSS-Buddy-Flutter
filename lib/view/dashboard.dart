@@ -8,6 +8,7 @@ import 'package:sssbuddy/components/header_toolbar.dart';
 import '../components/dashboard_card.dart';
 import '../components/dashboard_tile.dart';
 import '../components/upcoming_demo_card.dart';
+import '../utils/routes/routes_name.dart';
 import '../viewModel/demolist_view_model.dart';
 import '../viewModel/schoollist_view_model.dart';
 
@@ -72,7 +73,8 @@ class Dashboard extends ConsumerWidget {
                                     activeLabel: "Active",
                                     inactiveLabel: "Inactive",
                                     activeCount: stats.liveActive.toString(),
-                                    inactiveCount: stats.liveInactive.toString(),
+                                    inactiveCount: stats.liveInactive
+                                        .toString(),
                                     color: const Color(0xff2E4F7D),
                                   );
                                 },
@@ -201,14 +203,23 @@ class Dashboard extends ConsumerWidget {
                                 ),
                             itemBuilder: (context, index) {
                               final item = menuItems[index];
-                              return  DashboardTile(
+                              return DashboardTile(
                                 title: item.title,
                                 icon: item.icon,
                                 color: item.color,
+                                onTap: () {
+                                  switch (item.id) {
+                                    case 1:
+                                      Navigator.pushReplacementNamed(context, RoutesName.createdemo);
+                                      break;
+
+                                    default:
+                                      break;
+                                  }
+                                },
                               );
                             },
                           ),
-
                           const SizedBox(height: 20),
                         ],
                       ),

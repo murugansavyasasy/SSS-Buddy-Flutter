@@ -1,26 +1,21 @@
-import 'dart:convert';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../auth/model/Demolist.dart';
-import '../core/storage/secure_storage.dart';
 import '../provider/app_providers.dart';
-
+import 'login_view_model.dart';
 
 class DemolistViewModel extends AsyncNotifier<List<Demolist>> {
-
   @override
   Future<List<Demolist>> build() async {
     return demolist();
   }
 
   Future<List<Demolist>> demolist() async {
+    final loginState = ref.read(loginProvider);
+    final loginData = loginState.value;
 
-    final loginResponse = await SecureStorage.getLoginResponse();
-    if(loginResponse == null) return [];
+    if (loginData == null) return [];
 
-    final decode = jsonDecode(loginResponse);
-    final schoolLoginId = decode["SchoolLoginId"].toString();
+    final schoolLoginId = loginData.SchoolLoginId;
     final repo = ref.read(repositoryProvider);
 
     final response = await repo.getdemolist(schoolLoginId);
@@ -30,6 +25,6 @@ class DemolistViewModel extends AsyncNotifier<List<Demolist>> {
 }
 
 final demoviewProvider =
-AsyncNotifierProvider<DemolistViewModel, List<Demolist>>(
+    AsyncNotifierProvider<DemolistViewModel, List<Demolist>>(
       () => DemolistViewModel(),
-);
+    );

@@ -157,11 +157,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   onPressed: () {
                                     emailController.clear();
                                     passwordController.clear();
-
-                                    ref
-                                            .read(rememberMeProvider.notifier)
-                                            .state =
-                                        false;
+                                    ref.read(rememberMeProvider.notifier).state = false;
                                   },
                                 ),
                               ),

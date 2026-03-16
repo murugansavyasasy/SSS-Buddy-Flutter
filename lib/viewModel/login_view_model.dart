@@ -1,14 +1,15 @@
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sssbuddy/auth/model/Validatelogin.dart';
 import 'package:sssbuddy/core/storage/secure_storage.dart';
 import 'package:sssbuddy/provider/user_session_provider.dart';
 import '../provider/app_providers.dart';
 
-class LoginViewModel extends AsyncNotifier<bool> {
+class LoginViewModel extends AsyncNotifier<Validatelogin?> {
   @override
-  Future<bool> build() async {
-    return false;
+  Future<Validatelogin?> build() async {
+    return null;
   }
 
   Future<bool> login(
@@ -35,9 +36,10 @@ class LoginViewModel extends AsyncNotifier<bool> {
       );
       await ref.read(userSessionProvider.notifier).refreshUser();
 
-      state = const AsyncData(true);
+      state =    AsyncData(response);
 
       return true;
+
     } catch (e, stack) {
       state = AsyncError(e, stack);
 
@@ -46,6 +48,6 @@ class LoginViewModel extends AsyncNotifier<bool> {
   }
 }
 
-final loginProvider = AsyncNotifierProvider<LoginViewModel, bool>(
+final loginProvider = AsyncNotifierProvider<LoginViewModel,Validatelogin?>(
   () => LoginViewModel(),
 );
