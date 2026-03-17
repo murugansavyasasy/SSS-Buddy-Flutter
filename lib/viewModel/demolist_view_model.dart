@@ -20,7 +20,8 @@ class DemolistViewModel extends AsyncNotifier<List<Demolist>> {
 
     final response = await repo.getdemolist(schoolLoginId);
 
-    return response;
+    return response.take(5).toList();
+
   }
 }
 

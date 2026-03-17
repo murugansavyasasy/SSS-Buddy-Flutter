@@ -51,6 +51,7 @@ class UpcomingDemoCard extends StatelessWidget {
               children: [
 
                 Text(
+                  maxLines: 1,
                   demoId,
                   style: const TextStyle(
                       fontSize: 14,
@@ -61,6 +62,7 @@ class UpcomingDemoCard extends StatelessWidget {
 
                 Text(
                   schoolName,
+                  maxLines: 2,
                   style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600),
@@ -69,6 +71,7 @@ class UpcomingDemoCard extends StatelessWidget {
                 const SizedBox(height: 4),
 
                 Text(
+                  maxLines: 1,
                   "$principalNumber",
                   style: const TextStyle(fontSize: 12),
                 ),

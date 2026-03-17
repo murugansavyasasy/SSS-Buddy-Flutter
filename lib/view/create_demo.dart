@@ -8,8 +8,6 @@ import 'package:sssbuddy/viewModel/createdemo_view_model.dart';
 import '../Values/Colors/app_colors.dart';
 import '../components/common_dialog.dart';
 import '../components/toolbar_layout.dart';
-import '../provider/user_session_provider.dart';
-import '../utils/routes/routes_name.dart';
 import '../viewModel/login_view_model.dart';
 import 'dashboard.dart';
 
