@@ -93,7 +93,7 @@ class CommonDialog {
                     },
                     child: Text(
                       showRecordButton ? "Record Voice" : "Close",
-                      style: const TextStyle(fontSize: 16),
+                      style: const TextStyle(fontSize: 16,color: Colors.white),
                     ),
                   ),
                 ),

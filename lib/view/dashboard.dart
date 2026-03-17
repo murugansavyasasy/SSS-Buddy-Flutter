@@ -151,14 +151,14 @@ class Dashboard extends ConsumerWidget {
                                     child: Text("No demo list found"),
                                   );
                                 }
+                                final limitedList = demos.take(5).toList();
                                 return ListView.separated(
                                   scrollDirection: Axis.horizontal,
-                                  itemCount: demos.length,
+                                  itemCount: limitedList.length,
                                   separatorBuilder: (_, __) =>
                                       const SizedBox(width: 12),
                                   itemBuilder: (context, index) {
-                                    final demo = demos[index];
-
+                                    final demo = limitedList[index];
                                     return UpcomingDemoCard(
                                       demoId: demo.demoId.toString(),
                                       schoolName: demo.schoolName,
@@ -213,6 +213,8 @@ class Dashboard extends ConsumerWidget {
                                       Navigator.pushReplacementNamed(context, RoutesName.createdemo);
                                       break;
 
+                                    case 2:
+                                      Navigator.pushReplacementNamed(context, RoutesName.demolistview);
                                     default:
                                       break;
                                   }
