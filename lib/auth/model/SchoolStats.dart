@@ -1,7 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
-
 class SchoolStats {
   final int totalSchools;
   final int liveActive;
@@ -9,6 +7,7 @@ class SchoolStats {
   final int pocActive;
   final int pocInactive;
   final int stopped;
+  final List<dynamic> rawList;
 
   SchoolStats({
     required this.totalSchools,
@@ -17,6 +16,7 @@ class SchoolStats {
     required this.pocActive,
     required this.pocInactive,
     required this.stopped,
+    required this.rawList,
   });
 }
 SchoolStats calculateSchoolStatsFromJson(String jsonString) {
@@ -59,5 +59,7 @@ SchoolStats calculateSchoolStatsFromJson(String jsonString) {
     pocActive: pocActive,
     pocInactive: pocInactive,
     stopped: stopped,
+    rawList: data,
+
   );
 }

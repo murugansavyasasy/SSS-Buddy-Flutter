@@ -215,6 +215,12 @@ class Dashboard extends ConsumerWidget {
 
                                     case 2:
                                       Navigator.pushReplacementNamed(context, RoutesName.demolistview);
+                                      break;
+
+                                    case 3:
+                                      Navigator.pushReplacementNamed(context, RoutesName.schoollistview);
+                                      break;
+                                      
                                     default:
                                       break;
                                   }

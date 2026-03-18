@@ -10,85 +10,125 @@ class DemoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
+        color: Colors.grey.shade50, // soft background
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
 
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(width: 12),
 
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.schoolName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
+          _buildRow("Demo ID", item.demoId.toString()),
+
+          const SizedBox(height: 10),
+
+          _buildRow(
+            "School Name",
+            item.schoolName,
+            isBold: true,
+          ),
+
+          const SizedBox(height: 10),
+
+          _buildRow(
+            "Principal No",
+            item.principalNumber.toString(),
+            icon: Icons.phone,
+          ),
+
+          const SizedBox(height: 16),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              GestureDetector(
+                onTap: () {
+                  Navigator.pushReplacementNamed(
+                      context, RoutesName.recordvoice);
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.orange,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.keyboard_voice,
+                          color: Colors.white, size: 18),
+                      SizedBox(width: 6),
+                      Text(
+                        "Record",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      )
+                    ],
                   ),
                 ),
-
-                const SizedBox(height: 6),
-
-                Text(
-                  "Demo ID: ${item.demoId}",
-                  style: TextStyle(color: Colors.black, fontSize: 12),
-                ),
-
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    const Icon(Icons.phone, size: 14, color: Colors.grey),
-                    const SizedBox(width: 5),
-                    Text(
-                      item.principalNumber.toString(),
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(width: 10),
-
-          InkWell(
-            onTap: () {
-              Navigator.pushReplacementNamed(context, RoutesName.recordvoice);
-            },
-            borderRadius: BorderRadius.circular(10),
-            child: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(
-                Icons.keyboard_voice_sharp,
-                size: 16,
-                color: Colors.orange,
-              ),
-            ),
-          ),
+            ],
+          )
         ],
       ),
+    );
+  }
+
+  Widget _buildRow(String label, String value,
+      {bool isBold = false, IconData? icon}) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 110,
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.black,
+              fontWeight: FontWeight.bold
+            ),
+          ),
+        ),
+
+        const Text(":  "),
+
+        Expanded(
+          child: Row(
+            children: [
+              if (icon != null) ...[
+                Icon(icon, size: 14, color: Colors.grey),
+                const SizedBox(width: 4),
+              ],
+              Expanded(
+                child: Text(
+                  value,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight:
+                     FontWeight.normal,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

@@ -1,9 +1,5 @@
-import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../auth/model/SchoolStats.dart';
-import '../core/storage/secure_storage.dart';
 import '../provider/app_providers.dart';
 import 'login_view_model.dart';
 
@@ -26,7 +22,7 @@ class SchoolStatsViewModel extends AsyncNotifier<SchoolStats> {
         liveInactive: 0,
         pocActive: 0,
         pocInactive: 0,
-        stopped: 0,
+        stopped: 0, rawList: [],
       );
     }
 
