@@ -10,5 +10,6 @@ class RoutesName {
   static const String recordvoice = "record_voice";
   static const String demolistview = "demo_list";
   static const String schoollistview = "school_list";
+  static const String changepassword = "change_password";
 
 }
