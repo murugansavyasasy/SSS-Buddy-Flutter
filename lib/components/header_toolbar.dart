@@ -94,10 +94,42 @@ class HeaderToolbar extends ConsumerWidget {
 
                 const Spacer(),
 
-                const Icon(
-                  Icons.more_vert_rounded,
-                  color: Colors.white,
-                  size: 27,
+                GestureDetector(
+                  onTap: () {
+                    showMenu(
+                      context: context,
+                      position: RelativeRect.fromLTRB(100, 100, 0, 0),
+                      // adjust position
+                      items: [
+                        PopupMenuItem(
+                          value: "Change Password",
+                          child: Text("Change Password"),
+                        ),
+                        PopupMenuItem(
+                          value: "Logout",
+                          child: Text(
+                            "Logout",
+                            style: const TextStyle(color: Colors.red),
+                          ),
+                        ),
+                      ],
+                    ).then((value) {
+                      if (value != null) {
+                        print("Selected: $value");
+                        if (value == "Change Password") {
+                          print("Change Password clicked");
+                        } else if (value == "Logout") {
+                          print("Logout clicked");
+                        }
+                      }
+                    });
+                  },
+
+                  child: const Icon(
+                    Icons.more_vert_rounded,
+                    color: Colors.white,
+                    size: 27,
+                  ),
                 ),
               ],
             );

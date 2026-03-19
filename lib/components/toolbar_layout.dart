@@ -37,15 +37,8 @@ class ToolbarLayout extends ConsumerWidget {
           children: [
             GestureDetector(
               onTap: () {
-                if (navigateTo != null) {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => navigateTo!),
-                  );
-                } else {
-                  Navigator.pop(context);
-                }
-              },
+                Navigator.pop(context);
+                },
               child: Container(
                 height: 45,
                 width: 45,
