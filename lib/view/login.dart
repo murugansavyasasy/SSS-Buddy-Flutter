@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../Values/Colors/app_colors.dart';
 import '../Values/Strings/strings_value.dart';
 import '../Components/CustomPasswordField.dart';
 import '../Components/CustomButton.dart';
@@ -169,7 +170,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   height: 40,
                                   child: ElevatedButton(
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF4085EF),
+                                      backgroundColor:  AppColors.secondaryprimary,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(12),
                                       ),
@@ -189,7 +190,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                                   );
 
                                               if (success && context.mounted) {
-                                                Navigator.pushReplacementNamed(
+                                                Navigator.pushNamed(
                                                   context,
                                                   RoutesName.dashboard,
                                                 );

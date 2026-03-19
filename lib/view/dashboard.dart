@@ -122,12 +122,20 @@ class Dashboard extends ConsumerWidget {
                                 ),
                               ),
                               const Spacer(),
-                              Text(
-                                "View all",
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.primary,
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    RoutesName.demolistview,
+                                  );
+                                },
+                                child: Text(
+                                  "View all",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.primary,
+                                  ),
                                 ),
                               ),
                             ],
@@ -163,6 +171,9 @@ class Dashboard extends ConsumerWidget {
                                       demoId: demo.demoId.toString(),
                                       schoolName: demo.schoolName,
                                       principalNumber: demo.principalNumber,
+                                      onTap: () {
+                                        Navigator.pushNamed(context, RoutesName.recordvoice);
+                                        },
                                     );
                                   },
                                 );
@@ -210,17 +221,26 @@ class Dashboard extends ConsumerWidget {
                                 onTap: () {
                                   switch (item.id) {
                                     case 1:
-                                      Navigator.pushReplacementNamed(context, RoutesName.createdemo);
+                                      Navigator.pushNamed(
+                                        context,
+                                        RoutesName.createdemo,
+                                      );
                                       break;
 
                                     case 2:
-                                      Navigator.pushReplacementNamed(context, RoutesName.demolistview);
+                                      Navigator.pushNamed(
+                                        context,
+                                        RoutesName.demolistview,
+                                      );
                                       break;
 
                                     case 3:
-                                      Navigator.pushReplacementNamed(context, RoutesName.schoollistview);
+                                      Navigator.pushNamed(
+                                        context,
+                                        RoutesName.schoollistview,
+                                      );
                                       break;
-                                      
+
                                     default:
                                       break;
                                   }

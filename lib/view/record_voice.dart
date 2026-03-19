@@ -13,6 +13,7 @@ import '../components/CustomRecordingButton.dart';
 import '../components/CustomRecordingWaveWidget.dart';
 import '../components/toolbar_layout.dart';
 import 'dashboard.dart';
+import 'demo_list.dart';
 
 class RecordVoice extends ConsumerStatefulWidget {
   const RecordVoice({super.key});
@@ -173,7 +174,13 @@ class _RecordVoiceState extends ConsumerState<RecordVoice> {
 
   @override
   Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
+   return WillPopScope(
+      onWillPop: () async {
+        print("Back pressed");
+        // custom logic here
+        return true; // allow back
+      },
+    child:  AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
@@ -296,6 +303,7 @@ class _RecordVoiceState extends ConsumerState<RecordVoice> {
           ],
         ),
       ),
+    ),
     );
   }
 }

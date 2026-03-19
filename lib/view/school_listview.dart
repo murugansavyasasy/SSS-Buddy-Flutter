@@ -19,7 +19,14 @@ class SchoolListview extends ConsumerWidget {
     final schoolAsync = ref.watch(schoolStatsProvider);
     final selectedFilter = ref.watch(selectedFilterProvider);
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
+    return WillPopScope(
+      onWillPop: () async {
+        print("Back pressed");
+        // custom logic here
+        return true; // allow back
+      },
+
+    child:  AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
@@ -109,6 +116,7 @@ class SchoolListview extends ConsumerWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }

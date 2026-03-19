@@ -5,17 +5,22 @@ class UpcomingDemoCard extends StatelessWidget {
   final String demoId;
   final String schoolName;
   final int principalNumber;
+  final VoidCallback? onTap;
+
 
   const UpcomingDemoCard({
     super.key,
     required this.demoId,
     required this.schoolName,
     required this.principalNumber,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return GestureDetector(
+      onTap: onTap,
+    child:  Container(
       width: 260,
       decoration: BoxDecoration(
         color: const Color(0xffffffff),
@@ -80,6 +85,7 @@ class UpcomingDemoCard extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 }

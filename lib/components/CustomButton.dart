@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../Values/Colors/app_colors.dart';
+
 class CustomButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed; // ← keep it nullable
@@ -18,13 +20,13 @@ class CustomButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final buttonStyle = isOutlined
         ? OutlinedButton.styleFrom(
-            side: const BorderSide(color: Color(0xFF4085EF)),
+            side: const BorderSide(color: AppColors.secondaryprimary),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
           )
         : ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF4085EF),
+            backgroundColor: AppColors.secondaryprimary,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
@@ -34,7 +36,7 @@ class CustomButton extends StatelessWidget {
       text,
       style: TextStyle(
         fontSize: 15,
-        color: isOutlined ? const Color(0xFF4085EF) : Colors.white,
+        color: isOutlined ? AppColors.secondaryprimary : Colors.white,
       ),
     );
 

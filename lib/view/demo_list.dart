@@ -13,8 +13,14 @@ class DemoListView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final demoAsync = ref.watch(demoviewProvider);
+    return WillPopScope(
+      onWillPop: () async {
+        print("Back pressed");
+        // custom logic here
+        return true; // allow back
+      },
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
+    child:  AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
@@ -60,6 +66,7 @@ class DemoListView extends ConsumerWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }

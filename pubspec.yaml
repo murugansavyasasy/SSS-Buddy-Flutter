@@ -52,6 +52,7 @@ dependencies:
   record: ^6.2.0
   permission_handler: ^11.3.0
   just_audio: ^0.10.5
+  url_launcher: ^6.2.5
 
 dev_dependencies:
   flutter_test:

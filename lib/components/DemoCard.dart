@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../auth/model/Demolist.dart';
 import '../utils/routes/routes_name.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class DemoCard extends StatelessWidget {
   final Demolist item;
@@ -54,7 +55,7 @@ class DemoCard extends StatelessWidget {
             children: [
               GestureDetector(
                 onTap: () {
-                  Navigator.pushReplacementNamed(
+                  Navigator.pushNamed(
                       context, RoutesName.recordvoice);
                 },
                 child: Container(
@@ -87,6 +88,16 @@ class DemoCard extends StatelessWidget {
     );
   }
 
+  Future<void> openDialPad(String phone) async {
+    final Uri url = Uri(scheme: 'tel', path: phone.trim());
+
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
+    } else {
+      print("Could not launch $url");
+    }
+  }
+
   Widget _buildRow(String label, String value,
       {bool isBold = false, IconData? icon}) {
     return Row(
@@ -114,17 +125,26 @@ class DemoCard extends StatelessWidget {
                 const SizedBox(width: 4),
               ],
               Expanded(
-                child: Text(
-                  value,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight:
-                     FontWeight.normal,
+                child: GestureDetector(
+                  onTap: () {
+                    if (label == "Principal No") {
+                      print("label name  matched");
+                      openDialPad(value);
+                    } else {
+                      print("Value is empty");
+                    }
+                    },
+                  child: Text(
+                    value,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.normal,
+                    ),
                   ),
                 ),
-              ),
+              )
             ],
           ),
         ),
