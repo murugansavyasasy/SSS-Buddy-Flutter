@@ -26,13 +26,8 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        print("Back pressed");
-        // custom logic here
-        return true; // allow back
-      },
-    child:  AnnotatedRegion<SystemUiOverlayStyle>(
+
+      return  AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
@@ -227,7 +222,6 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
           ],
         ),
       ),
-    ),
     );
   }
 }

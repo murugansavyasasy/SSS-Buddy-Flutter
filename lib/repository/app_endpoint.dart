@@ -4,4 +4,5 @@ class AppEndpoint {
   static const demolistendpoint = "GetDemosByLoginId";
   static const schoollistendpoint = "DemoMySchoolList";
   static const createdemoendpoint = "DemoCreateOrEditDemo";
+  static const changepasswordendpoint = "api/AppDetails/ChangePassword";
 }

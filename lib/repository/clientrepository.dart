@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:sssbuddy/auth/model/CreatedemoResponse.dart';
 import 'package:sssbuddy/repository/app_endpoint.dart';
+import '../auth/model/ChangePassword.dart';
 import '../auth/model/Demolist.dart';
 import '../auth/model/Validatelogin.dart';
 import '../auth/model/Versioncheck.dart';
@@ -71,5 +72,24 @@ class ClientRepository {
     final List data = response.data;
 
     return Createdemoresponse.fromJson(data.first);
+  }
+
+
+  Future<Changepassword> changepassword(
+      String idUser,
+      String oldPassword,
+      String newPassword,
+      ) async {
+    final response = await client.get(
+      AppEndpoint.changepasswordendpoint,
+      query: {
+        "idUser": idUser,
+        "OldPassword": oldPassword,
+        "NewPassword": newPassword
+      },
+      useSchoolApi: false,
+    );
+
+    return Changepassword.fromJson(response.data);
   }
 }

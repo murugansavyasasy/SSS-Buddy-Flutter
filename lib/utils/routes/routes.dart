@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sssbuddy/View/splash.dart';
 import 'package:sssbuddy/View/login.dart';
 import 'package:sssbuddy/utils/routes/routes_name.dart';
+import 'package:sssbuddy/view/change_password.dart';
 import 'package:sssbuddy/view/create_demo.dart';
 import 'package:sssbuddy/view/dashboard.dart';
 import 'package:sssbuddy/view/record_voice.dart';
@@ -32,6 +33,9 @@ class Routes {
 
       case RoutesName.schoollistview:
         return MaterialPageRoute(builder: (context) => SchoolListview());
+
+      case RoutesName.changepassword:
+        return MaterialPageRoute(builder: (context) => ChangePassword());
 
       default:
         return MaterialPageRoute(

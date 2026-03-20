@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sssbuddy/Values/Colors/app_colors.dart';
 import '../provider/user_session_provider.dart';
+import '../utils/routes/routes_name.dart';
 
 class HeaderToolbar extends ConsumerWidget {
   const HeaderToolbar({super.key});
@@ -117,7 +118,10 @@ class HeaderToolbar extends ConsumerWidget {
                       if (value != null) {
                         print("Selected: $value");
                         if (value == "Change Password") {
-                          print("Change Password clicked");
+                          Navigator.pushNamed(
+                            context,
+                            RoutesName.changepassword,
+                          );
                         } else if (value == "Logout") {
                           print("Logout clicked");
                         }
