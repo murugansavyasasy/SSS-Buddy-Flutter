@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sssbuddy/Values/Colors/app_colors.dart';
+import '../core/storage/secure_storage.dart';
+import '../provider/app_providers.dart';
+import '../viewModel/login_view_model.dart';
 import '../provider/user_session_provider.dart';
 import '../utils/routes/routes_name.dart';
 
@@ -114,7 +117,7 @@ class HeaderToolbar extends ConsumerWidget {
                           ),
                         ),
                       ],
-                    ).then((value) {
+                    ).then((value) async {
                       if (value != null) {
                         print("Selected: $value");
                         if (value == "Change Password") {
@@ -124,6 +127,9 @@ class HeaderToolbar extends ConsumerWidget {
                           );
                         } else if (value == "Logout") {
                           print("Logout clicked");
+                          await SecureStorage.clearLoginData();
+                          ref.invalidate(loginProvider);
+                          ref.read(rememberMeProvider.notifier).state = false;
                           Navigator.pushReplacementNamed(
                             context,
                             RoutesName.login,
