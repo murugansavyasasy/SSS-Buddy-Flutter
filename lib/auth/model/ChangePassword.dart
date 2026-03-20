@@ -1,6 +1,6 @@
 class Changepassword {
   int result;
-  String resultMessage;
+  String? resultMessage;
   dynamic mailMsg;
   dynamic webUrl;
   dynamic accountManagerMailId;
@@ -20,13 +20,13 @@ class Changepassword {
   });
 
   factory Changepassword.fromJson(Map<String, dynamic> json) => Changepassword(
-    result: json["result"],
+    result: json["result"] ?? 0,
     resultMessage: json["resultMessage"],
     mailMsg: json["mailMsg"],
     webUrl: json["webUrl"],
     accountManagerMailId: json["accountManagerMailId"],
-    idTourExpense: json["idTourExpense"],
-    idDirectorExpense: json["idDirectorExpense"],
-    idLocalExpense: json["idLocalExpense"],
+    idTourExpense: json["idTourExpense"] ?? 0,
+    idDirectorExpense: json["idDirectorExpense"] ?? 0,
+    idLocalExpense: json["idLocalExpense"] ?? 0,
   );
 }

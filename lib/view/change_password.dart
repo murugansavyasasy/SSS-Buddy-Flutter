@@ -4,11 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../Values/Colors/app_colors.dart';
 import '../components/ChangePasswordDialog.dart';
 import '../components/toolbar_layout.dart';
+import '../core/storage/secure_storage.dart';
+import '../provider/app_providers.dart';
 import '../viewModel/changepassword_view_model.dart';
 import 'dashboard.dart';
 import 'package:sssbuddy/Components/CustomButton.dart';
-import 'package:sssbuddy/components/custom_text_field.dart';
 import '../viewModel/login_view_model.dart';
+import 'login.dart';
 
 class ChangePassword extends ConsumerStatefulWidget {
   const ChangePassword({super.key});
@@ -86,10 +88,21 @@ class _ChangePasswordState extends ConsumerState<ChangePassword> {
         message: message,
         isSuccess: isSuccess,
         onClose: isSuccess
-            ? () {
+            ? () async {
+
           existingpasswordcontroller.clear();
           newpasswordcontroller.clear();
           confrimpasswordcontroller.clear();
+          await SecureStorage.clearLoginData();
+          ref.invalidate(loginProvider);
+          ref.read(rememberMeProvider.notifier).state = false;
+          ref.invalidate(changepasswordProvider);
+          if (context.mounted) {
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  (route) => false,
+            );
+          }
         }
             : null,
       );

@@ -90,6 +90,7 @@ class ClientRepository {
       useSchoolApi: false,
     );
 
-    return Changepassword.fromJson(response.data);
+    final List<dynamic> list = response.data as List<dynamic>;
+    return Changepassword.fromJson(list[0]);
   }
 }
