@@ -67,7 +67,7 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
 
                       CustomTextField(
                         label: "Demo Principal Number",
-                        hint: "Enter Mobile Number",
+                        hint: "Enter Principal Mobile Number",
                         controller: subjectController,
                       ),
 
@@ -75,7 +75,7 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
 
                       CustomTextField(
                         label: "Demo Principal E-Mail ID",
-                        hint: "Enter email id",
+                        hint: "Enter Principal Email ID",
                         controller: dateController,
                       ),
 
@@ -95,7 +95,7 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
                                         ? "Demo Parent Number"
                                         : "",
                                     hint: index == 0
-                                        ? "Enter Mobile Number"
+                                        ? "Enter Parent Mobile Number"
                                         : "",
                                     controller: parentControllers[index],
                                   ),
