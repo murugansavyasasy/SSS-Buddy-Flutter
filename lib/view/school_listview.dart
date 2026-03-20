@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sssbuddy/view/schooldetail_view.dart';
+import 'package:sssbuddy/view/school_detail/schooldetail_view.dart';
 
 import '../Values/Colors/app_colors.dart';
 import '../auth/model/SchoolFilter.dart';

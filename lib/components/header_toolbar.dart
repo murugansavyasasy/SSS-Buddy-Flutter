@@ -5,15 +5,8 @@ import 'package:sssbuddy/Values/Colors/app_colors.dart';
 import 'package:sssbuddy/main.dart';
 import '../View/login.dart';
 import '../core/storage/secure_storage.dart';
-import '../provider/app_providers.dart';
 import '../provider/user_session_provider.dart';
 import '../utils/routes/routes_name.dart';
-import '../viewModel/auth_view_model.dart';
-import '../viewModel/changepassword_view_model.dart';
-import '../viewModel/createdemo_view_model.dart';
-import '../viewModel/demolist_view_model.dart';
-import '../viewModel/login_view_model.dart';
-import '../viewModel/schoollist_view_model.dart';
 
 class HeaderToolbar extends ConsumerWidget {
   const HeaderToolbar({super.key});
@@ -42,7 +35,7 @@ class HeaderToolbar extends ConsumerWidget {
       child: Container(
         color: AppColors.primary,
         padding: EdgeInsets.only(
-          top: topPadding,
+          top: topPadding + 20,
           left: 16,
           right: 16,
           bottom: 20,
@@ -124,7 +117,7 @@ class HeaderToolbar extends ConsumerWidget {
                           ),
                         ),
                       ],
-                    ).then((value) {
+                    ).then((value) async {
                       if (value != null) {
                         print("Selected: $value");
                         if (value == "Change Password") {

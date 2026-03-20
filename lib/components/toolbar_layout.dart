@@ -28,7 +28,7 @@ class ToolbarLayout extends ConsumerWidget {
       child: Container(
         color: AppColors.primary,
         padding: EdgeInsets.only(
-          top: topPadding,
+          top: topPadding + 10,
           left: 16,
           right: 16,
           bottom: 20,
@@ -40,11 +40,11 @@ class ToolbarLayout extends ConsumerWidget {
                 Navigator.pop(context);
                 },
               child: Container(
-                height: 45,
-                width: 45,
+                height: 46,
+                width: 46,
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(23),
                 ),
                 child: const Center(
                   child: Icon(Icons.arrow_back, color: Colors.black),

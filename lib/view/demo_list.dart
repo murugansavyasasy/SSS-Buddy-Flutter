@@ -28,7 +28,7 @@ class DemoListView extends ConsumerWidget {
         systemNavigationBarIconBrightness: Brightness.dark,
       ),
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.primary,
         body: Column(
           children: [
 
@@ -37,7 +37,18 @@ class DemoListView extends ConsumerWidget {
               navigateTo: Dashboard(),
             ),
 
-            Expanded(
+        Expanded(
+          child: Container(
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(25),
+                topRight: Radius.circular(25),
+              ),
+            ),
+
+
               child: demoAsync.when(
                 loading: () => const Center(
                   child: CircularProgressIndicator(),
@@ -63,6 +74,7 @@ class DemoListView extends ConsumerWidget {
                 },
               ),
             ),
+        ),
           ],
         ),
       ),
