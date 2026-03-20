@@ -190,7 +190,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                                   );
 
                                               if (success && context.mounted) {
-                                                Navigator.pushNamed(
+                                                Navigator.pushReplacementNamed(
                                                   context,
                                                   RoutesName.dashboard,
                                                 );

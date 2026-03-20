@@ -32,7 +32,7 @@ class HeaderToolbar extends ConsumerWidget {
       child: Container(
         color: AppColors.primary,
         padding: EdgeInsets.only(
-          top: topPadding,
+          top: topPadding + 20,
           left: 16,
           right: 16,
           bottom: 20,
@@ -124,6 +124,10 @@ class HeaderToolbar extends ConsumerWidget {
                           );
                         } else if (value == "Logout") {
                           print("Logout clicked");
+                          Navigator.pushReplacementNamed(
+                            context,
+                            RoutesName.login,
+                          );
                         }
                       }
                     });
