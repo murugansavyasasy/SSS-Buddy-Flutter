@@ -2,8 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sssbuddy/Values/Colors/app_colors.dart';
+import 'package:sssbuddy/main.dart';
+import '../View/login.dart';
+import '../core/storage/secure_storage.dart';
+import '../provider/app_providers.dart';
 import '../provider/user_session_provider.dart';
 import '../utils/routes/routes_name.dart';
+import '../viewModel/auth_view_model.dart';
+import '../viewModel/changepassword_view_model.dart';
+import '../viewModel/createdemo_view_model.dart';
+import '../viewModel/demolist_view_model.dart';
+import '../viewModel/login_view_model.dart';
+import '../viewModel/schoollist_view_model.dart';
 
 class HeaderToolbar extends ConsumerWidget {
   const HeaderToolbar({super.key});
@@ -123,7 +133,14 @@ class HeaderToolbar extends ConsumerWidget {
                             RoutesName.changepassword,
                           );
                         } else if (value == "Logout") {
-                          print("Logout clicked");
+                          SecureStorage.clearLoginData();
+                          AppRoot.restartApp(context);
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute(
+                              builder: (_) => const LoginScreen(),
+                            ),
+                            (route) => false,
+                          );
                         }
                       }
                     });

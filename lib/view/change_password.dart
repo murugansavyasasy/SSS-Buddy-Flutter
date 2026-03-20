@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sssbuddy/viewModel/auth_view_model.dart';
+import 'package:sssbuddy/viewModel/schoollist_view_model.dart';
 import '../Values/Colors/app_colors.dart';
 import '../components/ChangePasswordDialog.dart';
 import '../components/toolbar_layout.dart';
 import '../core/storage/secure_storage.dart';
+import '../main.dart';
 import '../provider/app_providers.dart';
 import '../viewModel/changepassword_view_model.dart';
+import '../viewModel/createdemo_view_model.dart';
+import '../viewModel/demolist_view_model.dart';
 import 'dashboard.dart';
 import 'package:sssbuddy/Components/CustomButton.dart';
 import '../viewModel/login_view_model.dart';
@@ -20,9 +25,11 @@ class ChangePassword extends ConsumerStatefulWidget {
 }
 
 class _ChangePasswordState extends ConsumerState<ChangePassword> {
-  final TextEditingController existingpasswordcontroller = TextEditingController();
+  final TextEditingController existingpasswordcontroller =
+      TextEditingController();
   final TextEditingController newpasswordcontroller = TextEditingController();
-  final TextEditingController confrimpasswordcontroller = TextEditingController();
+  final TextEditingController confrimpasswordcontroller =
+      TextEditingController();
 
   // Error state for each field
   String? existingPasswordError;
@@ -89,21 +96,16 @@ class _ChangePasswordState extends ConsumerState<ChangePassword> {
         isSuccess: isSuccess,
         onClose: isSuccess
             ? () async {
-
-          existingpasswordcontroller.clear();
-          newpasswordcontroller.clear();
-          confrimpasswordcontroller.clear();
-          await SecureStorage.clearLoginData();
-          ref.invalidate(loginProvider);
-          ref.read(rememberMeProvider.notifier).state = false;
-          ref.invalidate(changepasswordProvider);
-          if (context.mounted) {
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (_) => const LoginScreen()),
+                existingpasswordcontroller.clear();
+                newpasswordcontroller.clear();
+                confrimpasswordcontroller.clear();
+                await SecureStorage.clearLoginData();
+                AppRoot.restartApp(context);
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
                   (route) => false,
-            );
-          }
-        }
+                );
+              }
             : null,
       );
     } else {
@@ -152,15 +154,20 @@ class _ChangePasswordState extends ConsumerState<ChangePassword> {
           onChanged: (_) {
             // Clear error on typing
             setState(() {
-              if (controller == existingpasswordcontroller) existingPasswordError = null;
+              if (controller == existingpasswordcontroller)
+                existingPasswordError = null;
               if (controller == newpasswordcontroller) newPasswordError = null;
-              if (controller == confrimpasswordcontroller) confirmPasswordError = null;
+              if (controller == confrimpasswordcontroller)
+                confirmPasswordError = null;
             });
           },
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: const TextStyle(color: Colors.black38, fontSize: 14),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
             filled: true,
             fillColor: errorText != null
                 ? Colors.red.withOpacity(0.04)

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sssbuddy/view/schooldetail_view.dart';
 
 import '../Values/Colors/app_colors.dart';
 import '../auth/model/SchoolFilter.dart';
@@ -93,7 +94,12 @@ class SchoolListview extends ConsumerWidget {
                               itemCount: filteredList.length,
                               itemBuilder: (context, index) {
                                 final item = filteredList[index];
-                                return SchoolCard(item: item);
+                                return GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(context, MaterialPageRoute(builder: (context) => SchooldetailView(item : item),));
+                                  },
+                                  child: SchoolCard(item: item),
+                                );
                               },
                             ),
                           );
