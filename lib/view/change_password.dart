@@ -242,7 +242,7 @@ class _ChangePasswordState extends ConsumerState<ChangePassword> {
                       const SizedBox(height: 20),
                       _buildLabeledField(
                         label: "Existing Password",
-                        hint: "Enter existing password",
+                        hint: "Enter old password",
                         controller: existingpasswordcontroller,
                         errorText: existingPasswordError,
                       ),
@@ -264,7 +264,7 @@ class _ChangePasswordState extends ConsumerState<ChangePassword> {
                       SizedBox(
                         width: double.infinity,
                         child: CustomButton(
-                          text: "Submit",
+                          text: "Change",
                           onPressed: _validateAndSubmit,
                         ),
                       ),

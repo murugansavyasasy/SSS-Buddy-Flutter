@@ -55,7 +55,7 @@ class Dashboard extends ConsumerWidget {
                             children: [
                               schoolStats.when(
                                 loading: () => const DashboardCard(
-                                  title: "Schools",
+                                  title: "Live Schools",
                                   activeLabel: "Active",
                                   inactiveLabel: "Inactive",
                                   color: Color(0xff2E4F7D),

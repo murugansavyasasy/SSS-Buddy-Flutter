@@ -14,9 +14,9 @@ class DemoCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50, // soft background
+        color: Colors.grey.shade100, // soft background
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: Colors.grey.shade300),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
@@ -108,7 +108,7 @@ class DemoCard extends StatelessWidget {
           child: Text(
             label,
             style: const TextStyle(
-              fontSize: 16,
+              fontSize: 14,
               color: Colors.black,
               fontWeight: FontWeight.bold
             ),
@@ -121,7 +121,7 @@ class DemoCard extends StatelessWidget {
           child: Row(
             children: [
               if (icon != null) ...[
-                Icon(icon, size: 14, color: Colors.grey),
+                Icon(icon, size: 14, color: Colors.green),
                 const SizedBox(width: 4),
               ],
               Expanded(
@@ -136,10 +136,10 @@ class DemoCard extends StatelessWidget {
                     },
                   child: Text(
                     value,
-                    maxLines: 2,
+                    maxLines: 5,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 16,
+                      fontSize: 14,
                       fontWeight: FontWeight.normal,
                     ),
                   ),

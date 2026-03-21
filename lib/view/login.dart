@@ -250,7 +250,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Image.asset(
-                      "assets/images/buddy_logo.png",
+                      "assets/images/savyasasy.webp",
                       width: 50,
                       height: 50,
                     ),
