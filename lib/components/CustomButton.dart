@@ -13,7 +13,7 @@ class CustomButton extends StatelessWidget {
     required this.text,
     this.onPressed,
     this.isOutlined = false,
-    this.height = 48,
+    this.height = 40,
   });
 
   @override

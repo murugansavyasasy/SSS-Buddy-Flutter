@@ -9,6 +9,7 @@ import '../components/school_card.dart';
 import '../components/toolbar_layout.dart';
 import '../provider/app_providers.dart';
 import '../utils/filter_utils.dart';
+import '../utils/routes/routes_name.dart';
 import '../viewModel/schoollist_view_model.dart';
 import 'dashboard.dart';
 
@@ -96,7 +97,8 @@ class SchoolListview extends ConsumerWidget {
                                 final item = filteredList[index];
                                 return GestureDetector(
                                   onTap: () {
-                                    Navigator.push(context, MaterialPageRoute(builder: (context) => SchooldetailView(item : item),));
+                                    Navigator.push(context, MaterialPageRoute
+                                      (builder: (context) => SchooldetailView(item : item),));
                                   },
                                   child: SchoolCard(item: item),
                                 );

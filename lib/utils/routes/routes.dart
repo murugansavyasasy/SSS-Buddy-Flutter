@@ -7,8 +7,10 @@ import 'package:sssbuddy/view/create_demo.dart';
 import 'package:sssbuddy/view/dashboard.dart';
 import 'package:sssbuddy/view/record_voice.dart';
 import 'package:sssbuddy/view/school_listview.dart';
+import 'package:sssbuddy/view/usage_count.dart';
 
 import '../../view/demo_list.dart';
+import '../../view/school_detail/schooldetail_view.dart';
 
 class Routes {
   static Route<dynamic> generateRoutes(RouteSettings settings) {
@@ -36,6 +38,9 @@ class Routes {
 
       case RoutesName.changepassword:
         return MaterialPageRoute(builder: (context) => ChangePassword());
+
+      case RoutesName.usagecount:
+        return MaterialPageRoute(builder: (context) => UsageCountScreen());
 
       default:
         return MaterialPageRoute(

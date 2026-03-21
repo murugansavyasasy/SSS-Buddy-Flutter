@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sssbuddy/view/school_listview.dart';
+import 'package:sssbuddy/view/usage_count.dart';
 import '../../Values/Colors/app_colors.dart';
 import '../../components/toolbar_layout.dart';
+import '../../utils/routes/routes_name.dart';
 import '../dashboard.dart';
 import 'exam_table.dart';
 import 'table_row_model.dart';
@@ -41,7 +43,7 @@ class SchooldetailView extends ConsumerWidget {
                       _buildHeader(),
                       ExamTable(rows: _buildRows()),
                       const SizedBox(height: 8),
-                      _buildFooter(),
+                      _buildFooter(context),
                     ],
                   ),
                 ),
@@ -102,7 +104,7 @@ class SchooldetailView extends ConsumerWidget {
     ];
   }
 
-  Widget _buildFooter() {
+  Widget _buildFooter(BuildContext context) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
@@ -115,13 +117,17 @@ class SchooldetailView extends ConsumerWidget {
       ),
       child: Column(
         children: [
-
           Row(
             children: [
               Expanded(
                 child: ElevatedButton(
                   onPressed: () {
-
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const UsageCountScreen(),
+                      ),
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1A3A5C),
@@ -140,7 +146,10 @@ class SchooldetailView extends ConsumerWidget {
               Expanded(
                 child: OutlinedButton(
                   onPressed: () {
-
+                    Navigator.pushNamed(
+                      context,
+                      RoutesName.usagecount,
+                    );
                   },
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 12),
