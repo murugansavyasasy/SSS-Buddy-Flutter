@@ -10,7 +10,7 @@ class ExamTable extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFF1A3A5C), width: 1.5),
+        border: Border.all(color: const Color(0xFF1A3A5C), width: 0.8),
       ),
       child: Column(
         children: rows.map((row) => _buildRow(row)).toList(),
@@ -42,11 +42,11 @@ class ExamTable extends StatelessWidget {
                 ),
               ),
             ),
-            Container(width: 1.5, color: const Color(0xFF1A3A5C)),
+            Container(width: 0.8, color: const Color(0xFF1A3A5C)),
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(10),
-                child: Text(   maxLines: 2,row.value?.toString() ?? '—'),
+                child: Text(row.value?.toString() ?? '—'),
               ),
             ),
           ],
