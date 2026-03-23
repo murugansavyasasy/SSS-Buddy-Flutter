@@ -59,14 +59,24 @@ class SchoolCard extends StatelessWidget {
           const SizedBox(height: 8),
 
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
               color: Colors.orange.shade50,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Text(
-              "Sales Person : ${item["sales_person"] ?? ""}",
-              style: const TextStyle(color: Colors.orange),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "Sales Person : ${item["sales_person"] ?? ""}",
+                  style: const TextStyle(color: Colors.orange),
+                ),
+                const Icon(
+                  Icons.chevron_right,
+                  color: Colors.orange,
+                  size: 20,
+                ),
+              ],
             ),
           ),
         ],

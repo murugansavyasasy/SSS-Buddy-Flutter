@@ -31,7 +31,6 @@ class _ChangePasswordState extends ConsumerState<ChangePassword> {
   final TextEditingController confrimpasswordcontroller =
       TextEditingController();
 
-  // Error state for each field
   String? existingPasswordError;
   String? newPasswordError;
   String? confirmPasswordError;
@@ -69,6 +68,66 @@ class _ChangePasswordState extends ConsumerState<ChangePassword> {
 
     if (hasError) return;
 
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: const [
+              Icon(Icons.lock_outline, color: AppColors.primary, size: 22),
+              SizedBox(width: 8),
+              Text(
+                "Change Password",
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+          content: const Text(
+            "Are you sure you want to change your password? You will be logged out after the change.",
+            style: TextStyle(fontSize: 14, color: Colors.black54, height: 1.5),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: Colors.grey.shade300),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              ),
+              child: const Text(
+                "Cancel",
+                style: TextStyle(color: Colors.black54),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              ),
+              child: const Text(
+                "Yes, Change",
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) return;
+
+
     final loginState = ref.read(loginProvider);
     final loginData = loginState.value;
     final idUser = loginData?.VimsIdUser;
@@ -96,16 +155,16 @@ class _ChangePasswordState extends ConsumerState<ChangePassword> {
         isSuccess: isSuccess,
         onClose: isSuccess
             ? () async {
-                existingpasswordcontroller.clear();
-                newpasswordcontroller.clear();
-                confrimpasswordcontroller.clear();
-                await SecureStorage.clearLoginData();
-                AppRoot.restartApp(context);
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                  (route) => false,
-                );
-              }
+          existingpasswordcontroller.clear();
+          newpasswordcontroller.clear();
+          confrimpasswordcontroller.clear();
+          await SecureStorage.clearLoginData();
+          AppRoot.restartApp(context);
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const LoginScreen()),
+                (route) => false,
+          );
+        }
             : null,
       );
     } else {
