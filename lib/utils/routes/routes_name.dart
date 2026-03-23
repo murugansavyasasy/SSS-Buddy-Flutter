@@ -12,5 +12,6 @@ class RoutesName {
   static const String schoollistview = "school_list";
   static const String changepassword = "change_password";
   static const String usagecount = "usage_count";
+  static const String circularlist = "circular_list";
 
 }

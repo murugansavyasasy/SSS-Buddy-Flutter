@@ -3,11 +3,12 @@ import 'package:sssbuddy/View/splash.dart';
 import 'package:sssbuddy/View/login.dart';
 import 'package:sssbuddy/utils/routes/routes_name.dart';
 import 'package:sssbuddy/view/change_password.dart';
+import 'package:sssbuddy/view/Circular/circular_listview.dart';
 import 'package:sssbuddy/view/create_demo.dart';
 import 'package:sssbuddy/view/dashboard.dart';
 import 'package:sssbuddy/view/record_voice.dart';
 import 'package:sssbuddy/view/school_listview.dart';
-import 'package:sssbuddy/view/usage_count.dart';
+import 'package:sssbuddy/view/UsageCount/usage_count.dart';
 
 import '../../view/demo_list.dart';
 import '../../view/school_detail/schooldetail_view.dart';
@@ -39,8 +40,8 @@ class Routes {
       case RoutesName.changepassword:
         return MaterialPageRoute(builder: (context) => ChangePassword());
 
-      case RoutesName.usagecount:
-        return MaterialPageRoute(builder: (context) => UsageCountScreen());
+      case RoutesName.circularlist:
+        return MaterialPageRoute(builder: (context) => CircularListview());
 
       default:
         return MaterialPageRoute(

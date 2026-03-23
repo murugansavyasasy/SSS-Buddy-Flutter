@@ -2,16 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sssbuddy/view/school_listview.dart';
-import 'package:sssbuddy/view/usage_count.dart';
+import 'package:sssbuddy/view/UsageCount/usage_count.dart';
 import '../../Values/Colors/app_colors.dart';
 import '../../components/toolbar_layout.dart';
 import '../../utils/routes/routes_name.dart';
+import '../ManagementInfo/management_info.dart';
+import '../dashboard.dart';
+import 'exam_table.dart';
+import 'table_row_model.dart';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sssbuddy/view/school_listview.dart';
+import 'package:sssbuddy/view/UsageCount/usage_count.dart';
+import '../../Values/Colors/app_colors.dart';
+import '../../components/toolbar_layout.dart';
 import '../dashboard.dart';
 import 'exam_table.dart';
 import 'table_row_model.dart';
 
 class SchooldetailView extends ConsumerWidget {
-  final dynamic item;
+  final Map<String, dynamic> item;
 
   const SchooldetailView({super.key, required this.item});
 
@@ -67,7 +79,7 @@ class SchooldetailView extends ConsumerWidget {
         ),
       ),
       child: Text(
-        (item?['SchoolName'] ?? '_').toString().toUpperCase(),
+        (item['SchoolName'] ?? '_').toString().toUpperCase(),
         textAlign: TextAlign.center,
         style: const TextStyle(
           color: Colors.white,
@@ -81,24 +93,24 @@ class SchooldetailView extends ConsumerWidget {
 
   List<TableRowModel> _buildRows() {
     return [
-      TableRowModel(label: 'School Id', value: item?['SchoolID']),
-      TableRowModel(label: 'School Address', value: item?['Address']),
-      TableRowModel(label: 'School City', value: item?['City']),
-      TableRowModel(label: 'Contact No', value: item?['UserName']),
-      TableRowModel(label: 'Email', value: item?['ContactEmail']),
-      TableRowModel(label: 'Status', value: item?['Status']),
-      TableRowModel(label: 'From Date', value: item?['PeriodFrom']),
-      TableRowModel(label: 'To Date', value: item?['PeriodTo']),
-      TableRowModel(label: 'Student Count', value: item?['Students']),
-      TableRowModel(label: 'Staff Count', value: item?['Staff']),
-      TableRowModel(label: 'Contact Person 1', value: item?['ContactPerson1']),
-      TableRowModel(label: 'Contact Number 1', value: item?['ContactNumber1']),
-      TableRowModel(label: 'Contact Person 2', value: item?['ContactPerson2']),
-      TableRowModel(label: 'Contact Number 2', value: item?['ContactNumber2']),
-      TableRowModel(label: 'Contact Email', value: item?['ContactEmail']),
+      TableRowModel(label: 'School Id', value: item['SchoolID']),
+      TableRowModel(label: 'School Address', value: item['Address']),
+      TableRowModel(label: 'School City', value: item['City']),
+      TableRowModel(label: 'Contact No', value: item['UserName']),
+      TableRowModel(label: 'Email', value: item['ContactEmail']),
+      TableRowModel(label: 'Status', value: item['Status']),
+      TableRowModel(label: 'From Date', value: item['PeriodFrom']),
+      TableRowModel(label: 'To Date', value: item['PeriodTo']),
+      TableRowModel(label: 'Student Count', value: item['Students']),
+      TableRowModel(label: 'Staff Count', value: item['Staff']),
+      TableRowModel(label: 'Contact Person 1', value: item['ContactPerson1']),
+      TableRowModel(label: 'Contact Number 1', value: item['ContactNumber1']),
+      TableRowModel(label: 'Contact Person 2', value: item['ContactPerson2']),
+      TableRowModel(label: 'Contact Number 2', value: item['ContactNumber2']),
+      TableRowModel(label: 'Contact Email', value: item['ContactEmail']),
       TableRowModel(
         label: 'Web User Name',
-        value: item?['UserName'],
+        value: item['UserName'],
         isLast: true,
       ),
     ];
@@ -110,64 +122,41 @@ class SchooldetailView extends ConsumerWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: const Color(0xFF1A3A5C).withOpacity(0.05),
-        border: Border.all(
-          color: const Color(0xFF1A3A5C).withOpacity(0.25),
-        ),
+        border: Border.all(color: const Color(0xFF1A3A5C).withOpacity(0.25)),
         borderRadius: BorderRadius.circular(6),
       ),
-      child: Column(
+      child: Row(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const UsageCountScreen(),
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1A3A5C),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6),
-                    ),
+          Expanded(
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => UsageCountScreen(item: item),
                   ),
-                  child: const Text(
-                    "Usage Count",
-                    style: TextStyle(fontSize: 13, color: Colors.white),
-                  ),
-                ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1A3A5C),
+                foregroundColor: Colors.white,
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () {
-                    Navigator.pushNamed(
-                      context,
-                      RoutesName.usagecount,
-                    );
-                  },
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    side: const BorderSide(color: Color(0xFF1A3A5C)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6),
-                    ),
+              child: const Text("Usage Count"),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: OutlinedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ManagementInfo(item: item),
                   ),
-                  child: const Text(
-                    "Management Info",
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Color(0xFF1A3A5C),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+                );
+              },
+              child: const Text("Management Info"),
+            ),
           ),
         ],
       ),

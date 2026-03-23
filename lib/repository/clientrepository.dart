@@ -1,8 +1,11 @@
 import 'dart:convert';
 import 'package:sssbuddy/auth/model/CreatedemoResponse.dart';
+import 'package:sssbuddy/auth/model/UsageCount.dart';
 import 'package:sssbuddy/repository/app_endpoint.dart';
 import '../auth/model/ChangePassword.dart';
+import '../auth/model/CircularModel.dart';
 import '../auth/model/Demolist.dart';
+import '../auth/model/ManagementInfo.dart';
 import '../auth/model/Validatelogin.dart';
 import '../auth/model/Versioncheck.dart';
 import '../core/network/DioClient.dart';
@@ -92,5 +95,52 @@ class ClientRepository {
 
     final List<dynamic> list = response.data as List<dynamic>;
     return Changepassword.fromJson(list[0]);
+  }
+
+
+  Future<Usagecount> usagecount(
+      String schoolID, String fromDate, String toDate) async {
+
+    final response = await client.post(
+      AppEndpoint.getusagecount,
+      body: {
+        "schoolID": schoolID,
+        "FromDate": fromDate,
+        "ToDate": toDate,
+      },
+      useSchoolApi: true,
+    );
+
+    return Usagecount.fromJson(response.data[0]);
+  }
+
+
+
+
+  Future<List<Managementinfo>> managementinfo(
+      int schoolID) async {
+
+    final response = await client.get(
+      AppEndpoint.managementinfo,
+      query: {
+        "Schoolid": schoolID,
+      },
+      useSchoolApi: true,
+    );
+    return (response.data as List)
+        .map((e) => Managementinfo.fromJson(e))
+        .toList();
+
+  }
+
+
+  Future<List<Circularmodel>> getcircularlist(String schoolLoginId) async {
+    final response = await client.post(
+      AppEndpoint.circularreport,
+      body: {"LoginID": schoolLoginId},
+      useSchoolApi: true,
+    );
+    final List data = response.data;
+    return data.map((e) => Circularmodel.fromJson(e)).toList();
   }
 }

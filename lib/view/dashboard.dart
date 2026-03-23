@@ -241,6 +241,13 @@ class Dashboard extends ConsumerWidget {
                                       );
                                       break;
 
+                                    case 4:
+                                          Navigator.pushNamed(
+                                        context,
+                                        RoutesName.circularlist,
+                                      );
+                                      break;
+
                                     default:
                                       break;
                                   }
