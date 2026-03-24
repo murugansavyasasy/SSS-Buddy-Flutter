@@ -2,15 +2,35 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../Values/Colors/app_colors.dart';
+import '../auth/model/ManagementVideosModel.dart';
 import '../components/toolbar_layout.dart';
+import '../utils/VimeoPlayerScreen.dart';
 import '../viewModel/management_videos_viewmodel.dart';
 import 'dashboard.dart';
+
 
 class ManagementVideos extends ConsumerWidget {
   final String userId;
   const ManagementVideos({super.key, required this.userId});
+
+  void _launchYoutube(BuildContext context, String url) async {
+    final uri = Uri.parse(url);
+
+    try {
+      await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Could not open YouTube")),
+      );
+    }
+  }
+
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -51,15 +71,8 @@ class ManagementVideos extends ConsumerWidget {
                     itemBuilder: (context, index) {
                       final video = videos[index];
                       return ListTile(
-                        leading: Icon(
-                          video.videoType == "youtube"
-                              ? Icons.play_circle_fill
-                              : Icons.video_library,
-                          color: video.videoType == "youtube"
-                              ? Colors.red
-                              : Colors.blue,
-                          size: 36,
-                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        leading: _buildThumbnail(video),
                         title: Text(
                           video.videoName,
                           style: const TextStyle(
@@ -67,16 +80,22 @@ class ManagementVideos extends ConsumerWidget {
                             fontSize: 14,
                           ),
                         ),
-                        subtitle: Text(
-                          video.videoType.toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade500,
-                          ),
-                        ),
+
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () {
-                          // TODO: open video.videoURL
+                          if (video.videoType == "youtube") {
+                            _launchYoutube(context, video.videoURL);
+                          } else {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => VimeoPlayerScreen(
+                                  videoUrl: video.videoURL,
+                                  videoName: video.videoName,
+                                ),
+                              ),
+                            );
+                          }
                         },
                       );
                     },
@@ -88,5 +107,77 @@ class ManagementVideos extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+
+  Widget _buildThumbnail(Managementvideosmodel video) {
+    final String thumbnailUrl = _getThumbnailUrl(video);
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          CachedNetworkImage(
+            imageUrl: thumbnailUrl,
+            width: 90,
+            height: 60,
+            fit: BoxFit.cover,
+            placeholder: (context, url) => Container(
+              width: 90,
+              height: 60,
+              color: Colors.grey.shade200,
+              child: const Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            ),
+            errorWidget: (context, url, error) => Container(
+              width: 90,
+              height: 60,
+              color: Colors.grey.shade300,
+              child: const Icon(Icons.broken_image, color: Colors.grey),
+            ),
+          ),
+          Container(
+            width: 90,
+            height: 60,
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.3),
+            ),
+          ),
+          const Icon(
+            Icons.play_circle_fill,
+            color: Colors.white,
+            size: 28,
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getThumbnailUrl(Managementvideosmodel video) {
+    if (video.videoType == "youtube") {
+      final Uri uri = Uri.parse(video.videoURL);
+      String videoId = "";
+
+      if (uri.host.contains("youtu.be")) {
+        videoId = uri.pathSegments.first;
+      } else if (uri.host.contains("youtube.com")) {
+        videoId = uri.queryParameters["v"] ?? "";
+      }
+
+      return "https://img.youtube.com/vi/$videoId/mqdefault.jpg";
+    } else {
+      final Uri uri = Uri.parse(video.videoURL);
+      String videoId = uri.pathSegments.last;
+      if (videoId.contains("?")) {
+        videoId = videoId.split("?").first;
+      }
+      return "https://vumbnail.com/$videoId.jpg";
+    }
   }
 }

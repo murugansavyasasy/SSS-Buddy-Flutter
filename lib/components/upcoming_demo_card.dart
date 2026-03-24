@@ -23,8 +23,9 @@ class UpcomingDemoCard extends StatelessWidget {
     child:  Container(
       width: 260,
       decoration: BoxDecoration(
-        color: const Color(0xffffffff),
+        color: const Color(0xfff8f6f6),
         borderRadius: BorderRadius.circular(16),
+
       ),
       child: Row(
         children: [
