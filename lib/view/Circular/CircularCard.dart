@@ -31,7 +31,6 @@ class Circularcard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const teal = Color(0xFF1A3A5C);
-    final hasVoice = item.voiceFile.isNotEmpty;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -84,7 +83,7 @@ class Circularcard extends StatelessWidget {
                   child: Text(
                     _messageLabel,
                     style: const TextStyle(
-                      fontSize: 10,
+                      fontSize: 12,
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
                     ),
@@ -105,7 +104,7 @@ class Circularcard extends StatelessWidget {
                     const SizedBox(width: 4),
                     Text(
                       'ID: ${item.SchoolId}',
-                      style: const TextStyle(fontSize: 11, color: Colors.grey),
+                      style: const TextStyle(fontSize: 13, color: Colors.black),
                     ),
                     const Spacer(),
                     const Icon(
@@ -116,7 +115,7 @@ class Circularcard extends StatelessWidget {
                     const SizedBox(width: 4),
                     Text(
                       item.Time,
-                      style: const TextStyle(fontSize: 11, color: Colors.grey),
+                      style: const TextStyle(fontSize: 13, color: Colors.black),
                     ),
                   ],
                 ),
@@ -128,30 +127,13 @@ class Circularcard extends StatelessWidget {
                     const Icon(
                       Icons.call_rounded,
                       size: 13,
-                      color: Colors.grey,
+                      color: Colors.black,
                     ),
                     const SizedBox(width: 4),
                     Text(
                       'Total Calls: ${item.TotalCalls}',
-                      style: const TextStyle(fontSize: 11, color: Colors.grey),
+                      style: const TextStyle(fontSize: 13, color: Colors.black),
                     ),
-                    if (hasVoice) ...[
-                      const Spacer(),
-                      const Icon(
-                        Icons.volume_up_rounded,
-                        size: 13,
-                        color: Colors.blueAccent,
-                      ),
-                      const SizedBox(width: 4),
-                      const Text(
-                        'Voice Available',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.blueAccent,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
                   ],
                 ),
 

@@ -108,7 +108,7 @@ class _DashboardTileState extends State<DashboardTile>
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 10,
+                  fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: _textColor,
                   height: 1.3,
