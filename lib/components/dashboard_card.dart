@@ -11,6 +11,8 @@ class DashboardCard extends StatelessWidget {
   final String inactiveLabel;
   final String? activeCount;
   final String? inactiveCount;
+  final String? totalStudent;
+  final String? totalStaff;
   final Color color;
   final bool isLoading;
 
@@ -22,128 +24,168 @@ class DashboardCard extends StatelessWidget {
     required this.color,
     this.activeCount,
     this.inactiveCount,
+    this.totalStudent,
+    this.totalStaff,
     this.isLoading = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        height: 150,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+    return Container(
+      width: 250,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
 
-            /// Title
-            Text(
-              title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
+        children: [
+          /// Title
+          Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 12),
+
+
+          /// Active / Inactive Row
+          Row(
+            children: [
+              /// Active Section
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+
+                  children: [
+                    Text(
+                      activeLabel,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
+                    ),
+
+                    const SizedBox(height: 4),
+
+                    isLoading
+                        ? const SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Text(
+                            activeCount ?? "",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                  ],
+                ),
               ),
-            ),
 
-            const Spacer(),
+              /// Divider
+              Container(width: 1, height: 35, color: Colors.white30),
 
-            /// Active / Inactive Row
-            Row(
-              children: [
+              const SizedBox(width: 12),
 
-                /// Active Section
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-
-                      Text(
-                        activeLabel,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 12,
-                        ),
+              /// Inactive Section
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      inactiveLabel,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
                       ),
+                    ),
 
-                      const SizedBox(height: 4),
+                    const SizedBox(height: 4),
 
-                      isLoading
-                          ? const SizedBox(
-                        height: 18,
-                        width: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                          : Text(
-                        activeCount ?? "0",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 26,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
+                    isLoading
+                        ? const SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Text(
+                            inactiveCount ?? "",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 26,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                  ],
                 ),
+              ),
+            ],
+          ),
 
-                /// Divider
-                Container(
-                  width: 1,
-                  height: 35,
-                  color: Colors.white30,
+          const SizedBox(height: 12),
+
+          Row(
+            children: [
+              Text(
+                title =="Live Schools" ? "Active Students": "Students",
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
                 ),
-
-                const SizedBox(width: 12),
-
-                /// Inactive Section
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-
-                      Text(
-                        inactiveLabel,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 12,
-                        ),
-                      ),
-
-                      const SizedBox(height: 4),
-
-                      isLoading
-                          ? const SizedBox(
-                        height: 18,
-                        width: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                          : Text(
-                        inactiveCount ?? "0",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 26,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
+              ),
+              const SizedBox(width: 5),
+              Text(
+                " : $totalStudent",
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
                 ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+
+          Row(
+            children: [
+              Text(
+                title =="Live Schools" ? "Active Staff": "Staff",
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(width: 5),
+              Text(
+                " : $totalStaff",
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 }
-
-

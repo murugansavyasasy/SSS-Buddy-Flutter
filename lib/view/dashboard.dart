@@ -19,6 +19,7 @@ class Dashboard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final demoState = ref.watch(demoviewProvider);
     final schoolStats = ref.watch(schoolStatsProvider);
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -33,232 +34,270 @@ class Dashboard extends ConsumerWidget {
           children: [
             const HeaderToolbar(),
 
+            /// MAIN CONTENT
             Expanded(
               child: Container(
-                width: double.infinity,
                 decoration: const BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(25),
-                    topRight: Radius.circular(25),
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(25),
                   ),
                 ),
+
                 child: SingleChildScrollView(
-                  child: Container(
-                    color: Colors.grey.shade100,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              schoolStats.when(
-                                loading: () => const DashboardCard(
+                  padding: const EdgeInsets.all(16),
+
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+
+                      /// 🔥 DASHBOARD CARDS (HORIZONTAL)
+                      SizedBox(
+                        height: 200,
+                        child: schoolStats.when(
+                          loading: () => const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+
+                          error: (e, _) => Center(child: Text(e.toString())),
+
+                          data: (stats) {
+
+                            final schoolList = stats.rawList;
+
+                            int totalLiveStudents = schoolList.fold(0, (sum, item) {
+                              if (item["Status"] == "LIVE" && item["isActive"] == "1"  ) {
+                                return sum + (int.tryParse(item["Students"]?.toString() ?? "0") ?? 0);
+                              }
+                              return sum;
+                            });
+                            int totalLiveStaff = schoolList.fold(0, (sum, item) {
+                              if (item["Status"] == "LIVE" && item["isActive"] == "1") {
+                                return sum + (int.tryParse(item["Staff"]?.toString() ?? "0") ?? 0);
+                              }
+                              return sum;
+                            });
+
+                            int totalPOCStudents = schoolList.fold(0, (sum, item) {
+                              if (item["Status"] == "POC") {
+                                return sum + (int.tryParse(item["Students"]?.toString() ?? "0") ?? 0);
+                              }
+                              return sum;
+                            });
+                            int totalPOCStaff = schoolList.fold(0, (sum, item) {
+                              if (item["Status"] == "POC") {
+                                return sum + (int.tryParse(item["Staff"]?.toString() ?? "0") ?? 0);
+                              }
+                              return sum;
+                            });
+
+                            int totalStoppedStudents = schoolList.fold(0, (sum, item) {
+                              if (item["Status"] == "STOPPED") {
+                                return sum + (int.tryParse(item["Students"]?.toString() ?? "0") ?? 0);
+                              }
+                              return sum;
+                            });
+                            int totalStoppedStaff = schoolList.fold(0, (sum, item) {
+                              if (item["Status"] == "STOPPED") {
+                                return sum + (int.tryParse(item["Staff"]?.toString() ?? "0") ?? 0);
+                              }
+                              return sum;
+                            });
+
+
+
+                            return ListView(
+                              scrollDirection: Axis.horizontal,
+                              children: [
+
+                                DashboardCard(
                                   title: "Live Schools",
                                   activeLabel: "Active",
                                   inactiveLabel: "Inactive",
-                                  color: Color(0xff2E4F7D),
-                                  isLoading: true,
+                                  activeCount: stats.liveActive.toString(),
+                                  inactiveCount: stats.liveInactive.toString(),
+                                  totalStudent: totalLiveStudents.toString(),
+                                  totalStaff: totalLiveStaff.toString(),
+                                  color: const Color(0xff2E4F7D),
                                 ),
-                                error: (e, _) => const DashboardCard(
-                                  title: "Schools",
+
+                                const SizedBox(width: 12),
+
+                                DashboardCard(
+                                  title: "POC",
                                   activeLabel: "Active",
                                   inactiveLabel: "Inactive",
-                                  color: Color(0xff2E4F7D),
+                                  activeCount: stats.pocActive.toString(),
+                                  inactiveCount: stats.pocInactive.toString(),
+                                  totalStudent: totalPOCStudents.toString(),
+                                  totalStaff: totalPOCStaff.toString(),
+                                  color: Colors.green,
                                 ),
-                                data: (stats) {
-                                  return DashboardCard(
-                                    title: "Schools",
-                                    activeLabel: "Active",
-                                    inactiveLabel: "Inactive",
-                                    activeCount: stats.liveActive.toString(),
-                                    inactiveCount: stats.liveInactive
-                                        .toString(),
-                                    color: const Color(0xff2E4F7D),
-                                  );
-                                },
-                              ),
 
+                                const SizedBox(width: 12),
+
+                                DashboardCard(
+                                  title: "Stopped Schools",
+                                  activeLabel: "",
+                                  inactiveLabel: "",
+                                  activeCount: stats.stopped.toString(),
+                                  totalStudent: totalStoppedStudents.toString(),
+                                  totalStaff: totalStoppedStaff.toString(),
+                                  color: Colors.orange,
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      /// 🔥 DEMO LIST HEADER
+                      Row(
+                        children: [
+                          const Text(
+                            "Recent Demos",
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const Spacer(),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.pushNamed(
+                                context,
+                                RoutesName.demolistview,
+                              );
+                            },
+                            child: Text(
+                              "View all",
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      /// 🔥 DEMO LIST
+                      SizedBox(
+                        height: 95,
+                        child: demoState.when(
+                          loading: () => const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+
+                          error: (e, _) =>
+                              Center(child: Text(e.toString())),
+
+                          data: (demos) {
+                            if (demos.isEmpty) {
+                              return const Center(
+                                child: Text("No demo list found"),
+                              );
+                            }
+
+                            final limitedList = demos.take(5).toList();
+
+                            return ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: limitedList.length,
+                              separatorBuilder: (_, __) =>
                               const SizedBox(width: 12),
+                              itemBuilder: (context, index) {
+                                final demo = limitedList[index];
 
-                              schoolStats.when(
-                                loading: () => const DashboardCard(
-                                  title: "POC",
-                                  activeLabel: "Active",
-                                  inactiveLabel: "Inactive",
-                                  color: Colors.green,
-                                  isLoading: true,
-                                ),
-                                error: (e, _) => const DashboardCard(
-                                  title: "POC",
-                                  activeLabel: "Active",
-                                  inactiveLabel: "Inactive",
-                                  color: Colors.green,
-                                ),
-                                data: (stats) {
-                                  return DashboardCard(
-                                    title: "POC",
-                                    activeLabel: "Active",
-                                    inactiveLabel: "Inactive",
-                                    activeCount: stats.pocActive.toString(),
-                                    inactiveCount: stats.pocInactive.toString(),
-                                    color: Colors.green,
-                                  );
-                                },
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 20),
-
-                          Row(
-                            children: [
-                              const Text(
-                                "Demo List",
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const Spacer(),
-                              GestureDetector(
-                                onTap: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    RoutesName.demolistview,
-                                  );
-                                },
-                                child: Text(
-                                  "View all",
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.primary,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 12),
-
-                          SizedBox(
-                            height: 95,
-                            child: demoState.when(
-                              loading: () => const Center(
-                                child: CircularProgressIndicator(),
-                              ),
-
-                              error: (e, _) =>
-                                  Center(child: Text(e.toString())),
-
-                              data: (demos) {
-                                if (demos.isEmpty) {
-                                  return const Center(
-                                    child: Text("No demo list found"),
-                                  );
-                                }
-                                final limitedList = demos.take(5).toList();
-                                return ListView.separated(
-                                  scrollDirection: Axis.horizontal,
-                                  itemCount: limitedList.length,
-                                  separatorBuilder: (_, __) =>
-                                      const SizedBox(width: 12),
-                                  itemBuilder: (context, index) {
-                                    final demo = limitedList[index];
-                                    return UpcomingDemoCard(
-                                      demoId: demo.demoId.toString(),
-                                      schoolName: demo.schoolName,
-                                      principalNumber: demo.principalNumber,
-                                      onTap: () {
-                                        Navigator.pushNamed(context, RoutesName.recordvoice);
-                                        },
+                                return UpcomingDemoCard(
+                                  demoId: demo.demoId.toString(),
+                                  schoolName: demo.schoolName,
+                                  principalNumber: demo.principalNumber,
+                                  onTap: () {
+                                    Navigator.pushNamed(
+                                      context,
+                                      RoutesName.recordvoice,
                                     );
                                   },
                                 );
                               },
+                            );
+                          },
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      /// 🔥 MENU HEADER
+                      Row(
+                        children: const [
+                          Text(
+                            "Menus",
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-
-                          const SizedBox(height: 16),
-
-                          Row(
-                            children: const [
-                              Text(
-                                "Menus",
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black,
-                                ),
-                              ),
-                              Spacer(),
-                              Icon(Icons.search, color: Colors.black, size: 20),
-                            ],
-                          ),
-
-                          const SizedBox(height: 15),
-
-                          GridView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            padding: EdgeInsets.zero,
-                            itemCount: menuItems.length,
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 4,
-                                  crossAxisSpacing: 16,
-                                  mainAxisSpacing: 16,
-                                  mainAxisExtent: 100,
-                                ),
-                            itemBuilder: (context, index) {
-                              final item = menuItems[index];
-                              return DashboardTile(
-                                title: item.title,
-                                icon: item.icon,
-                                color: item.color,
-                                onTap: () {
-                                  switch (item.id) {
-                                    case 1:
-                                      Navigator.pushNamed(
-                                        context,
-                                        RoutesName.createdemo,
-                                      );
-                                      break;
-
-                                    case 2:
-                                      Navigator.pushNamed(
-                                        context,
-                                        RoutesName.demolistview,
-                                      );
-                                      break;
-
-                                    case 3:
-                                      Navigator.pushNamed(
-                                        context,
-                                        RoutesName.schoollistview,
-                                      );
-                                      break;
-
-                                    case 4:
-                                          Navigator.pushNamed(
-                                        context,
-                                        RoutesName.circularlist,
-                                      );
-                                      break;
-
-                                    default:
-                                      break;
-                                  }
-                                },
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 20),
+                          Spacer(),
+                          Icon(Icons.search, size: 20),
                         ],
                       ),
-                    ),
+
+                      const SizedBox(height: 15),
+
+                      /// 🔥 GRID MENU
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        padding: EdgeInsets.zero,
+                        itemCount: menuItems.length,
+                        gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 4,
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
+                          mainAxisExtent: 100,
+                        ),
+                        itemBuilder: (context, index) {
+                          final item = menuItems[index];
+
+                          return DashboardTile(
+                            title: item.title,
+                            icon: item.icon,
+                            color: item.color,
+                            onTap: () {
+                              switch (item.id) {
+                                case 1:
+                                  Navigator.pushNamed(
+                                      context, RoutesName.createdemo);
+                                  break;
+
+                                case 2:
+                                  Navigator.pushNamed(
+                                      context, RoutesName.demolistview);
+                                  break;
+
+                                case 3:
+                                  Navigator.pushNamed(
+                                      context, RoutesName.schoollistview);
+                                  break;
+
+                                case 4:
+                                  Navigator.pushNamed(
+                                      context, RoutesName.circularlist);
+                                  break;
+                              }
+                            },
+                          );
+                        },
+                      ),
+
+                      const SizedBox(height: 20),
+                    ],
                   ),
                 ),
               ),
