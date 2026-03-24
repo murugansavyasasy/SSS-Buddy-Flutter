@@ -6,6 +6,7 @@ import 'package:sssbuddy/view/change_password.dart';
 import 'package:sssbuddy/view/Circular/circular_listview.dart';
 import 'package:sssbuddy/view/create_demo.dart';
 import 'package:sssbuddy/view/dashboard.dart';
+import 'package:sssbuddy/view/management_videos.dart';
 import 'package:sssbuddy/view/record_voice.dart';
 import 'package:sssbuddy/view/school_listview.dart';
 import 'package:sssbuddy/view/UsageCount/usage_count.dart';
@@ -42,6 +43,9 @@ class Routes {
 
       case RoutesName.circularlist:
         return MaterialPageRoute(builder: (context) => CircularListview());
+
+      case RoutesName.managementvideos:
+        return MaterialPageRoute(builder: (context) => const ManagementVideos(userId: '0'));
 
       default:
         return MaterialPageRoute(

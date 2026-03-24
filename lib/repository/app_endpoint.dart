@@ -8,4 +8,5 @@ class AppEndpoint {
   static const getusagecount = "GetUsageReport";
   static const managementinfo = "GetManagementNumbers";
   static const circularreport = "GetVoiceCircularReport";
+  static const managementvideos = "api/AppDetails/GetVideos";
 }

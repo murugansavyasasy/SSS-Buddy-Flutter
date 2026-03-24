@@ -185,7 +185,6 @@ class _ChangePasswordState extends ConsumerState<ChangePassword> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Label with mandatory star
         RichText(
           text: TextSpan(
             text: label,
@@ -206,12 +205,10 @@ class _ChangePasswordState extends ConsumerState<ChangePassword> {
           ),
         ),
         const SizedBox(height: 6),
-        // Text field with error border
         TextField(
           controller: controller,
           obscureText: true,
           onChanged: (_) {
-            // Clear error on typing
             setState(() {
               if (controller == existingpasswordcontroller)
                 existingPasswordError = null;
@@ -247,7 +244,6 @@ class _ChangePasswordState extends ConsumerState<ChangePassword> {
             ),
           ),
         ),
-        // Inline error message
         if (errorText != null) ...[
           const SizedBox(height: 5),
           Row(

@@ -172,8 +172,11 @@ class Dashboard extends ConsumerWidget {
                                       schoolName: demo.schoolName,
                                       principalNumber: demo.principalNumber,
                                       onTap: () {
-                                        Navigator.pushNamed(context, RoutesName.recordvoice);
-                                        },
+                                        Navigator.pushNamed(
+                                          context,
+                                          RoutesName.recordvoice,
+                                        );
+                                      },
                                     );
                                   },
                                 );
@@ -242,9 +245,16 @@ class Dashboard extends ConsumerWidget {
                                       break;
 
                                     case 4:
-                                          Navigator.pushNamed(
+                                      Navigator.pushNamed(
                                         context,
                                         RoutesName.circularlist,
+                                      );
+                                      break;
+
+                                    case 17:
+                                      Navigator.pushNamed(
+                                        context,
+                                        RoutesName.managementvideos,
                                       );
                                       break;
 

@@ -5,17 +5,12 @@ import '../provider/app_providers.dart';
 import 'login_view_model.dart';
 
 class CircularPostViewmodel extends AsyncNotifier<List<Circularmodel>> {
-
   @override
-
   Future<List<Circularmodel>> build() async {
-
     return circularlist();
   }
 
-
-  Future <List<Circularmodel>> circularlist() async {
-
+  Future<List<Circularmodel>> circularlist() async {
     final loginState = ref.read(loginProvider);
     final loginData = loginState.value;
 
@@ -27,14 +22,10 @@ class CircularPostViewmodel extends AsyncNotifier<List<Circularmodel>> {
     final response = await repo.getcircularlist(schoolLoginId);
 
     return response;
-
   }
-
-
 }
 
-
 final circularviewProvider =
-AsyncNotifierProvider<CircularPostViewmodel, List<Circularmodel>>(
+    AsyncNotifierProvider<CircularPostViewmodel, List<Circularmodel>>(
       () => CircularPostViewmodel(),
-);
+    );

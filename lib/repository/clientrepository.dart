@@ -9,6 +9,7 @@ import '../auth/model/ManagementInfo.dart';
 import '../auth/model/Validatelogin.dart';
 import '../auth/model/Versioncheck.dart';
 import '../core/network/DioClient.dart';
+import '../auth/model/ManagementVideosModel.dart';
 
 class ClientRepository {
   final Dioclient client;
@@ -142,5 +143,15 @@ class ClientRepository {
     );
     final List data = response.data;
     return data.map((e) => Circularmodel.fromJson(e)).toList();
+  }
+
+
+  Future<List<Managementvideosmodel>> getmanagementvideos(String vimIdUSer) async {
+    final response = await client.get(
+      AppEndpoint.managementvideos,
+      query: {"UserId": vimIdUSer},
+    );
+    final List data = response.data;
+    return data.map((e) => Managementvideosmodel.fromJson(e)).toList();
   }
 }
