@@ -11,6 +11,7 @@ import 'package:sssbuddy/view/record_voice.dart';
 import 'package:sssbuddy/view/school_listview.dart';
 import 'package:sssbuddy/view/UsageCount/usage_count.dart';
 
+import '../../view/customer_list_view.dart';
 import '../../view/demo_list.dart';
 import '../../view/school_detail/schooldetail_view.dart';
 
@@ -46,6 +47,9 @@ class Routes {
 
       case RoutesName.managementvideos:
         return MaterialPageRoute(builder: (context) => const ManagementVideos(userId: '0'));
+
+      case RoutesName.customerListView:
+        return MaterialPageRoute(builder: (context) => CustomerListView());
 
       default:
         return MaterialPageRoute(

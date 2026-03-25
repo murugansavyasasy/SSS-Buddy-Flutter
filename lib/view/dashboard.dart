@@ -381,6 +381,13 @@ class Dashboard extends ConsumerWidget {
                                     RoutesName.managementvideos,
                                   );
                                   break;
+
+                                case 10:
+                                  Navigator.pushNamed(
+                                    context,
+                                    RoutesName.customerListView,
+                                  );
+                                  break;
                               }
                             },
                           );
