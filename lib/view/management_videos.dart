@@ -50,6 +50,7 @@ class ManagementVideos extends ConsumerWidget {
             const ToolbarLayout(
               title: "Management Videos",
               navigateTo: Dashboard(),
+                isSearch : false
             ),
             Expanded(
               child: Container(

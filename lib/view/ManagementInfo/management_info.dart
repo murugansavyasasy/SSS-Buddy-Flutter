@@ -50,6 +50,7 @@ class _ManagementInfoScreenState extends ConsumerState<ManagementInfo> {
             const ToolbarLayout(
               title: "Management Info",
               navigateTo: SchoolListview(),
+                isSearch : false
             ),
             Expanded(
               child: Container(

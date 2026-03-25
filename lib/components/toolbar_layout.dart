@@ -7,11 +7,13 @@ import '../Values/Colors/app_colors.dart';
 class ToolbarLayout extends ConsumerWidget {
   final Widget? navigateTo;
   final String title;
+  final bool isSearch;
 
   const ToolbarLayout({
     super.key,
     this.navigateTo,
     required this.title,
+    required this.isSearch,
   });
 
   @override
@@ -62,6 +64,15 @@ class ToolbarLayout extends ConsumerWidget {
                 color: Colors.white,
               ),
             ),
+            const Spacer(),
+
+            isSearch? IconButton(
+              icon: const Icon(Icons.search,color: Colors.white),
+              onPressed: () {
+                print("Search clicked");
+              },
+            ) :SizedBox()
+
           ],
         ),
       ),

@@ -29,6 +29,7 @@ class DemoListView extends ConsumerWidget {
             const ToolbarLayout(
               title: "Demo List",
               navigateTo: Dashboard(),
+                isSearch : true
             ),
 
         Expanded(

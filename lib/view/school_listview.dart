@@ -33,6 +33,7 @@ class SchoolListview extends ConsumerWidget {
             const ToolbarLayout(
               title: "School List",
               navigateTo: Dashboard(),
+                isSearch : true
             ),
 
             Expanded(

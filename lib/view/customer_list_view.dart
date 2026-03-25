@@ -29,6 +29,7 @@ class CustomerListView extends ConsumerWidget {
             const ToolbarLayout(
               title: "Customer List",
               navigateTo: Dashboard(),
+                isSearch : true
             ),
             Expanded(
               child: Container(
