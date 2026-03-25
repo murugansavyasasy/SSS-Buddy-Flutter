@@ -22,71 +22,67 @@ class HeaderToolbar extends ConsumerWidget {
   void confirmationLogout(BuildContext context) {
     showDialog(
       context: context,
-      barrierDismissible: false, // prevent outside tap
-      builder: (context) {
-        return Dialog(
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(16),
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.logout, size: 50, color: Colors.red),
-
-                const SizedBox(height: 10),
-
-                const Text(
-                  "Logout?",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          title: Row(
+            children: const [
+              Icon(Icons.logout, color: AppColors.primary, size: 22),
+              SizedBox(width: 8),
+              Text(
+                "Logout?",
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+          content: const Text(
+            "Are you sure you want to logout?",
+            style: TextStyle(fontSize: 14, color: Colors.black54, height: 1.5),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: Colors.grey.shade300),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
                 ),
-
-                const SizedBox(height: 10),
-
-                const Text("Are you sure you want to logout?"),
-
-                const SizedBox(height: 20),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 30,
-                          vertical: 5,
-                        ),
-                      ),
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      child: const Text("No"),
-                    ),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 30,
-                          vertical: 5,
-                        ),
-                      ),
-                      onPressed: () {
-                        SecureStorage.clearLoginData();
-                        AppRoot.restartApp(context);
-                        Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(
-                            builder: (_) => const LoginScreen(),
-                          ),
-                              (route) => false,
-                        );
-                      },
-                      child: const Text("Yes"),
-                    ),
-                  ],
-                )
-              ],
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
+              ),
+              child: const Text(
+                "Cancel",
+                style: TextStyle(color: Colors.black54),
+              ),
             ),
-          ),
+            ElevatedButton(
+              onPressed: () => {
+                SecureStorage.clearLoginData(),
+                AppRoot.restartApp(context),
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  (route) => false,
+                ),
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
+              ),
+              child: const Text("Yes", style: TextStyle(color: Colors.white)),
+            ),
+          ],
         );
       },
     );
