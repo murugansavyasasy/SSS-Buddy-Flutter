@@ -38,10 +38,9 @@ class SchooldetailView extends ConsumerWidget {
         backgroundColor: AppColors.primary,
         body: Column(
           children: [
-            const ToolbarLayout(
+             ToolbarLayout(
               title: "School List Detail",
               navigateTo: SchoolListview(),
-                isSearch : false
             ),
             Expanded(
               child: Container(

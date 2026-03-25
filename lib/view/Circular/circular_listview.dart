@@ -26,10 +26,12 @@ class CircularListview extends ConsumerWidget {
         backgroundColor: AppColors.primary,
         body: Column(
           children: [
-            const ToolbarLayout(
+            ToolbarLayout(
               title: "Circular List",
-              navigateTo: Dashboard(),
-              isSearch : true
+              navigateTo: const Dashboard(),
+              searchHint: "Search school name....",
+              onSearch: (query) =>
+                  ref.read(circularviewProvider.notifier).filter(query),
             ),
             Expanded(
               child: Container(

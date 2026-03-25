@@ -9,35 +9,17 @@ import '../components/school_card.dart';
 import '../components/toolbar_layout.dart';
 import '../provider/app_providers.dart';
 import '../utils/filter_utils.dart';
+import '../utils/routes/routes_name.dart';
 import '../viewModel/schoollist_view_model.dart';
 import 'dashboard.dart';
 
-class SchoolListview extends ConsumerStatefulWidget {
+class SchoolListview extends ConsumerWidget {
   const SchoolListview({super.key});
 
   @override
-  ConsumerState<SchoolListview> createState() => _SchoolListState();
-  }
-
-  class _SchoolListState extends ConsumerState<SchoolListview> {
-
-  final TextEditingController searchController = TextEditingController();
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final schoolAsync = ref.watch(schoolStatsProvider);
-    final isSearching = ref.watch(searchProvider);
-    final filteredList = ref.watch(filteredSchoolListProvider);
-
-    void filter(String query) {
-      ref.read(searchQueryProvider.notifier).state = query;
-    }
-
-    void closeSearch() {
-      ref.read(searchProvider.notifier).state = false;
-      ref.read(searchQueryProvider.notifier).state = "";
-      searchController.clear();
-    }
+    final selectedFilter = ref.watch(selectedFilterProvider);
 
     return  AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
@@ -48,39 +30,12 @@ class SchoolListview extends ConsumerStatefulWidget {
         backgroundColor: AppColors.primary,
         body: Column(
           children: [
-            ToolbarLayout(
+            const ToolbarLayout(
               title: "School List",
-              navigateTo: const Dashboard(),
-                isSearch : true,
-
+              navigateTo: Dashboard(),
             ),
-            if (isSearching)
-              Padding(
-                padding: const EdgeInsets.all(7),
-                child: TextField(
-                  controller: searchController,
-                  onChanged: filter,
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.grey.shade200, // background color
-                    hintText: "Search...",
-                    contentPadding: EdgeInsets.symmetric(
-                      vertical: 8, // 👈 controls height
-                      horizontal: 10,
-                    ),
-                    prefixIcon: const Icon(Icons.search,size: 20,),
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.close,size: 20,),
-                      onPressed: closeSearch,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide.none, // ❌ remove border
-                    ),
-                  ),
-                ),
 
-              ),
+
 
             Expanded(
               child: Container(
@@ -120,15 +75,20 @@ class SchoolListview extends ConsumerStatefulWidget {
                       ),
                     ),
 
+
                     const SizedBox(height: 8),
+
 
                     Expanded(
                       child: schoolAsync.when(
                         data: (stats) {
+                          final schoolList = stats.rawList;
+                          final filteredList = applyFilter(schoolList, selectedFilter);
 
                           if (filteredList.isEmpty) {
                             return const Center(child: Text("No Data Found"));
                           }
+
                           return MediaQuery.removePadding(
                             context: context,
                             removeTop: true,

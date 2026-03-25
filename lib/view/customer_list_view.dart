@@ -28,10 +28,12 @@ class CustomerListView extends ConsumerWidget {
         backgroundColor: AppColors.primary,
         body: Column(
           children: [
-            const ToolbarLayout(
+            ToolbarLayout(
               title: "Customer List",
-              navigateTo: Dashboard(),
-                isSearch : true
+              navigateTo: const Dashboard(),
+              searchHint: "Search school name....",
+              onSearch: (query) =>
+                  ref.read(customerviewProvider.notifier).filter(query),
             ),
             Expanded(
               child: Container(

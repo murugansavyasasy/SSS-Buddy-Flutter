@@ -4,10 +4,29 @@ import '../provider/app_providers.dart';
 import 'login_view_model.dart';
 
 class DemolistViewModel extends AsyncNotifier<List<Demolist>> {
+
+  List<Demolist> _all = [];
   @override
   Future<List<Demolist>> build() async {
-    return demolist();
+    final list = await demolist();
+    _all = list;
+    return list;
   }
+
+
+  void filter(String query) {
+    if (query.trim().isEmpty) {
+      state = AsyncData(_all);
+      return;
+    }
+    final lower = query.toLowerCase();
+    state = AsyncData(
+      _all.where((item) {
+        return item.schoolName.toLowerCase().contains(lower);
+      }).toList(),
+    );
+  }
+
 
   Future<List<Demolist>> demolist() async {
     final loginState = ref.read(loginProvider);

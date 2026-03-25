@@ -7,6 +7,16 @@ import '../Values/Colors/app_colors.dart';
 import '../viewModel/demolist_view_model.dart';
 import 'dashboard.dart';
 
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../components/DemoCard.dart';
+import '../components/toolbar_layout.dart';
+import '../Values/Colors/app_colors.dart';
+import '../viewModel/demolist_view_model.dart';
+import 'dashboard.dart';
+
 class DemoListView extends ConsumerWidget {
   const DemoListView({super.key});
 
@@ -14,7 +24,7 @@ class DemoListView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final demoAsync = ref.watch(demoviewProvider);
 
-    return  AnnotatedRegion<SystemUiOverlayStyle>(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
@@ -25,51 +35,44 @@ class DemoListView extends ConsumerWidget {
         backgroundColor: AppColors.primary,
         body: Column(
           children: [
-
-            const ToolbarLayout(
+            ToolbarLayout(
               title: "Demo List",
-              navigateTo: Dashboard(),
-                isSearch : true
+              navigateTo: const Dashboard(),
+              searchHint: "Search school name....",
+              onSearch: (query) =>
+                  ref.read(demoviewProvider.notifier).filter(query),
             ),
 
-        Expanded(
-          child: Container(
-            width: double.infinity,
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(25),
-                topRight: Radius.circular(25),
+            Expanded(
+              child: Container(
+                width: double.infinity,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(25),
+                    topRight: Radius.circular(25),
+                  ),
+                ),
+                child: demoAsync.when(
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (e, _) => Center(child: Text("Error: $e")),
+                  data: (list) {
+                    if (list.isEmpty) {
+                      return const Center(child: Text("No Data Found"));
+                    }
+                    return ListView.builder(
+                      padding: const EdgeInsets.all(12),
+                      itemCount: list.length,
+                      itemBuilder: (context, index) {
+                        final item = list[index];
+                        return DemoCard(item: item);
+                      },
+                    );
+                  },
+                ),
               ),
             ),
-
-
-              child: demoAsync.when(
-                loading: () => const Center(
-                  child: CircularProgressIndicator(),
-                ),
-
-                error: (e, _) => Center(
-                  child: Text("Error: $e"),
-                ),
-
-                data: (list) {
-                  if (list.isEmpty) {
-                    return const Center(child: Text("No Data Found"));
-                  }
-
-                  return ListView.builder(
-                    padding: const EdgeInsets.all(12),
-                    itemCount: list.length,
-                    itemBuilder: (context, index) {
-                      final item = list[index];
-                      return DemoCard(item: item);
-                    },
-                  );
-                },
-              ),
-            ),
-        ),
           ],
         ),
       ),

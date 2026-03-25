@@ -3,24 +3,66 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../Values/Colors/app_colors.dart';
-import '../provider/app_providers.dart';
 
-class ToolbarLayout extends ConsumerWidget {
-  final Widget? navigateTo;
+class ToolbarLayout extends ConsumerStatefulWidget {
   final String title;
-  final bool isSearch;
+  final Widget? navigateTo;
+  final ValueChanged<String>? onSearch;
+  final String searchHint;
 
   const ToolbarLayout({
     super.key,
-    this.navigateTo,
     required this.title,
-    required this.isSearch,
-
+    this.navigateTo,
+    this.onSearch,
+    this.searchHint = "Search...",
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ToolbarLayout> createState() => _ToolbarLayoutState();
+}
+
+class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
+    with SingleTickerProviderStateMixin {
+  bool _searchOpen = false;
+  final TextEditingController _controller = TextEditingController();
+  late final AnimationController _animController;
+  late final Animation<double> _fade;
+
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 220),
+    );
+    _fade = CurvedAnimation(parent: _animController, curve: Curves.easeInOut);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _animController.dispose();
+    super.dispose();
+  }
+
+  void _openSearch() {
+    setState(() => _searchOpen = true);
+    _animController.forward();
+  }
+
+  void _closeSearch() {
+    _animController.reverse().then((_) {
+      setState(() => _searchOpen = false);
+      _controller.clear();
+      widget.onSearch?.call('');
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final double topPadding = MediaQuery.of(context).padding.top;
+    final bool hasSearch = widget.onSearch != null;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
@@ -35,46 +77,116 @@ class ToolbarLayout extends ConsumerWidget {
           top: topPadding + 10,
           left: 16,
           right: 16,
-          bottom: 20,
+          bottom: 16,
         ),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            GestureDetector(
-              onTap: () {
-                Navigator.pop(context);
-                },
-              child: Container(
-                height: 46,
-                width: 46,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(23),
+            Row(
+              children: [
+                GestureDetector(
+                  onTap: _searchOpen
+                      ? _closeSearch
+                      : () => Navigator.pop(context),
+                  child: Container(
+                    height: 42,
+                    width: 42,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(21),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        _searchOpen
+                            ? Icons.arrow_back
+                            : Icons.arrow_back,
+                        color: Colors.black,
+                        size: 20,
+                      ),
+                    ),
+                  ),
                 ),
-                child: const Center(
-                  child: Icon(Icons.arrow_back, color: Colors.black),
+
+                const SizedBox(width: 12),
+
+                Expanded(
+                  child: Text(
+                    widget.title,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
-              ),
+
+                if (hasSearch && !_searchOpen)
+                  GestureDetector(
+                    onTap: _openSearch,
+                    child: Container(
+                      height: 42,
+                      width: 42,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(21),
+                        border: Border.all(color: Colors.white30),
+                      ),
+                      child: const Icon(
+                        Icons.search,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+              ],
             ),
 
-            const SizedBox(width: 12),
-
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+            if (hasSearch && _searchOpen)
+              FadeTransition(
+                opacity: _fade,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Container(
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: TextField(
+                      controller: _controller,
+                      autofocus: true,
+                      onChanged: widget.onSearch,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.black87,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: widget.searchHint,
+                        hintStyle: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade400,
+                        ),
+                        prefixIcon: Icon(Icons.search,
+                            color: Colors.grey.shade400, size: 20),
+                        suffixIcon: _controller.text.isNotEmpty
+                            ? GestureDetector(
+                          onTap: () {
+                            _controller.clear();
+                            widget.onSearch?.call('');
+                            setState(() {});
+                          },
+                          child: Icon(Icons.close,
+                              color: Colors.grey.shade400, size: 18),
+                        )
+                            : null,
+                        border: InputBorder.none,
+                        contentPadding:
+                        const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                ),
               ),
-            ),
-            const Spacer(),
-
-            isSearch? IconButton(
-              icon: const Icon(Icons.search,color: Colors.white),
-              onPressed: (){
-                ref.read(searchProvider.notifier).state = true;
-                },
-            ) :SizedBox()
-
           ],
         ),
       ),
