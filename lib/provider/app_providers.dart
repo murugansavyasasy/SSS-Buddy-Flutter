@@ -18,5 +18,3 @@ final rememberMeProvider = StateProvider<bool>((ref) => false);
 final selectedFilterProvider = StateProvider<SchoolFilter>(
       (ref) => SchoolFilter.all,
 );
-
-final searchQueryProvider = StateProvider<String>((ref) => '');
