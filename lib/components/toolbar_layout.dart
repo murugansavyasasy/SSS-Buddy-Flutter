@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../Values/Colors/app_colors.dart';
+import '../provider/app_providers.dart';
 
 class ToolbarLayout extends ConsumerWidget {
   final Widget? navigateTo;
@@ -14,6 +15,7 @@ class ToolbarLayout extends ConsumerWidget {
     this.navigateTo,
     required this.title,
     required this.isSearch,
+
   });
 
   @override
@@ -68,9 +70,9 @@ class ToolbarLayout extends ConsumerWidget {
 
             isSearch? IconButton(
               icon: const Icon(Icons.search,color: Colors.white),
-              onPressed: () {
-                print("Search clicked");
-              },
+              onPressed: (){
+                ref.read(searchProvider.notifier).state = true;
+                },
             ) :SizedBox()
 
           ],
