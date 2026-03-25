@@ -164,12 +164,11 @@ class ClientRepository {
     return data.map((e) => Customerdetailsmodel.fromJson(e)).toList();
   }
 
-
   Future<List<Customerdetailsinfomodelclass>> getcustomerinfo(
-      String VimIdUser,
-      String customerId,
-      String selectedUser,
-      ) async {
+    String VimIdUser,
+    String customerId,
+    String selectedUser,
+  ) async {
     final response = await client.post(
       AppEndpoint.customerinfo,
       body: {

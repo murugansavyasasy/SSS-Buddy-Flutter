@@ -2,12 +2,14 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sssbuddy/view/customer_info_view.dart';
 
 import '../Values/Colors/app_colors.dart';
 import '../components/customer_card_details.dart';
 import '../components/toolbar_layout.dart';
 import '../viewModel/customer_details_viewmodel.dart';
 import 'dashboard.dart';
+
 class CustomerListView extends ConsumerWidget {
   const CustomerListView({super.key});
 
@@ -41,12 +43,9 @@ class CustomerListView extends ConsumerWidget {
                   ),
                 ),
                 child: customerlistAsync.when(
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                  error: (e, _) => Center(
-                    child: Text("Error: $e"),
-                  ),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (e, _) => Center(child: Text("Error: $e")),
                   data: (list) {
                     if (list.isEmpty) {
                       return const Center(child: Text("No Data Found"));
@@ -56,7 +55,19 @@ class CustomerListView extends ConsumerWidget {
                       itemCount: list.length,
                       itemBuilder: (context, index) {
                         final item = list[index];
-                        return CustomerCardDetails(item: item);
+
+                        return InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    CustomerInfoView(item: item),
+                              ),
+                            );
+                          },
+                          child: CustomerCardDetails(item: item),
+                        );
                       },
                     );
                   },

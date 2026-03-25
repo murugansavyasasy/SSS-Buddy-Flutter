@@ -4,34 +4,40 @@ import '../auth/model/CustomerDetailsInfoModelClass.dart';
 import '../provider/app_providers.dart';
 import 'login_view_model.dart';
 
-class CustomerDetailsInfoModel extends AsyncNotifier<List<Customerdetailsinfomodelclass>>{
-
-
+class CustomerDetailsInfoModel extends AsyncNotifier<List<Customerdetailsinfomodelclass>> {
   @override
-  Future<List<Customerdetailsinfomodelclass>> build() async{
-    return getcustomerinfo();
+  Future<List<Customerdetailsinfomodelclass>> build() async {
+    return [];
   }
+  Future<void> fetchCustomerInfo(String customerId) async {
+    state = const AsyncLoading();
 
-  Future<List<Customerdetailsinfomodelclass>> getcustomerinfo() async {
-    final loginState = ref.read(loginProvider);
-    final loginData = loginState.value;
+    try {
+      final loginState = ref.read(loginProvider);
+      final loginData = loginState.value;
 
-    if(loginData == null) return [];
+      if (loginData == null) {
+        state = const AsyncData([]);
+        return;
+      }
 
-    final VimIdUser = loginData.VimsIdUser;
-    final repo = ref.read(repositoryProvider);
+      final vimIdUser = loginData.VimsIdUser;
+      final repo = ref.read(repositoryProvider);
+      const selectedUser = "0";
 
-    var customerId = "644";
-    var selectedUser = "0";
+      final response = await repo.getcustomerinfo(
+        vimIdUser,
+        customerId,
+        selectedUser,
+      );
 
-    final response = await repo.getcustomerinfo(VimIdUser,customerId,selectedUser);
-    return response;
+      state = AsyncData(response);
+    } catch (e, stackTrace) {
+      state = AsyncError(e, stackTrace);
+    }
   }
-
 }
-
-
 final customerviewinfoProvider =
 AsyncNotifierProvider<CustomerDetailsInfoModel, List<Customerdetailsinfomodelclass>>(
-      () => CustomerDetailsInfoModel(),
+  CustomerDetailsInfoModel.new,
 );

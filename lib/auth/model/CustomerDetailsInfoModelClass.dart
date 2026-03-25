@@ -3,6 +3,7 @@ class Customerdetailsinfomodelclass {
   String tallyCustomerId;
   String customerName;
   String customerOtherName;
+  String salesPersonName;
   String customerBranchType;
   String customerBranchTypeName;
   String customerType;
@@ -39,7 +40,6 @@ class Customerdetailsinfomodelclass {
   String salesPersonId;
   String headCustomerId;
   String headCustomerName;
-  String isActive;
   String isDelete;
   int createdBy;
   String createdByName;
@@ -56,11 +56,14 @@ class Customerdetailsinfomodelclass {
   int schoolServerID;
   String collegeServerID;
   String HuddleServerID;
+  bool isActive;
 
   Customerdetailsinfomodelclass({
     required this.idCustomer,
     required this.tallyCustomerId,
     required this.customerName,
+    required this.salesPersonName,
+    required this.isActive,
     required this.customerOtherName,
     required this.customerBranchType,
     required this.customerBranchTypeName,
@@ -98,7 +101,6 @@ class Customerdetailsinfomodelclass {
     required this.salesPersonId,
     required this.headCustomerId,
     required this.headCustomerName,
-    required this.isActive,
     required this.isDelete,
     required this.createdBy,
     required this.createdByName,
@@ -116,46 +118,41 @@ class Customerdetailsinfomodelclass {
     required this.collegeServerID,
     required this.HuddleServerID,
   });
-  factory Customerdetailsinfomodelclass.fromJson(Map<String,dynamic> json) {
-    return Customerdetailsinfomodelclass (
+
+  factory Customerdetailsinfomodelclass.fromJson(Map<String, dynamic> json) {
+    return Customerdetailsinfomodelclass(
       idCustomer: json["idCustomer"] ?? 0,
       tallyCustomerId: json["tallyCustomerId"] ?? "",
       customerName: json["customerName"] ?? "",
+      salesPersonName: json["salesPersonName"] ?? "",
+      isActive: json["isActive"] ?? false,          // ← Fixed (bool)
       customerOtherName: json["customerOtherName"] ?? "",
       customerBranchType: json["customerBranchType"] ?? "",
-      customerTypeName: json["customerTypeName"] ?? "",
-      customerType: json["customerType"] ?? "",
       customerBranchTypeName: json["customerBranchTypeName"] ?? "",
-      headCustomerName: json["headCustomerName"] ?? "",
+      customerType: json["customerType"] ?? "",
+      customerTypeName: json["customerTypeName"] ?? "",
+      companyNameVS: json["companyNameVS"] ?? "",
       contactPerson: json["contactPerson"] ?? "",
       contactNumber: json["contactNumber"] ?? "",
       contactPersonDesignation: json["contactPersonDesignation"] ?? "",
       mailId: json["mailId"] ?? "",
       alternateContactPerson: json["alternateContactPerson"] ?? "",
       alternateContactNumber: json["alternateContactNumber"] ?? "",
-      isActive: json["isActive"] ?? "",
-      billingPersonName: json["billingPersonName"] ?? "",
-      billingPhoneNumber: json["billingPhoneNumber"] ?? "",
+      alternateMailId: json["alternateMailId"] ?? "",
+      alternatePersonDesignation: json["alternatePersonDesignation"] ?? "",
+      fax: json["fax"] ?? "",
+      PANNumber: json["PANNumber"] ?? "",
+      TINNumber: json["TINNumber"] ?? "",
+      STCNumber: json["STCNumber"] ?? "",
+      GSTINNumber: json["GSTINNumber"] ?? "",
       billingAddress: json["billingAddress"] ?? "",
       billingCity: json["billingCity"] ?? "",
       billingDistrict: json["billingDistrict"] ?? "",
       billingState: json["billingState"] ?? "",
       billingCountry: json["billingCountry"] ?? "",
       billingPincode: json["billingPincode"] ?? "",
-      result: json["result"] ?? 0,
-      resultMessage: json["resultMessage"] ?? "",
-      companyNameVS: json["companyNameVS"] ?? "",
-      createdByName: json["createdByName"] ?? "",
-      createdOn: json["createdOn"] ?? "",
-      modifiedByName: json["modifiedByName"] ?? "",
-      modifiedOn: json["modifiedOn"] ?? "",
-      alternateMailId: json["alternateMailId"] ?? "",
-      alternatePersonDesignation: json["alternatePersonDesignation"] ?? "",
-      fax: json["fax"] ?? "",
-      PANNumber: json["PANNumber"] ?? "",
-      TINNumber: json["TINNumber"] ?? "",
-      STCNumber:json["STCNumber"] ?? "",
-      GSTINNumber: json["GSTINNumber"] ?? "",
+      billingPhoneNumber: json["billingPhoneNumber"] ?? "",
+      billingPersonName: json["billingPersonName"] ?? "",
       shipAddress: json["shipAddress"] ?? "",
       shipCity: json["shipCity"] ?? "",
       shipDistrict: json["shipDistrict"] ?? "",
@@ -163,13 +160,20 @@ class Customerdetailsinfomodelclass {
       shipCountry: json["shipCountry"] ?? "",
       shipPincode: json["shipPincode"] ?? "",
       shipPhoneNumber: json["shipPhoneNumber"] ?? "",
+      shipPersonName: json["shipPersonName"] ?? "",
       remarks: json["remarks"] ?? "",
       salesPersonId: json["salesPersonId"] ?? "",
       headCustomerId: json["headCustomerId"] ?? "",
+      headCustomerName: json["headCustomerName"] ?? "",
       isDelete: json["isDelete"] ?? "",
       createdBy: json["createdBy"] ?? 0,
+      createdByName: json["createdByName"] ?? "",
+      createdOn: json["createdOn"] ?? "",
       modifiedBy: json["modifiedBy"] ?? 0,
-      shipPersonName: json["shipPersonName"] ?? "",
+      modifiedByName: json["modifiedByName"] ?? "",
+      modifiedOn: json["modifiedOn"] ?? "",
+      result: json["result"] ?? 0,
+      resultMessage: json["resultMessage"] ?? "",
       billingPersonNamePre: json["billingPersonNamePre"] ?? "",
       shipPersonNamePre: json["shipPersonNamePre"] ?? "",
       schoolServerID: json["schoolServerID"] ?? 0,
