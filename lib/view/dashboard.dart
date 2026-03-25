@@ -223,7 +223,7 @@ class Dashboard extends ConsumerWidget {
                       Row(
                         children: [
                           const Text(
-                            "Recent Demos",
+                            "Recent Demo",
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
@@ -313,11 +313,11 @@ class Dashboard extends ConsumerWidget {
                               color: const Color(0xFFF0F4FF),
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Icon(
-                              Icons.search_rounded,
-                              size: 18,
-                              color: Color(0xFF2E4F7D),
-                            ),
+                            // child: const Icon(
+                            //   Icons.search_rounded,
+                            //   size: 18,
+                            //   color: Color(0xFF2E4F7D),
+                            // ),
                           ),
                         ],
                       ),

@@ -120,6 +120,7 @@ class _UsageCountScreenState extends ConsumerState<UsageCountScreen> {
             const ToolbarLayout(
               title: "Usage Count",
               navigateTo: SchoolListview(),
+                isSearch : false
             ),
             Expanded(
               child: Container(

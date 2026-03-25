@@ -278,6 +278,7 @@ class _ChangePasswordState extends ConsumerState<ChangePassword> {
             const ToolbarLayout(
               title: "Change Password",
               navigateTo: Dashboard(),
+                isSearch : false
             ),
             Expanded(
               child: Container(

@@ -192,6 +192,7 @@ class _RecordVoiceState extends ConsumerState<RecordVoice> {
             const ToolbarLayout(
               title: "Record Voice",
               navigateTo: Dashboard(),
+                isSearch : false
             ),
 
             Expanded(

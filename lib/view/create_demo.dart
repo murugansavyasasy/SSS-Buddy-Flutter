@@ -56,7 +56,7 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
         backgroundColor: AppColors.primary,
         body: Column(
           children: [
-            const ToolbarLayout(title: "Create Demo", navigateTo: Dashboard()),
+            const ToolbarLayout(title: "Create Demo", navigateTo: Dashboard(), isSearch : false),
             Expanded(
               child: Container(
                 width: double.infinity,

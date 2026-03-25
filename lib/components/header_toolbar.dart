@@ -19,6 +19,79 @@ class HeaderToolbar extends ConsumerWidget {
     return words.first[0].toUpperCase();
   }
 
+  void confirmationLogout(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // prevent outside tap
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.logout, size: 50, color: Colors.red),
+
+                const SizedBox(height: 10),
+
+                const Text(
+                  "Logout?",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+
+                const SizedBox(height: 10),
+
+                const Text("Are you sure you want to logout?"),
+
+                const SizedBox(height: 20),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 30,
+                          vertical: 5,
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: const Text("No"),
+                    ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 30,
+                          vertical: 5,
+                        ),
+                      ),
+                      onPressed: () {
+                        SecureStorage.clearLoginData();
+                        AppRoot.restartApp(context);
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(
+                            builder: (_) => const LoginScreen(),
+                          ),
+                              (route) => false,
+                        );
+                      },
+                      child: const Text("Yes"),
+                    ),
+                  ],
+                )
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userSession = ref.watch(userSessionProvider);
@@ -126,14 +199,7 @@ class HeaderToolbar extends ConsumerWidget {
                             RoutesName.changepassword,
                           );
                         } else if (value == "Logout") {
-                          SecureStorage.clearLoginData();
-                          AppRoot.restartApp(context);
-                          Navigator.of(context).pushAndRemoveUntil(
-                            MaterialPageRoute(
-                              builder: (_) => const LoginScreen(),
-                            ),
-                            (route) => false,
-                          );
+                          confirmationLogout(context);
                         }
                       }
                     });

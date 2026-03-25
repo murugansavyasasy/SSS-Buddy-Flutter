@@ -29,6 +29,7 @@ class CircularListview extends ConsumerWidget {
             const ToolbarLayout(
               title: "Circular List",
               navigateTo: Dashboard(),
+              isSearch : true
             ),
             Expanded(
               child: Container(

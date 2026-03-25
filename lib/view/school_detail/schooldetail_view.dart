@@ -41,6 +41,7 @@ class SchooldetailView extends ConsumerWidget {
             const ToolbarLayout(
               title: "School List Detail",
               navigateTo: SchoolListview(),
+                isSearch : false
             ),
             Expanded(
               child: Container(
