@@ -109,62 +109,107 @@ class SchoolDocumentCard extends StatelessWidget {
 
   void _showVideoBottomSheet(BuildContext context) {
     final List<dynamic> videos = jsonDecode(item.DocumentURL);
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 36, height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(99),
-                ),
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.45,
+          minChildSize: 0.3,
+          maxChildSize: 0.85,
+          expand: false,
+          builder: (_, scrollController) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Videos',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 12),
-            ...videos.map<Widget>((v) {
-              return ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: Container(
-                  width: 36, height: 36,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEEEDFE),
-                    borderRadius: BorderRadius.circular(8),
+              child: Column(
+                children: [
+                  const SizedBox(height: 12),
+                  Center(
+                    child: Container(
+                      width: 36,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                    ),
                   ),
-                  child: const Icon(Icons.play_arrow_rounded,
-                      color: Color(0xFF534AB7), size: 20),
-                ),
-                title: Text(
-                  v['VideoName'],
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-                ),
-                subtitle: Text(
-                  v['videolocation'].toString().toUpperCase(),
-                  style: const TextStyle(fontSize: 11, color: Color(0xFF888780)),
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  _launchURL(v['VideoLink']);
-                },
-              );
-            }).toList(),
-          ],
-        ),
-      ),
+                  const SizedBox(height: 16),
+
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Videos',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  Expanded(
+                    child: ListView.builder(
+                      controller: scrollController,
+                      padding: EdgeInsets.only(
+                        left: 20,
+                        right: 20,
+                        bottom: MediaQuery.of(ctx).padding.bottom + 16,
+                      ),
+                      itemCount: videos.length,
+                      itemBuilder: (_, i) {
+                        final v = videos[i];
+                        return ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEEEDFE),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.play_arrow_rounded,
+                              color: Color(0xFF534AB7),
+                              size: 20,
+                            ),
+                          ),
+                          title: Text(
+                            v['VideoName'],
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          subtitle: Text(
+                            v['videolocation'].toString().toUpperCase(),
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF888780),
+                            ),
+                          ),
+                          onTap: () {
+                            Navigator.pop(context);
+                            _launchURL(v['VideoLink']);
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
