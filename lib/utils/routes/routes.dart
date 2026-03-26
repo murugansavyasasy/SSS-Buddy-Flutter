@@ -2,15 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:sssbuddy/View/splash.dart';
 import 'package:sssbuddy/View/login.dart';
 import 'package:sssbuddy/utils/routes/routes_name.dart';
+import 'package:sssbuddy/view/advance_tour_expense.dart';
 import 'package:sssbuddy/view/change_password.dart';
 import 'package:sssbuddy/view/Circular/circular_listview.dart';
 import 'package:sssbuddy/view/create_demo.dart';
 import 'package:sssbuddy/view/dashboard.dart';
+import 'package:sssbuddy/view/local_conveyence.dart';
 import 'package:sssbuddy/view/management_videos.dart';
+import 'package:sssbuddy/view/record_collection.dart';
 import 'package:sssbuddy/view/record_voice.dart';
 import 'package:sssbuddy/view/school_documents.dart';
 import 'package:sssbuddy/view/school_listview.dart';
 import 'package:sssbuddy/view/UsageCount/usage_count.dart';
+import 'package:sssbuddy/view/status_report.dart';
+import 'package:sssbuddy/view/tour_settlement.dart';
 
 import '../../view/customer_list_view.dart';
 import '../../view/demo_list.dart';
@@ -48,7 +53,9 @@ class Routes {
         return MaterialPageRoute(builder: (context) => CircularListview());
 
       case RoutesName.managementvideos:
-        return MaterialPageRoute(builder: (context) => const ManagementVideos(userId: '0'));
+        return MaterialPageRoute(
+          builder: (context) => const ManagementVideos(userId: '0'),
+        );
 
       case RoutesName.customerListView:
         return MaterialPageRoute(builder: (context) => CustomerListView());
@@ -58,6 +65,21 @@ class Routes {
 
       case RoutesName.importantinfo:
         return MaterialPageRoute(builder: (context) => ImportantInfoScreen());
+
+      case RoutesName.advancetourexpense:
+        return MaterialPageRoute(builder: (context) => AdvanceTourExpense());
+
+      case RoutesName.localconveyence:
+        return MaterialPageRoute(builder: (context) => LocalConveyence());
+
+      case RoutesName.recordcollection:
+        return MaterialPageRoute(builder: (context) => RecordCollection());
+
+      case RoutesName.statusreport:
+        return MaterialPageRoute(builder: (context) => StatusReport());
+
+      case RoutesName.toursettlement:
+        return MaterialPageRoute(builder: (context) => TourSettlement());
 
       default:
         return MaterialPageRoute(

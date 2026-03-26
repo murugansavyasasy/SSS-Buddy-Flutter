@@ -14,5 +14,10 @@ class RoutesName {
   static const String customerListView = "customer_list_view";
   static const String schooldocuments = "school_documents";
   static const String importantinfo = "important_info";
+  static const String statusreport = "status_report";
+  static const String recordcollection = "record_collection";
+  static const String toursettlement = "tour_settlement";
+  static const String advancetourexpense = "advance_tourexpense";
+  static const String localconveyence = "local_conveyence";
 
 }
