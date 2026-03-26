@@ -7,7 +7,9 @@ import '../auth/model/CircularModel.dart';
 import '../auth/model/CustomerDetailsInfoModelClass.dart';
 import '../auth/model/CustomerdetailsModel.dart';
 import '../auth/model/Demolist.dart';
+import '../auth/model/ImportantInfoModel.dart';
 import '../auth/model/ManagementInfo.dart';
+import '../auth/model/SchoolDocuments.dart';
 import '../auth/model/Validatelogin.dart';
 import '../auth/model/Versioncheck.dart';
 import '../core/network/DioClient.dart';
@@ -181,5 +183,30 @@ class ClientRepository {
     final List data = response.data;
 
     return data.map((e) => Customerdetailsinfomodelclass.fromJson(e)).toList();
+  }
+
+  Future<List<Schooldocuments>> getSchoolDocuments(String vimIDuser) async {
+    final response = await client.get(
+      AppEndpoint.schooldocuments,
+      query: {"UserId": vimIDuser},
+    );
+
+    final List data = response.data;
+
+    return data.map((e) => Schooldocuments.fromJson(e)).toList();
+  }
+
+  Future<List<Importantinfomodel>> getImportantInfo() async {
+    final response = await client.get(
+      AppEndpoint.getimportantinfo,
+      useSchoolApi: true,
+    );
+
+    final List<dynamic> data = response.data;
+    if (data.isEmpty) {
+      return [];
+    }
+    final Map<String, dynamic> jsonData = data.first as Map<String, dynamic>;
+    return [Importantinfomodel.fromJson(jsonData)];
   }
 }

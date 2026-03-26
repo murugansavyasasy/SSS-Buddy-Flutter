@@ -12,5 +12,7 @@ class RoutesName {
   static const String circularlist = "circular_list";
   static const String managementvideos = "management_videos";
   static const String customerListView = "customer_list_view";
+  static const String schooldocuments = "school_documents";
+  static const String importantinfo = "important_info";
 
 }

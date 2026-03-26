@@ -7,16 +7,6 @@ import '../Values/Colors/app_colors.dart';
 import '../viewModel/demolist_view_model.dart';
 import 'dashboard.dart';
 
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../components/DemoCard.dart';
-import '../components/toolbar_layout.dart';
-import '../Values/Colors/app_colors.dart';
-import '../viewModel/demolist_view_model.dart';
-import 'dashboard.dart';
-
 class DemoListView extends ConsumerWidget {
   const DemoListView({super.key});
 

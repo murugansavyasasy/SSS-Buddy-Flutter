@@ -8,11 +8,13 @@ import 'package:sssbuddy/view/create_demo.dart';
 import 'package:sssbuddy/view/dashboard.dart';
 import 'package:sssbuddy/view/management_videos.dart';
 import 'package:sssbuddy/view/record_voice.dart';
+import 'package:sssbuddy/view/school_documents.dart';
 import 'package:sssbuddy/view/school_listview.dart';
 import 'package:sssbuddy/view/UsageCount/usage_count.dart';
 
 import '../../view/customer_list_view.dart';
 import '../../view/demo_list.dart';
+import '../../view/important_info.dart';
 import '../../view/school_detail/schooldetail_view.dart';
 
 class Routes {
@@ -50,6 +52,12 @@ class Routes {
 
       case RoutesName.customerListView:
         return MaterialPageRoute(builder: (context) => CustomerListView());
+
+      case RoutesName.schooldocuments:
+        return MaterialPageRoute(builder: (context) => SchoolDocuments());
+
+      case RoutesName.importantinfo:
+        return MaterialPageRoute(builder: (context) => ImportantInfoScreen());
 
       default:
         return MaterialPageRoute(

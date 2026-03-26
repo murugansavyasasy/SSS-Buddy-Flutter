@@ -65,7 +65,7 @@ class Dashboard extends ConsumerWidget {
                               ),
                               const SizedBox(width: 12),
                               DashboardCard(
-                                title: "POC",
+                                title: "POC Schools",
                                 activeLabel: "Active",
                                 inactiveLabel: "Inactive",
                                 color: const Color(0xFF2E4F7D),
@@ -335,8 +335,7 @@ class Dashboard extends ConsumerWidget {
                               crossAxisCount: 2,
                               crossAxisSpacing: 12,
                               mainAxisSpacing: 18,
-                              mainAxisExtent:
-                                  95,
+                              mainAxisExtent: 95,
                             ),
                         itemBuilder: (context, index) {
                           final item = menuItems[index];
@@ -375,17 +374,30 @@ class Dashboard extends ConsumerWidget {
                                   );
                                   break;
 
-                                case 17:
+                                case 10:
+                                  Navigator.pushNamed(
+                                    context,
+                                    RoutesName.customerListView,
+                                  );
+                                  break;
+
+                                case 11:
+                                  Navigator.pushNamed(
+                                    context,
+                                    RoutesName.schooldocuments,
+                                  );
+                                  break;
+                                case 13:
                                   Navigator.pushNamed(
                                     context,
                                     RoutesName.managementvideos,
                                   );
                                   break;
 
-                                case 10:
+                                case 12:
                                   Navigator.pushNamed(
                                     context,
-                                    RoutesName.customerListView,
+                                    RoutesName.importantinfo,
                                   );
                                   break;
                               }

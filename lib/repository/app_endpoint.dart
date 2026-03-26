@@ -11,4 +11,6 @@ class AppEndpoint {
   static const managementvideos = "api/AppDetails/GetVideos";
   static const customerslist = "api/AppDetails/GetCustomersList";
   static const customerinfo = "api/AppDetails/GetIndvidualCustomerInfo";
+  static const schooldocuments = "api/AppDetails/GetSchoolDocuments";
+  static const getimportantinfo = "GetImportantInfo";
 }

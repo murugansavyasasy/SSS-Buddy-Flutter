@@ -40,7 +40,7 @@ class PillStat extends StatelessWidget {
                     label,
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.7),
-                      fontSize: 9,
+                      fontSize: 7,
                       fontWeight: FontWeight.w500,
                     ),
                     overflow: TextOverflow.ellipsis,

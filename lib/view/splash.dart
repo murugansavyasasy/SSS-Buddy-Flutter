@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../repository/app_url.dart';
 import '../utils/routes/routes_name.dart';
 import '../viewModel/auth_view_model.dart';
@@ -51,6 +54,18 @@ class Splash extends ConsumerWidget {
   void _goToLogin(BuildContext context) {
     Navigator.pushReplacementNamed(context, RoutesName.login);
   }
+  Future<void> openStore() async {
+    const androidUrl = "https://play.google.com/store/apps/details?id=pkg.vs.schoolsdemo.voicensapschoolsdemo";
+    const iosUrl = "https://apps.apple.com/app/idYOUR_APP_ID";
+
+    final url = Platform.isAndroid ? androidUrl : iosUrl;
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      throw "Could not launch store";
+    }
+  }
 
   void _showUpdateDialog(
       BuildContext context,
@@ -64,7 +79,7 @@ class Splash extends ConsumerWidget {
       barrierDismissible: !isForceUpdate,
       builder: (context) {
         return AlertDialog(
-          title: const Text("Update Available"),
+          title: const Text("Update Available!!"),
           content: const Text(
             "A new version of the app is available. Please update to continue.",
           ),
@@ -79,7 +94,7 @@ class Splash extends ConsumerWidget {
               ),
             ElevatedButton(
               onPressed: () {
-                // launchUrl(Uri.parse(AppUrl.playStoreUrl));
+                //openStore();
               },
               child: const Text("Update"),
             ),

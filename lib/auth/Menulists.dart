@@ -8,7 +8,12 @@ final List<MenuItem> menuItems = [
     icon: Icons.create,
     color: Colors.orange,
   ),
-  MenuItem(id: 2, title: "Demo List", icon: Icons.list, color: Colors.blue),
+  MenuItem(
+    id: 2,
+    title: "Demo List",
+    icon: Icons.list,
+    color: Colors.blue,
+  ),
   MenuItem(
     id: 3,
     title: "School List",
@@ -19,14 +24,13 @@ final List<MenuItem> menuItems = [
     id: 4,
     title: "Circular List",
     icon: Icons.announcement,
-    color: Colors.lightBlue,
+    color: Colors.purple,
   ),
-
   MenuItem(
     id: 5,
     title: "Status Report",
     icon: Icons.assignment_turned_in,
-    color: Colors.purple,
+    color: Colors.purpleAccent,
   ),
   MenuItem(
     id: 6,
@@ -36,16 +40,45 @@ final List<MenuItem> menuItems = [
   ),
 
   MenuItem(
+    id: 7,
+    title: "Tour Settlement",
+    icon: Icons.receipt_long,
+    color: Colors.teal,
+  ),
+  MenuItem(
+    id: 8,
+    title: "Advance Tour Expense",
+    icon: Icons.attach_money,
+    color: Colors.deepOrange,
+  ),
+  MenuItem(
+    id: 9,
+    title: "Local Conveyence",
+    icon: Icons.directions_car,
+    color: Colors.indigo,
+  ),
+  MenuItem(
     id: 10,
     title: "Customer Details",
-    icon: Icons.event_note,
-    color: Colors.lightBlue,
+    icon: Icons.business,
+    color: Colors.cyan,
   ),
-
   MenuItem(
-    id: 17,
+    id: 11,
+    title: "School Documents",
+    icon: Icons.folder_open,
+    color: Colors.brown,
+  ),
+  MenuItem(
+    id: 12,
+    title: "Important Info",
+    icon: Icons.info_outline,
+    color: Colors.redAccent,
+  ),
+  MenuItem(
+    id: 13,
     title: "Management Videos",
-    icon: Icons.event,
-    color: Colors.lime,
+    icon: Icons.video_library,
+    color: Colors.deepPurple,
   ),
 ];
