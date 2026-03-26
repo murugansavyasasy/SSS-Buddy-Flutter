@@ -3,25 +3,24 @@ class Customerdetailsinfomodelclass {
   String tallyCustomerId;
   String customerName;
   String customerOtherName;
-  String salesPersonName;
   String customerBranchType;
-  String customerBranchTypeName;
+  dynamic customerBranchTypeName;
   String customerType;
   String customerTypeName;
-  String companyNameVS;
+  String companyNameVs;
   String contactPerson;
   String contactNumber;
   String contactPersonDesignation;
   String mailId;
-  String alternateContactPerson;
-  String alternateContactNumber;
-  String alternateMailId;
-  String alternatePersonDesignation;
-  String fax;
-  String PANNumber;
-  String TINNumber;
-  String STCNumber;
-  String GSTINNumber;
+  dynamic alternateContactPerson;
+  dynamic alternateContactNumber;
+  dynamic alternateMailId;
+  dynamic alternatePersonDesignation;
+  dynamic fax;
+  String panNumber;
+  String tinNumber;
+  String stcNumber;
+  String gstinNumber;
   String billingAddress;
   String billingCity;
   String billingDistrict;
@@ -35,41 +34,40 @@ class Customerdetailsinfomodelclass {
   String shipState;
   String shipCountry;
   String shipPincode;
-  String shipPhoneNumber;
-  String remarks;
+  dynamic shipPhoneNumber;
+  dynamic remarks;
   String salesPersonId;
-  String headCustomerId;
-  String headCustomerName;
-  String isDelete;
+  String salesPersonName;
+  dynamic headCustomerId;
+  dynamic headCustomerName;
+  bool isActive;
+  bool isDelete;
   int createdBy;
-  String createdByName;
-  String createdOn;
+  dynamic createdByName;
+  dynamic createdOn;
   int modifiedBy;
-  String modifiedByName;
-  String modifiedOn;
+  dynamic modifiedByName;
+  dynamic modifiedOn;
   int result;
   String resultMessage;
   String billingPersonName;
-  String shipPersonName;
-  String billingPersonNamePre;
-  String shipPersonNamePre;
-  int schoolServerID;
-  String collegeServerID;
-  String HuddleServerID;
-  bool isActive;
+  dynamic shipPersonName;
+  dynamic billingPersonNamePre;
+  dynamic shipPersonNamePre;
+  int schoolServerId;
+  int collegeServerId;
+  dynamic huddleServerId;
 
   Customerdetailsinfomodelclass({
     required this.idCustomer,
     required this.tallyCustomerId,
     required this.customerName,
-    required this.salesPersonName,
-    required this.isActive,
     required this.customerOtherName,
     required this.customerBranchType,
     required this.customerBranchTypeName,
     required this.customerType,
     required this.customerTypeName,
-    required this.companyNameVS,
+    required this.companyNameVs,
     required this.contactPerson,
     required this.contactNumber,
     required this.contactPersonDesignation,
@@ -79,10 +77,10 @@ class Customerdetailsinfomodelclass {
     required this.alternateMailId,
     required this.alternatePersonDesignation,
     required this.fax,
-    required this.PANNumber,
-    required this.TINNumber,
-    required this.STCNumber,
-    required this.GSTINNumber,
+    required this.panNumber,
+    required this.tinNumber,
+    required this.stcNumber,
+    required this.gstinNumber,
     required this.billingAddress,
     required this.billingCity,
     required this.billingDistrict,
@@ -99,8 +97,10 @@ class Customerdetailsinfomodelclass {
     required this.shipPhoneNumber,
     required this.remarks,
     required this.salesPersonId,
+    required this.salesPersonName,
     required this.headCustomerId,
     required this.headCustomerName,
+    required this.isActive,
     required this.isDelete,
     required this.createdBy,
     required this.createdByName,
@@ -114,9 +114,9 @@ class Customerdetailsinfomodelclass {
     required this.shipPersonName,
     required this.billingPersonNamePre,
     required this.shipPersonNamePre,
-    required this.schoolServerID,
-    required this.collegeServerID,
-    required this.HuddleServerID,
+    required this.schoolServerId,
+    required this.collegeServerId,
+    required this.huddleServerId,
   });
 
   factory Customerdetailsinfomodelclass.fromJson(Map<String, dynamic> json) {
@@ -125,13 +125,13 @@ class Customerdetailsinfomodelclass {
       tallyCustomerId: json["tallyCustomerId"] ?? "",
       customerName: json["customerName"] ?? "",
       salesPersonName: json["salesPersonName"] ?? "",
-      isActive: json["isActive"] ?? false,          // ← Fixed (bool)
+      isActive: json["isActive"] ?? false,
       customerOtherName: json["customerOtherName"] ?? "",
       customerBranchType: json["customerBranchType"] ?? "",
       customerBranchTypeName: json["customerBranchTypeName"] ?? "",
       customerType: json["customerType"] ?? "",
       customerTypeName: json["customerTypeName"] ?? "",
-      companyNameVS: json["companyNameVS"] ?? "",
+      companyNameVs: json["companyNameVS"] ?? "",
       contactPerson: json["contactPerson"] ?? "",
       contactNumber: json["contactNumber"] ?? "",
       contactPersonDesignation: json["contactPersonDesignation"] ?? "",
@@ -141,10 +141,10 @@ class Customerdetailsinfomodelclass {
       alternateMailId: json["alternateMailId"] ?? "",
       alternatePersonDesignation: json["alternatePersonDesignation"] ?? "",
       fax: json["fax"] ?? "",
-      PANNumber: json["PANNumber"] ?? "",
-      TINNumber: json["TINNumber"] ?? "",
-      STCNumber: json["STCNumber"] ?? "",
-      GSTINNumber: json["GSTINNumber"] ?? "",
+      panNumber: json["PANNumber"] ?? "",
+      tinNumber: json["TINNumber"] ?? "",
+      stcNumber: json["STCNumber"] ?? "",
+      gstinNumber: json["GSTINNumber"] ?? "",
       billingAddress: json["billingAddress"] ?? "",
       billingCity: json["billingCity"] ?? "",
       billingDistrict: json["billingDistrict"] ?? "",
@@ -165,7 +165,7 @@ class Customerdetailsinfomodelclass {
       salesPersonId: json["salesPersonId"] ?? "",
       headCustomerId: json["headCustomerId"] ?? "",
       headCustomerName: json["headCustomerName"] ?? "",
-      isDelete: json["isDelete"] ?? "",
+      isDelete: json["isDelete"] ?? false,
       createdBy: json["createdBy"] ?? 0,
       createdByName: json["createdByName"] ?? "",
       createdOn: json["createdOn"] ?? "",
@@ -176,9 +176,9 @@ class Customerdetailsinfomodelclass {
       resultMessage: json["resultMessage"] ?? "",
       billingPersonNamePre: json["billingPersonNamePre"] ?? "",
       shipPersonNamePre: json["shipPersonNamePre"] ?? "",
-      schoolServerID: json["schoolServerID"] ?? 0,
-      collegeServerID: json["collegeServerID"] ?? "",
-      HuddleServerID: json["HuddleServerID"] ?? "",
+      schoolServerId: json["schoolServerID"] ?? 0,
+      collegeServerId: json["collegeServerID"] ?? 0,
+      huddleServerId: json["HuddleServerID"] ?? "",
     );
   }
 }
