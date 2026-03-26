@@ -65,7 +65,7 @@ class Dashboard extends ConsumerWidget {
                               ),
                               const SizedBox(width: 12),
                               DashboardCard(
-                                title: "POC",
+                                title: "POC Schools",
                                 activeLabel: "Active",
                                 inactiveLabel: "Inactive",
                                 color: const Color(0xFF2E4F7D),
