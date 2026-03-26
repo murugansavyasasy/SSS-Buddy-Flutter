@@ -189,7 +189,7 @@ class Dashboard extends ConsumerWidget {
                                 const SizedBox(width: 12),
 
                                 DashboardCard(
-                                  title: "POC",
+                                  title: "POC Schools",
                                   activeLabel: "Active",
                                   inactiveLabel: "Inactive",
                                   activeCount: stats.pocActive.toString(),
