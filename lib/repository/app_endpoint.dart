@@ -9,6 +9,7 @@ class AppEndpoint {
   static const managementinfo = "GetManagementNumbers";
   static const circularreport = "GetVoiceCircularReport";
   static const managementvideos = "api/AppDetails/GetVideos";
+  static const localconveyence = "api/AppDetails/ViewExpenses";
   static const customerslist = "api/AppDetails/GetCustomersList";
   static const customerinfo = "api/AppDetails/GetIndvidualCustomerInfo";
   static const schooldocuments = "api/AppDetails/GetSchoolDocuments";
