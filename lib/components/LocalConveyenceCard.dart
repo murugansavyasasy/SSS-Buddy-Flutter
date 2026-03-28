@@ -8,7 +8,6 @@ import 'description_row_local.dart';
 import 'detail_row.dart';
 import 'info_tile_local.dart';
 
-
 class LocalConveyenceCard extends StatelessWidget {
   final Localconveyencemodel item;
   final VoidCallback? onEdit;
@@ -106,9 +105,7 @@ class LocalConveyenceCard extends StatelessWidget {
             Container(
               height: 4,
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: style.gradient,
-                ),
+                gradient: LinearGradient(colors: style.gradient),
               ),
             ),
 
@@ -135,8 +132,11 @@ class LocalConveyenceCard extends StatelessWidget {
                         const SizedBox(height: 2),
                         Row(
                           children: [
-                            const Icon(Icons.tag_rounded,
-                                size: 11, color: Color(0xFFCBD5E1)),
+                            const Icon(
+                              Icons.tag_rounded,
+                              size: 11,
+                              color: Color(0xFFCBD5E1),
+                            ),
                             const SizedBox(width: 2),
                             Text(
                               item.RefId,
@@ -214,9 +214,7 @@ class LocalConveyenceCard extends StatelessWidget {
             Container(height: 1, color: const Color(0xFFF1F5F9)),
 
             // ── Action buttons ──
-            Row(
-              children: _buildActionButtons(userType, approved),
-            ),
+            Row(children: _buildActionButtons(userType, approved)),
 
             // ── Attachment ──
             if (hasFile) ...[
@@ -247,15 +245,14 @@ class LocalConveyenceCard extends StatelessWidget {
     return [_detailsButton(isOnly: true)];
   }
 
-  Widget _detailsButton({bool isOnly = false}) =>
-      Localconveyenceactionbutton(
-        icon: Icons.info_outline_rounded,
-        label: "Details",
-        color: const Color(0xFF7C3AED),
-        bgColor: const Color(0xFFF5F3FF),
-        onTap: onDetails,
-        isOnly: isOnly,
-      );
+  Widget _detailsButton({bool isOnly = false}) => Localconveyenceactionbutton(
+    icon: Icons.info_outline_rounded,
+    label: "Details",
+    color: const Color(0xFF7C3AED),
+    bgColor: const Color(0xFFF5F3FF),
+    onTap: onDetails,
+    isOnly: isOnly,
+  );
 
   Widget _editButton() => Localconveyenceactionbutton(
     icon: Icons.edit_outlined,
@@ -341,11 +338,12 @@ class _StatusBadge extends StatelessWidget {
   final Color color;
   final Color bg;
   final IconData icon;
-  const _StatusBadge(
-      {required this.label,
-        required this.color,
-        required this.bg,
-        required this.icon});
+  const _StatusBadge({
+    required this.label,
+    required this.color,
+    required this.bg,
+    required this.icon,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -402,8 +400,11 @@ class _AttachmentButton extends StatelessWidget {
                 color: gradient.first.withOpacity(0.12),
                 borderRadius: BorderRadius.circular(7),
               ),
-              child: Icon(Icons.picture_as_pdf_rounded,
-                  size: 14, color: gradient.first),
+              child: Icon(
+                Icons.picture_as_pdf_rounded,
+                size: 14,
+                color: gradient.first,
+              ),
             ),
             const SizedBox(width: 8),
             Text(
@@ -416,8 +417,11 @@ class _AttachmentButton extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 4),
-            Icon(Icons.arrow_forward_ios_rounded,
-                size: 10, color: gradient.first.withOpacity(0.7)),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 10,
+              color: gradient.first.withOpacity(0.7),
+            ),
           ],
         ),
       ),
