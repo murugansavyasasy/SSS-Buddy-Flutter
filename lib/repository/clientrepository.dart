@@ -8,6 +8,7 @@ import '../auth/model/CustomerDetailsInfoModelClass.dart';
 import '../auth/model/CustomerdetailsModel.dart';
 import '../auth/model/Demolist.dart';
 import '../auth/model/ImportantInfoModel.dart';
+import '../auth/model/LocalConveyenceModel.dart';
 import '../auth/model/ManagementInfo.dart';
 import '../auth/model/SchoolDocuments.dart';
 import '../auth/model/Validatelogin.dart';
@@ -208,5 +209,17 @@ class ClientRepository {
     }
     final Map<String, dynamic> jsonData = data.first as Map<String, dynamic>;
     return [Importantinfomodel.fromJson(jsonData)];
+  }
+
+
+  Future<List<Localconveyencemodel>> getlocalconveyence(
+      String vimIdUSer,
+      ) async {
+    final response = await client.get(
+      AppEndpoint.localconveyence,
+      query: {"idUser": vimIdUSer},
+    );
+    final List data = response.data;
+    return data.map((e) => Localconveyencemodel.fromJson(e)).toList();
   }
 }

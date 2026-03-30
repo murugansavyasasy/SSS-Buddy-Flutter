@@ -189,7 +189,7 @@ class Dashboard extends ConsumerWidget {
                                 const SizedBox(width: 12),
 
                                 DashboardCard(
-                                  title: "POC",
+                                  title: "POC Schools",
                                   activeLabel: "Active",
                                   inactiveLabel: "Inactive",
                                   activeCount: stats.pocActive.toString(),
@@ -374,6 +374,41 @@ class Dashboard extends ConsumerWidget {
                                   );
                                   break;
 
+                                case 5:
+                                  Navigator.pushNamed(
+                                    context,
+                                    RoutesName.statusreport,
+                                  );
+                                  break;
+
+                                case 6:
+                                  Navigator.pushNamed(
+                                    context,
+                                    RoutesName.recordcollection,
+                                  );
+                                  break;
+
+                                case 7:
+                                  Navigator.pushNamed(
+                                    context,
+                                    RoutesName.toursettlement,
+                                  );
+                                  break;
+
+                                case 8:
+                                  Navigator.pushNamed(
+                                    context,
+                                    RoutesName.advancetourexpense,
+                                  );
+                                  break;
+
+                                case 9:
+                                  Navigator.pushNamed(
+                                    context,
+                                    RoutesName.localconveyence,
+                                  );
+                                  break;
+
                                 case 10:
                                   Navigator.pushNamed(
                                     context,
@@ -387,17 +422,18 @@ class Dashboard extends ConsumerWidget {
                                     RoutesName.schooldocuments,
                                   );
                                   break;
-                                case 13:
-                                  Navigator.pushNamed(
-                                    context,
-                                    RoutesName.managementvideos,
-                                  );
-                                  break;
 
                                 case 12:
                                   Navigator.pushNamed(
                                     context,
                                     RoutesName.importantinfo,
+                                  );
+                                  break;
+
+                                case 13:
+                                  Navigator.pushNamed(
+                                    context,
+                                    RoutesName.managementvideos,
                                   );
                                   break;
                               }
