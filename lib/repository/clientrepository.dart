@@ -2,19 +2,24 @@ import 'dart:convert';
 import 'package:sssbuddy/auth/model/CreatedemoResponse.dart';
 import 'package:sssbuddy/auth/model/UsageCount.dart';
 import 'package:sssbuddy/repository/app_endpoint.dart';
+import '../auth/model/AdvanceTourExpenseModel.dart';
 import '../auth/model/ChangePassword.dart';
 import '../auth/model/CircularModel.dart';
 import '../auth/model/CustomerDetailsInfoModelClass.dart';
 import '../auth/model/CustomerdetailsModel.dart';
 import '../auth/model/Demolist.dart';
+import '../auth/model/FinancialYearModel.dart';
 import '../auth/model/ImportantInfoModel.dart';
+import '../auth/model/InvoiceModel.dart';
 import '../auth/model/LocalConveyenceModel.dart';
 import '../auth/model/ManagementInfo.dart';
 import '../auth/model/SchoolDocuments.dart';
+import '../auth/model/SchoolNameModel.dart';
 import '../auth/model/Validatelogin.dart';
 import '../auth/model/Versioncheck.dart';
 import '../core/network/DioClient.dart';
 import '../auth/model/ManagementVideosModel.dart';
+import '../viewModel/invoice_dd_viewmodel.dart';
 
 class ClientRepository {
   final Dioclient client;
@@ -222,4 +227,54 @@ class ClientRepository {
     final List data = response.data;
     return data.map((e) => Localconveyencemodel.fromJson(e)).toList();
   }
+
+
+  Future<List<Advancetourexpensemodel>> getadvancetourdata(String VimsIdUser) async {
+    final response = await client.get(
+      AppEndpoint.getAdvanceTourExpenses,
+      query: {"idUser": VimsIdUser},
+    );
+
+    final List data = response.data;
+
+    return data.map((e) => Advancetourexpensemodel.fromJson(e)).toList();
+  }
+
+
+  Future<List<Schoolnamemodel>> getschoolname(String VimsIdUser) async {
+    final response = await client.get(
+      AppEndpoint.getSchoolName,
+      query: {"CustomerType" : 1,"LoginId": VimsIdUser},
+    );
+
+    final List data = response.data;
+
+    return data.map((e) => Schoolnamemodel.fromJson(e)).toList();
+  }
+
+
+  Future<List<Financialyearmodel>> getfinancialyear() async {
+    final response = await client.get(
+      AppEndpoint.getFinancialyear,
+    );
+
+    final List data = response.data;
+
+    return data.map((e) => Financialyearmodel.fromJson(e)).toList();
+  }
+
+  Future<List<Invoicemodel>> getinvoicevalue(String customerId) async {
+    final response = await client.get(
+      AppEndpoint.getInvoiceValue,
+      query: {"customerId": customerId},
+
+    );
+
+    final List data = response.data;
+
+    return data.map((e) => Invoicemodel.fromJson(e)).toList();
+  }
+
 }
+
+

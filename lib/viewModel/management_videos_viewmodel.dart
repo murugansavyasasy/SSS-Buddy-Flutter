@@ -3,8 +3,7 @@ import 'package:sssbuddy/auth/model/ManagementVideosModel.dart';
 import '../provider/app_providers.dart';
 import 'login_view_model.dart';
 
-class ManagementVideosViewmodel
-    extends AsyncNotifier<List<Managementvideosmodel>> {
+class ManagementVideosViewmodel extends AsyncNotifier<List<Managementvideosmodel>> {
   @override
   Future<List<Managementvideosmodel>> build() async {
     return managementvideosmodel();
