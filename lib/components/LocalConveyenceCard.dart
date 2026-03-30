@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:sssbuddy/auth/model/LocalConveyenceModel.dart';
 import 'package:sssbuddy/components/LocalConveyenceActionButton.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../Values/Colors/app_colors.dart';
 import 'description_row_local.dart';
 import 'detail_row.dart';
 import 'info_tile_local.dart';
@@ -272,6 +271,7 @@ class LocalConveyenceCard extends StatelessWidget {
 
   Widget _vDivider() =>
       Container(width: 1, height: 40, color: const Color(0xFFF1F5F9));
+
 }
 
 class _StatusStyle {
