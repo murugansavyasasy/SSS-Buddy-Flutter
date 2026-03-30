@@ -13,10 +13,12 @@ import '../auth/model/ImportantInfoModel.dart';
 import '../auth/model/InvoiceModel.dart';
 import '../auth/model/LocalConveyenceModel.dart';
 import '../auth/model/ManagementInfo.dart';
+import '../auth/model/PO_listModal.dart';
 import '../auth/model/SchoolDocuments.dart';
 import '../auth/model/SchoolNameModel.dart';
 import '../auth/model/Validatelogin.dart';
 import '../auth/model/Versioncheck.dart';
+import '../auth/model/po_details_modal.dart';
 import '../core/network/DioClient.dart';
 import '../auth/model/ManagementVideosModel.dart';
 import '../viewModel/invoice_dd_viewmodel.dart';
@@ -274,6 +276,35 @@ class ClientRepository {
 
     return data.map((e) => Invoicemodel.fromJson(e)).toList();
   }
+
+
+  Future<List<PoListModel>> getpolist(String cusId) async {
+    final response = await client.get(
+      AppEndpoint.getponummerbycustomer,
+      query: {"cusId": cusId},
+    );
+
+    final List data = response.data;
+
+    return data.map((e) => PoListModel.fromJson(e)).toList();
+  }
+  Future<List<PoDetailsModel>> getpodetails(
+      String VimIdUser,
+      String purchaseOrderId,
+      ) async {
+    final response = await client.post(
+      AppEndpoint.getindiualpoforapp,
+      body: {
+        "idUser": VimIdUser,
+        "PurchaseOrderID": purchaseOrderId,
+      },
+    );
+
+    final List data = response.data;
+
+    return data.map((e) => PoDetailsModel.fromJson(e)).toList();
+  }
+
 
 }
 

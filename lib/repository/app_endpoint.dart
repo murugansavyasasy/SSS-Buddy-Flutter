@@ -18,4 +18,6 @@ class AppEndpoint {
   static const getSchoolName = "api/GetDetails/DemoGetCustomerList";
   static const getFinancialyear = "api/GetDetails/getFinancialYearForApp";
   static const getInvoiceValue = "api/GetDetails/DemoGetInvoiceByCustomerID";
+  static const getponummerbycustomer = "api/GetDetails/GetPONumbersByCustomer";
+  static const getindiualpoforapp = "api/AppDetails/GetIndvidualSchoolPoInfoForApp";
 }

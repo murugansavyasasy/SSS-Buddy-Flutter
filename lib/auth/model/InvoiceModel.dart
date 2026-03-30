@@ -1,18 +1,18 @@
 class Invoicemodel {
-  String invoiceId;
-  String invoiceNumber;
-  String pendingAmount;
+  String InvoiceId;
+  String InvoiceNumber;
+  String PendingAmount;
 
   Invoicemodel({
-    required this.invoiceId,
-    required this.invoiceNumber,
-    required this.pendingAmount,
+    required this.InvoiceId,
+    required this.InvoiceNumber,
+    required this.PendingAmount,
   });
   factory Invoicemodel.fromJson(Map<String, dynamic> json) {
     return Invoicemodel(
-      invoiceId: json["invoiceId"],
-      invoiceNumber: json["invoiceNumber"],
-      pendingAmount: json["pendingAmount"],
+      InvoiceId: json["InvoiceId"],
+      InvoiceNumber: json["InvoiceNumber"],
+      PendingAmount: json["PendingAmount"],
     );
   }
 }

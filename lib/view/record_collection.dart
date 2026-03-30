@@ -103,16 +103,6 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
     }
   }
 
-  void _onInvoiceSelected(String? invoiceId, List invoices) {
-    setState(() => selectedInvoice = invoiceId);
-    if (invoiceId == null) return;
-    try {
-      final match = invoices.firstWhere(
-            (e) => (e.invoiceId?.toString() ?? '') == invoiceId,
-      );
-      _amountController.text = match.amount?.toString() ?? '';
-    } catch (_) {}
-  }
 
   void _onPaymentModeChanged(String? mode) {
     setState(() {
@@ -247,38 +237,41 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
                       const SizedBox(height: 12),
 
                       invoiceAsync.when(
-                        loading: () => const DropdownSkeleton(
-                            label: "Select Invoice"),
+                        loading: () => const DropdownSkeleton(label: "Invoice Details"),
                         error: (e, _) => DropdownError(
-                          label: "Select Invoice",
+                          label: "Invoice Details",
                           onRetry: () {
                             if (selectedSchoolCusId != null) {
-                              ref
-                                  .read(invoiceProvider.notifier)
+                              ref.read(invoiceProvider.notifier)
                                   .fetchForCustomer(selectedSchoolCusId!);
                             }
                           },
                         ),
-                        data: (invoices) => invoices.isEmpty && selectedSchool == null
-                            ? _InactiveDropdownHint(
-                            hint: "Select a school first to load invoices")
-                            : SearchableDropdown<dynamic>(
-                          label: "Select Invoice",
-                          hint: "Choose an invoice",
-                          value: selectedInvoice,
-                          items: invoices,
-                          itemLabel: (e) =>
-                          e.invoiceNumber?.toString() ?? "",
-                          itemValue: (e) =>
-                          e.invoiceId?.toString() ?? "",
-                          onChanged: (v) =>
-                              _onInvoiceSelected(v, invoices),
-                        ),
+                        data: (invoices) {
+                          if (invoices.isEmpty) {
+                            return const _InactiveDropdownHint(
+                              hint: "No invoice found",
+                            );
+                          }
+
+                          final invoice = invoices.first;
+
+                          final displayText =
+                              "${invoice.InvoiceNumber ?? ''} - ${invoice.PendingAmount ?? '0'}";
+
+                          _amountController.text = invoice.PendingAmount?.toString() ?? '';
+
+                          return FormInputField(
+                            controller: TextEditingController(text: displayText),
+                            label: "Invoice Details",
+                            icon: Icons.receipt_long,
+                            readOnly: true,
+                          );
+                        },
                       ),
 
                       const SizedBox(height: 16),
 
-                      // Amount Received (auto-filled from invoice)
                       FormInputField(
                         controller: _amountController,
                         label: "Amount Received",
