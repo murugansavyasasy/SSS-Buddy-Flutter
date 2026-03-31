@@ -8,6 +8,7 @@ import '../components/toolbar_layout.dart';
 import '../viewModel/local_conveyence_viewmodel.dart';
 import '../viewModel/login_view_model.dart';
 import 'dashboard.dart';
+import 'local_conveyence_detail.dart';
 
 class LocalConveyence extends ConsumerWidget {
   const LocalConveyence({super.key});
@@ -18,6 +19,7 @@ class LocalConveyence extends ConsumerWidget {
     final loginState = ref.watch(loginProvider);
     final loginData = loginState.value;
     final VimsUserTypeId = loginData?.VimsUserTypeId;
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -27,13 +29,23 @@ class LocalConveyence extends ConsumerWidget {
       ),
       child: Scaffold(
         backgroundColor: AppColors.primary,
+
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+
+          },
+          backgroundColor: AppColors.primary,
+          child: const Icon(Icons.add, color: Colors.white),
+        ),
+
         body: Column(
           children: [
             ToolbarLayout(
               title: "Local Conveyence",
               navigateTo: const Dashboard(),
               searchHint: "Search name....",
-              onSearch: (query) =>  ref.read(localConvienceProvider.notifier).filter(query),
+              onSearch: (query) =>
+                  ref.read(localConvienceProvider.notifier).filter(query),
             ),
             Expanded(
               child: Container(
@@ -53,10 +65,22 @@ class LocalConveyence extends ConsumerWidget {
                     return ListView.builder(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 20),
+                      // ✅ Extra bottom padding so FAB doesn't overlap last card
                       itemCount: list.length,
                       itemBuilder: (context, index) {
                         final item = list[index];
-                        return LocalConveyenceCard(item: item,VimsUserTypeId:VimsUserTypeId);
+                        return LocalConveyenceCard(
+                          item: item,
+                          VimsUserTypeId: VimsUserTypeId,
+                          onDetails: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    LocalConveyenceDetail(item: item),
+                              ),
+                            );
+                          },
+                        );
                       },
                     );
                   },

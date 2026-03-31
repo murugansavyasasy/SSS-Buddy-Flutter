@@ -12,6 +12,7 @@ import '../auth/model/FinancialYearModel.dart';
 import '../auth/model/ImportantInfoModel.dart';
 import '../auth/model/InvoiceModel.dart';
 import '../auth/model/LocalConveyenceModel.dart';
+import '../auth/model/LocalExpenseDetailModel.dart';
 import '../auth/model/ManagementInfo.dart';
 import '../auth/model/PO_listModal.dart';
 import '../auth/model/SchoolDocuments.dart';
@@ -305,6 +306,17 @@ class ClientRepository {
     return data.map((e) => PoDetailsModel.fromJson(e)).toList();
   }
 
+
+  Future<List<Localexpensedetailmodel>> getlocalconviencedetail(
+      String idLocalExpense,
+      ) async {
+    final response = await client.get(
+      AppEndpoint.getlocalconviencedetail,
+      query: {"idLocalExpense": idLocalExpense},
+    );
+    final List data = response.data;
+    return data.map((e) => Localexpensedetailmodel.fromJson(e)).toList();
+  }
 
 }
 

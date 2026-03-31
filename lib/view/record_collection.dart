@@ -259,7 +259,6 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
                           final displayText =
                               "${invoice.InvoiceNumber ?? ''} - ${invoice.PendingAmount ?? '0'}";
 
-                          _amountController.text = invoice.PendingAmount?.toString() ?? '';
 
                           return FormInputField(
                             controller: TextEditingController(text: displayText),
