@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:sssbuddy/auth/model/CreatedemoResponse.dart';
 import 'package:sssbuddy/auth/model/UsageCount.dart';
 import 'package:sssbuddy/repository/app_endpoint.dart';
+import '../auth/model/AdvanceTourExpenseDetailModel.dart';
 import '../auth/model/AdvanceTourExpenseModel.dart';
 import '../auth/model/ChangePassword.dart';
 import '../auth/model/CircularModel.dart';
@@ -318,6 +319,18 @@ class ClientRepository {
     return data.map((e) => Localexpensedetailmodel.fromJson(e)).toList();
   }
 
+
+  Future<List<Advancetourexpensedetailmodel>> getadvancetourdetails(
+      String idTourExpense,
+      ) async {
+    final response = await client.get(
+      AppEndpoint.getlocalconviencedetail,
+      query: {"idTourExpense" : idTourExpense,"cmd": "Advance"},
+
+    );
+    final List data = response.data;
+    return data.map((e) => Advancetourexpensedetailmodel.fromJson(e)).toList();
+  }
 }
 
 

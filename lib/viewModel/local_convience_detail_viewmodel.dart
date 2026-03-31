@@ -5,7 +5,7 @@ import 'login_view_model.dart';
 
 class LocalConvienceDetailViewmodel extends AsyncNotifier<List<Localexpensedetailmodel>> {
   String? idLocalExpense;
-  bool _fetched = false; // 👈 guard flag
+  bool _fetched = false;
 
   @override
   Future<List<Localexpensedetailmodel>> build() async {
@@ -20,7 +20,7 @@ class LocalConvienceDetailViewmodel extends AsyncNotifier<List<Localexpensedetai
   }
 
   void fetchDetail(String id) {
-    if (_fetched && idLocalExpense == id) return; // 👈 skip if already fetched
+    if (_fetched && idLocalExpense == id) return;
     _fetched = true;
     idLocalExpense = id;
     ref.invalidateSelf();

@@ -245,7 +245,6 @@ class TourExpenseCard extends StatelessWidget {
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () {
-                          // TODO: Navigate to Details
                         },
                         icon: const Icon(Icons.info_outline_rounded, size: 16),
                         label: const Text(

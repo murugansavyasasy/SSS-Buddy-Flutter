@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sssbuddy/view/customer_info_view.dart';
-
 import '../Values/Colors/app_colors.dart';
 import '../components/customer_card_details.dart';
 import '../components/toolbar_layout.dart';
