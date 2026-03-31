@@ -179,8 +179,6 @@ class _HeaderCard extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 10),
-
-        // ── Name + icon ───────────────────────────────────────────
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -504,7 +502,7 @@ class AppCard extends StatelessWidget {
                         fontWeight: FontWeight.bold, fontSize: 15)),
               ],
             ),
-            const Divider(height: 20),
+            const Divider(height: 20,color: const Color(0xFFD1D1D6)),
           ],
           child,
         ],
