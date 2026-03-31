@@ -19,15 +19,11 @@ class _POPreviewViewState extends ConsumerState<POPreviewView> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _fetchData());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(poDetailsProvider.notifier)
+          .getPoDetails(widget.purchaseOrderId); // one-time fetch
+    });
   }
-
-  Future<void> _fetchData() async {
-    await ref
-        .read(poDetailsProvider.notifier)
-        .getPoDetails(widget.purchaseOrderId);
-  }
-
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(poDetailsProvider);
