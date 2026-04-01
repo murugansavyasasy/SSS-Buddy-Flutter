@@ -324,7 +324,7 @@ class ClientRepository {
       String idTourExpense,
       ) async {
     final response = await client.get(
-      AppEndpoint.getlocalconviencedetail,
+      AppEndpoint.gettourexpensedetal,
       query: {"idTourExpense" : idTourExpense,"cmd": "Advance"},
 
     );

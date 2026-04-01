@@ -1,9 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' hide VerticalDivider;
 import 'package:sssbuddy/auth/model/AdvanceTourExpenseModel.dart';
+import 'package:sssbuddy/view/move_to_toursettlement.dart';
 
 import '../Values/Colors/app_colors.dart';
 import '../view/ManagementInfo/info_row.dart';
+import '../view/adavance_tour_expense_detail.dart';
+import '../view/local_conveyence_detail.dart';
 import 'AmountTile.dart';
 
 class TourExpenseCard extends StatelessWidget {
@@ -223,7 +226,12 @@ class TourExpenseCard extends StatelessWidget {
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () {
-                          // TODO: Handle Move to Tour Settlement
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  MoveToToursettlement(item: item),
+                            ),
+                          );
                         },
                         icon: const Icon(Icons.swap_horiz_rounded, size: 16),
                         label: const Text(
@@ -245,6 +253,12 @@ class TourExpenseCard extends StatelessWidget {
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  AdavanceTourExpenseDetail(item: item),
+                            ),
+                          );
                         },
                         icon: const Icon(Icons.info_outline_rounded, size: 16),
                         label: const Text(

@@ -25,6 +25,13 @@ class AdvanceTourExpense extends ConsumerWidget {
       ),
       child: Scaffold(
         backgroundColor: AppColors.primary,
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+
+          },
+          backgroundColor: AppColors.primary,
+          child: const Icon(Icons.add, color: Colors.white),
+        ),
         body: Column(
           children: [
             ToolbarLayout(
