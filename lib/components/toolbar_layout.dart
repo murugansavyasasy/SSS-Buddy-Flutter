@@ -3,19 +3,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../Values/Colors/app_colors.dart';
+import 'package:dropdown_button2/dropdown_button2.dart';
 
 class ToolbarLayout extends ConsumerStatefulWidget {
   final String title;
   final Widget? navigateTo;
   final ValueChanged<String>? onSearch;
   final String searchHint;
-
+  final ValueChanged<String>? onMonthChanged;
+  final String? selectedMonth;
   const ToolbarLayout({
     super.key,
     required this.title,
     this.navigateTo,
     this.onSearch,
-    this.searchHint = "Search...",
+    this.searchHint = "Search...", this.onMonthChanged, this.selectedMonth,
   });
 
   @override
@@ -24,8 +26,14 @@ class ToolbarLayout extends ConsumerStatefulWidget {
 
 class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
     with SingleTickerProviderStateMixin {
+  final List<String> _months = const [
+    "January", "February", "March", "April",
+    "May", "June", "July", "August",
+    "September", "October", "November", "December"
+  ];
   bool _searchOpen = false;
   final TextEditingController _controller = TextEditingController();
+
   late final AnimationController _animController;
   late final Animation<double> _fade;
 
@@ -63,7 +71,6 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
   Widget build(BuildContext context) {
     final double topPadding = MediaQuery.of(context).padding.top;
     final bool hasSearch = widget.onSearch != null;
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -183,6 +190,52 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                         contentPadding:
                         const EdgeInsets.symmetric(vertical: 12),
                       ),
+                    ),
+                  ),
+                ),
+              ),
+            if (widget.onMonthChanged != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Container(
+                  height: 44,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton2<String>(
+                      value: widget.selectedMonth ?? _months.first,
+                      isExpanded: true,
+                      dropdownStyleData: DropdownStyleData(
+                        maxHeight: 250,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          color: Colors.white,
+                        ),
+                        offset: const Offset(0, 8),
+                      ),
+                      buttonStyleData: const ButtonStyleData(
+                        height: 44,
+                      ),
+                      iconStyleData: const IconStyleData(
+                        icon: Icon(Icons.keyboard_arrow_down),
+                      ),
+                      items: _months.map((month) {
+                        return DropdownMenuItem(
+                          value: month,
+                          child: Text(
+                            month,
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        if (val != null) {
+                          widget.onMonthChanged?.call(val);
+                        }
+                      },
                     ),
                   ),
                 ),

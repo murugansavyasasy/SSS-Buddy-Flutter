@@ -7,6 +7,7 @@ import '../components/LocalConveyenceCard.dart';
 import '../components/toolbar_layout.dart';
 import '../viewModel/local_conveyence_viewmodel.dart';
 import '../viewModel/login_view_model.dart';
+import 'add_localconvenyence.dart';
 import 'dashboard.dart';
 import 'local_conveyence_detail.dart';
 
@@ -32,7 +33,12 @@ class LocalConveyence extends ConsumerWidget {
 
         floatingActionButton: FloatingActionButton(
           onPressed: () {
-
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => AddLocalConveyence(),
+              ),
+            );
           },
           backgroundColor: AppColors.primary,
           child: const Icon(Icons.add, color: Colors.white),
@@ -65,7 +71,6 @@ class LocalConveyence extends ConsumerWidget {
                     return ListView.builder(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 20),
-                      // ✅ Extra bottom padding so FAB doesn't overlap last card
                       itemCount: list.length,
                       itemBuilder: (context, index) {
                         final item = list[index];
@@ -77,6 +82,15 @@ class LocalConveyence extends ConsumerWidget {
                               MaterialPageRoute(
                                 builder: (_) =>
                                     LocalConveyenceDetail(item: item),
+                              ),
+                            );
+                          },
+                          // ✏️ EDIT
+                          onEdit: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => AddLocalConveyence(),
                               ),
                             );
                           },
