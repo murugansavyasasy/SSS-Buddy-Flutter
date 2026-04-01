@@ -2,13 +2,14 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../Values/Colors/app_colors.dart';
 import '../components/LocalConveyenceCard.dart';
 import '../components/toolbar_layout.dart';
 import '../viewModel/local_conveyence_viewmodel.dart';
 import '../viewModel/login_view_model.dart';
+import 'add_localconvenyence.dart';
 import 'dashboard.dart';
+import 'local_conveyence_detail.dart';
 
 class LocalConveyence extends ConsumerWidget {
   const LocalConveyence({super.key});
@@ -19,6 +20,7 @@ class LocalConveyence extends ConsumerWidget {
     final loginState = ref.watch(loginProvider);
     final loginData = loginState.value;
     final VimsUserTypeId = loginData?.VimsUserTypeId;
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -28,13 +30,28 @@ class LocalConveyence extends ConsumerWidget {
       ),
       child: Scaffold(
         backgroundColor: AppColors.primary,
+
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => AddLocalConveyence(),
+              ),
+            );
+          },
+          backgroundColor: AppColors.primary,
+          child: const Icon(Icons.add, color: Colors.white),
+        ),
+
         body: Column(
           children: [
             ToolbarLayout(
               title: "Local Conveyence",
               navigateTo: const Dashboard(),
               searchHint: "Search name....",
-              onSearch: (query) =>  ref.read(localConvienceProvider.notifier).filter(query),
+              onSearch: (query) =>
+                  ref.read(localConvienceProvider.notifier).filter(query),
             ),
             Expanded(
               child: Container(
@@ -57,7 +74,27 @@ class LocalConveyence extends ConsumerWidget {
                       itemCount: list.length,
                       itemBuilder: (context, index) {
                         final item = list[index];
-                        return LocalConveyenceCard(item: item,VimsUserTypeId:VimsUserTypeId);
+                        return LocalConveyenceCard(
+                          item: item,
+                          VimsUserTypeId: VimsUserTypeId,
+                          onDetails: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    LocalConveyenceDetail(item: item),
+                              ),
+                            );
+                          },
+                          // ✏️ EDIT
+                          onEdit: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => AddLocalConveyence(),
+                              ),
+                            );
+                          },
+                        );
                       },
                     );
                   },

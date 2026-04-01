@@ -14,6 +14,12 @@ class AppEndpoint {
   static const customerinfo = "api/AppDetails/GetIndvidualCustomerInfo";
   static const schooldocuments = "api/AppDetails/GetSchoolDocuments";
   static const getimportantinfo = "GetImportantInfo";
+  static const getAdvanceTourExpenses = "api/AppDetails/GetAdvanceTourExpenses";
+  static const getSchoolName = "api/GetDetails/DemoGetCustomerList";
+  static const getFinancialyear = "api/GetDetails/getFinancialYearForApp";
+  static const getInvoiceValue = "api/GetDetails/DemoGetInvoiceByCustomerID";
   static const getponummerbycustomer = "api/GetDetails/GetPONumbersByCustomer";
   static const getindiualpoforapp = "api/AppDetails/GetIndvidualSchoolPoInfoForApp";
+  static const getlocalconviencedetail = "api/GetDetails/GetLocalExpenseSummary";
+
 }
