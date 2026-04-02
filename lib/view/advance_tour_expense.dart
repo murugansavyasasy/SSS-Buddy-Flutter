@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sssbuddy/view/add_advance_tour_expense.dart';
 import 'package:sssbuddy/viewModel/advance_tourexpense_viewmodel.dart';
 
 import '../Values/Colors/app_colors.dart';
@@ -27,7 +28,12 @@ class AdvanceTourExpense extends ConsumerWidget {
         backgroundColor: AppColors.primary,
         floatingActionButton: FloatingActionButton(
           onPressed: () {
-
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) =>
+                    AddAdvanceTourExpense(),
+              ),
+            );
           },
           backgroundColor: AppColors.primary,
           child: const Icon(Icons.add, color: Colors.white),
