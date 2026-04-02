@@ -12,12 +12,16 @@ class ToolbarLayout extends ConsumerStatefulWidget {
   final String searchHint;
   final ValueChanged<String>? onMonthChanged;
   final String? selectedMonth;
+  final VoidCallback? onBackPressed;
   const ToolbarLayout({
     super.key,
     required this.title,
     this.navigateTo,
     this.onSearch,
-    this.searchHint = "Search...", this.onMonthChanged, this.selectedMonth,
+    this.searchHint = "Search...",
+    this.onMonthChanged,
+    this.selectedMonth,
+    this.onBackPressed,
   });
 
   @override
@@ -94,7 +98,13 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                 GestureDetector(
                   onTap: _searchOpen
                       ? _closeSearch
-                      : () => Navigator.pop(context),
+                      : ()  {
+                    if (widget.onBackPressed != null) {
+                      widget.onBackPressed!();
+                    } else {
+                      Navigator.pop(context);
+                    }
+                  },
                   child: Container(
                     height: 42,
                     width: 42,

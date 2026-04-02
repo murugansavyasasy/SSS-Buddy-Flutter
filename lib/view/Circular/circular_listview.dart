@@ -14,8 +14,14 @@ class CircularListview extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final circularAsync = ref.watch(circularviewProvider);
+    return PopScope(
+        onPopInvokedWithResult: (didPop, result) {
+          if (didPop) {
+            ref.read(circularviewProvider.notifier).filter('');
+          }
+        },
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
+    child: AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
@@ -67,6 +73,7 @@ class CircularListview extends ConsumerWidget {
           ],
         ),
       ),
+    )
     );
   }
 }
