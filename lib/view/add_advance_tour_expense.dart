@@ -75,6 +75,7 @@ class _AddAdvanceTourExpenseState extends ConsumerState<AddAdvanceTourExpense> {
   ];
 
   void _calculateTotal() {
+    //changed  by balu
     double total = 0.0;
     for (final ctrl in _summaryControllers) {
       total += double.tryParse(ctrl.text.trim()) ?? 0.0;
