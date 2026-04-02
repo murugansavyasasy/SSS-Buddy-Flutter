@@ -5,8 +5,7 @@ import 'package:sssbuddy/viewModel/login_view_model.dart';
 
 import '../provider/app_providers.dart';
 
-class CustomerDetailsViewmodel
-    extends AsyncNotifier<List<Customerdetailsmodel>> {
+class CustomerDetailsViewmodel extends AsyncNotifier<List<Customerdetailsmodel>> {
   List<Customerdetailsmodel> _all = [];
   @override
   Future<List<Customerdetailsmodel>> build() async {

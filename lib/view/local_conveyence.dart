@@ -21,90 +21,98 @@ class LocalConveyence extends ConsumerWidget {
     final loginData = loginState.value;
     final VimsUserTypeId = loginData?.VimsUserTypeId;
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
-        systemNavigationBarColor: Colors.white,
-        systemNavigationBarIconBrightness: Brightness.dark,
-      ),
-      child: Scaffold(
-        backgroundColor: AppColors.primary,
+    return PopScope(
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) {
+          ref.read(localConvienceProvider.notifier).filter('');
+        }
+      },
 
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => AddLocalConveyence(),
-              ),
-            );
-          },
-          backgroundColor: AppColors.primary,
-          child: const Icon(Icons.add, color: Colors.white),
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          systemNavigationBarColor: Colors.white,
+          systemNavigationBarIconBrightness: Brightness.dark,
         ),
+        child: Scaffold(
+          backgroundColor: AppColors.primary,
 
-        body: Column(
-          children: [
-            ToolbarLayout(
-              title: "Local Conveyence",
-              navigateTo: const Dashboard(),
-              searchHint: "Search name....",
-              onSearch: (query) =>
-                  ref.read(localConvienceProvider.notifier).filter(query),
-            ),
-            Expanded(
-              child: Container(
-                width: double.infinity,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(25),
-                    topRight: Radius.circular(25),
+          floatingActionButton: FloatingActionButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => AddLocalConveyence()),
+              );
+            },
+            backgroundColor: AppColors.primary,
+            child: const Icon(Icons.add, color: Colors.white),
+          ),
+
+          body: Column(
+            children: [
+              ToolbarLayout(
+                title: "Local Conveyence",
+                navigateTo: const Dashboard(),
+                searchHint: "Search name....",
+                onSearch: (query) =>
+                    ref.read(localConvienceProvider.notifier).filter(query),
+              ),
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(25),
+                      topRight: Radius.circular(25),
+                    ),
+                  ),
+                  child: localconveyenceAsync.when(
+                    data: (list) {
+                      if (list.isEmpty) {
+                        return const Center(child: Text("No Data Found"));
+                      }
+                      return ListView.builder(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 20,
+                        ),
+                        itemCount: list.length,
+                        itemBuilder: (context, index) {
+                          final item = list[index];
+                          return LocalConveyenceCard(
+                            item: item,
+                            VimsUserTypeId: VimsUserTypeId,
+                            onDetails: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      LocalConveyenceDetail(item: item),
+                                ),
+                              );
+                            },
+                            // ✏️ EDIT
+                            onEdit: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => AddLocalConveyence(),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      );
+                    },
+                    error: (e, _) => Center(child: Text("Error: $e")),
+                    loading: () =>
+                        const Center(child: CircularProgressIndicator()),
                   ),
                 ),
-                child: localconveyenceAsync.when(
-                  data: (list) {
-                    if (list.isEmpty) {
-                      return const Center(child: Text("No Data Found"));
-                    }
-                    return ListView.builder(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 20),
-                      itemCount: list.length,
-                      itemBuilder: (context, index) {
-                        final item = list[index];
-                        return LocalConveyenceCard(
-                          item: item,
-                          VimsUserTypeId: VimsUserTypeId,
-                          onDetails: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    LocalConveyenceDetail(item: item),
-                              ),
-                            );
-                          },
-                          // ✏️ EDIT
-                          onEdit: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => AddLocalConveyence(),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    );
-                  },
-                  error: (e, _) => Center(child: Text("Error: $e")),
-                  loading: () =>
-                  const Center(child: CircularProgressIndicator()),
-                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

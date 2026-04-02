@@ -22,5 +22,6 @@ class AppEndpoint {
   static const getindiualpoforapp = "api/AppDetails/GetIndvidualSchoolPoInfoForApp";
   static const getlocalconviencedetail = "api/GetDetails/GetLocalExpenseSummary";
   static const gettourexpensedetal = "api/GetDetails/GetTourExpenseSummary";
+  static const getsalespersondetails = "api/AppDetails/GetSalesPersonDD";
 
 }

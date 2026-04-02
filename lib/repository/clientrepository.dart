@@ -16,6 +16,7 @@ import '../auth/model/LocalConveyenceModel.dart';
 import '../auth/model/LocalExpenseDetailModel.dart';
 import '../auth/model/ManagementInfo.dart';
 import '../auth/model/PO_listModal.dart';
+import '../auth/model/SalesPersonModel.dart';
 import '../auth/model/SchoolDocuments.dart';
 import '../auth/model/SchoolNameModel.dart';
 import '../auth/model/Validatelogin.dart';
@@ -330,6 +331,18 @@ class ClientRepository {
     );
     final List data = response.data;
     return data.map((e) => Advancetourexpensedetailmodel.fromJson(e)).toList();
+  }
+
+
+  Future<List<Salespersonmodel>> getsalesperson(String IdUser) async {
+    final response = await client.get(
+      AppEndpoint.getsalespersondetails,
+      query: {"idUser" : IdUser},
+    );
+
+    final List data = response.data;
+
+    return data.map((e) => Salespersonmodel.fromJson(e)).toList();
   }
 }
 

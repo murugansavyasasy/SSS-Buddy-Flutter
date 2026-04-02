@@ -16,7 +16,14 @@ class CustomerListView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final customerlistAsync = ref.watch(customerviewProvider);
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
+    return PopScope(
+        onPopInvokedWithResult: (didPop, result) {
+          if (didPop) {
+            ref.read(customerviewProvider.notifier).filter('');
+          }
+        },
+
+    child: AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
@@ -79,6 +86,7 @@ class CustomerListView extends ConsumerWidget {
           ],
         ),
       ),
+    )
     );
   }
 }

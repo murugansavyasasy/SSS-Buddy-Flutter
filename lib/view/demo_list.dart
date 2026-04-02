@@ -13,57 +13,67 @@ class DemoListView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final demoAsync = ref.watch(demoviewProvider);
+    return PopScope(
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) {
+          ref.read(demoviewProvider.notifier).filter('');
+        }
+      },
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          systemNavigationBarColor: Colors.white,
+          systemNavigationBarIconBrightness: Brightness.dark,
+        ),
+        child: Scaffold(
+          backgroundColor: AppColors.primary,
+          body: Column(
+            children: [
+              ToolbarLayout(
+                title: "Demo List",
+                navigateTo: const Dashboard(),
+                searchHint: "Search school name....",
+                onSearch: (query) =>
+                    ref.read(demoviewProvider.notifier).filter(query),
+                onBackPressed: () {
+                  ref.read(demoviewProvider.notifier).filter('');
+                  Navigator.pop(context);
+                },
+              ),
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
-        systemNavigationBarColor: Colors.white,
-        systemNavigationBarIconBrightness: Brightness.dark,
-      ),
-      child: Scaffold(
-        backgroundColor: AppColors.primary,
-        body: Column(
-          children: [
-            ToolbarLayout(
-              title: "Demo List",
-              navigateTo: const Dashboard(),
-              searchHint: "Search school name....",
-              onSearch: (query) =>
-                  ref.read(demoviewProvider.notifier).filter(query),
-            ),
-
-            Expanded(
-              child: Container(
-                width: double.infinity,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(25),
-                    topRight: Radius.circular(25),
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(25),
+                      topRight: Radius.circular(25),
+                    ),
+                  ),
+                  child: demoAsync.when(
+                    loading: () =>
+                        const Center(child: CircularProgressIndicator()),
+                    error: (e, _) => Center(child: Text("Error: $e")),
+                    data: (list) {
+                      if (list.isEmpty) {
+                        return const Center(child: Text("No Data Found"));
+                      }
+                      return ListView.builder(
+                        padding: const EdgeInsets.all(12),
+                        itemCount: list.length,
+                        itemBuilder: (context, index) {
+                          final item = list[index];
+                          return DemoCard(item: item);
+                        },
+                      );
+                    },
                   ),
                 ),
-                child: demoAsync.when(
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(child: Text("Error: $e")),
-                  data: (list) {
-                    if (list.isEmpty) {
-                      return const Center(child: Text("No Data Found"));
-                    }
-                    return ListView.builder(
-                      padding: const EdgeInsets.all(12),
-                      itemCount: list.length,
-                      itemBuilder: (context, index) {
-                        final item = list[index];
-                        return DemoCard(item: item);
-                      },
-                    );
-                  },
-                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
