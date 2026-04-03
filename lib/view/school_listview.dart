@@ -2,14 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sssbuddy/view/school_detail/schooldetail_view.dart';
-
 import '../Values/Colors/app_colors.dart';
 import '../auth/model/SchoolFilter.dart';
 import '../components/school_card.dart';
 import '../components/toolbar_layout.dart';
 import '../provider/app_providers.dart';
 import '../utils/filter_utils.dart';
-import '../utils/routes/routes_name.dart';
 import '../viewModel/schoollist_view_model.dart';
 import 'dashboard.dart';
 
@@ -20,8 +18,13 @@ class SchoolListview extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final schoolAsync = ref.watch(schoolStatsProvider);
     final selectedFilter = ref.watch(selectedFilterProvider);
-
-    return  AnnotatedRegion<SystemUiOverlayStyle>(
+    return PopScope(
+        onPopInvokedWithResult: (didPop, result) {
+          if (didPop) {
+            ref.read(schoolStatsProvider.notifier).filter('');
+          }
+        },
+    child:  AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
@@ -30,9 +33,12 @@ class SchoolListview extends ConsumerWidget {
         backgroundColor: AppColors.primary,
         body: Column(
           children: [
-            const ToolbarLayout(
+             ToolbarLayout(
               title: "School List",
               navigateTo: Dashboard(),
+              searchHint: "Search school name....",
+              onSearch: (query) =>
+                  ref.read(schoolStatsProvider.notifier).filter(query),
             ),
 
 
@@ -119,6 +125,7 @@ class SchoolListview extends ConsumerWidget {
           ],
         ),
       ),
+    )
     );
   }
 }

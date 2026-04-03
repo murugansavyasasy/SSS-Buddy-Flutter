@@ -63,3 +63,44 @@ SchoolStats calculateSchoolStatsFromJson(String jsonString) {
 
   );
 }
+
+
+SchoolStats calculateSchoolStatsFromList(List<dynamic> data) {
+  int totalSchools = data.length;
+  int liveActive = 0;
+  int liveInactive = 0;
+  int pocActive = 0;
+  int pocInactive = 0;
+  int stopped = 0;
+
+  for (final item in data) {
+    final status = item["Status"]?.toString().toUpperCase() ?? "";
+    final isActive = item["isActive"]?.toString() ?? "0";
+
+    if (status == "LIVE") {
+      if (isActive == "1") {
+        liveActive++;
+      } else {
+        liveInactive++;
+      }
+    } else if (status == "POC") {
+      if (isActive == "1") {
+        pocActive++;
+      } else {
+        pocInactive++;
+      }
+    } else if (status == "STOPPED") {
+      stopped++;
+    }
+  }
+
+  return SchoolStats(
+    totalSchools: totalSchools,
+    liveActive: liveActive,
+    liveInactive: liveInactive,
+    pocActive: pocActive,
+    pocInactive: pocInactive,
+    stopped: stopped,
+    rawList: data,
+  );
+}

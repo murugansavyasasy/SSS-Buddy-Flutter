@@ -11,10 +11,9 @@ class ToolbarLayout extends ConsumerStatefulWidget {
   final ValueChanged<String>? onSearch;
   final String searchHint;
   final ValueChanged<String>? onMonthChanged;
-  final ValueChanged<String>? onRoleChanged;
   final String? selectedMonth;
-  final String? selectedRole;
-  final List<String>? rolesList; // role list
+  final VoidCallback? onBackPressed;
+  final List<String>? dropdownLists;
   const ToolbarLayout({
     super.key,
     required this.title,
@@ -23,9 +22,8 @@ class ToolbarLayout extends ConsumerStatefulWidget {
     this.searchHint = "Search...",
     this.onMonthChanged,
     this.selectedMonth,
-    this.onRoleChanged,
-    this.selectedRole,
-    this.rolesList,
+    this.onBackPressed,
+    this.dropdownLists,
   });
 
   @override
@@ -34,12 +32,6 @@ class ToolbarLayout extends ConsumerStatefulWidget {
 
 class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
     with SingleTickerProviderStateMixin {
-  final List<String> _months = const [
-    "January", "February", "March", "April",
-    "May", "June", "July", "August",
-    "September", "October", "November", "December"
-  ];
-
   bool _searchOpen = false;
   final TextEditingController _controller = TextEditingController();
 
@@ -80,6 +72,7 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
   Widget build(BuildContext context) {
     final double topPadding = MediaQuery.of(context).padding.top;
     final bool hasSearch = widget.onSearch != null;
+    final List<String> dropdownLists = widget.dropdownLists ?? [];
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -98,13 +91,18 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Header row with back & search
             Row(
               children: [
                 GestureDetector(
                   onTap: _searchOpen
                       ? _closeSearch
-                      : () => Navigator.pop(context),
+                      : ()  {
+                    if (widget.onBackPressed != null) {
+                      widget.onBackPressed!();
+                    } else {
+                      Navigator.pop(context);
+                    }
+                  },
                   child: Container(
                     height: 42,
                     width: 42,
@@ -112,16 +110,20 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(21),
                     ),
-                    child: const Center(
+                    child: Center(
                       child: Icon(
-                        Icons.arrow_back,
+                        _searchOpen
+                            ? Icons.arrow_back
+                            : Icons.arrow_back,
                         color: Colors.black,
                         size: 20,
                       ),
                     ),
                   ),
                 ),
+
                 const SizedBox(width: 12),
+
                 Expanded(
                   child: Text(
                     widget.title,
@@ -132,6 +134,7 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                     ),
                   ),
                 ),
+
                 if (hasSearch && !_searchOpen)
                   GestureDetector(
                     onTap: _openSearch,
@@ -153,7 +156,6 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
               ],
             ),
 
-            // Search field
             if (hasSearch && _searchOpen)
               FadeTransition(
                 opacity: _fade,
@@ -200,13 +202,9 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                   ),
                 ),
               ),
-
-            const SizedBox(height: 12),
-
-            // Month Dropdown
             if (widget.onMonthChanged != null)
               Padding(
-                padding: const EdgeInsets.only(top: 0),
+                padding: const EdgeInsets.only(top: 12),
                 child: Container(
                   height: 44,
                   padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -216,7 +214,7 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton2<String>(
-                      value: widget.selectedMonth ?? _months.first,
+                      value: widget.selectedMonth ?? dropdownLists.first,
                       isExpanded: true,
                       dropdownStyleData: DropdownStyleData(
                         maxHeight: 250,
@@ -226,11 +224,13 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                         ),
                         offset: const Offset(0, 8),
                       ),
-                      buttonStyleData: const ButtonStyleData(height: 44),
+                      buttonStyleData: const ButtonStyleData(
+                        height: 44,
+                      ),
                       iconStyleData: const IconStyleData(
                         icon: Icon(Icons.keyboard_arrow_down),
                       ),
-                      items: _months.map((month) {
+                      items: dropdownLists.map((month) {
                         return DropdownMenuItem(
                           value: month,
                           child: Text(
@@ -239,57 +239,12 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                           ),
                         );
                       }).toList(),
-                      onChanged: (val) {
-                        if (val != null) {
-                          widget.onMonthChanged?.call(val);
+                        onChanged: (val) {
+                          if (val != null) {
+                            widget.onMonthChanged?.call(val);
+                          }
                         }
-                      },
                     ),
-                  ),
-                ),
-              ),
-
-            const SizedBox(height: 12),
-
-            // Role/User Dropdown
-            if (widget.onRoleChanged != null && widget.rolesList != null)
-              Container(
-                height: 44,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton2<String>(
-                    value: widget.selectedRole ?? widget.rolesList!.first,
-                    isExpanded: true,
-                    dropdownStyleData: DropdownStyleData(
-                      maxHeight: 250,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        color: Colors.white,
-                      ),
-                      offset: const Offset(0, 8),
-                    ),
-                    buttonStyleData: const ButtonStyleData(height: 44),
-                    iconStyleData: const IconStyleData(
-                      icon: Icon(Icons.keyboard_arrow_down),
-                    ),
-                    items: widget.rolesList!.map((role) {
-                      return DropdownMenuItem(
-                        value: role,
-                        child: Text(
-                          role,
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (val) {
-                      if (val != null) {
-                        widget.onRoleChanged?.call(val);
-                      }
-                    },
                   ),
                 ),
               ),
