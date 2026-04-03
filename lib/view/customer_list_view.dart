@@ -50,6 +50,7 @@ class CustomerListView extends ConsumerWidget {
                   error: (e, _) => Center(child: Text("Error: $e")),
                   data: (list) {
                     if (list.isEmpty) {
+
                       return const Center(child: Text("No Data Found"));
                     }
                     return ListView.builder(
