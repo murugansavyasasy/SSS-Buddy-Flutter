@@ -15,7 +15,9 @@ import '../auth/model/InvoiceModel.dart';
 import '../auth/model/LocalConveyenceModel.dart';
 import '../auth/model/LocalExpenseDetailModel.dart';
 import '../auth/model/ManagementInfo.dart';
+import '../auth/model/OverallTripDetailsModel.dart';
 import '../auth/model/PO_listModal.dart';
+import '../auth/model/ReportingMembersModel.dart';
 import '../auth/model/SalesPersonModel.dart';
 import '../auth/model/SchoolDocuments.dart';
 import '../auth/model/SchoolNameModel.dart';
@@ -343,6 +345,28 @@ class ClientRepository {
     final List data = response.data;
 
     return data.map((e) => Salespersonmodel.fromJson(e)).toList();
+  }
+
+  Future<List<Reportingmembersmodel>> getreportingmembers(String IdUser) async {
+    final response = await client.get(
+      AppEndpoint.getsalespersondetails,
+      query: {"UserId" : IdUser},
+    );
+
+    final List data = response.data;
+
+    return data.map((e) => Reportingmembersmodel.fromJson(e)).toList();
+  }
+
+  Future<List<Overalltripdetailsmodel>> getoveralldetails(String idMember) async {
+    final response = await client.get(
+      AppEndpoint.getsalespersondetails,
+      query: {"UserId" : idMember},
+    );
+
+    final List data = response.data;
+
+    return data.map((e) => Overalltripdetailsmodel.fromJson(e)).toList();
   }
 }
 
