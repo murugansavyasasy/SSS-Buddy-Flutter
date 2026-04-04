@@ -13,6 +13,7 @@ class ToolbarLayout extends ConsumerStatefulWidget {
   final ValueChanged<String>? onMonthChanged;
   final String? selectedMonth;
   final VoidCallback? onBackPressed;
+  final List<String>? dropdownLists;
   const ToolbarLayout({
     super.key,
     required this.title,
@@ -22,6 +23,7 @@ class ToolbarLayout extends ConsumerStatefulWidget {
     this.onMonthChanged,
     this.selectedMonth,
     this.onBackPressed,
+    this.dropdownLists,
   });
 
   @override
@@ -30,20 +32,6 @@ class ToolbarLayout extends ConsumerStatefulWidget {
 
 class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
     with SingleTickerProviderStateMixin {
-  final List<String> _months = const [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
   bool _searchOpen = false;
   final TextEditingController _controller = TextEditingController();
 
@@ -84,6 +72,7 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
   Widget build(BuildContext context) {
     final double topPadding = MediaQuery.of(context).padding.top;
     final bool hasSearch = widget.onSearch != null;
+    final List<String> dropdownLists = widget.dropdownLists ?? [];
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -107,13 +96,13 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                 GestureDetector(
                   onTap: _searchOpen
                       ? _closeSearch
-                      : () {
-                          if (widget.onBackPressed != null) {
-                            widget.onBackPressed!();
-                          } else {
-                            Navigator.pop(context);
-                          }
-                        },
+                      : ()  {
+                    if (widget.onBackPressed != null) {
+                      widget.onBackPressed!();
+                    } else {
+                      Navigator.pop(context);
+                    }
+                  },
                   child: Container(
                     height: 42,
                     width: 42,
@@ -123,7 +112,9 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                     ),
                     child: Center(
                       child: Icon(
-                        _searchOpen ? Icons.arrow_back : Icons.arrow_back,
+                        _searchOpen
+                            ? Icons.arrow_back
+                            : Icons.arrow_back,
                         color: Colors.black,
                         size: 20,
                       ),
@@ -190,29 +181,22 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                           fontSize: 14,
                           color: Colors.grey.shade400,
                         ),
-                        prefixIcon: Icon(
-                          Icons.search,
-                          color: Colors.grey.shade400,
-                          size: 20,
-                        ),
+                        prefixIcon: Icon(Icons.search,
+                            color: Colors.grey.shade400, size: 20),
                         suffixIcon: _controller.text.isNotEmpty
                             ? GestureDetector(
-                                onTap: () {
-                                  _controller.clear();
-                                  widget.onSearch?.call('');
-                                  setState(() {});
-                                },
-                                child: Icon(
-                                  Icons.close,
-                                  color: Colors.grey.shade400,
-                                  size: 18,
-                                ),
-                              )
+                          onTap: () {
+                            _controller.clear();
+                            widget.onSearch?.call('');
+                            setState(() {});
+                          },
+                          child: Icon(Icons.close,
+                              color: Colors.grey.shade400, size: 18),
+                        )
                             : null,
                         border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 12,
-                        ),
+                        contentPadding:
+                        const EdgeInsets.symmetric(vertical: 12),
                       ),
                     ),
                   ),
@@ -230,7 +214,7 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton2<String>(
-                      value: widget.selectedMonth ?? _months.first,
+                      value: widget.selectedMonth ?? dropdownLists.first,
                       isExpanded: true,
                       dropdownStyleData: DropdownStyleData(
                         maxHeight: 250,
@@ -240,11 +224,13 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                         ),
                         offset: const Offset(0, 8),
                       ),
-                      buttonStyleData: const ButtonStyleData(height: 44),
+                      buttonStyleData: const ButtonStyleData(
+                        height: 44,
+                      ),
                       iconStyleData: const IconStyleData(
                         icon: Icon(Icons.keyboard_arrow_down),
                       ),
-                      items: _months.map((month) {
+                      items: dropdownLists.map((month) {
                         return DropdownMenuItem(
                           value: month,
                           child: Text(
@@ -253,11 +239,11 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                           ),
                         );
                       }).toList(),
-                      onChanged: (val) {
-                        if (val != null) {
-                          widget.onMonthChanged?.call(val);
+                        onChanged: (val) {
+                          if (val != null) {
+                            widget.onMonthChanged?.call(val);
+                          }
                         }
-                      },
                     ),
                   ),
                 ),

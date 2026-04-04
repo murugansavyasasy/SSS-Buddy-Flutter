@@ -7,13 +7,21 @@ import '../provider/app_providers.dart';
 
 class CustomerDetailsViewmodel extends AsyncNotifier<List<Customerdetailsmodel>> {
   List<Customerdetailsmodel> _all = [];
+  String _selectedSalesPersonId = "0";
   @override
   Future<List<Customerdetailsmodel>> build() async {
-    final list = await customerlist();
+    final list = await customerlist(_selectedSalesPersonId);
     _all = list;
     return list;
   }
+  Future<void> filterBySalesPerson(String id) async {
+    _selectedSalesPersonId = id;
+    state = const AsyncLoading();
+    final list = await customerlist(id);
+    _all = list;
 
+    state = AsyncData(list);
+  }
   void filter(String query) {
     if (query.trim().isEmpty) {
       state = AsyncData(_all);
@@ -29,7 +37,7 @@ class CustomerDetailsViewmodel extends AsyncNotifier<List<Customerdetailsmodel>>
     );
   }
 
-  Future<List<Customerdetailsmodel>> customerlist() async {
+  Future<List<Customerdetailsmodel>> customerlist(String customerId) async {
     final loginState = ref.read(loginProvider);
     final loginData = loginState.value;
 
@@ -38,12 +46,11 @@ class CustomerDetailsViewmodel extends AsyncNotifier<List<Customerdetailsmodel>>
     final VimIdUser = loginData.VimsIdUser;
     final repo = ref.read(repositoryProvider);
 
-    var customerId = "0";
     var selectedUser = "0";
 
     final response = await repo.getcustomerslist(
       VimIdUser,
-      customerId,
+      "0",
       selectedUser,
     );
     return response;

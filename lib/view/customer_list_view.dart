@@ -7,6 +7,7 @@ import '../Values/Colors/app_colors.dart';
 import '../components/customer_card_details.dart';
 import '../components/toolbar_layout.dart';
 import '../viewModel/customer_details_viewmodel.dart';
+import '../viewModel/sales_person_viewmodel.dart';
 import 'dashboard.dart';
 
 class CustomerListView extends ConsumerWidget {
@@ -15,7 +16,10 @@ class CustomerListView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final customerlistAsync = ref.watch(customerviewProvider);
-
+    final salesAsync = ref.watch(salespersonProvider);
+    final dropdownList = salesAsync.value?.map((e) => e.nameValue ?? "").toList() ?? [];
+    final salesList = salesAsync.value ?? [];
+    String? selectedValue;
     return PopScope(
         onPopInvokedWithResult: (didPop, result) {
           if (didPop) {
@@ -38,8 +42,24 @@ class CustomerListView extends ConsumerWidget {
               title: "Customer List",
               navigateTo: const Dashboard(),
               searchHint: "Search school name....",
+
               onSearch: (query) =>
                   ref.read(customerviewProvider.notifier).filter(query),
+              dropdownLists: dropdownList,
+              selectedMonth: selectedValue != null
+                  ? selectedValue ?? '0'
+                  : null,
+              onMonthChanged: (value) {
+                if (value == null || salesList.isEmpty) return;
+
+                final selected = salesList.firstWhere(
+                      (e) => e.nameValue == value,
+                  orElse: () => salesList.first,
+                );
+
+                ref.read(customerviewProvider.notifier)
+                    .filterBySalesPerson(selected.idValue.toString());
+              },
             ),
             Expanded(
               child: Container(
