@@ -13,6 +13,8 @@ class ToolbarLayout extends ConsumerStatefulWidget {
   final ValueChanged<String>? onMonthChanged;
   final String? selectedMonth;
   final VoidCallback? onBackPressed;
+  final List<String>? dropdownLists;
+
   const ToolbarLayout({
     super.key,
     required this.title,
@@ -22,6 +24,7 @@ class ToolbarLayout extends ConsumerStatefulWidget {
     this.onMonthChanged,
     this.selectedMonth,
     this.onBackPressed,
+    this.dropdownLists,
   });
 
   @override
@@ -30,20 +33,6 @@ class ToolbarLayout extends ConsumerStatefulWidget {
 
 class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
     with SingleTickerProviderStateMixin {
-  final List<String> _months = const [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
   bool _searchOpen = false;
   final TextEditingController _controller = TextEditingController();
 
@@ -84,6 +73,7 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
   Widget build(BuildContext context) {
     final double topPadding = MediaQuery.of(context).padding.top;
     final bool hasSearch = widget.onSearch != null;
+    final List<String> dropdownLists = widget.dropdownLists ?? [];
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -230,7 +220,7 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton2<String>(
-                      value: widget.selectedMonth ?? _months.first,
+                      value: widget.selectedMonth ?? dropdownLists.first,
                       isExpanded: true,
                       dropdownStyleData: DropdownStyleData(
                         maxHeight: 250,
@@ -244,7 +234,7 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                       iconStyleData: const IconStyleData(
                         icon: Icon(Icons.keyboard_arrow_down),
                       ),
-                      items: _months.map((month) {
+                      items: dropdownLists.map((month) {
                         return DropdownMenuItem(
                           value: month,
                           child: Text(
