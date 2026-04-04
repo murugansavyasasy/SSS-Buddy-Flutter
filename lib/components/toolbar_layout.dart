@@ -14,6 +14,7 @@ class ToolbarLayout extends ConsumerStatefulWidget {
   final String? selectedMonth;
   final VoidCallback? onBackPressed;
   final List<String>? dropdownLists;
+
   const ToolbarLayout({
     super.key,
     required this.title,
@@ -96,13 +97,13 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                 GestureDetector(
                   onTap: _searchOpen
                       ? _closeSearch
-                      : ()  {
-                    if (widget.onBackPressed != null) {
-                      widget.onBackPressed!();
-                    } else {
-                      Navigator.pop(context);
-                    }
-                  },
+                      : () {
+                          if (widget.onBackPressed != null) {
+                            widget.onBackPressed!();
+                          } else {
+                            Navigator.pop(context);
+                          }
+                        },
                   child: Container(
                     height: 42,
                     width: 42,
@@ -112,9 +113,7 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                     ),
                     child: Center(
                       child: Icon(
-                        _searchOpen
-                            ? Icons.arrow_back
-                            : Icons.arrow_back,
+                        _searchOpen ? Icons.arrow_back : Icons.arrow_back,
                         color: Colors.black,
                         size: 20,
                       ),
@@ -181,22 +180,29 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                           fontSize: 14,
                           color: Colors.grey.shade400,
                         ),
-                        prefixIcon: Icon(Icons.search,
-                            color: Colors.grey.shade400, size: 20),
+                        prefixIcon: Icon(
+                          Icons.search,
+                          color: Colors.grey.shade400,
+                          size: 20,
+                        ),
                         suffixIcon: _controller.text.isNotEmpty
                             ? GestureDetector(
-                          onTap: () {
-                            _controller.clear();
-                            widget.onSearch?.call('');
-                            setState(() {});
-                          },
-                          child: Icon(Icons.close,
-                              color: Colors.grey.shade400, size: 18),
-                        )
+                                onTap: () {
+                                  _controller.clear();
+                                  widget.onSearch?.call('');
+                                  setState(() {});
+                                },
+                                child: Icon(
+                                  Icons.close,
+                                  color: Colors.grey.shade400,
+                                  size: 18,
+                                ),
+                              )
                             : null,
                         border: InputBorder.none,
-                        contentPadding:
-                        const EdgeInsets.symmetric(vertical: 12),
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                        ),
                       ),
                     ),
                   ),
@@ -224,9 +230,7 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                         ),
                         offset: const Offset(0, 8),
                       ),
-                      buttonStyleData: const ButtonStyleData(
-                        height: 44,
-                      ),
+                      buttonStyleData: const ButtonStyleData(height: 44),
                       iconStyleData: const IconStyleData(
                         icon: Icon(Icons.keyboard_arrow_down),
                       ),
@@ -239,11 +243,11 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                           ),
                         );
                       }).toList(),
-                        onChanged: (val) {
-                          if (val != null) {
-                            widget.onMonthChanged?.call(val);
-                          }
+                      onChanged: (val) {
+                        if (val != null) {
+                          widget.onMonthChanged?.call(val);
                         }
+                      },
                     ),
                   ),
                 ),
