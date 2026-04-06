@@ -1,5 +1,3 @@
-// reporting_members_dd_viewmodel.dart
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sssbuddy/auth/model/ReportingMembersModel.dart';
 
@@ -10,29 +8,32 @@ class ReportingMembersDdViewmodel extends AsyncNotifier<List<Reportingmembersmod
 
   @override
   Future<List<Reportingmembersmodel>> build() async {
-    return _fetch();
-  }
+    final loginAsync = ref.watch(loginProvider);
 
-  Future<List<Reportingmembersmodel>> _fetch() async {
-    final loginState = ref.read(loginProvider);
-    final loginData = loginState.value;
+    return loginAsync.when(
+      data: (loginData) async {
+        if (loginData == null) return [];
 
-    if (loginData == null) return [];
+        final IdUser = loginData.VimsIdUser;
+        final repo = ref.read(repositoryProvider);
 
-    final IdUser = loginData.VimsIdUser;
-    final repo = ref.read(repositoryProvider);
-    final response = await repo.getreportingmembers(IdUser);
+        final response = await repo.getreportingmembers(IdUser);
 
-    return response;
-  }
-
-  Future<void> refresh() async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(_fetch);
+        return response;
+      },
+      loading: () async {
+        return [];
+      },
+      error: (e, s) async {
+        return [];
+      },
+    );
   }
 }
 
+
 final reportingmembersProvider =
 AsyncNotifierProvider<ReportingMembersDdViewmodel, List<Reportingmembersmodel>>(
-  ReportingMembersDdViewmodel.new,
+      () => ReportingMembersDdViewmodel(),
 );
+

@@ -8,22 +8,27 @@ class OverallTripViewmodel extends AsyncNotifier<List<Overalltripdetailsmodel>> 
 
   @override
   Future<List<Overalltripdetailsmodel>> build() async {
+    print('📌 OverallTripViewmodel build() called');
     return [];
   }
 
   Future<void> loadForMember(int idMember) async {
+    print('📡 loadForMember CALLED → ID: $idMember');
     state = const AsyncLoading();
     state = await AsyncValue.guard(() => _fetch(idMember));
   }
 
   Future<List<Overalltripdetailsmodel>> _fetch(int idMember) async {
-    final loginState = ref.read(loginProvider);
-    final loginData = loginState.value;
-    if (loginData == null) return [];
+    print('🔌 _fetch STARTED for member $idMember');
+
 
     final repo = ref.read(repositoryProvider);
+    print('✅ Calling repo.getoveralldetails(UserId: $idMember)');
+
     final response = await repo.getoveralldetails(idMember.toString());
     _all = response;
+
+    print('📦 API SUCCESS → Received ${response.length} trips');
     return response;
   }
 

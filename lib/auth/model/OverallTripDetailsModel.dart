@@ -10,7 +10,7 @@ class Overalltripdetailsmodel {
   String? end_latitude;
   String? end_longitude;
   int is_closed;
-  List<VisitDetail> visit_details;
+  List<VisitDetail> visit_details;   // ← this stays the same
 
   Overalltripdetailsmodel({
     required this.status,
@@ -25,22 +25,25 @@ class Overalltripdetailsmodel {
     required this.end_longitude,
     required this.is_closed,
     required this.visit_details,
-});
+  });
 
-  factory Overalltripdetailsmodel.fromJson(Map<String,dynamic> json) {
+  factory Overalltripdetailsmodel.fromJson(Map<String, dynamic> json) {
     return Overalltripdetailsmodel(
-      status: json["status"],
-      message: json["message"],
-      trip_id: json["trip_id"],
-      username: json["username"],
-      start_time: json["start_time"],
-      start_latitude: json["start_latitude"],
-      start_longitude: json["start_longitude"],
+      status: json["status"] ?? 0,
+      message: json["message"] ?? '',
+      trip_id: json["trip_id"] ?? 0,
+      username: json["username"] ?? '',
+      start_time: json["start_time"] ?? '',
+      start_latitude: json["start_latitude"] ?? '',
+      start_longitude: json["start_longitude"] ?? '',
       end_time: json["end_time"],
       end_latitude: json["end_latitude"],
       end_longitude: json["end_longitude"],
-      is_closed: json["is_closed"],
-      visit_details: json["visit_details"],
+      is_closed: json["is_closed"] ?? 0,
+      // ✅ THIS WAS THE MISSING PART
+      visit_details: (json["visit_details"] as List<dynamic>? ?? [])
+          .map((item) => VisitDetail.fromJson(item as Map<String, dynamic>))
+          .toList(),
     );
   }
 }
@@ -54,23 +57,22 @@ class VisitDetail {
   String? remarks;
 
   VisitDetail({
-    required this.school_latitude,
-    required this.school_longitude,
-    required this.school_name,
-    required this.person_name,
-    required this.reason_of_visit,
-    required this.remarks,
+    this.school_latitude,
+    this.school_longitude,
+    this.school_name,
+    this.person_name,
+    this.reason_of_visit,
+    this.remarks,
   });
 
-  factory VisitDetail.fromJson(Map<String,dynamic> json) {
+  factory VisitDetail.fromJson(Map<String, dynamic> json) {
     return VisitDetail(
-      school_latitude: json["school_latitude"],
-      school_longitude: json["school_longitude"],
-      school_name: json["school_name"],
-      person_name: json["person_name"],
-      reason_of_visit: json["reason_of_visit"],
-      remarks: json["remarks"],
+      school_latitude: json["school_latitude"] as String?,
+      school_longitude: json["school_longitude"] as String?,
+      school_name: json["school_name"] as String?,
+      person_name: json["person_name"] as String?,
+      reason_of_visit: json["reason_of_visit"] as String?,
+      remarks: json["remarks"] as String?,
     );
   }
-
 }

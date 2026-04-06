@@ -33,7 +33,6 @@ class ToolbarLayout extends ConsumerStatefulWidget {
 
 class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
     with SingleTickerProviderStateMixin {
-<<<<<<< HEAD
   final List<String> _months = const [
     "January",
     "February",
@@ -49,8 +48,7 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
     "December",
   ];
 
-=======
->>>>>>> aea469c7a66157d4f648638848e82cfaa14c3f59
+
   bool _searchOpen = false;
   final TextEditingController _controller = TextEditingController();
 
@@ -238,7 +236,9 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton2<String>(
-                      value: widget.selectedMonth ?? dropdownLists.first,
+                      value: (widget.selectedMonth != null && dropdownLists.contains(widget.selectedMonth))
+                          ? widget.selectedMonth
+                          : (dropdownLists.isNotEmpty ? dropdownLists.first : null),
                       isExpanded: true,
                       dropdownStyleData: DropdownStyleData(
                         maxHeight: 250,
