@@ -14,6 +14,7 @@ class ToolbarLayout extends ConsumerStatefulWidget {
   final String? selectedMonth;
   final VoidCallback? onBackPressed;
   final List<String>? dropdownLists;
+
   const ToolbarLayout({
     super.key,
     required this.title,
@@ -32,6 +33,7 @@ class ToolbarLayout extends ConsumerStatefulWidget {
 
 class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
     with SingleTickerProviderStateMixin {
+<<<<<<< HEAD
   final List<String> _months = const [
     "January",
     "February",
@@ -47,6 +49,8 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
     "December",
   ];
 
+=======
+>>>>>>> aea469c7a66157d4f648638848e82cfaa14c3f59
   bool _searchOpen = false;
   final TextEditingController _controller = TextEditingController();
 
@@ -257,11 +261,11 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                           ),
                         );
                       }).toList(),
-                        onChanged: (val) {
-                          if (val != null) {
-                            widget.onMonthChanged?.call(val);
-                          }
+                      onChanged: (val) {
+                        if (val != null) {
+                          widget.onMonthChanged?.call(val);
                         }
+                      },
                     ),
                   ),
                 ),
