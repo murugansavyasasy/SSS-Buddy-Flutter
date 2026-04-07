@@ -17,7 +17,6 @@ import '../auth/model/LocalExpenseDetailModel.dart';
 import '../auth/model/ManagementInfo.dart';
 import '../auth/model/OverallTripDetailsModel.dart';
 import '../auth/model/PO_listModal.dart';
-
 import '../auth/model/ReportingMembersModel.dart';
 import '../auth/model/SalesPersonModel.dart';
 import '../auth/model/SchoolDocuments.dart';
@@ -350,7 +349,7 @@ class ClientRepository {
 
   Future<List<Reportingmembersmodel>> getreportingmembers(String IdUser) async {
     final response = await client.get(
-      AppEndpoint.getsalespersondetails,
+      AppEndpoint.getreportingmembers,
       query: {"UserId" : IdUser},
     );
 
@@ -361,7 +360,7 @@ class ClientRepository {
 
   Future<List<Overalltripdetailsmodel>> getoveralldetails(String idMember) async {
     final response = await client.get(
-      AppEndpoint.getsalespersondetails,
+      AppEndpoint.getOverallDetails,
       query: {"UserId" : idMember},
     );
 

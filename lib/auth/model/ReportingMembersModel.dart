@@ -16,4 +16,12 @@ class Reportingmembersmodel {
       usertype: json["usertype"],
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+          other is Reportingmembersmodel && other.idmember == idmember;
+
+  @override
+  int get hashCode => idmember.hashCode;
 }
