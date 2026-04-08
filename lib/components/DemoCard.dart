@@ -56,7 +56,7 @@ class DemoCard extends StatelessWidget {
               GestureDetector(
                 onTap: () {
                   Navigator.pushNamed(
-                      context, RoutesName.recordvoice);
+                      context, RoutesName.recordvoice,arguments: item);
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(

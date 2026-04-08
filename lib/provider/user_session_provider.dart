@@ -6,11 +6,13 @@ class UserSession {
   final String employeeName;
   final String employeeId;
   final String employeerole;
+  final String VimsIdUser;
 
   UserSession({
     required this.employeeName,
     required this.employeeId,
     required this.employeerole,
+    required this.VimsIdUser,
   });
 
   factory UserSession.fromJson(Map<String, dynamic> json) {
@@ -18,6 +20,7 @@ class UserSession {
       employeeName: json["VimsUserName"] ?? "",
       employeeId: json["VimsEmployeeId"] ?? "",
       employeerole: json["SchooluserType"] ?? "",
+      VimsIdUser: json["VimsIdUser"] ?? "",
     );
   }
 }

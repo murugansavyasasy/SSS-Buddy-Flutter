@@ -12,6 +12,7 @@ class AuthViewModel extends AsyncNotifier<Versioncheck> {
     AppUrl.vimsUrl = value.VimsURL;
     AppUrl.schoolUrl = value.SchoolURL;
     dioClient.dio.options.baseUrl = value.VimsURL;
+    dioClient.schoolDio.options.baseUrl = value.SchoolURL;
     return value;
   }
 }

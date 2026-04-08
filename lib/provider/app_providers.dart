@@ -5,8 +5,8 @@ import '../auth/model/SchoolFilter.dart';
 import '../core/network/DioClient.dart';
 import '../repository/clientrepository.dart';
 
-final dioProvider = Provider<Dioclient>((ref) {
-  return Dioclient();
+final dioProvider = Provider<DioClient>((ref) {
+  return DioClient();
 });
 
 final repositoryProvider = Provider<ClientRepository>((ref) {
