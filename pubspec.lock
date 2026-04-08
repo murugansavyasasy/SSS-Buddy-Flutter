@@ -1016,8 +1016,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.5.0"
-<<<<<<< HEAD
-=======
   proj4dart:
     dependency: transitive
     description:
@@ -1026,15 +1024,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.0"
-  provider:
-    dependency: "direct main"
-    description:
-      name: provider
-      sha256: "4e82183fa20e5ca25703ead7e05de9e4cceed1fbd1eadc1ac3cb6f565a09f272"
-      url: "https://pub.dev"
-    source: hosted
-    version: "6.1.5+1"
->>>>>>> origin/Chanthru
   pub_semver:
     dependency: transitive
     description:

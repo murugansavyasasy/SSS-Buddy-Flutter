@@ -13,16 +13,15 @@ dependencies:
 
   http: ^1.1.2
   flutter_launcher_icons: ^0.14.4
-
   cupertino_icons: ^1.0.8
   logger: ^2.6.2
   connectivity_plus: ^7.1.0
   shared_preferences: ^2.2.2
   flutter_secure_storage: ^10.0.0
 
-  # Riverpod 3.x - Correct Compatible Versions
+  # Riverpod
   flutter_riverpod: ^3.3.1
-  riverpod_annotation: ^4.0.2     # ← Updated
+  riverpod_annotation: ^4.0.2
 
   dio: ^5.4.0
   record: ^6.2.0
@@ -33,22 +32,18 @@ dependencies:
   webview_flutter: ^4.7.0
   share_plus: ^12.0.1
   image_picker: ^1.2.1
-<<<<<<< HEAD
   dropdown_button2: ^3.0.0
-
-=======
-  dropdown_button2: ^2.3.9
   latlong2: ^0.9.0
   flutter_map: ^6.1.0
   geolocator: ^10.1.0
->>>>>>> origin/Chanthru
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
   build_runner: ^2.4.8
-  riverpod_generator: ^4.0.3      # ← Updated
-  # riverpod_lint: ^4.0.0         # Optional but recommended
+  riverpod_generator: ^4.0.3
+  # riverpod_lint: ^4.0.0
 
 flutter_launcher_icons:
   android: true

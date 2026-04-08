@@ -375,6 +375,7 @@ class ClientRepository {
     );
     final List data = response.data;
     return data.map((e) => Initiatedemocall.fromJson(e)).toList();
+  }
 
     Future<Map<String, dynamic>> manageTrip(String latitude,
         String longitude,
@@ -426,4 +427,4 @@ class ClientRepository {
       return response.data;
     }
   }
-}
+
