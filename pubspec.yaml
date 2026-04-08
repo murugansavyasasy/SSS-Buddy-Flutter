@@ -33,8 +33,15 @@ dependencies:
   webview_flutter: ^4.7.0
   share_plus: ^12.0.1
   image_picker: ^1.2.1
+<<<<<<< HEAD
   dropdown_button2: ^3.0.0
 
+=======
+  dropdown_button2: ^2.3.9
+  latlong2: ^0.9.0
+  flutter_map: ^6.1.0
+  geolocator: ^10.1.0
+>>>>>>> origin/Chanthru
 dev_dependencies:
   flutter_test:
     sdk: flutter

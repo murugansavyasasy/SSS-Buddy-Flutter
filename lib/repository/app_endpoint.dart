@@ -27,4 +27,7 @@ class AppEndpoint {
   static const getOverallDetails = "api/AppDetails/GetOverallTripDetails";
   static const getpresignedurl = "get-s3-presigned-url";
   static const postInitiateCall = "InitiateDemoCallByDemoID";
+  static const manageTrip = "api/AppDetails/ManageTripDetails";
+  static const updateDailyVisit = "AppDetails/UpdateDailyVisitWithLocation";
+
 }
