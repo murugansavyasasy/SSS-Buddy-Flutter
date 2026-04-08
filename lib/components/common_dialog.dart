@@ -76,7 +76,6 @@ class CommonDialog {
                     onPressed: () {
 
                       if (showRecordButton) {
-
                         Navigator.pushReplacementNamed(
                           context,
                           RoutesName.recordvoice,
