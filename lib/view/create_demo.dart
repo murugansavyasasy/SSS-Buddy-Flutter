@@ -118,7 +118,7 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
                                           : "",
                                       hint: index == 0
                                           ? "Enter Parent Mobile Number"
-                                          : "Enter Parent Mobile Number",
+                                          : "",
                                       controller: parentControllers[index],
                                       keyboardType: TextInputType.phone,
                                       validator: index == 0

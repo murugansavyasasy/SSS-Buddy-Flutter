@@ -11,6 +11,8 @@ import '../auth/model/CustomerdetailsModel.dart';
 import '../auth/model/Demolist.dart';
 import '../auth/model/FinancialYearModel.dart';
 import '../auth/model/ImportantInfoModel.dart';
+import '../auth/model/InitiateDemoCall.dart';
+import '../auth/model/InitiateDemoCallRequest.dart';
 import '../auth/model/InvoiceModel.dart';
 import '../auth/model/LocalConveyenceModel.dart';
 import '../auth/model/LocalExpenseDetailModel.dart';
@@ -24,12 +26,13 @@ import '../auth/model/SchoolNameModel.dart';
 import '../auth/model/Validatelogin.dart';
 import '../auth/model/Versioncheck.dart';
 import '../auth/model/po_details_modal.dart';
+import '../core/aws/upload_response.dart';
 import '../core/network/DioClient.dart';
 import '../auth/model/ManagementVideosModel.dart';
 import '../viewModel/invoice_dd_viewmodel.dart';
 
 class ClientRepository {
-  final Dioclient client;
+  final DioClient client;
   ClientRepository(this.client);
   Future<Versioncheck> getVersionCheckDetails() async {
     final response = await client.get(
@@ -48,10 +51,9 @@ class ClientRepository {
   }
 
   Future<List<Demolist>> getdemolist(String schoolLoginId) async {
-    final response = await client.get(
+    final response = await client.schoolget(
       AppEndpoint.demolistendpoint,
       query: {"LoginID": schoolLoginId},
-      useSchoolApi: true,
     );
 
     final List data = response.data;
@@ -60,10 +62,9 @@ class ClientRepository {
   }
 
   Future<String> postschoollist(String schoolLoginId) async {
-    final response = await client.post(
+    final response = await client.schoolPost(
       AppEndpoint.schoollistendpoint,
       body: {"LoginID": schoolLoginId},
-      useSchoolApi: true,
     );
 
     return jsonEncode(response.data);
@@ -77,7 +78,7 @@ class ClientRepository {
     String ParentNos,
     String RequestType,
   ) async {
-    final response = await client.post(
+    final response = await client.schoolPost(
       AppEndpoint.createdemoendpoint,
       body: {
         "LoginID": LoginID,
@@ -87,7 +88,6 @@ class ClientRepository {
         "ParentNos": ParentNos,
         "RequestType": RequestType,
       },
-      useSchoolApi: true,
     );
 
     final List data = response.data;
@@ -107,7 +107,6 @@ class ClientRepository {
         "OldPassword": oldPassword,
         "NewPassword": newPassword,
       },
-      useSchoolApi: false,
     );
 
     final List<dynamic> list = response.data as List<dynamic>;
@@ -119,20 +118,18 @@ class ClientRepository {
     String fromDate,
     String toDate,
   ) async {
-    final response = await client.post(
+    final response = await client.schoolPost(
       AppEndpoint.getusagecount,
       body: {"schoolID": schoolID, "FromDate": fromDate, "ToDate": toDate},
-      useSchoolApi: true,
     );
 
     return Usagecount.fromJson(response.data[0]);
   }
 
   Future<List<Managementinfo>> managementinfo(int schoolID) async {
-    final response = await client.get(
+    final response = await client.schoolget(
       AppEndpoint.managementinfo,
       query: {"Schoolid": schoolID},
-      useSchoolApi: true,
     );
     return (response.data as List)
         .map((e) => Managementinfo.fromJson(e))
@@ -140,10 +137,9 @@ class ClientRepository {
   }
 
   Future<List<Circularmodel>> getcircularlist(String schoolLoginId) async {
-    final response = await client.post(
+    final response = await client.schoolPost(
       AppEndpoint.circularreport,
       body: {"LoginID": schoolLoginId},
-      useSchoolApi: true,
     );
     final List data = response.data;
     return data.map((e) => Circularmodel.fromJson(e)).toList();
@@ -210,9 +206,8 @@ class ClientRepository {
   }
 
   Future<List<Importantinfomodel>> getImportantInfo() async {
-    final response = await client.get(
+    final response = await client.schoolget(
       AppEndpoint.getimportantinfo,
-      useSchoolApi: true,
     );
 
     final List<dynamic> data = response.data;
@@ -223,10 +218,9 @@ class ClientRepository {
     return [Importantinfomodel.fromJson(jsonData)];
   }
 
-
   Future<List<Localconveyencemodel>> getlocalconveyence(
-      String vimIdUSer,
-      ) async {
+    String vimIdUSer,
+  ) async {
     final response = await client.get(
       AppEndpoint.localconveyence,
       query: {"idUser": vimIdUSer},
@@ -235,8 +229,9 @@ class ClientRepository {
     return data.map((e) => Localconveyencemodel.fromJson(e)).toList();
   }
 
-
-  Future<List<Advancetourexpensemodel>> getadvancetourdata(String VimsIdUser) async {
+  Future<List<Advancetourexpensemodel>> getadvancetourdata(
+    String VimsIdUser,
+  ) async {
     final response = await client.get(
       AppEndpoint.getAdvanceTourExpenses,
       query: {"idUser": VimsIdUser},
@@ -247,11 +242,10 @@ class ClientRepository {
     return data.map((e) => Advancetourexpensemodel.fromJson(e)).toList();
   }
 
-
   Future<List<Schoolnamemodel>> getschoolname(String VimsIdUser) async {
     final response = await client.get(
       AppEndpoint.getSchoolName,
-      query: {"CustomerType" : 1,"LoginId": VimsIdUser},
+      query: {"CustomerType": 1, "LoginId": VimsIdUser},
     );
 
     final List data = response.data;
@@ -259,11 +253,8 @@ class ClientRepository {
     return data.map((e) => Schoolnamemodel.fromJson(e)).toList();
   }
 
-
   Future<List<Financialyearmodel>> getfinancialyear() async {
-    final response = await client.get(
-      AppEndpoint.getFinancialyear,
-    );
+    final response = await client.get(AppEndpoint.getFinancialyear);
 
     final List data = response.data;
 
@@ -274,14 +265,12 @@ class ClientRepository {
     final response = await client.get(
       AppEndpoint.getInvoiceValue,
       query: {"customerId": customerId},
-
     );
 
     final List data = response.data;
 
     return data.map((e) => Invoicemodel.fromJson(e)).toList();
   }
-
 
   Future<List<PoListModel>> getpolist(String cusId) async {
     final response = await client.get(
@@ -293,16 +282,14 @@ class ClientRepository {
 
     return data.map((e) => PoListModel.fromJson(e)).toList();
   }
+
   Future<List<PoDetailsModel>> getpodetails(
-      String VimIdUser,
-      String purchaseOrderId,
-      ) async {
+    String VimIdUser,
+    String purchaseOrderId,
+  ) async {
     final response = await client.post(
       AppEndpoint.getindiualpoforapp,
-      body: {
-        "idUser": VimIdUser,
-        "PurchaseOrderID": purchaseOrderId,
-      },
+      body: {"idUser": VimIdUser, "PurchaseOrderID": purchaseOrderId},
     );
 
     final List data = response.data;
@@ -310,10 +297,9 @@ class ClientRepository {
     return data.map((e) => PoDetailsModel.fromJson(e)).toList();
   }
 
-
   Future<List<Localexpensedetailmodel>> getlocalconviencedetail(
-      String idLocalExpense,
-      ) async {
+    String idLocalExpense,
+  ) async {
     final response = await client.get(
       AppEndpoint.getlocalconviencedetail,
       query: {"idLocalExpense": idLocalExpense},
@@ -322,24 +308,21 @@ class ClientRepository {
     return data.map((e) => Localexpensedetailmodel.fromJson(e)).toList();
   }
 
-
   Future<List<Advancetourexpensedetailmodel>> getadvancetourdetails(
-      String idTourExpense,
-      ) async {
+    String idTourExpense,
+  ) async {
     final response = await client.get(
       AppEndpoint.gettourexpensedetal,
-      query: {"idTourExpense" : idTourExpense,"cmd": "Advance"},
-
+      query: {"idTourExpense": idTourExpense, "cmd": "Advance"},
     );
     final List data = response.data;
     return data.map((e) => Advancetourexpensedetailmodel.fromJson(e)).toList();
   }
 
-
   Future<List<Salespersonmodel>> getsalesperson(String IdUser) async {
     final response = await client.get(
       AppEndpoint.getsalespersondetails,
-      query: {"idUser" : IdUser},
+      query: {"idUser": IdUser},
     );
 
     final List data = response.data;
@@ -350,7 +333,7 @@ class ClientRepository {
   Future<List<Reportingmembersmodel>> getreportingmembers(String IdUser) async {
     final response = await client.get(
       AppEndpoint.getreportingmembers,
-      query: {"UserId" : IdUser},
+      query: {"UserId": IdUser},
     );
 
     final List data = response.data;
@@ -358,16 +341,54 @@ class ClientRepository {
     return data.map((e) => Reportingmembersmodel.fromJson(e)).toList();
   }
 
-  Future<List<Overalltripdetailsmodel>> getoveralldetails(String idMember) async {
+  Future<List<Overalltripdetailsmodel>> getoveralldetails(
+    String idMember,
+  ) async {
     final response = await client.get(
       AppEndpoint.getOverallDetails,
-      query: {"UserId" : idMember},
+      query: {"UserId": idMember},
     );
 
     final List data = response.data;
 
     return data.map((e) => Overalltripdetailsmodel.fromJson(e)).toList();
   }
+
+  Future<UploadResponse> getPresignedUrl({
+    required String bucket,
+    required String fileName,
+    required String bucketPath,
+    required String fileType,
+  }) async {
+    final response = await client.awsGet(
+      AppEndpoint.getpresignedurl,
+      query: {
+        "bucket": bucket,
+        "fileName": fileName,
+        "bucketPath": bucketPath,
+        "fileType": fileType,
+      },
+    );
+    return UploadResponse.fromJson(response.data);
+  }
+
+  Future<bool> uploadToS3({
+    required String presignedUrl,
+    required List<int> fileBytes,
+    required String contentType,
+}) async {
+    final response = await client.s3Put(presignedUrl: presignedUrl, fileBytes: fileBytes, contentType: contentType);
+    return response.statusCode == 200;
+  }
+
+  Future<List<Initiatedemocall>> postInitiateDemoCall(
+      InitiateDemoCallRequest request,
+      ) async {
+    final response = await client.schoolPost(
+      AppEndpoint.postInitiateCall,
+      body: request.toJson(),
+    );
+    final List data = response.data;
+    return data.map((e) => Initiatedemocall.fromJson(e)).toList();
+  }
 }
-
-

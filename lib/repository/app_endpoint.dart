@@ -25,5 +25,6 @@ class AppEndpoint {
   static const getsalespersondetails = "api/AppDetails/GetSalesPersonDD";
   static const getreportingmembers = "api/AppDetails/GetReportingMembersByHierarchy";
   static const getOverallDetails = "api/AppDetails/GetOverallTripDetails";
-
+  static const getpresignedurl = "get-s3-presigned-url";
+  static const postInitiateCall = "InitiateDemoCallByDemoID";
 }

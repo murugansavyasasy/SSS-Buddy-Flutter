@@ -48,27 +48,52 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
     "December",
   ];
 
-
   bool _searchOpen = false;
   final TextEditingController _controller = TextEditingController();
 
   late final AnimationController _animController;
   late final Animation<double> _fade;
 
+  // New for dropdown_button2 v3.0.0
+  late final ValueNotifier<String?> _selectedMonthNotifier;
+
   @override
   void initState() {
     super.initState();
+
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 220),
     );
     _fade = CurvedAnimation(parent: _animController, curve: Curves.easeInOut);
+
+    final lists = widget.dropdownLists ?? [];
+    _selectedMonthNotifier = ValueNotifier(
+      (widget.selectedMonth != null && lists.contains(widget.selectedMonth))
+          ? widget.selectedMonth
+          : (lists.isNotEmpty ? lists.first : null),
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant ToolbarLayout oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    final lists = widget.dropdownLists ?? [];
+    final newValue = (widget.selectedMonth != null && lists.contains(widget.selectedMonth))
+        ? widget.selectedMonth
+        : (lists.isNotEmpty ? lists.first : null);
+
+    if (_selectedMonthNotifier.value != newValue) {
+      _selectedMonthNotifier.value = newValue;
+    }
   }
 
   @override
   void dispose() {
     _controller.dispose();
     _animController.dispose();
+    _selectedMonthNotifier.dispose();   // ← Important
     super.dispose();
   }
 
@@ -90,6 +115,7 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
     final double topPadding = MediaQuery.of(context).padding.top;
     final bool hasSearch = widget.onSearch != null;
     final List<String> dropdownLists = widget.dropdownLists ?? [];
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -114,12 +140,12 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                   onTap: _searchOpen
                       ? _closeSearch
                       : () {
-                          if (widget.onBackPressed != null) {
-                            widget.onBackPressed!();
-                          } else {
-                            Navigator.pop(context);
-                          }
-                        },
+                    if (widget.onBackPressed != null) {
+                      widget.onBackPressed!();
+                    } else {
+                      Navigator.pop(context);
+                    }
+                  },
                   child: Container(
                     height: 42,
                     width: 42,
@@ -203,17 +229,17 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                         ),
                         suffixIcon: _controller.text.isNotEmpty
                             ? GestureDetector(
-                                onTap: () {
-                                  _controller.clear();
-                                  widget.onSearch?.call('');
-                                  setState(() {});
-                                },
-                                child: Icon(
-                                  Icons.close,
-                                  color: Colors.grey.shade400,
-                                  size: 18,
-                                ),
-                              )
+                          onTap: () {
+                            _controller.clear();
+                            widget.onSearch?.call('');
+                            setState(() {});
+                          },
+                          child: Icon(
+                            Icons.close,
+                            color: Colors.grey.shade400,
+                            size: 18,
+                          ),
+                        )
                             : null,
                         border: InputBorder.none,
                         contentPadding: const EdgeInsets.symmetric(
@@ -224,6 +250,7 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                   ),
                 ),
               ),
+
             if (widget.onMonthChanged != null)
               Padding(
                 padding: const EdgeInsets.only(top: 12),
@@ -236,10 +263,8 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton2<String>(
-                      value: (widget.selectedMonth != null && dropdownLists.contains(widget.selectedMonth))
-                          ? widget.selectedMonth
-                          : (dropdownLists.isNotEmpty ? dropdownLists.first : null),
                       isExpanded: true,
+                      valueListenable: _selectedMonthNotifier,
                       dropdownStyleData: DropdownStyleData(
                         maxHeight: 250,
                         decoration: BoxDecoration(
@@ -253,7 +278,7 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                         icon: Icon(Icons.keyboard_arrow_down),
                       ),
                       items: dropdownLists.map((month) {
-                        return DropdownMenuItem(
+                        return DropdownItem<String>(
                           value: month,
                           child: Text(
                             month,
@@ -263,6 +288,7 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                       }).toList(),
                       onChanged: (val) {
                         if (val != null) {
+                          _selectedMonthNotifier.value = val;
                           widget.onMonthChanged?.call(val);
                         }
                       },

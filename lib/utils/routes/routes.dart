@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sssbuddy/View/splash.dart';
 import 'package:sssbuddy/View/login.dart';
+import 'package:sssbuddy/auth/model/Demolist.dart';
 import 'package:sssbuddy/utils/routes/routes_name.dart';
 import 'package:sssbuddy/view/advance_tour_expense.dart';
 import 'package:sssbuddy/view/change_password.dart';
@@ -10,7 +11,7 @@ import 'package:sssbuddy/view/dashboard.dart';
 import 'package:sssbuddy/view/local_conveyence.dart';
 import 'package:sssbuddy/view/management_videos.dart';
 import 'package:sssbuddy/view/record_collection.dart';
-import 'package:sssbuddy/view/record_voice.dart';
+import 'package:sssbuddy/view/RecordVoice/record_voice.dart';
 import 'package:sssbuddy/view/school_documents.dart';
 import 'package:sssbuddy/view/school_listview.dart';
 import 'package:sssbuddy/view/UsageCount/usage_count.dart';
@@ -38,7 +39,8 @@ class Routes {
         return MaterialPageRoute(builder: (context) => CreateDemo());
 
       case RoutesName.recordvoice:
-        return MaterialPageRoute(builder: (context) => RecordVoice());
+        final item = settings.arguments as Demolist;
+        return MaterialPageRoute(builder: (context) => RecordVoiceScreen(item: item));
 
       case RoutesName.demolistview:
         return MaterialPageRoute(builder: (context) => DemoListView());
