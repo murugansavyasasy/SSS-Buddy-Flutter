@@ -368,6 +368,61 @@ class ClientRepository {
 
     return data.map((e) => Overalltripdetailsmodel.fromJson(e)).toList();
   }
+  Future<Map<String, dynamic>> manageTrip(
+      String latitude,
+      String longitude,
+      String type,
+      String userId,
+      ) async {
+
+    final response = await client.post(
+      AppEndpoint.manageTrip,
+      body: {
+        "latitude": latitude,
+        "longitude": longitude,
+        "type": type,
+        "user_id": userId,
+      },
+    );
+
+    return response.data;
+  }
+
+  Future<List<dynamic>> visitRecord(
+      String loginId,
+      String schoolName,
+      String area,
+      String district,
+      String personName,
+      String contactNumber,
+      String remarks,
+      String reasonOfVisit,
+      String personMet,
+      String dateOfVisit,
+      String latitude,
+      String longitude,
+      ) async {
+
+    final response = await client.post(
+      AppEndpoint.updateDailyVisit,
+      body: {
+        "login_id": loginId,
+        "school_name": schoolName,
+        "area": area,
+        "district": district,
+        "person_name": personName,
+        "contact_number": contactNumber,
+        "remarks": remarks,
+        "reason_of_visit": reasonOfVisit,
+        "person_met": personMet,
+        "date_of_visit": dateOfVisit,
+        "latitude": latitude,
+        "longitude": longitude,
+      },
+    );
+
+    return response.data;
+  }
 }
 
 

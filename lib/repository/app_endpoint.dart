@@ -25,5 +25,7 @@ class AppEndpoint {
   static const getsalespersondetails = "api/AppDetails/GetSalesPersonDD";
   static const getreportingmembers = "api/AppDetails/GetReportingMembersByHierarchy";
   static const getOverallDetails = "api/AppDetails/GetOverallTripDetails";
+  static const manageTrip = "api/AppDetails/ManageTripDetails";
+  static const updateDailyVisit = "AppDetails/UpdateDailyVisitWithLocation";
 
 }

@@ -1,22 +1,29 @@
-import 'dart:math' as Math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
+
 import '../auth/model/TodayVisitModal.dart';
 import '../viewModel/today_visit_viewmodal.dart';
 
-const LatLng kStart = LatLng(13.0827, 80.2707);
-const LatLng kEnd = LatLng(13.0674, 80.2209);
-
 class TodayVisitMapScreen extends ConsumerStatefulWidget {
   final VoidCallback onEndDay;
+  final LatLng startLocation;
+  final LatLng endLocation;
+  final String startLabel;
+  final String endLabel;
+  final String packageName;
 
   const TodayVisitMapScreen({
     super.key,
     required this.onEndDay,
+    required this.startLocation,
+    required this.endLocation,
+    required this.startLabel,
+    required this.endLabel,
+    required this.packageName,
   });
 
   @override
@@ -26,20 +33,15 @@ class TodayVisitMapScreen extends ConsumerStatefulWidget {
 
 class _TodayVisitMapScreenState extends ConsumerState<TodayVisitMapScreen> {
   late final MapController _mapController;
+  bool _hasFittedBounds = false;
 
   static const Color _primaryBlue = Color(0xFF1A73E8);
   static const Color _darkNavy = Color(0xFF1A1F36);
-  static const Color _surface = Color(0xFFF8F9FF);
 
   @override
   void initState() {
     super.initState();
     _mapController = MapController();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref
-          .read(todayVisitProvider.notifier)
-          .getRoute(start: kStart, end: kEnd);
-    });
   }
 
   void _fitBounds(List<LatLng> points) {
@@ -52,25 +54,34 @@ class _TodayVisitMapScreenState extends ConsumerState<TodayVisitMapScreen> {
       ),
     );
   }
+
   @override
   Widget build(BuildContext context) {
-    final routeAsync = ref.watch(todayVisitProvider);
+    final vm = ref.watch(todayVisitProvider.notifier);
+    final trip = ref.watch(todayVisitProvider).value;
+    final livePoints = vm.trackedPoints;
+    final hasPoints = livePoints.length >= 2;
+
+    if (hasPoints && !_hasFittedBounds) {
+      _hasFittedBounds = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _fitBounds(livePoints);
+      });
+    }
 
     return Scaffold(
       backgroundColor: _darkNavy,
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(routeAsync),
+            _buildHeader(vm),
             Expanded(
               child: Stack(
                 children: [
-                  _buildMap(routeAsync),
-                  if (routeAsync.isLoading) _buildLoadingOverlay(),
-                  if (routeAsync.hasError) _buildErrorBanner(routeAsync.error),
-                  _buildZoomControls(),
-                  if (routeAsync.hasValue && routeAsync.value != null)
-                    _buildInfoCard(routeAsync.value!),
+                  _buildMap(vm),
+                  if (trip == null) _buildLoadingOverlay(),
+                  if (trip != null) _buildInfoCard(trip, vm),
+                  _buildZoomControls(vm),
                 ],
               ),
             ),
@@ -79,7 +90,8 @@ class _TodayVisitMapScreenState extends ConsumerState<TodayVisitMapScreen> {
       ),
     );
   }
-  Widget _buildHeader(AsyncValue<RouteModel?> routeAsync) {
+
+  Widget _buildHeader(TodayVisitViewmodel vm) {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       color: _darkNavy,
@@ -103,16 +115,16 @@ class _TodayVisitMapScreenState extends ConsumerState<TodayVisitMapScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text("Route Map",
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -0.4)),
+                const Text(
+                  "Route Map",
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.4),
+                ),
                 Text(
-                  routeAsync.hasValue && routeAsync.value != null
-                      ? "Chennai Central → Anna Nagar"
-                      : "Fetching route...",
+                  "${widget.startLabel} → ${widget.endLabel}",
                   style: TextStyle(
                       color: Colors.white.withOpacity(0.55), fontSize: 12),
                 ),
@@ -120,9 +132,12 @@ class _TodayVisitMapScreenState extends ConsumerState<TodayVisitMapScreen> {
             ),
           ),
           GestureDetector(
-            onTap: () => ref
-                .read(todayVisitProvider.notifier)
-                .getRoute(start: kStart, end: kEnd),
+            onTap: () {
+              if (vm.trackedPoints.isNotEmpty) {
+                _hasFittedBounds = false;
+                _fitBounds(vm.trackedPoints);
+              }
+            },
             child: Container(
               width: 38,
               height: 38,
@@ -130,7 +145,7 @@ class _TodayVisitMapScreenState extends ConsumerState<TodayVisitMapScreen> {
                 color: _primaryBlue.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.refresh_rounded,
+              child: const Icon(Icons.my_location_rounded,
                   color: _primaryBlue, size: 20),
             ),
           ),
@@ -139,24 +154,15 @@ class _TodayVisitMapScreenState extends ConsumerState<TodayVisitMapScreen> {
     );
   }
 
-  Widget _buildMap(AsyncValue<RouteModel?> routeAsync) {
-    final route = routeAsync.when(
-      data: (d) => d,
-      loading: () => null,
-      error: (_, __) => null,
-    );
-    final hasRoute = route != null && route.points.isNotEmpty;
-
-    if (hasRoute) {
-      WidgetsBinding.instance
-          .addPostFrameCallback((_) => _fitBounds(route.points));
-    }
+  Widget _buildMap(TodayVisitViewmodel vm) {
+    final livePoints = vm.trackedPoints;
+    final hasPoints = livePoints.length >= 2;
 
     return FlutterMap(
       mapController: _mapController,
       options: MapOptions(
-        initialCenter: kStart,
-        initialZoom: 13,
+        initialCenter: widget.startLocation,
+        initialZoom: 14,
         interactionOptions: const InteractionOptions(
           flags: InteractiveFlag.all,
         ),
@@ -166,27 +172,25 @@ class _TodayVisitMapScreenState extends ConsumerState<TodayVisitMapScreen> {
           urlTemplate:
           'https://cartodb-basemaps-{s}.global.ssl.fastly.net/rastertiles/voyager/{z}/{x}/{y}.png',
           subdomains: const ['a', 'b', 'c', 'd'],
-          userAgentPackageName: 'com.example.app',
+          userAgentPackageName: widget.packageName,
         ),
-
-        if (hasRoute)
+        if (hasPoints)
           PolylineLayer(
             polylines: [
               Polyline(
-                points: route.points,
+                points: livePoints,
                 strokeWidth: 10,
-                color: Colors.black.withOpacity(0.18),
+                color: Colors.black.withOpacity(0.15),
                 strokeCap: StrokeCap.round,
                 strokeJoin: StrokeJoin.round,
               ),
             ],
           ),
-
-        if (hasRoute)
+        if (hasPoints)
           PolylineLayer(
             polylines: [
               Polyline(
-                points: route.points,
+                points: livePoints,
                 strokeWidth: 6,
                 color: _primaryBlue,
                 strokeCap: StrokeCap.round,
@@ -194,37 +198,20 @@ class _TodayVisitMapScreenState extends ConsumerState<TodayVisitMapScreen> {
               ),
             ],
           ),
-
         MarkerLayer(
           markers: [
-            // Start marker (blue circle like Google Maps)
             Marker(
-              point: kStart,
-              width: 48,
-              height: 48,
-              child: _StartMarker(),
-            ),
-
-            // End marker (red pin)
-            Marker(
-              point: kEnd,
-              width: 48,
-              height: 64,
-              alignment: Alignment.bottomCenter,
-              child: _EndMarker(),
-            ),
-
-            // Midpoint annotation
-            if (hasRoute && route.points.length > 2)
+                point: widget.startLocation,
+                width: 48,
+                height: 48,
+                child: _StartMarker()),
+            if (livePoints.isNotEmpty)
               Marker(
-                point: route.points[route.points.length ~/ 2],
-                width: 130,
-                height: 40,
-                child: _RouteAnnotation(
-                  label:
-                  "${route.distance.toStringAsFixed(1)} km · ${route.duration.toStringAsFixed(0)} min",
-                ),
-              ),
+                  point: livePoints.last,
+                  width: 48,
+                  height: 64,
+                  alignment: Alignment.bottomCenter,
+                  child: _CurrentLocationMarker()),
           ],
         ),
       ],
@@ -240,46 +227,12 @@ class _TodayVisitMapScreenState extends ConsumerState<TodayVisitMapScreen> {
           children: [
             CircularProgressIndicator(color: _primaryBlue),
             SizedBox(height: 14),
-            Text("Fetching route…",
-                style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildErrorBanner(Object? error) {
-    return Positioned(
-      top: 12,
-      left: 16,
-      right: 16,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: const Color(0xFFEF4444),
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-                color: Colors.black.withOpacity(0.15),
-                blurRadius: 8,
-                offset: const Offset(0, 3))
-          ],
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.error_outline_rounded,
-                color: Colors.white, size: 18),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                error?.toString() ?? "Something went wrong",
-                style: const TextStyle(color: Colors.white, fontSize: 13),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
+            Text(
+              "Fetching location…",
+              style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14),
             ),
           ],
         ),
@@ -287,7 +240,7 @@ class _TodayVisitMapScreenState extends ConsumerState<TodayVisitMapScreen> {
     );
   }
 
-  Widget _buildZoomControls() {
+  Widget _buildZoomControls(TodayVisitViewmodel vm) {
     return Positioned(
       top: 16,
       right: 16,
@@ -296,33 +249,35 @@ class _TodayVisitMapScreenState extends ConsumerState<TodayVisitMapScreen> {
           _MapButton(
             icon: Icons.add,
             onTap: () {
-              final zoom = _mapController.camera.zoom;
-              _mapController.move(
-                  _mapController.camera.center, zoom + 1);
+              double zoom = _mapController.camera.zoom;
+              zoom = (zoom + 0.5).clamp(1.0, 18.0); // smooth increment, clamp to map limits
+              _mapController.move(_mapController.camera.center, zoom);
             },
           ),
           const SizedBox(height: 4),
           _MapButton(
             icon: Icons.remove,
             onTap: () {
-              final zoom = _mapController.camera.zoom;
-              _mapController.move(
-                  _mapController.camera.center, zoom - 1);
+              double zoom = _mapController.camera.zoom;
+              zoom = (zoom - 0.5).clamp(1.0, 18.0);
+              _mapController.move(_mapController.camera.center, zoom);
             },
           ),
           const SizedBox(height: 4),
           _MapButton(
             icon: Icons.my_location_rounded,
-            onTap: () => ref
-                .read(todayVisitProvider.notifier)
-                .getRoute(start: kStart, end: kEnd),
+            onTap: () {
+              if (vm.trackedPoints.isNotEmpty) {
+                _mapController.move(vm.trackedPoints.last, 15); // optional: smooth zoom
+              }
+            },
           ),
         ],
       ),
     );
   }
 
-  Widget _buildInfoCard(RouteModel route) {
+  Widget _buildInfoCard(TripState trip, TodayVisitViewmodel vm) {
     return Positioned(
       bottom: 0,
       left: 0,
@@ -344,7 +299,6 @@ class _TodayVisitMapScreenState extends ConsumerState<TodayVisitMapScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Route title row
             Row(
               children: [
                 Container(
@@ -356,10 +310,10 @@ class _TodayVisitMapScreenState extends ConsumerState<TodayVisitMapScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                const Expanded(
+                Expanded(
                   child: Text(
-                    "Chennai Central",
-                    style: TextStyle(
+                    widget.startLabel,
+                    style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: Color(0xFF1A1F36)),
@@ -380,10 +334,10 @@ class _TodayVisitMapScreenState extends ConsumerState<TodayVisitMapScreen> {
                 const Icon(Icons.location_on_rounded,
                     color: Color(0xFFEF4444), size: 16),
                 const SizedBox(width: 4),
-                const Expanded(
+                Expanded(
                   child: Text(
-                    "Anna Nagar",
-                    style: TextStyle(
+                    widget.endLabel,
+                    style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: Color(0xFF1A1F36)),
@@ -396,17 +350,17 @@ class _TodayVisitMapScreenState extends ConsumerState<TodayVisitMapScreen> {
               children: [
                 _InfoChip(
                   icon: Icons.straighten_rounded,
-                  label: "${route.distance.toStringAsFixed(1)} km",
+                  label:
+                  "${trip.distance.toStringAsFixed(1)} km",
                   color: _primaryBlue,
                 ),
                 const SizedBox(width: 12),
                 _InfoChip(
-                  icon: Icons.schedule_rounded,
-                  label: "${route.duration.toStringAsFixed(0)} min",
+                  icon: Icons.place_rounded,
+                  label: "${vm.trackedPoints.length} pts",
                   color: const Color(0xFF22C55E),
                 ),
                 const Spacer(),
-                // ✅ END DAY BUTTON
                 SizedBox(
                   width: 130,
                   child: _buildEndDayButton(),
@@ -418,6 +372,7 @@ class _TodayVisitMapScreenState extends ConsumerState<TodayVisitMapScreen> {
       ),
     );
   }
+
   Widget _buildEndDayButton() {
     return SizedBox(
       width: double.infinity,
@@ -432,7 +387,7 @@ class _TodayVisitMapScreenState extends ConsumerState<TodayVisitMapScreen> {
           ),
         ),
         style: OutlinedButton.styleFrom(
-          foregroundColor: Color(0xFFEF4444),
+          foregroundColor: const Color(0xFFEF4444),
           padding: const EdgeInsets.symmetric(vertical: 16),
           side: const BorderSide(color: Color(0xFFEF4444), width: 1.5),
           shape: RoundedRectangleBorder(
@@ -440,13 +395,17 @@ class _TodayVisitMapScreenState extends ConsumerState<TodayVisitMapScreen> {
           ),
         ),
         onPressed: () {
-            Navigator.pop(context, true);
+          widget.onEndDay();
+          Navigator.pop(context, true);
         },
       ),
     );
   }
 }
 
+// ─────────────────────────────────────────────
+// Sub-widgets
+// ─────────────────────────────────────────────
 
 class _StartMarker extends StatelessWidget {
   @override
@@ -473,7 +432,7 @@ class _StartMarker extends StatelessWidget {
   }
 }
 
-class _EndMarker extends StatelessWidget {
+class _CurrentLocationMarker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -483,21 +442,22 @@ class _EndMarker extends StatelessWidget {
           width: 32,
           height: 32,
           decoration: const BoxDecoration(
-            color: Color(0xFFEF4444),
+            color: Color(0xFF1A73E8),
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                  color: Color(0x33EF4444),
-                  blurRadius: 10,
-                  spreadRadius: 2,
-                  offset: Offset(0, 3))
+                  color: Color(0x441A73E8),
+                  blurRadius: 12,
+                  spreadRadius: 4,
+                  offset: Offset(0, 2))
             ],
           ),
-          child: const Icon(Icons.flag_rounded, color: Colors.white, size: 18),
+          child: const Icon(Icons.person_pin_rounded,
+              color: Colors.white, size: 18),
         ),
         CustomPaint(
           size: const Size(14, 14),
-          painter: _PinTailPainter(color: const Color(0xFFEF4444)),
+          painter: _PinTailPainter(color: const Color(0xFF1A73E8)),
         ),
       ],
     );
@@ -521,43 +481,6 @@ class _PinTailPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_) => false;
-}
-
-class _RouteAnnotation extends StatelessWidget {
-  final String label;
-  const _RouteAnnotation({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1F36),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withOpacity(0.25),
-              blurRadius: 8,
-              offset: const Offset(0, 3))
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.route_rounded, color: Colors.white, size: 12),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _MapButton extends StatelessWidget {

@@ -14,11 +14,8 @@ class TodayVisitPage extends ConsumerStatefulWidget {
   ConsumerState<TodayVisitPage> createState() => _TodayVisitPageState();
 }
 
-class _TodayVisitPageState extends ConsumerState<TodayVisitPage>
-    with SingleTickerProviderStateMixin {
+class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
   bool isTripStarted = false;
-  late AnimationController _animController;
-  late Animation<double> _fadeAnim;
 
   final TextEditingController dateController = TextEditingController();
   final TextEditingController schoolController = TextEditingController();
@@ -45,23 +42,13 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage>
   static const Color accentColor = Color(0xFF4F6FFF);
   static const Color successColor = Color(0xFF22C55E);
   static const Color dangerColor = Color(0xFFEF4444);
-  static const Color surfaceColor = Color(0xFFF8F9FF);
   static const Color cardColor = Colors.white;
   static const Color mutedText = Color(0xFF8A94A6);
 
   @override
   void initState() {
     super.initState();
-    _animController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 600),
-    );
-    _fadeAnim = CurvedAnimation(parent: _animController, curve: Curves.easeOut);
-    _animController.forward();
-
-    final now = DateTime.now();
-    dateController.text =
-    "${now.day.toString().padLeft(2, '0')}-${_monthName(now.month)}-${now.year}";
+    dateController.text = _formattedToday();
   }
 
   String _monthName(int month) {
@@ -137,10 +124,8 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage>
       return;
     }
 
-    final success = await ref
-        .read(todayVisitProvider.notifier)
-        .endTripApi();
-
+    final success =
+    await ref.read(todayVisitProvider.notifier).manageTrip("stop");
     if (!mounted) return;
 
     if (success) {
@@ -184,9 +169,51 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage>
     });
   }
 
+  // /// Opens map screen. If trip not started, starts trip first.
+  // Future<void> _openMapScreen() async {
+  //   final vm = ref.read(todayVisitProvider.notifier);
+  //
+  //   if (!isTripStarted) {
+  //     // Start trip → captures startLocation + begins tracking
+  //     final success = await vm.manageTrip("start");
+  //     if (!mounted) return;
+  //
+  //     if (!success) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         const SnackBar(content: Text("Failed to start trip")),
+  //       );
+  //       return;
+  //     }
+  //     setState(() => isTripStarted = true);
+  //   }
+  //
+  //   if (!mounted) return;
+  //   final startLoc = vm.tripStartLocation!;
+  //
+  //   final endLoc = vm.trackedPoints.isNotEmpty
+  //       ? vm.trackedPoints.last
+  //       : startLoc;
+  //
+  //   final endDayTriggered = await Navigator.push<bool>(
+  //     context,
+  //     MaterialPageRoute(
+  //       builder: (_) => TodayVisitMapScreen(
+  //         onEndDay: () {},
+  //         startLocation: startLoc,
+  //         endLocation: endLoc,
+  //         startLabel: "Trip Start",
+  //         endLabel: "Current Location",
+  //         packageName: "com.your.app", // ← replace with your package name
+  //       ),
+  //     ),
+  //   );
+  //
+  //   if (!mounted) return;
+  //   if (endDayTriggered == true) await _handleEndDay();
+  // }
+
   @override
   void dispose() {
-    _animController.dispose();
     dateController.dispose();
     schoolController.dispose();
     areaController.dispose();
@@ -332,44 +359,7 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage>
 
   Widget _buildStatusBanner() {
     return GestureDetector(
-      onTap: () async {
-        if (isTripStarted) {
-          final endDayTriggered = await Navigator.push<bool>(
-            context,
-            MaterialPageRoute(
-              builder: (_) => TodayVisitMapScreen(onEndDay: () {}),
-            ),
-          );
-          if (!mounted) return;
-          if (endDayTriggered == true) await _handleEndDay();
-          return;
-        }
-
-        final success = await ref
-            .read(todayVisitProvider.notifier)
-            .startTripApi();
-
-        if (!mounted) return;
-
-        if (!success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Failed to start trip")),
-          );
-          return;
-        }
-
-        setState(() => isTripStarted = true);
-
-        final endDayTriggered = await Navigator.push<bool>(
-          context,
-          MaterialPageRoute(
-            builder: (_) => TodayVisitMapScreen(onEndDay: () {}),
-          ),
-        );
-
-        if (!mounted) return;
-        if (endDayTriggered == true) await _handleEndDay();
-      },
+      // onTap: _openMapScreen, // ← unified handler for both start + open map
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 400),
         margin: const EdgeInsets.fromLTRB(20, 20, 20, 16),
@@ -422,8 +412,8 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage>
                   ),
                   Text(
                     isTripStarted
-                        ? "Fill in the details below to record your visit"
-                        : "Start your trip to enable form fields",
+                        ? "Tap to view your route map"
+                        : "Tap to start your trip",
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.8),
                       fontSize: 12,
@@ -522,7 +512,7 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage>
     required TextEditingController controller,
     required String label,
     required IconData icon,
-    String? hint, // ✅ NEW
+    String? hint,
     bool required = false,
     bool readOnly = false,
     int maxLines = 1,
@@ -600,8 +590,7 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage>
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide:
-                const BorderSide(color: accentColor, width: 1.5),
+                borderSide: const BorderSide(color: accentColor, width: 1.5),
               ),
               disabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -738,8 +727,19 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage>
           elevation: 0,
           shadowColor: Colors.transparent,
         ),
-        onPressed: () {
-          setState(() => isTripStarted = true);
+        onPressed: () async {
+          // Call API to start trip → saves startLocation + begins tracking
+          final success =
+          await ref.read(todayVisitProvider.notifier).manageTrip("start");
+          if (!mounted) return;
+
+          if (success) {
+            setState(() => isTripStarted = true);
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Failed to start trip")),
+            );
+          }
         },
       ),
     );
@@ -767,8 +767,52 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage>
           ),
           elevation: 0,
         ),
-        onPressed: () {
-          // TODO: API CALL - Record Visit
+        onPressed: () async {
+          final error = _validateFields();
+
+          if (error != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(error)),
+            );
+            return;
+          }
+          try {
+            final success = await ref
+                .read(todayVisitProvider.notifier)
+                .submitVisitRecord(
+              schoolName: schoolController.text.trim(),
+              area: areaController.text.trim(),
+              district: districtController.text.trim(),
+              personName: personNameController.text.trim(),
+              contactNumber: contactController.text.trim(),
+              remarks: remarkController.text.trim(),
+              reasonOfVisit: selectedReason ?? "",
+              personMet: selectedPerson ?? "",
+              dateOfVisit: dateController.text,
+            );
+
+            if (!mounted) return;
+
+            if (success) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text("Visit recorded successfully ✅"),
+                ),
+              );
+              _clearForm();
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text("Failed to record visit ❌"),
+                ),
+              );
+            }
+          } catch (e) {
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(e.toString())),
+            );
+          }
         },
       ),
     );
