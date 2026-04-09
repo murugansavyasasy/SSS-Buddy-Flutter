@@ -59,9 +59,10 @@ class RecordVoiceViewModel extends AsyncNotifier<UploadState> {
 
         final uploadResponse = await repo.getPresignedUrl(
           bucket: AwsKey.SCHOOL_CHIMES_COMMUNICATION,
-          fileName: fileName,
+          fileName: '${loginId}_${demoId}_${DateTime.now().millisecondsSinceEpoch}.m4a',
           bucketPath: bucketPath,
-          fileType: 'audio/wav',
+          fileType: 'audio/mp4',
+
         );
 
         _presignedUrl = uploadResponse.data?.presignedUrl;
@@ -90,7 +91,7 @@ class RecordVoiceViewModel extends AsyncNotifier<UploadState> {
       final uploaded = await repo.uploadToS3(
         presignedUrl: _presignedUrl!,
         fileBytes: fileBytes,
-        contentType: 'audio/wav',
+        contentType: 'audio/mp4',
       );
 
       if (!uploaded) throw Exception("Upload returned a failure status.");

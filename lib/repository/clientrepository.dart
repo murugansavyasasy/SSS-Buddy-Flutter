@@ -111,9 +111,11 @@ class ClientRepository {
     return Changepassword.fromJson(list[0]);
   }
 
+
   Future<Usagecount> usagecount(String schoolID,
       String fromDate,
       String toDate,) async {
+
     final response = await client.schoolPost(
       AppEndpoint.getusagecount,
       body: {"schoolID": schoolID, "FromDate": fromDate, "ToDate": toDate},
@@ -211,6 +213,7 @@ class ClientRepository {
 
   Future<List<Localconveyencemodel>> getlocalconveyence(
       String vimIdUSer,) async {
+
     final response = await client.get(
       AppEndpoint.localconveyence,
       query: {"idUser": vimIdUSer},
@@ -219,8 +222,8 @@ class ClientRepository {
     return data.map((e) => Localconveyencemodel.fromJson(e)).toList();
   }
 
-  Future<List<Advancetourexpensemodel>> getadvancetourdata(
-      String VimsIdUser,) async {
+  Future<List<Advancetourexpensemodel>> getadvancetourdata(String VimsIdUser,) async {
+
     final response = await client.get(
       AppEndpoint.getAdvanceTourExpenses,
       query: {"idUser": VimsIdUser},
@@ -274,6 +277,7 @@ class ClientRepository {
 
   Future<List<PoDetailsModel>> getpodetails(String VimIdUser,
       String purchaseOrderId,) async {
+
     final response = await client.post(
       AppEndpoint.getindiualpoforapp,
       body: {"idUser": VimIdUser, "PurchaseOrderID": purchaseOrderId},
@@ -294,8 +298,8 @@ class ClientRepository {
     return data.map((e) => Localexpensedetailmodel.fromJson(e)).toList();
   }
 
-  Future<List<Advancetourexpensedetailmodel>> getadvancetourdetails(
-      String idTourExpense,) async {
+  Future<List<Advancetourexpensedetailmodel>> getadvancetourdetails(String idTourExpense,) async {
+
     final response = await client.get(
       AppEndpoint.gettourexpensedetal,
       query: {"idTourExpense": idTourExpense, "cmd": "Advance"},
@@ -327,6 +331,7 @@ class ClientRepository {
   }
 
   Future<List<Overalltripdetailsmodel>> getoveralldetails(
+
       String idMember,) async {
     final response = await client.get(
       AppEndpoint.getOverallDetails,
@@ -364,11 +369,13 @@ class ClientRepository {
     final response = await client.s3Put(presignedUrl: presignedUrl,
         fileBytes: fileBytes,
         contentType: contentType);
+
     return response.statusCode == 200;
   }
 
   Future<List<Initiatedemocall>> postInitiateDemoCall(
       InitiateDemoCallRequest request,) async {
+
     final response = await client.schoolPost(
       AppEndpoint.postInitiateCall,
       body: request.toJson(),
@@ -377,54 +384,56 @@ class ClientRepository {
     return data.map((e) => Initiatedemocall.fromJson(e)).toList();
   }
 
-    Future<Map<String, dynamic>> manageTrip(String latitude,
-        String longitude,
-        String type,
-        String userId,) async {
-      final response = await client.post(
-        AppEndpoint.manageTrip,
-        body: {
-          "latitude": latitude,
-          "longitude": longitude,
-          "type": type,
-          "user_id": userId,
-        },
-      );
+  Future<Map<String, dynamic>> manageTrip(String latitude,
+      String longitude,
+      String type,
+      String userId,) async {
+    final response = await client.post(
+      AppEndpoint.manageTrip,
+      body: {
+        "latitude": latitude,
+        "longitude": longitude,
+        "type": type,
+        "user_id": userId,
+      },
+    );
 
-      return response.data;
-    }
-
-    Future<List<dynamic>> visitRecord(String loginId,
-        String schoolName,
-        String area,
-        String district,
-        String personName,
-        String contactNumber,
-        String remarks,
-        String reasonOfVisit,
-        String personMet,
-        String dateOfVisit,
-        String latitude,
-        String longitude,) async {
-      final response = await client.post(
-        AppEndpoint.updateDailyVisit,
-        body: {
-          "login_id": loginId,
-          "school_name": schoolName,
-          "area": area,
-          "district": district,
-          "person_name": personName,
-          "contact_number": contactNumber,
-          "remarks": remarks,
-          "reason_of_visit": reasonOfVisit,
-          "person_met": personMet,
-          "date_of_visit": dateOfVisit,
-          "latitude": latitude,
-          "longitude": longitude,
-        },
-      );
-
-      return response.data;
-    }
+    return response.data;
   }
+
+  Future<List<dynamic>> visitRecord(String loginId,
+      String schoolName,
+      String area,
+      String district,
+      String personName,
+      String contactNumber,
+      String remarks,
+      String reasonOfVisit,
+      String personMet,
+      String dateOfVisit,
+      String latitude,
+      String longitude,) async {
+    final response = await client.post(
+      AppEndpoint.updateDailyVisit,
+      body: {
+        "login_id": loginId,
+        "school_name": schoolName,
+        "area": area,
+        "district": district,
+        "person_name": personName,
+        "contact_number": contactNumber,
+        "remarks": remarks,
+        "reason_of_visit": reasonOfVisit,
+        "person_met": personMet,
+        "date_of_visit": dateOfVisit,
+        "latitude": latitude,
+        "longitude": longitude,
+      },
+    );
+
+    return response.data;
+  }
+
+}
+
 

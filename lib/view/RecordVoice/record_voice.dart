@@ -79,8 +79,9 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
 
       _recordingStart = DateTime.now();
       await _audioRecorder.start(
-        const RecordConfig(encoder: AudioEncoder.wav),
-        path: filePath,
+        const RecordConfig(encoder: AudioEncoder.aacLc),
+        path: filePath.replaceAll('.wav', '.m4a'),
+
       );
     } catch (e) {
       debugPrint("Recording error: $e");
