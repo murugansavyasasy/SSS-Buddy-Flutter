@@ -62,6 +62,7 @@ class RecordVoiceViewModel extends AsyncNotifier<UploadState> {
           fileName: '${loginId}_${demoId}_${DateTime.now().millisecondsSinceEpoch}.m4a',
           bucketPath: bucketPath,
           fileType: 'audio/mp4',
+
         );
 
         _presignedUrl = uploadResponse.data?.presignedUrl;
