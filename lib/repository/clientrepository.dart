@@ -78,6 +78,7 @@ class ClientRepository {
       String Email,
       String ParentNos,
       String RequestType,) async {
+
     final response = await client.schoolPost(
       AppEndpoint.createdemoendpoint,
       body: {
@@ -114,6 +115,7 @@ class ClientRepository {
   Future<Usagecount> usagecount(String schoolID,
       String fromDate,
       String toDate,) async {
+
     final response = await client.schoolPost(
       AppEndpoint.getusagecount,
       body: {"schoolID": schoolID, "FromDate": fromDate, "ToDate": toDate},
@@ -210,7 +212,9 @@ class ClientRepository {
   }
 
   Future<List<Localconveyencemodel>> getlocalconveyence(
-      String vimIdUSer,) async {
+
+    String vimIdUSer,
+  ) async {
     final response = await client.get(
       AppEndpoint.localconveyence,
       query: {"idUser": vimIdUSer},
@@ -220,7 +224,9 @@ class ClientRepository {
   }
 
   Future<List<Advancetourexpensemodel>> getadvancetourdata(
-      String VimsIdUser,) async {
+
+    String VimsIdUser,
+  ) async {
     final response = await client.get(
       AppEndpoint.getAdvanceTourExpenses,
       query: {"idUser": VimsIdUser},
@@ -272,8 +278,11 @@ class ClientRepository {
     return data.map((e) => PoListModel.fromJson(e)).toList();
   }
 
-  Future<List<PoDetailsModel>> getpodetails(String VimIdUser,
-      String purchaseOrderId,) async {
+
+  Future<List<PoDetailsModel>> getpodetails(
+    String VimIdUser,
+    String purchaseOrderId,
+  ) async {
     final response = await client.post(
       AppEndpoint.getindiualpoforapp,
       body: {"idUser": VimIdUser, "PurchaseOrderID": purchaseOrderId},
@@ -364,11 +373,13 @@ class ClientRepository {
     final response = await client.s3Put(presignedUrl: presignedUrl,
         fileBytes: fileBytes,
         contentType: contentType);
+
     return response.statusCode == 200;
   }
 
   Future<List<Initiatedemocall>> postInitiateDemoCall(
       InitiateDemoCallRequest request,) async {
+
     final response = await client.schoolPost(
       AppEndpoint.postInitiateCall,
       body: request.toJson(),
@@ -427,4 +438,5 @@ class ClientRepository {
       return response.data;
     }
   }
+
 
