@@ -33,6 +33,7 @@ import '../viewModel/invoice_dd_viewmodel.dart';
 
 class ClientRepository {
   final DioClient client;
+
   ClientRepository(this.client);
 
   Future<Versioncheck> getVersionCheckDetails() async {
@@ -114,6 +115,7 @@ class ClientRepository {
   Future<Usagecount> usagecount(String schoolID,
       String fromDate,
       String toDate,) async {
+
     final response = await client.schoolPost(
       AppEndpoint.getusagecount,
       body: {"schoolID": schoolID, "FromDate": fromDate, "ToDate": toDate},
@@ -211,6 +213,7 @@ class ClientRepository {
 
   Future<List<Localconveyencemodel>> getlocalconveyence(
       String vimIdUSer,) async {
+
     final response = await client.get(
       AppEndpoint.localconveyence,
       query: {"idUser": vimIdUSer},
@@ -220,6 +223,7 @@ class ClientRepository {
   }
 
   Future<List<Advancetourexpensemodel>> getadvancetourdata(String VimsIdUser,) async {
+
     final response = await client.get(
       AppEndpoint.getAdvanceTourExpenses,
       query: {"idUser": VimsIdUser},
@@ -273,6 +277,7 @@ class ClientRepository {
 
   Future<List<PoDetailsModel>> getpodetails(String VimIdUser,
       String purchaseOrderId,) async {
+
     final response = await client.post(
       AppEndpoint.getindiualpoforapp,
       body: {"idUser": VimIdUser, "PurchaseOrderID": purchaseOrderId},
@@ -294,6 +299,7 @@ class ClientRepository {
   }
 
   Future<List<Advancetourexpensedetailmodel>> getadvancetourdetails(String idTourExpense,) async {
+
     final response = await client.get(
       AppEndpoint.gettourexpensedetal,
       query: {"idTourExpense": idTourExpense, "cmd": "Advance"},
@@ -363,12 +369,13 @@ class ClientRepository {
     final response = await client.s3Put(presignedUrl: presignedUrl,
         fileBytes: fileBytes,
         contentType: contentType);
+
     return response.statusCode == 200;
   }
 
   Future<List<Initiatedemocall>> postInitiateDemoCall(
-
       InitiateDemoCallRequest request,) async {
+
     final response = await client.schoolPost(
       AppEndpoint.postInitiateCall,
       body: request.toJson(),
@@ -427,7 +434,6 @@ class ClientRepository {
     return response.data;
   }
 
-
-
 }
+
 

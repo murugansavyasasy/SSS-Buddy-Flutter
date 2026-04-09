@@ -13,15 +13,18 @@ dependencies:
 
   http: ^1.1.2
   flutter_launcher_icons: ^0.14.4
+
   cupertino_icons: ^1.0.8
   logger: ^2.6.2
   connectivity_plus: ^7.1.0
   shared_preferences: ^2.2.2
   flutter_secure_storage: ^10.0.0
 
-  # Riverpod
+
+  # Riverpod 3.x - Correct Compatible Versions
   flutter_riverpod: ^3.3.1
-  riverpod_annotation: ^4.0.2
+  riverpod_annotation: ^4.0.2     # ← Updated
+
   dio: ^5.4.0
   record: ^6.2.0
   permission_handler: ^12.0.1
@@ -41,8 +44,8 @@ dev_dependencies:
     sdk: flutter
 
   build_runner: ^2.4.8
-  riverpod_generator: ^4.0.3      # ← Updated
 
+  riverpod_generator: ^4.0.3      # ← Updated
 
 flutter_launcher_icons:
   android: true
