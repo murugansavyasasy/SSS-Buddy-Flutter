@@ -5,14 +5,15 @@ import 'package:sssbuddy/view/move_to_toursettlement.dart';
 
 import '../Values/Colors/app_colors.dart';
 import '../view/ManagementInfo/info_row.dart';
-import '../view/adavance_tour_expense_detail.dart';
+import '../view/advance_tour_expense_detail.dart';
 import '../view/local_conveyence_detail.dart';
 import 'AmountTile.dart';
 
 class TourExpenseCard extends StatelessWidget {
   final Advancetourexpensemodel item;
+  final String directorLogin;
 
-  const TourExpenseCard({super.key, required this.item});
+  const TourExpenseCard({super.key, required this.item,required this.directorLogin});
 
   Color _statusColor(String status) {
     switch (status.toLowerCase()) {
@@ -41,7 +42,7 @@ class TourExpenseCard extends StatelessWidget {
     final String description = item.Description ?? '-';
     final String monthOfClaim = item.monthOfClaim ?? '-';
     final String status = item.Status ?? 'Unknown';
-
+    final helper = ButtonVisibilityHelper(item, directorLogin);
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
@@ -218,8 +219,6 @@ class TourExpenseCard extends StatelessWidget {
                 ),
 
                 const SizedBox(height: 12),
-
-                // ── Action Buttons ───────────────────
                 Row(
                   children: [
                     // Move to Tour Settlement
@@ -278,6 +277,59 @@ class TourExpenseCard extends StatelessWidget {
                     ),
                   ],
                 ),
+                // Wrap(
+                //   spacing: 8,
+                //   runSpacing: 8,
+                //   children: [
+                //
+                //     if (helper.canEditDelete)
+                //       _actionButton(
+                //         icon: Icons.edit,
+                //         text: "Edit",
+                //         color: Colors.blue,
+                //         onTap: () {
+                //           print("Edit Clicked");
+                //         },
+                //       ),
+                //
+                //     if (helper.canEditDelete)
+                //       _actionButton(
+                //         icon: Icons.delete,
+                //         text: "Delete",
+                //         color: Colors.red,
+                //         onTap: () {
+                //           print("Delete Clicked");
+                //         },
+                //       ),
+                //
+                //     if (helper.canMove)
+                //       _actionButton(
+                //         icon: Icons.swap_horiz,
+                //         text: "Move to Settlement",
+                //         color: AppColors.primary,
+                //         onTap: () {
+                //           Navigator.of(context).push(
+                //             MaterialPageRoute(
+                //               builder: (_) => MoveToToursettlement(item: item),
+                //             ),
+                //           );
+                //         },
+                //       ),
+                //     _actionButton(
+                //       icon: Icons.info_outline,
+                //       text: "Details",
+                //       color: AppColors.primary,
+                //       isFilled: true,
+                //       onTap: () {
+                //         Navigator.of(context).push(
+                //           MaterialPageRoute(
+                //             builder: (_) => AdavanceTourExpenseDetail(item: item),
+                //           ),
+                //         );
+                //       },
+                //     ),
+                //   ],
+                // ),
                 const SizedBox(height: 12),
               ],
             ),
@@ -286,4 +338,37 @@ class TourExpenseCard extends StatelessWidget {
       ),
     );
   }
+}
+Widget _actionButton({
+  required IconData icon,
+  required String text,
+  required Color color,
+  required VoidCallback onTap,
+  bool isFilled = false,
+}) {
+  return SizedBox(
+    height: 36,
+    child: isFilled
+        ? ElevatedButton.icon(
+      onPressed: onTap,
+      icon: Icon(icon, size: 16),
+      label: Text(text, style: const TextStyle(fontSize: 12)),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+      ),
+    )
+        : OutlinedButton.icon(
+      onPressed: onTap,
+      icon: Icon(icon, size: 16),
+      label: Text(text, style: const TextStyle(fontSize: 12)),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: color,
+        side: BorderSide(color: color),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+      ),
+    ),
+  );
 }

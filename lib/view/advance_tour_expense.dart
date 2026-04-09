@@ -8,6 +8,7 @@ import 'package:sssbuddy/viewModel/advance_tourexpense_viewmodel.dart';
 import '../Values/Colors/app_colors.dart';
 import '../components/TourExpenseCard.dart';
 import '../components/toolbar_layout.dart';
+import '../viewModel/login_view_model.dart';
 import 'dashboard.dart';
 
 class AdvanceTourExpense extends ConsumerWidget {
@@ -16,6 +17,8 @@ class AdvanceTourExpense extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tourAsync = ref.watch(tourexpenseprovider);
+    final loginData = ref.read(loginProvider).value;
+    final directorLogin = loginData?.VimsUserTypeId;
     return PopScope(
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) {
@@ -73,7 +76,7 @@ class AdvanceTourExpense extends ConsumerWidget {
                         itemCount: list.length,
                         itemBuilder: (context, index) {
                           final item = list[index];
-                          return TourExpenseCard(item: item);
+                          return TourExpenseCard(item: item, directorLogin: directorLogin ?? '');
                         },
                       );
                     },
