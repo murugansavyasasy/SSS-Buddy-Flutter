@@ -182,20 +182,20 @@ class TodayVisitViewmodel extends AsyncNotifier<TripState?> {
         final result = response["result"]?.toString();
 
         if (backendStatus == 1 || result == "1") {
-          tripStartLocation ??= latLng; // Only set if not already set
-          tripEndLocation = null;
-          await startTracking(latLng); // Start tracking if not already
-          return true;
+          // tripStartLocation ??= latLng; // Only set if not already set
+          // tripEndLocation = null;
+          // await startTracking(latLng); // Start tracking if not already
+          // return true;
         }
         return false;
       } else if (type == "stop") {
         if (response["result"]?.toString() == "1") {
-          tripEndLocation = latLng;
-          stopTracking();
-          state = AsyncData(state.value?.copyWith(
-            isTripStarted: false,
-            distance: _calculateTotalDistance(trackedPoints),
-          ));
+          // tripEndLocation = latLng;
+          // stopTracking();
+          // state = AsyncData(state.value?.copyWith(
+          //   isTripStarted: false,
+          //   distance: _calculateTotalDistance(trackedPoints),
+          // ));
           return true;
         }
         return false;
