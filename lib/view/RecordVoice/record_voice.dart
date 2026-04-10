@@ -18,7 +18,6 @@ import '../../components/toolbar_layout.dart';
 import '../../viewModel/record_voice_viewmodel.dart';
 import '../dashboard.dart';
 
-
 class RecordVoiceScreen extends ConsumerStatefulWidget {
   final Demolist item;
   const RecordVoiceScreen({super.key, required this.item});
@@ -30,20 +29,21 @@ class RecordVoiceScreen extends ConsumerStatefulWidget {
 class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
 
   bool isRecording = false;
-  bool _isBusy = false;
+  bool _isPlaying  = false;
+  bool _isBusy     = false;
+
   late final AudioRecorder _audioRecorder;
   String? _audioPath;
   DateTime? _recordingStart;
 
-
-  bool isPlaying = false;
   final AudioPlayer _audioPlayer = AudioPlayer();
   Duration _duration = Duration.zero;
   Duration _position = Duration.zero;
 
-  int get _recordedDurationSeconds =>
-      _recordingStart == null ? 0
-          : DateTime.now().difference(_recordingStart!).inSeconds;
+  int get _recordedDurationSeconds {
+    if (_recordingStart == null) return 0;
+    return DateTime.now().difference(_recordingStart!).inSeconds;
+  }
 
   double get _progress {
     if (_duration.inMilliseconds == 0) return 0;
@@ -54,6 +54,30 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
   void initState() {
     super.initState();
     _audioRecorder = AudioRecorder();
+
+    _audioPlayer.durationStream.listen((d) {
+      if (d != null && mounted) setState(() => _duration = d);
+    });
+    _audioPlayer.positionStream.listen((p) {
+      if (mounted) setState(() => _position = p);
+    });
+    _audioPlayer.playerStateStream.listen((state) {
+      if (!mounted) return;
+
+      final isPlayingNow = state.playing;
+
+      setState(() {
+        _isPlaying = isPlayingNow;
+      });
+
+      if (state.processingState == ProcessingState.completed) {
+        setState(() {
+          _isPlaying = false;
+          _position = Duration.zero;
+        });
+        _audioPlayer.seek(Duration.zero);
+      }
+    });
   }
 
   @override
@@ -66,31 +90,41 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
   Future<void> _startRecording() async {
     try {
       final dir = await getApplicationDocumentsDirectory();
-      final id = List.generate(10, (_) =>
+      final id  = List.generate(10, (_) =>
       'abcdefghijklmnopqrstuvwxyz0123456789'[Random().nextInt(36)]).join();
-      final filePath = '${dir.path}/$id.wav';
 
       setState(() {
-        _audioPath = null;
-        isPlaying = false;
-        _duration = Duration.zero;
-        _position = Duration.zero;
+        _audioPath      = null;
+        _isPlaying      = false;
+        _duration       = Duration.zero;
+        _position       = Duration.zero;
+        _recordingStart = null;
       });
 
       _recordingStart = DateTime.now();
       await _audioRecorder.start(
         const RecordConfig(encoder: AudioEncoder.aacLc),
-        path: filePath.replaceAll('.wav', '.m4a'),
-
+        path: '${dir.path}/$id.m4a',
       );
     } catch (e) {
       debugPrint("Recording error: $e");
     }
   }
 
+  Future<void> _loadDuration(String path) async {
+    try {
+      await _audioPlayer.setFilePath(path);
+    } catch (e) {
+      debugPrint("Duration load error: $e");
+    }
+  }
+
   Future<void> _stopRecording() async {
     final path = await _audioRecorder.stop();
-    if (path != null) setState(() => _audioPath = path);
+    if (path != null) {
+      setState(() => _audioPath = path);
+      await _loadDuration(path);
+    }
   }
 
   Future<void> _record() async {
@@ -117,31 +151,32 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
   Future<void> _togglePlay() async {
     if (_audioPath == null) return;
 
-    if (isPlaying) {
+    if (_isPlaying) {
       await _audioPlayer.pause();
-      setState(() => isPlaying = false);
+      setState(() => _isPlaying = false);
     } else {
-      await _audioPlayer.setFilePath(_audioPath!);
-      _audioPlayer.play();
-      setState(() => isPlaying = true);
-
-      _audioPlayer.durationStream.listen((d) {
-        if (d != null && mounted) setState(() => _duration = d);
-      });
-      _audioPlayer.positionStream.listen((p) {
-        if (mounted) setState(() => _position = p);
-      });
-      _audioPlayer.playerStateStream.listen((s) {
-        if (s.processingState == ProcessingState.completed && mounted) {
-          setState(() { isPlaying = false; _position = Duration.zero; });
+      try {
+        // ✅ Ensure audio is loaded
+        if (_audioPlayer.audioSource == null) {
+          await _audioPlayer.setFilePath(_audioPath!);
         }
-      });
+
+        // ✅ Restart if completed
+        if (_position >= _duration && _duration > Duration.zero) {
+          await _audioPlayer.seek(Duration.zero);
+        }
+
+        await _audioPlayer.play();
+
+        setState(() => _isPlaying = true);
+      } catch (e) {
+        debugPrint("Playback error: $e");
+      }
     }
   }
 
   Future<void> _onCreatePressed() async {
     if (_audioPath == null) return;
-
     await ref.read(recordVoiceViewModelProvider.notifier).createAndUpload(
       audioPath: _audioPath!,
       demoId: widget.item.demoId.toString(),
@@ -228,7 +263,6 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
           backgroundColor: AppColors.primary,
           body: Stack(
             children: [
-              // ── Main content ──────────────────────────────────────────
               Column(
                 children: [
                   const ToolbarLayout(
@@ -241,7 +275,9 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
                       padding: const EdgeInsets.all(20),
                       decoration: const BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(25),
+                        ),
                       ),
                       child: Column(
                         children: [
@@ -258,10 +294,11 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
 
                           if (_audioPath != null) ...[
                             PlaybackCardWidget(
-                              isPlaying: isPlaying,
-                              progress: _progress,
-                              position: _position,
-                              onTogglePlay: _togglePlay,
+                              isPlaying:     _isPlaying,
+                              progress:      _progress,
+                              position:      _position,
+                              totalDuration: _duration,
+                              onTogglePlay:  _togglePlay,
                             ),
                             const SizedBox(height: 40),
                             CreateButtonWidget(
@@ -277,7 +314,6 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
                   ),
                 ],
               ),
-
               if (isUploading)
                 UploadOverlayWidget(step: uploadState!.step),
             ],

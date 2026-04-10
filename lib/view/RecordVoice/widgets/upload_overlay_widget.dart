@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-
 import '../../../auth/model/UploadState.dart';
-
 
 class UploadOverlayWidget extends StatelessWidget {
   final UploadStep step;
@@ -10,10 +8,14 @@ class UploadOverlayWidget extends StatelessWidget {
 
   String get _label {
     switch (step) {
-      case UploadStep.gettingPresignedUrl: return "Preparing upload...";
-      case UploadStep.uploadingToS3:      return "Uploading audio...";
-      case UploadStep.initiatingCall:     return "Initiating demo call...";
-      default:                            return "";
+      case UploadStep.gettingPresignedUrl:
+        return "Preparing upload...";
+      case UploadStep.uploadingToS3:
+        return "Uploading audio...";
+      case UploadStep.initiatingCall:
+        return "Initiating demo call...";
+      default:
+        return "";
     }
   }
 
@@ -82,7 +84,7 @@ class _StepDots extends StatelessWidget {
         final isActive = _steps.indexOf(s) <= _steps.indexOf(currentStep);
         return AnimatedContainer(
           duration: const Duration(milliseconds: 300),
-          width: isActive ? 10 : 8,
+          width:  isActive ? 10 : 8,
           height: isActive ? 10 : 8,
           margin: const EdgeInsets.symmetric(horizontal: 4),
           decoration: BoxDecoration(

@@ -40,16 +40,27 @@ class Importantinforow extends StatelessWidget {
                           color: Color(0xFF888780),
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        data.value,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: data.isLink || data.onTap != null
-                              ? const Color(0xFF185FA5)
-                              : const Color(0xFF1A1A1A),
-                        ),
+                      const SizedBox(height: 10),
+                      Builder(
+                        builder: (context) {
+                          final values = data.value.split(',');
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: values.map((v) {
+                              return Text(
+                                v.trim(),
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: data.isLink || data.onTap != null
+                                      ? const Color(0xFF185FA5)
+                                      : const Color(0xFF1A1A1A),
+                                ),
+                              );
+                            }).toList(),
+                          );
+                        },
                       ),
                     ],
                   ),

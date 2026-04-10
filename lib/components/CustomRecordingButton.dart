@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class CustomRecordingButton extends StatelessWidget {
@@ -17,14 +16,17 @@ class CustomRecordingButton extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         AnimatedContainer(
-          height: 110,
-          width: 110,
+          height: 80,
+          width: 80,
           duration: const Duration(milliseconds: 300),
-          padding: EdgeInsets.all(isRecording ? 25 : 15),
+          padding: EdgeInsets.all(isRecording ? 18 : 10),
           decoration: BoxDecoration(
             color: Colors.white,
             shape: BoxShape.circle,
-            border: Border.all(color: Colors.blue, width: isRecording ? 8 : 3),
+            border: Border.all(
+              color: Colors.blue,
+              width: isRecording ? 5 : 2,
+            ),
           ),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 300),
@@ -34,12 +36,12 @@ class CustomRecordingButton extends StatelessWidget {
             ),
             child: InkWell(
               onTap: onPressed,
-              borderRadius: BorderRadius.circular(50),
+              borderRadius: BorderRadius.circular(40),
               child: Center(
                 child: Icon(
                   isRecording ? Icons.stop : Icons.mic,
                   color: Colors.white,
-                  size: 32,
+                  size: 24,
                 ),
               ),
             ),
@@ -53,7 +55,10 @@ class CustomRecordingButton extends StatelessWidget {
           child: Text(
             isRecording ? "Tap to Stop" : "Tap to Record",
             key: ValueKey(isRecording),
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
       ],

@@ -1,6 +1,4 @@
 import 'dart:async';
-
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class CustomRecordingWaveWidget extends StatefulWidget {
@@ -11,7 +9,14 @@ class CustomRecordingWaveWidget extends StatefulWidget {
 }
 
 class _RecordingWaveWidgetState extends State<CustomRecordingWaveWidget> {
-  final List<double> _heights = [0.05, 0.07, 0.1, 0.07, 0.05];
+
+  final List<double> _heights = [
+    0.30, 0.50, 0.70, 0.90, 0.60,
+    0.40, 0.80, 0.50, 0.30, 0.65,
+    0.75, 0.45, 0.90, 0.55, 0.35,
+    0.70, 0.50, 0.60, 0.40, 0.30,
+  ];
+
   Timer? _timer;
 
   @override
@@ -27,25 +32,27 @@ class _RecordingWaveWidgetState extends State<CustomRecordingWaveWidget> {
   }
 
   void _startAnimating() {
-    _timer = Timer.periodic(const Duration(milliseconds: 150), (timer) {
-      setState(() {
-        _heights.add(_heights.removeAt(0));
-      });
+    _timer = Timer.periodic(const Duration(milliseconds: 120), (_) {
+      if (mounted) {
+        setState(() => _heights.add(_heights.removeAt(0)));
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.sizeOf(context).height;
+
     return SizedBox(
-      height: MediaQuery.sizeOf(context).height * 0.1,
+      height: screenHeight * 0.08,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: _heights.map((height) {
+        children: _heights.map((h) {
           return AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            width: 20,
-            height: MediaQuery.sizeOf(context).height * height,
-            margin: const EdgeInsets.only(right: 10),
+            duration: const Duration(milliseconds: 120),
+            width: 6,
+            height: screenHeight * h * 0.08,
+            margin: const EdgeInsets.symmetric(horizontal: 3),
             decoration: BoxDecoration(
               color: Colors.blue,
               borderRadius: BorderRadius.circular(50),
