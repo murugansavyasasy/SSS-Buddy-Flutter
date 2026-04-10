@@ -13,7 +13,6 @@ class Overalltripdetailsmodel {
   String? end_longitude;
   int is_closed;
   List<VisitDetail> visit_details;
-
   double totalDistanceKm;
 
   Overalltripdetailsmodel({

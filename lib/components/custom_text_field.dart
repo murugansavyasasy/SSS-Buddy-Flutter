@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import '../Values/Colors/app_colors.dart';
-
-import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Added for inputFormatters
 import '../Values/Colors/app_colors.dart';
 
 class CustomTextField extends StatelessWidget {
@@ -10,6 +8,7 @@ class CustomTextField extends StatelessWidget {
   final TextEditingController controller;
   final String? Function(String?)? validator;
   final TextInputType? keyboardType;
+  final List<TextInputFormatter>? inputFormatters; // NEW: Support input formatters
 
   const CustomTextField({
     super.key,
@@ -18,6 +17,7 @@ class CustomTextField extends StatelessWidget {
     required this.controller,
     this.validator,
     this.keyboardType,
+    this.inputFormatters, // NEW
   });
 
   @override
@@ -26,6 +26,7 @@ class CustomTextField extends StatelessWidget {
       controller: controller,
       keyboardType: keyboardType,
       validator: validator,
+      inputFormatters: inputFormatters,
       style: const TextStyle(
         fontSize: 16,
         color: Colors.black87,

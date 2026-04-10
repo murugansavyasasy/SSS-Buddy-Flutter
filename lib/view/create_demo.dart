@@ -43,6 +43,19 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
     return null;
   }
 
+  String? _validateEmail(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return null;
+    }
+    final emailRegex = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    );
+    if (!emailRegex.hasMatch(value.trim())) {
+      return 'Enter a valid email address';
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -93,6 +106,10 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
                           keyboardType: TextInputType.phone,
                           validator: (value) =>
                               _validateMobile(value, 'Principal Mobile Number'),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(10),
+                          ],
                         ),
 
                         const SizedBox(height: 20),
@@ -101,6 +118,7 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
                           label: "Demo Principal E-Mail ID",
                           hint: "Enter Principal Email ID",
                           controller: dateController,
+                          validator: _validateEmail,
                         ),
 
                         const SizedBox(height: 20),
@@ -136,6 +154,10 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
                                         }
                                         return null;
                                       },
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.digitsOnly,
+                                        LengthLimitingTextInputFormatter(10),
+                                      ],
                                     ),
                                   ),
                                   if (index != 0)
@@ -170,6 +192,18 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
                           alignment: Alignment.centerRight,
                           child: GestureDetector(
                             onTap: () {
+                              if (parentControllers.isNotEmpty &&
+                                  parentControllers.last.text.trim().isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      "Please enter the previous parent number first",
+                                    ),
+                                  ),
+                                );
+                                return;
+                              }
+
                               setState(() {
                                 parentControllers.add(TextEditingController());
                               });
@@ -230,10 +264,15 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
                               );
 
                               if (response?.status == 1) {
+                                // Clear all fields
                                 titleController.clear();
                                 subjectController.clear();
                                 dateController.clear();
+
+                                // NEW: Reset parent list to initial state (one empty field)
+                                // (Original .clear() left the list empty and broke UI)
                                 parentControllers.clear();
+                                parentControllers.add(TextEditingController());
 
                                 CommonDialog.showSuccessDialog(
                                   context,
@@ -241,7 +280,7 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
                                   showRecordButton: true,
                                   response: demoItem,
                                 );
-                              }else {
+                              } else {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
                                     content: Text("Failed to create demo"),
