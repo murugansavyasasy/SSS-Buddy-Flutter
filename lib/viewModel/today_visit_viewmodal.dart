@@ -185,7 +185,7 @@ class TodayVisitViewmodel extends AsyncNotifier<TripState?> {
           // tripStartLocation ??= latLng; // Only set if not already set
           // tripEndLocation = null;
           // await startTracking(latLng); // Start tracking if not already
-          // return true;
+          return true;
         }
         return false;
       } else if (type == "stop") {
