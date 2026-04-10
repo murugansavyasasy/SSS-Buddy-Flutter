@@ -18,7 +18,7 @@ class TodayVisitPage extends ConsumerStatefulWidget {
 class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
   bool isTripStarted = false;
   bool isStartingTrip = false;
-
+  bool isLoadingTrip = true;
   final TextEditingController dateController = TextEditingController();
   final TextEditingController schoolController = TextEditingController();
   final TextEditingController areaController = TextEditingController();
@@ -51,26 +51,25 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
   void initState() {
     super.initState();
     dateController.text = _formattedToday();
-    _checkStoredTrip();
+    _initTripState();
   }
-  Future<void> _checkStoredTrip() async {
+
+  Future<void> _initTripState() async {
     final storedStarted = await SecureStorage.getTripStarted();
     final storedDate = await SecureStorage.getTripStartDate();
 
     final today = _formattedToday();
 
-    if (storedStarted && storedDate != null) {
-      if (storedDate == today) {
-        setState(() {
-          isTripStarted = true;
-        });
-      } else {
-        await SecureStorage.clearTripData();
-        setState(() {
-          isTripStarted = false;
-        });
-      }
+    if (storedStarted && storedDate != null && storedDate == today) {
+      isTripStarted = true;
+    } else {
+      await SecureStorage.clearTripData();
+      isTripStarted = false;
     }
+
+    setState(() {
+      isLoadingTrip = false;
+    });
   }
   String _monthName(int month) {
     const months = [
@@ -150,6 +149,7 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
     if (!mounted) return;
 
     if (success) {
+      await SecureStorage.clearTripData();
       setState(() => isTripStarted = false);
       _clearForm();
       ScaffoldMessenger.of(context).showSnackBar(
@@ -226,7 +226,6 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
                 children: [
                   _buildStatusBanner(),
 
-                  // ✅ Scrollable form content
                   Expanded(
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
@@ -363,6 +362,14 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
   }
 
   Widget _buildStatusBanner() {
+    if (isLoadingTrip) {
+      return const Padding(
+        padding: EdgeInsets.all(20),
+        child: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
     return AnimatedContainer(
       duration: const Duration(milliseconds: 400),
       margin: const EdgeInsets.fromLTRB(20, 20, 20, 16),
