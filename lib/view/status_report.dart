@@ -23,13 +23,13 @@ class StatusReport extends ConsumerWidget {
       accent: Color(0xFF4F8EF7),
       page: TodayVisitPage(),
     ),
-    MenuItemData(
-      title: "Overall Status Report",
-      subtitle: "Comprehensive overview of all statuses",
-      icon: Icons.bar_chart_rounded,
-      accent: Color(0xFF36C98E),
-      page: OverallStatusReportPage(),
-    ),
+    // MenuItemData(
+    //   title: "Overall Status Report",
+    //   subtitle: "Comprehensive overview of all statuses",
+    //   icon: Icons.bar_chart_rounded,
+    //   accent: Color(0xFF36C98E),
+    //   page: OverallStatusReportPage(),
+    // ),
     MenuItemData(
       title: "Reports",
       subtitle: "Browse and export detailed reports",
