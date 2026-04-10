@@ -65,3 +65,24 @@ class Advancetourexpensemodel {
     );
   }
 }
+class ButtonVisibilityHelper {
+  final Advancetourexpensemodel item;
+  final String directorLogin;
+
+  ButtonVisibilityHelper(this.item, this.directorLogin);
+
+  bool get canEditDelete {
+    if (item.isApproved == 0 && directorLogin == "3") {
+      return false;
+    }
+    if ((directorLogin != "3" && item.isApproved == 0) ||
+        item.isApproved == 2) {
+      return true;
+    }
+    return false;
+  }
+
+  bool get canMove {
+    return item.isClaimed == 1;
+  }
+}

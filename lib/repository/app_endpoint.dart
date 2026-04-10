@@ -29,5 +29,6 @@ class AppEndpoint {
   static const postInitiateCall = "InitiateDemoCallByDemoID";
   static const manageTrip = "api/AppDetails/ManageTripDetails";
   static const updateDailyVisit = "AppDetails/UpdateDailyVisitWithLocation";
+  static const addTourexpence = "api/AppDetails/ManageTourExpense";
 
 }

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:sssbuddy/auth/model/CreatedemoResponse.dart';
 import 'package:sssbuddy/auth/model/UsageCount.dart';
 import 'package:sssbuddy/repository/app_endpoint.dart';
+import '../auth/model/AddTourExpenceModal.dart';
 import '../auth/model/AdvanceTourExpenseDetailModel.dart';
 import '../auth/model/AdvanceTourExpenseModel.dart';
 import '../auth/model/ChangePassword.dart';
@@ -433,7 +434,25 @@ class ClientRepository {
 
     return response.data;
   }
-
+  Future<TourExpenseResponse?> submitTourExpense(
+      TourExpenseRequest request) async {
+    try {
+      final response = await client.post(
+        AppEndpoint.addTourexpence,
+        body: request.toJson(),
+      );
+      final data = response.data;
+      if (data is List && data.isNotEmpty) {
+        return TourExpenseResponse.fromJson(data[0]);
+      } else if (data is Map<String, dynamic>) {
+        return TourExpenseResponse.fromJson(data);
+      }
+      return null;
+    } catch (e) {
+      print("ERROR: $e");
+      return null;
+    }
+  }
 }
 
 

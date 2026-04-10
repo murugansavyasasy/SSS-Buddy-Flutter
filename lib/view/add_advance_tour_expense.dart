@@ -3,11 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../Values/Colors/app_colors.dart';
+import '../auth/model/AddTourExpenceModal.dart';
+import '../auth/model/AdvanceTourExpenseModel.dart';
 import '../components/toolbar_layout.dart';
+import '../provider/app_providers.dart';
+import '../viewModel/addAdvace_tour_viewmodal.dart';
+import '../viewModel/advance_tourexpense_viewmodel.dart';
+import '../viewModel/login_view_model.dart';
 import 'advance_tour_expense.dart';
 
 class AddAdvanceTourExpense extends ConsumerStatefulWidget {
-  const AddAdvanceTourExpense({super.key});
+  final Advancetourexpensemodel? editData;
+  const AddAdvanceTourExpense({super.key, this.editData});
 
   @override
   ConsumerState<AddAdvanceTourExpense> createState() =>
@@ -57,6 +64,20 @@ class _AddAdvanceTourExpenseState extends ConsumerState<AddAdvanceTourExpense> {
   @override
   void initState() {
     super.initState();
+
+    if (widget.editData != null) {
+      final data = widget.editData!;
+
+      _tourNameController.text = data.TourName;
+      _descriptionController.text = data.Description;
+      _purposeController.text = data.TourPurpose;
+
+      _place1Controller.text = data.TourPlace;
+      _selectedMonth = _months[int.parse(data.monthOfClaim) - 1];
+
+      _totalExpense = double.tryParse(data.TotalTourExpense) ?? 0.0;
+    }
+
     for (final ctrl in _summaryControllers) {
       ctrl.addListener(_calculateTotal);
     }
@@ -115,12 +136,75 @@ class _AddAdvanceTourExpenseState extends ConsumerState<AddAdvanceTourExpense> {
     }
   }
 
-  void _submit() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Tour expense submitted successfully!')),
-    );
-  }
+  void _submit() async {
+    final loginData = ref.read(loginProvider).value;
+    if (loginData == null) return;
 
+    if (_startDate == null || _endDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Select dates")),
+      );
+      return;
+    }
+
+    final request = TourExpenseRequest(
+      idTourExpense: "0",
+      idUser: loginData.VimsIdUser.toString(),
+      tourPurpose: _purposeController.text,
+      monthOfClaim:
+      (_months.indexOf(_selectedMonth ?? "Jan") + 1).toString(),
+      tourName: _tourNameController.text,
+      tourId: "",
+      startDate:
+      "${_startDate!.day}/${_startDate!.month}/${_startDate!.year}",
+      endDate:
+      "${_endDate!.day}/${_endDate!.month}/${_endDate!.year}",
+      tourPlace1: _place1Controller.text,
+      tourPlace2: _place2Controller.text,
+      tourPlace3: _place3Controller.text,
+      remarksWithoutBill: _remarksController.text,
+      description: _descriptionController.text,
+      totalTourExpense: _totalExpense.toString(),
+      processBy: loginData.VimsIdUser.toString(),
+      processType: "AdvanceTour",
+      tourItemList: [
+        TourItem(
+          boardLodge: _boardingController.text,
+          businessPromo: _businessPromoController.text,
+          convTravel: _localConveyanceController.text,
+          food: _foodController.text,
+          fuel: _petrolController.text,
+          postageCourier: _postageController.text,
+          printing: _printingController.text,
+          travel: _trainBusController.text,
+          misc: _miscController.text,
+        ),
+      ],
+    );
+    await ref
+        .read(tourExpenseProvider.notifier)
+        .submitTourExpense(request);
+  }
+  void _clearForm() {
+    _tourNameController.clear();
+    _descriptionController.clear();
+    _purposeController.clear();
+    _place1Controller.clear();
+    _place2Controller.clear();
+    _place3Controller.clear();
+    _remarksController.clear();
+
+    for (final ctrl in _summaryControllers) {
+      ctrl.clear();
+    }
+
+    setState(() {
+      _selectedMonth = null;
+      _startDate = null;
+      _endDate = null;
+      _totalExpense = 0.0;
+    });
+  }
   @override
   void dispose() {
     _tourNameController.dispose();
@@ -205,6 +289,33 @@ class _AddAdvanceTourExpenseState extends ConsumerState<AddAdvanceTourExpense> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<AsyncValue<TourExpenseResponse?>>(
+      tourExpenseProvider,
+          (previous, next) {
+        next.when(
+          data: (res) {
+            if (res != null && res.result == 1) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(res.resultMessage)),
+              );
+
+              _clearForm();
+              Navigator.pop(context, true);
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(res?.resultMessage ?? "Failed")),
+              );
+            }
+          },
+          loading: () {},
+          error: (e, st) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Submission Failed ❌")),
+            );
+          },
+        );
+      },
+    );
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
