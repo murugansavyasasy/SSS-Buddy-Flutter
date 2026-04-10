@@ -5,6 +5,7 @@ import 'package:sssbuddy/view/status_report.dart';
 
 import '../Values/Colors/app_colors.dart';
 import '../components/toolbar_layout.dart';
+import '../core/storage/secure_storage.dart';
 import '../viewModel/today_visit_viewmodal.dart';
 
 class TodayVisitPage extends ConsumerStatefulWidget {
@@ -50,8 +51,27 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
   void initState() {
     super.initState();
     dateController.text = _formattedToday();
+    _checkStoredTrip();
   }
+  Future<void> _checkStoredTrip() async {
+    final storedStarted = await SecureStorage.getTripStarted();
+    final storedDate = await SecureStorage.getTripStartDate();
 
+    final today = _formattedToday();
+
+    if (storedStarted && storedDate != null) {
+      if (storedDate == today) {
+        setState(() {
+          isTripStarted = true;
+        });
+      } else {
+        await SecureStorage.clearTripData();
+        setState(() {
+          isTripStarted = false;
+        });
+      }
+    }
+  }
   String _monthName(int month) {
     const months = [
       'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -429,7 +449,10 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
                 if (!mounted) return;
                 setState(() => isStartingTrip = false);
                 if (success) {
+                  final today = _formattedToday();
+                  await SecureStorage.saveTripData(true, today);
                   setState(() => isTripStarted = true);
+
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
