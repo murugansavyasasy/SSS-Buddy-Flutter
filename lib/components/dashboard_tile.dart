@@ -28,10 +28,10 @@ class _DashboardTileState extends State<DashboardTile>
     super.initState();
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 130),
+      duration: const Duration(milliseconds: 120),
     );
-    _scale = Tween(begin: 1.0, end: 0.92).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
+    _scale = Tween(begin: 1.0, end: 0.96).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeOut),
     );
   }
 
@@ -41,10 +41,8 @@ class _DashboardTileState extends State<DashboardTile>
     super.dispose();
   }
 
-  Color get _bgColor => Color.lerp(widget.color, Colors.white, 0.88)!;
-  Color get _textColor => Color.lerp(widget.color, Colors.black, 0.35)!;
-  Color get _borderColor => Color.lerp(widget.color, Colors.white, 0.4)!;
-  Color get _iconShine => Color.lerp(widget.color, Colors.white, 0.3)!;
+  Color get _iconBg => widget.color.withOpacity(0.10);
+  Color get _borderColor => widget.color.withOpacity(0.25);
 
   @override
   Widget build(BuildContext context) {
@@ -58,61 +56,67 @@ class _DashboardTileState extends State<DashboardTile>
       child: ScaleTransition(
         scale: _scale,
         child: Container(
-          padding: const EdgeInsets.fromLTRB(10, 12, 10, 8),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: _bgColor,
+            color: Colors.white,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: _borderColor,
-              width: 1.5,
-            ),
+            border: Border.all(color: _borderColor, width: 0.8),
             boxShadow: [
               BoxShadow(
-                color: widget.color.withOpacity(0.15),
-                blurRadius: 10,
-                spreadRadius: 0,
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
             ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Icon with gradient
+              // Icon
               Container(
-                width: 34,
-                height: 34,
+                height: 40,
+                width: 40,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [_iconShine, widget.color],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
-                    BoxShadow(
-                      color: widget.color.withOpacity(0.35),
-                      blurRadius: 6,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
+                  color: _iconBg,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(widget.icon, color: Colors.white, size: 18),
+                child: Icon(widget.icon, color: widget.color, size: 19),
               ),
 
-              const SizedBox(height: 8),
-
-              Text(
-                widget.title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: _textColor,
-                  height: 1.3,
-                ),
+              // Title + arrow row
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: Text(
+                      widget.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1C2340),
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  // Arrow badge
+                  Container(
+                    width: 22,
+                    height: 22,
+                    decoration: BoxDecoration(
+                      color: _iconBg,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Icon(
+                      Icons.arrow_outward_rounded,
+                      color: widget.color,
+                      size: 13,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
