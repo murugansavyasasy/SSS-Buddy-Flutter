@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:sssbuddy/Components/CustomButton.dart';
+import 'package:sssbuddy/auth/model/Demolist.dart';
 import 'package:sssbuddy/components/custom_text_field.dart';
 import 'package:sssbuddy/viewModel/createdemo_view_model.dart';
 import '../Values/Colors/app_colors.dart';
@@ -191,7 +192,6 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
                           child: CustomButton(
                             text: "Create Demo",
                             onPressed: () async {
-                              // Validate all form fields before proceeding
                               if (!_formKey.currentState!.validate()) return;
 
                               final loginData = ref.read(loginProvider);
@@ -220,28 +220,28 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
 
                               if (!mounted) return;
 
-                              if (success) {
-                                final response =
-                                    ref.read(createdemoProvider).value;
-                                if (response?.status == 1) {
-                                  titleController.clear();
-                                  subjectController.clear();
-                                  dateController.clear();
-                                  parentControllers.clear();
+                              final response = ref.read(createdemoProvider).value;
 
-                                  CommonDialog.showSuccessDialog(
-                                    context,
-                                    message: "Demo created successfully",
-                                    showRecordButton: true,
-                                  );
-                                } else {
-                                  CommonDialog.showSuccessDialog(
-                                    context,
-                                    message: "Demo created successfully",
-                                    showRecordButton: false,
-                                  );
-                                }
-                              } else {
+                              final demoItem = Demolist(
+                                schoolName: titleController.text,
+                                principalNumber: int.tryParse(subjectController.text) ?? 0,
+                                demoId: response?.demoId ?? 0,
+                                DemoID: response?.demoId ?? 0,
+                              );
+
+                              if (response?.status == 1) {
+                                titleController.clear();
+                                subjectController.clear();
+                                dateController.clear();
+                                parentControllers.clear();
+
+                                CommonDialog.showSuccessDialog(
+                                  context,
+                                  message: "Demo created successfully",
+                                  showRecordButton: true,
+                                  response: demoItem,
+                                );
+                              }else {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
                                     content: Text("Failed to create demo"),

@@ -8,6 +8,7 @@ class CommonDialog {
       BuildContext context, {
         required String message,
         bool showRecordButton = false,
+        dynamic response,
       }) {
 
     showDialog(
@@ -24,7 +25,6 @@ class CommonDialog {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-
                 /// Success Icon
                 Container(
                   height: 70,
@@ -79,6 +79,7 @@ class CommonDialog {
                         Navigator.pushReplacementNamed(
                           context,
                           RoutesName.recordvoice,
+                          arguments: response
                         );
 
                       } else {

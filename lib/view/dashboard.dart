@@ -282,7 +282,7 @@ class Dashboard extends ConsumerWidget {
                                   onTap: () {
                                     Navigator.pushNamed(
                                       context,
-                                      RoutesName.recordvoice,
+                                      RoutesName.recordvoice,arguments: demo
                                     );
                                   },
                                 );
