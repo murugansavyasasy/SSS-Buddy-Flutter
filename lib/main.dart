@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sssbuddy/utils/network_utils.dart';
 import 'package:sssbuddy/utils/routes/routes.dart';
 import 'package:sssbuddy/utils/routes/routes_name.dart';
 
@@ -43,6 +44,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       onGenerateRoute: Routes.generateRoutes,
       initialRoute: RoutesName.splashscreen,
+      builder: (context, child) => ConnectivityWrapper(child: child?? const SizedBox.shrink()),
     );
   }
 }
