@@ -18,10 +18,14 @@ import 'package:sssbuddy/view/UsageCount/usage_count.dart';
 import 'package:sssbuddy/view/status_report.dart';
 import 'package:sssbuddy/view/tour_settlement.dart';
 
+import '../../view/alert.dart';
+import '../../view/chat.dart';
 import '../../view/customer_list_view.dart';
 import '../../view/demo_list.dart';
+import '../../view/feedback.dart';
 import '../../view/important_info.dart';
 import '../../view/school_detail/schooldetail_view.dart';
+import '../../view/zero_activity.dart';
 
 class Routes {
   static Route<dynamic> generateRoutes(RouteSettings settings) {
@@ -82,6 +86,18 @@ class Routes {
 
       case RoutesName.toursettlement:
         return MaterialPageRoute(builder: (context) => TourSettlement());
+
+      case RoutesName.zero_activity:
+        return MaterialPageRoute(builder: (context) => ZeroActivityScreen());
+
+      case RoutesName.chat:
+        return MaterialPageRoute(builder: (context) => ChatScreen());
+
+      case RoutesName.feedback:
+        return MaterialPageRoute(builder: (context) => FeedbackScreen());
+
+      case RoutesName.alert:
+        return MaterialPageRoute(builder: (context) => AlertScreen());
 
       default:
         return MaterialPageRoute(

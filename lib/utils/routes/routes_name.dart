@@ -19,5 +19,9 @@ class RoutesName {
   static const String toursettlement = "tour_settlement";
   static const String advancetourexpense = "advance_tourexpense";
   static const String localconveyence = "local_conveyence";
-
+  static const String zero_activity = "zero_activity";
+  static const String chat = "chat";
+  static const String alert = "alert";
+  static const String feedback = "feedback";
 }
+
