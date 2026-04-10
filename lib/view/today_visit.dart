@@ -16,6 +16,7 @@ class TodayVisitPage extends ConsumerStatefulWidget {
 
 class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
   bool isTripStarted = false;
+  bool isStartingTrip = false;
 
   final TextEditingController dateController = TextEditingController();
   final TextEditingController schoolController = TextEditingController();
@@ -169,49 +170,6 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
     });
   }
 
-  // /// Opens map screen. If trip not started, starts trip first.
-  // Future<void> _openMapScreen() async {
-  //   final vm = ref.read(todayVisitProvider.notifier);
-  //
-  //   if (!isTripStarted) {
-  //     // Start trip → captures startLocation + begins tracking
-  //     final success = await vm.manageTrip("start");
-  //     if (!mounted) return;
-  //
-  //     if (!success) {
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         const SnackBar(content: Text("Failed to start trip")),
-  //       );
-  //       return;
-  //     }
-  //     setState(() => isTripStarted = true);
-  //   }
-  //
-  //   if (!mounted) return;
-  //   final startLoc = vm.tripStartLocation!;
-  //
-  //   final endLoc = vm.trackedPoints.isNotEmpty
-  //       ? vm.trackedPoints.last
-  //       : startLoc;
-  //
-  //   final endDayTriggered = await Navigator.push<bool>(
-  //     context,
-  //     MaterialPageRoute(
-  //       builder: (_) => TodayVisitMapScreen(
-  //         onEndDay: () {},
-  //         startLocation: startLoc,
-  //         endLocation: endLoc,
-  //         startLabel: "Trip Start",
-  //         endLabel: "Current Location",
-  //         packageName: "com.your.app", // ← replace with your package name
-  //       ),
-  //     ),
-  //   );
-  //
-  //   if (!mounted) return;
-  //   if (endDayTriggered == true) await _handleEndDay();
-  // }
-
   @override
   void dispose() {
     dateController.dispose();
@@ -247,6 +205,8 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
               child: Column(
                 children: [
                   _buildStatusBanner(),
+
+                  // ✅ Scrollable form content
                   Expanded(
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
@@ -342,12 +302,13 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 24),
-                          _buildActionButtons(),
                         ],
                       ),
                     ),
                   ),
+
+                  // ✅ Fixed bottom action buttons (always visible)
+                  _buildFixedBottomButtons(),
                 ],
               ),
             ),
@@ -357,78 +318,137 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
     );
   }
 
-  Widget _buildStatusBanner() {
-    return GestureDetector(
-      // onTap: _openMapScreen, // ← unified handler for both start + open map
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 400),
-        margin: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: isTripStarted
-                ? [const Color(0xFF16A34A), const Color(0xFF22C55E)]
-                : [const Color(0xFFDC2626), const Color(0xFFEF4444)],
+  // ✅ NEW: Fixed bottom buttons — always visible, never scrolls away
+  Widget _buildFixedBottomButtons() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F7FA),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 10,
+            offset: const Offset(0, -4),
           ),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color:
-              (isTripStarted ? successColor : dangerColor).withOpacity(0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(child: _buildRecordVisitButton()),
+          const SizedBox(width: 12),
+          Expanded(child: _buildEndDayButton()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusBanner() {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 400),
+      margin: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isTripStarted
+              ? [const Color(0xFF16A34A), const Color(0xFF22C55E)]
+              : [const Color(0xFFDC2626), const Color(0xFFEF4444)],
         ),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                isTripStarted
-                    ? Icons.directions_car_rounded
-                    : Icons.car_crash_outlined,
-                color: Colors.white,
-                size: 20,
-              ),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(10),
             ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    isTripStarted ? "Trip In Progress" : "No Active Trip",
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 15,
-                    ),
-                  ),
-                  Text(
-                    isTripStarted
-                        ? "Tap to view your route map"
-                        : "Tap to start your trip",
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.8),
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(
-              Icons.arrow_forward_ios_rounded,
+            child: Icon(
+              isTripStarted
+                  ? Icons.directions_car_rounded
+                  : Icons.car_crash_outlined,
               color: Colors.white,
-              size: 16,
+              size: 20,
             ),
-          ],
-        ),
+          ),
+          const SizedBox(width: 14),
+
+          // TEXT
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isTripStarted ? "Trip In Progress" : "No Active Trip",
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
+                ),
+                Text(
+                  isTripStarted
+                      ? "Tracking your route"
+                      : "Start your trip now",
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.8),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // BUTTON / LOADER
+          if (!isTripStarted)
+            isStartingTrip
+                ? const SizedBox(
+              width: 22,
+              height: 22,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            )
+                : ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.red,
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 6),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              onPressed: () async {
+                setState(() => isStartingTrip = true);
+                final success = await ref
+                    .read(todayVisitProvider.notifier)
+                    .manageTrip("start");
+                if (!mounted) return;
+                setState(() => isStartingTrip = false);
+                if (success) {
+                  setState(() => isTripStarted = true);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text("Failed to start trip")),
+                  );
+                }
+              },
+              child: const Text(
+                "START",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+
+          if (isTripStarted)
+            const Icon(
+              Icons.check_circle,
+              color: Colors.white,
+            ),
+        ],
       ),
     );
   }
@@ -691,60 +711,6 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
     );
   }
 
-  Widget _buildActionButtons() {
-    if (!isTripStarted) {
-      return _buildStartTripButton();
-    }
-    return Row(
-      children: [
-        Expanded(child: _buildRecordVisitButton()),
-        const SizedBox(width: 12),
-        Expanded(child: _buildEndDayButton()),
-      ],
-    );
-  }
-
-  Widget _buildStartTripButton() {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton.icon(
-        icon: const Icon(Icons.play_circle_outline_rounded, size: 20),
-        label: const Text(
-          "START TRIP",
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1,
-          ),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: accentColor,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          elevation: 0,
-          shadowColor: Colors.transparent,
-        ),
-        onPressed: () async {
-          // Call API to start trip → saves startLocation + begins tracking
-          final success =
-          await ref.read(todayVisitProvider.notifier).manageTrip("start");
-          if (!mounted) return;
-
-          if (success) {
-            setState(() => isTripStarted = true);
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Failed to start trip")),
-            );
-          }
-        },
-      ),
-    );
-  }
-
   Widget _buildRecordVisitButton() {
     return SizedBox(
       width: double.infinity,
@@ -759,7 +725,7 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
           ),
         ),
         style: ElevatedButton.styleFrom(
-          backgroundColor: accentColor,
+          backgroundColor: isTripStarted ? accentColor : mutedText,
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
@@ -767,12 +733,26 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
           ),
           elevation: 0,
         ),
-        onPressed: () async {
+        onPressed: isTripStarted
+            ? () async {
           final error = _validateFields();
-
           if (error != null) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(error)),
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(Icons.warning_amber_rounded,
+                        color: Colors.white, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(error)),
+                  ],
+                ),
+                backgroundColor: dangerColor,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
             );
             return;
           }
@@ -790,20 +770,28 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
               personMet: selectedPerson ?? "",
               dateOfVisit: dateController.text,
             );
-
             if (!mounted) return;
-
             if (success) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text("Visit recorded successfully ✅"),
+                SnackBar(
+                  content: const Text("Visit recorded successfully ✅"),
+                  backgroundColor: successColor,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               );
               _clearForm();
             } else {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text("Failed to record visit ❌"),
+                SnackBar(
+                  content: const Text("Failed to record visit ❌"),
+                  backgroundColor: dangerColor,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               );
             }
@@ -813,7 +801,8 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
               SnackBar(content: Text(e.toString())),
             );
           }
-        },
+        }
+            : null,
       ),
     );
   }
@@ -832,14 +821,17 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
           ),
         ),
         style: OutlinedButton.styleFrom(
-          foregroundColor: dangerColor,
+          foregroundColor: isTripStarted ? dangerColor : mutedText,
           padding: const EdgeInsets.symmetric(vertical: 16),
-          side: const BorderSide(color: dangerColor, width: 1.5),
+          side: BorderSide(
+            color: isTripStarted ? dangerColor : mutedText,
+            width: 1.5,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
         ),
-        onPressed: () => _handleEndDay(),
+        onPressed: isTripStarted ? () => _handleEndDay() : null,
       ),
     );
   }

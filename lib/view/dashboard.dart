@@ -295,7 +295,6 @@ class Dashboard extends ConsumerWidget {
                       const SizedBox(height: 16),
 
                       /// 🔥 MENU HEADER
-                      /// 🔥 MENU HEADER
                       Row(
                         children: [
                           const Text(
@@ -325,123 +324,79 @@ class Dashboard extends ConsumerWidget {
                       const SizedBox(height: 15),
 
                       /// 🔥 GRID MENU
-                      GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        padding: EdgeInsets.zero,
-                        itemCount: menuItems.length,
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 12,
-                              mainAxisSpacing: 18,
-                              mainAxisExtent: 95,
-                            ),
-                        itemBuilder: (context, index) {
+
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: List.generate(menuItems.length, (index) {
                           final item = menuItems[index];
 
-                          return DashboardTile(
-                            title: item.title,
-                            icon: item.icon,
-                            color: item.color,
-                            onTap: () {
-                              switch (item.id) {
-                                case 1:
-                                  Navigator.pushNamed(
-                                    context,
-                                    RoutesName.createdemo,
-                                  );
-                                  break;
+                          return SizedBox(
+                            width: (MediaQuery.of(context).size.width - 48) / 2, // 2 columns
+                            child: DashboardTile(
+                              title: item.title,
+                              icon: item.icon,
+                              color: item.color,
+                              onTap: () {
+                                switch (item.id) {
+                                  case 1:
+                                    Navigator.pushNamed(context, RoutesName.createdemo);
+                                    break;
+                                  case 2:
+                                    Navigator.pushNamed(context, RoutesName.demolistview);
+                                    break;
+                                  case 3:
+                                    Navigator.pushNamed(context, RoutesName.schoollistview);
+                                    break;
+                                  case 4:
+                                    Navigator.pushNamed(context, RoutesName.circularlist);
+                                    break;
+                                  case 5:
+                                    Navigator.pushNamed(context, RoutesName.statusreport);
+                                    break;
+                                  case 6:
+                                    Navigator.pushNamed(context, RoutesName.recordcollection);
+                                    break;
+                                  case 7:
+                                    Navigator.pushNamed(context, RoutesName.toursettlement);
+                                    break;
+                                  case 8:
+                                    Navigator.pushNamed(context, RoutesName.advancetourexpense);
+                                    break;
+                                  case 9:
+                                    Navigator.pushNamed(context, RoutesName.localconveyence);
+                                    break;
+                                  case 10:
+                                    Navigator.pushNamed(context, RoutesName.customerListView);
+                                    break;
+                                  case 11:
+                                    Navigator.pushNamed(context, RoutesName.schooldocuments);
+                                    break;
+                                  case 12:
+                                    Navigator.pushNamed(context, RoutesName.importantinfo);
+                                    break;
+                                  case 13:
+                                    Navigator.pushNamed(context, RoutesName.managementvideos);
+                                    break;
+                                  case 14:
+                                    Navigator.pushNamed(context, RoutesName.zero_activity);
+                                    break;
+                                  case 15:
+                                    Navigator.pushNamed(context, RoutesName.chat);
+                                    break;
+                                  case 16:
+                                    Navigator.pushNamed(context, RoutesName.alert);
+                                    break;
+                                  case 17:
+                                    Navigator.pushNamed(context, RoutesName.feedback);
+                                    break;
 
-                                case 2:
-                                  Navigator.pushNamed(
-                                    context,
-                                    RoutesName.demolistview,
-                                  );
-                                  break;
-
-                                case 3:
-                                  Navigator.pushNamed(
-                                    context,
-                                    RoutesName.schoollistview,
-                                  );
-                                  break;
-
-                                case 4:
-                                  Navigator.pushNamed(
-                                    context,
-                                    RoutesName.circularlist,
-                                  );
-                                  break;
-
-                                case 5:
-                                  Navigator.pushNamed(
-                                    context,
-                                    RoutesName.statusreport,
-                                  );
-                                  break;
-
-                                case 6:
-                                  Navigator.pushNamed(
-                                    context,
-                                    RoutesName.recordcollection,
-                                  );
-                                  break;
-
-                                case 7:
-                                  Navigator.pushNamed(
-                                    context,
-                                    RoutesName.toursettlement,
-                                  );
-                                  break;
-
-                                case 8:
-                                  Navigator.pushNamed(
-                                    context,
-                                    RoutesName.advancetourexpense,
-                                  );
-                                  break;
-
-                                case 9:
-                                  Navigator.pushNamed(
-                                    context,
-                                    RoutesName.localconveyence,
-                                  );
-                                  break;
-
-                                case 10:
-                                  Navigator.pushNamed(
-                                    context,
-                                    RoutesName.customerListView,
-                                  );
-                                  break;
-
-                                case 11:
-                                  Navigator.pushNamed(
-                                    context,
-                                    RoutesName.schooldocuments,
-                                  );
-                                  break;
-
-                                case 12:
-                                  Navigator.pushNamed(
-                                    context,
-                                    RoutesName.importantinfo,
-                                  );
-                                  break;
-
-                                case 13:
-                                  Navigator.pushNamed(
-                                    context,
-                                    RoutesName.managementvideos,
-                                  );
-                                  break;
-                              }
-                            },
+                                }
+                              },
+                            ),
                           );
-                        },
+                        }),
                       ),
-
                       const SizedBox(height: 20),
                     ],
                   ),
@@ -452,5 +407,14 @@ class Dashboard extends ConsumerWidget {
         ),
       ),
     );
+  }
+  double _getTileRatio() {
+    final maxLen = menuItems
+        .map((e) => e.title.length)
+        .reduce((a, b) => a > b ? a : b);
+
+    if (maxLen <= 10) return 1.5;
+    if (maxLen <= 16) return 1.35;
+    return 1.2;
   }
 }
