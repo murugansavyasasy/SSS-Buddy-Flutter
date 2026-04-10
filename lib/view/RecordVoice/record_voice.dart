@@ -64,18 +64,17 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
     _audioPlayer.playerStateStream.listen((state) {
       if (!mounted) return;
 
-      final isPlayingNow = state.playing;
-
       setState(() {
-        _isPlaying = isPlayingNow;
+        _isPlaying = state.playing;
       });
 
       if (state.processingState == ProcessingState.completed) {
+        _audioPlayer.stop();
+        _audioPlayer.seek(Duration.zero);
         setState(() {
           _isPlaying = false;
           _position = Duration.zero;
         });
-        _audioPlayer.seek(Duration.zero);
       }
     });
   }
@@ -137,6 +136,8 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
       if (status == PermissionStatus.granted) {
         setState(() => isRecording = true);
         await _startRecording();
+      } else if (status == PermissionStatus.denied) {
+        _showSnackBar("Microphone permission denied.", isError: true);
       } else if (status == PermissionStatus.permanentlyDenied) {
         openAppSettings();
       }
@@ -156,16 +157,10 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
       setState(() => _isPlaying = false);
     } else {
       try {
-        // ✅ Ensure audio is loaded
-        if (_audioPlayer.audioSource == null) {
-          await _audioPlayer.setFilePath(_audioPath!);
-        }
+        // ✅ Always reload path — needed after stop() clears the source
+        await _audioPlayer.setFilePath(_audioPath!);
 
-        // ✅ Restart if completed
-        if (_position >= _duration && _duration > Duration.zero) {
-          await _audioPlayer.seek(Duration.zero);
-        }
-
+        await _audioPlayer.seek(Duration.zero);
         await _audioPlayer.play();
 
         setState(() => _isPlaying = true);
