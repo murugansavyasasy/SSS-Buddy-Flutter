@@ -7,6 +7,15 @@ import 'StatusBadge.dart';
 import 'TimeInfo.dart';
 import 'VisitTile.dart';
 
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+
+import '../Values/Colors/app_colors.dart';
+import '../auth/model/OverallTripDetailsModel.dart';
+import 'StatusBadge.dart';
+import 'TimeInfo.dart';
+import 'VisitTile.dart';
+
 class TripCard extends StatelessWidget {
   final Overalltripdetailsmodel trip;
 
@@ -38,6 +47,7 @@ class TripCard extends StatelessWidget {
       ),
       child: Column(
         children: [
+          // Header (unchanged)
           Padding(
             padding: const EdgeInsets.all(14),
             child: Row(
@@ -68,7 +78,7 @@ class TripCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        trip.start_time?.trim() ?? 'N/A',
+                        trip.start_time.trim(),
                         style: TextStyle(
                           color: Colors.grey.shade600,
                           fontSize: 12,
@@ -105,6 +115,38 @@ class TripCard extends StatelessWidget {
               ],
             ),
           ),
+
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.route_rounded,
+                  size: 18,
+                  color: Colors.grey.shade500,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Total Distance',
+                  style: TextStyle(
+                    color: Colors.grey.shade600,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  '${trip.totalDistanceKm.toStringAsFixed(2)} Km',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    color: Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
 
           if (visits.isNotEmpty &&
               visits.any((v) => v.school_name != null)) ...[
