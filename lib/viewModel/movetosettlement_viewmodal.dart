@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../auth/model/AddTourExpenceModal.dart';
 import '../provider/app_providers.dart';
 
-class TourExpenseViewModel
+class MovetosettlementViewmodal
     extends AsyncNotifier<TourExpenseResponse?> {
 
   @override
@@ -26,6 +26,6 @@ class TourExpenseViewModel
 }
 
 final tourExpenseProvider =
-AsyncNotifierProvider<TourExpenseViewModel, TourExpenseResponse?>(
-      () => TourExpenseViewModel(),
+AsyncNotifierProvider<MovetosettlementViewmodal, TourExpenseResponse?>(
+      () => MovetosettlementViewmodal(),
 );

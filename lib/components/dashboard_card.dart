@@ -77,8 +77,9 @@ class _DashboardCardState extends State<DashboardCard>
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 230,
+    return IntrinsicWidth(
+      child: Container(
+      constraints:const BoxConstraints(maxWidth: 300),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         gradient: LinearGradient(
@@ -230,6 +231,7 @@ class _DashboardCardState extends State<DashboardCard>
           ],
         ),
       ),
+    )
     );
   }
 }
