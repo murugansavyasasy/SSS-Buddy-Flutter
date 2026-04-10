@@ -16,6 +16,8 @@ class DescriptionRow extends StatelessWidget {
         Expanded(
           child: Text(
             description,
+            softWrap: true,
+            overflow: TextOverflow.visible,
             style: const TextStyle(
               fontSize: 12,
               color: Color(0xFF64748B),

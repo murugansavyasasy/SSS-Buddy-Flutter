@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:convert';
 import '../auth/model/SchoolDocuments.dart';
@@ -92,12 +93,66 @@ class SchoolDocumentCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            Icon(Icons.chevron_right_rounded, color: Colors.grey.shade400, size: 20),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.share, size: 18),
+                  onPressed: () => _shareDocument(context),
+                ),
+                Icon(Icons.chevron_right_rounded,
+                    color: Colors.grey.shade400, size: 20),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
+
+  void _shareDocument(BuildContext context) {
+    if (item.DocumentType == 'video') {
+      _shareVideoList();
+    } else {
+      _shareSingleFile();
+    }
+  }
+
+  void _shareSingleFile() {
+    final title = item.DocumentName;
+    final url = item.DocumentURL;
+
+    if (url.isEmpty) return;
+
+    SharePlus.instance.share(
+      ShareParams(
+        text: '📄 $title\n\nDownload here:\n$url',
+        subject: title,
+      ),
+    );
+  }
+
+  void _shareVideoList() {
+    final List<dynamic> videos = jsonDecode(item.DocumentURL);
+
+    if (videos.isEmpty) return;
+
+    final buffer = StringBuffer();
+    buffer.writeln("🎬 ${item.DocumentName}\n");
+
+    for (var v in videos) {
+      buffer.writeln("• ${v['VideoName']}");
+      buffer.writeln("${v['VideoLink']}\n");
+    }
+
+    SharePlus.instance.share(
+      ShareParams(
+        text: buffer.toString(),
+        subject: item.DocumentName,
+      ),
+    );
+  }
+
 
   void _handleTap(BuildContext context) {
     if (item.DocumentType == 'video') {

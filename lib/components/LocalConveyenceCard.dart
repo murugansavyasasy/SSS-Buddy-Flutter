@@ -121,28 +121,28 @@ class LocalConveyenceCard extends StatelessWidget {
                       children: [
                         Text(
                           item.Username,
+                          maxLines: 1, // ✅ prevent overflow
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
                             color: Color(0xFF0F172A),
-                            letterSpacing: -0.3,
                           ),
                         ),
                         const SizedBox(height: 2),
                         Row(
                           children: [
-                            const Icon(
-                              Icons.tag_rounded,
-                              size: 11,
-                              color: Color(0xFFCBD5E1),
-                            ),
+                            const Icon(Icons.tag_rounded, size: 11, color: Color(0xFFCBD5E1)),
                             const SizedBox(width: 2),
-                            Text(
-                              item.RefId,
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: Color(0xFF94A3B8),
-                                letterSpacing: 0.2,
+                            Expanded( // ✅ IMPORTANT
+                              child: Text(
+                                item.RefId,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: Color(0xFF94A3B8),
+                                ),
                               ),
                             ),
                           ],
@@ -150,12 +150,14 @@ class LocalConveyenceCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  _StatusBadge(
-                    label: item.Status,
-                    color: style.color,
-                    bg: style.bg,
-                    icon: style.icon,
-                  ),
+              Flexible( // ✅ prevents overflow
+                child: _StatusBadge(
+                  label: item.Status,
+                  color: style.color,
+                  bg: style.bg,
+                  icon: style.icon,
+                ),
+              ),
                 ],
               ),
             ),
@@ -163,20 +165,25 @@ class LocalConveyenceCard extends StatelessWidget {
             // ── Info tiles ──
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-              child: Row(
+              child:
+              Row(
                 children: [
-                  InfoTileLocal(
-                    icon: Icons.calendar_month_rounded,
-                    label: "Month",
-                    value: item.monthOfClaim,
+                  Expanded(
+                    child: InfoTileLocal(
+                      icon: Icons.calendar_month_rounded,
+                      label: "Month",
+                      value: item.monthOfClaim,
+                    ),
                   ),
                   const SizedBox(width: 10),
-                  InfoTileLocal(
-                    icon: Icons.currency_rupee_rounded,
-                    label: "Total Expense",
-                    value: "₹ ${item.TotalLocalExpense.toStringAsFixed(2)}",
-                    highlight: true,
-                    accentGradient: style.gradient,
+                  Expanded(
+                    child: InfoTileLocal(
+                      icon: Icons.currency_rupee_rounded,
+                      label: "Total Expense",
+                      value: "₹ ${item.TotalLocalExpense.toStringAsFixed(2)}",
+                      highlight: true,
+                      accentGradient: style.gradient,
+                    ),
                   ),
                 ],
               ),

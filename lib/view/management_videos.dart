@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../Values/Colors/app_colors.dart';
 import '../auth/model/ManagementVideosModel.dart';
@@ -80,8 +81,24 @@ class ManagementVideos extends ConsumerWidget {
                             fontSize: 14,
                           ),
                         ),
-
-                        trailing: const Icon(Icons.chevron_right),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // ✅ Share button
+                            IconButton(
+                              icon: Icon(
+                                // ✅ Use platform-specific share icon
+                                Theme.of(context).platform == TargetPlatform.iOS
+                                    ? CupertinoIcons.share
+                                    : Icons.share,
+                                color: AppColors.primary,
+                                size: 22,
+                              ),
+                              onPressed: () => _shareVideo(video),
+                            ),
+                            const Icon(Icons.chevron_right),
+                          ],
+                        ),
                         onTap: () {
                           if (video.videoType == "youtube") {
                             _launchYoutube(context, video.videoURL);
@@ -109,6 +126,22 @@ class ManagementVideos extends ConsumerWidget {
     );
   }
 
+  void _shareVideo(Managementvideosmodel video) {
+    final title = video.videoName?.trim() ?? "Video";
+    final url = video.videoURL?.trim() ?? "";
+
+    if (url.isEmpty) {
+      debugPrint("❌ No video URL to share");
+      return;
+    }
+
+    SharePlus.instance.share(
+      ShareParams(
+        text: '🎬 $title\n\nWatch here:\n$url',
+        subject: title,
+      ),
+    );
+  }
 
   Widget _buildThumbnail(Managementvideosmodel video) {
     final String thumbnailUrl = _getThumbnailUrl(video);

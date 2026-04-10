@@ -29,12 +29,13 @@ class DetailRow extends StatelessWidget {
         Expanded(
           child: Text(
             value,
+            softWrap: true,
+            overflow: TextOverflow.visible,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: valueColor ?? const Color(0xFF1E293B),
             ),
-            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],
