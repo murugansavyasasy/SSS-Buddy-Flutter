@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:sssbuddy/auth/model/CreatedemoResponse.dart';
 import 'package:sssbuddy/auth/model/UsageCount.dart';
 import 'package:sssbuddy/repository/app_endpoint.dart';
@@ -20,6 +22,7 @@ import '../auth/model/LocalExpenseDetailModel.dart';
 import '../auth/model/ManagementInfo.dart';
 import '../auth/model/OverallTripDetailsModel.dart';
 import '../auth/model/PO_listModal.dart';
+import '../auth/model/RecordCollectionPaymentResponse.dart';
 import '../auth/model/ReportingMembersModel.dart';
 import '../auth/model/SalesPersonModel.dart';
 import '../auth/model/SchoolDocuments.dart';
@@ -73,12 +76,14 @@ class ClientRepository {
     return jsonEncode(response.data);
   }
 
-  Future<Createdemoresponse> createdemo(String LoginID,
-      String SchoolName,
-      String MobileNo,
-      String Email,
-      String ParentNos,
-      String RequestType,) async {
+  Future<Createdemoresponse> createdemo(
+    String LoginID,
+    String SchoolName,
+    String MobileNo,
+    String Email,
+    String ParentNos,
+    String RequestType,
+  ) async {
     final response = await client.schoolPost(
       AppEndpoint.createdemoendpoint,
       body: {
@@ -96,9 +101,11 @@ class ClientRepository {
     return Createdemoresponse.fromJson(data.first);
   }
 
-  Future<Changepassword> changepassword(String idUser,
-      String oldPassword,
-      String newPassword,) async {
+  Future<Changepassword> changepassword(
+    String idUser,
+    String oldPassword,
+    String newPassword,
+  ) async {
     final response = await client.get(
       AppEndpoint.changepasswordendpoint,
       query: {
@@ -112,11 +119,11 @@ class ClientRepository {
     return Changepassword.fromJson(list[0]);
   }
 
-
-  Future<Usagecount> usagecount(String schoolID,
-      String fromDate,
-      String toDate,) async {
-
+  Future<Usagecount> usagecount(
+    String schoolID,
+    String fromDate,
+    String toDate,
+  ) async {
     final response = await client.schoolPost(
       AppEndpoint.getusagecount,
       body: {"schoolID": schoolID, "FromDate": fromDate, "ToDate": toDate},
@@ -145,7 +152,8 @@ class ClientRepository {
   }
 
   Future<List<Managementvideosmodel>> getmanagementvideos(
-      String vimIdUSer,) async {
+    String vimIdUSer,
+  ) async {
     final response = await client.get(
       AppEndpoint.managementvideos,
       query: {"UserId": vimIdUSer},
@@ -154,9 +162,11 @@ class ClientRepository {
     return data.map((e) => Managementvideosmodel.fromJson(e)).toList();
   }
 
-  Future<List<Customerdetailsmodel>> getcustomerslist(String VimIdUser,
-      String customerId,
-      String selectedUser,) async {
+  Future<List<Customerdetailsmodel>> getcustomerslist(
+    String VimIdUser,
+    String customerId,
+    String selectedUser,
+  ) async {
     final response = await client.post(
       AppEndpoint.customerslist,
       body: {
@@ -171,9 +181,11 @@ class ClientRepository {
     return data.map((e) => Customerdetailsmodel.fromJson(e)).toList();
   }
 
-  Future<List<Customerdetailsinfomodelclass>> getcustomerinfo(String VimIdUser,
-      String customerId,
-      String selectedUser,) async {
+  Future<List<Customerdetailsinfomodelclass>> getcustomerinfo(
+    String VimIdUser,
+    String customerId,
+    String selectedUser,
+  ) async {
     final response = await client.post(
       AppEndpoint.customerinfo,
       body: {
@@ -200,9 +212,7 @@ class ClientRepository {
   }
 
   Future<List<Importantinfomodel>> getImportantInfo() async {
-    final response = await client.schoolget(
-      AppEndpoint.getimportantinfo,
-    );
+    final response = await client.schoolget(AppEndpoint.getimportantinfo);
 
     final List<dynamic> data = response.data;
     if (data.isEmpty) {
@@ -213,8 +223,8 @@ class ClientRepository {
   }
 
   Future<List<Localconveyencemodel>> getlocalconveyence(
-      String vimIdUSer,) async {
-
+    String vimIdUSer,
+  ) async {
     final response = await client.get(
       AppEndpoint.localconveyence,
       query: {"idUser": vimIdUSer},
@@ -223,8 +233,9 @@ class ClientRepository {
     return data.map((e) => Localconveyencemodel.fromJson(e)).toList();
   }
 
-  Future<List<Advancetourexpensemodel>> getadvancetourdata(String VimsIdUser,) async {
-
+  Future<List<Advancetourexpensemodel>> getadvancetourdata(
+    String VimsIdUser,
+  ) async {
     final response = await client.get(
       AppEndpoint.getAdvanceTourExpenses,
       query: {"idUser": VimsIdUser},
@@ -276,9 +287,10 @@ class ClientRepository {
     return data.map((e) => PoListModel.fromJson(e)).toList();
   }
 
-  Future<List<PoDetailsModel>> getpodetails(String VimIdUser,
-      String purchaseOrderId,) async {
-
+  Future<List<PoDetailsModel>> getpodetails(
+    String VimIdUser,
+    String purchaseOrderId,
+  ) async {
     final response = await client.post(
       AppEndpoint.getindiualpoforapp,
       body: {"idUser": VimIdUser, "PurchaseOrderID": purchaseOrderId},
@@ -290,7 +302,8 @@ class ClientRepository {
   }
 
   Future<List<Localexpensedetailmodel>> getlocalconviencedetail(
-      String idLocalExpense,) async {
+    String idLocalExpense,
+  ) async {
     final response = await client.get(
       AppEndpoint.getlocalconviencedetail,
       query: {"idLocalExpense": idLocalExpense},
@@ -299,8 +312,9 @@ class ClientRepository {
     return data.map((e) => Localexpensedetailmodel.fromJson(e)).toList();
   }
 
-  Future<List<Advancetourexpensedetailmodel>> getadvancetourdetails(String idTourExpense,) async {
-
+  Future<List<Advancetourexpensedetailmodel>> getadvancetourdetails(
+    String idTourExpense,
+  ) async {
     final response = await client.get(
       AppEndpoint.gettourexpensedetal,
       query: {"idTourExpense": idTourExpense, "cmd": "Advance"},
@@ -332,8 +346,8 @@ class ClientRepository {
   }
 
   Future<List<Overalltripdetailsmodel>> getoveralldetails(
-
-      String idMember,) async {
+    String idMember,
+  ) async {
     final response = await client.get(
       AppEndpoint.getOverallDetails,
       query: {"UserId": idMember},
@@ -367,16 +381,18 @@ class ClientRepository {
     required List<int> fileBytes,
     required String contentType,
   }) async {
-    final response = await client.s3Put(presignedUrl: presignedUrl,
-        fileBytes: fileBytes,
-        contentType: contentType);
+    final response = await client.s3Put(
+      presignedUrl: presignedUrl,
+      fileBytes: fileBytes,
+      contentType: contentType,
+    );
 
     return response.statusCode == 200;
   }
 
   Future<List<Initiatedemocall>> postInitiateDemoCall(
-      InitiateDemoCallRequest request,) async {
-
+    InitiateDemoCallRequest request,
+  ) async {
     final response = await client.schoolPost(
       AppEndpoint.postInitiateCall,
       body: request.toJson(),
@@ -385,10 +401,12 @@ class ClientRepository {
     return data.map((e) => Initiatedemocall.fromJson(e)).toList();
   }
 
-  Future<Map<String, dynamic>> manageTrip(String latitude,
-      String longitude,
-      String type,
-      String userId,) async {
+  Future<Map<String, dynamic>> manageTrip(
+    String latitude,
+    String longitude,
+    String type,
+    String userId,
+  ) async {
     final response = await client.post(
       AppEndpoint.manageTrip,
       body: {
@@ -402,18 +420,20 @@ class ClientRepository {
     return response.data;
   }
 
-  Future<List<dynamic>> visitRecord(String loginId,
-      String schoolName,
-      String area,
-      String district,
-      String personName,
-      String contactNumber,
-      String remarks,
-      String reasonOfVisit,
-      String personMet,
-      String dateOfVisit,
-      String latitude,
-      String longitude,) async {
+  Future<List<dynamic>> visitRecord(
+    String loginId,
+    String schoolName,
+    String area,
+    String district,
+    String personName,
+    String contactNumber,
+    String remarks,
+    String reasonOfVisit,
+    String personMet,
+    String dateOfVisit,
+    String latitude,
+    String longitude,
+  ) async {
     final response = await client.post(
       AppEndpoint.updateDailyVisit,
       body: {
@@ -434,8 +454,10 @@ class ClientRepository {
 
     return response.data;
   }
+
   Future<TourExpenseResponse?> submitTourExpense(
-      TourExpenseRequest request) async {
+    TourExpenseRequest request,
+  ) async {
     try {
       final response = await client.post(
         AppEndpoint.addTourexpence,
@@ -453,6 +475,68 @@ class ClientRepository {
       return null;
     }
   }
+
+  Future<Recordcollectionpaymentresponse> createPaymentMultipart({
+    required String invoiceID,
+    required String customerId,
+    required String financialYear,
+    required String invoiceNumber,
+    required String received,
+    required String receivedDate,
+    required String paymentMode,
+    required String createdBy,
+    required String cashRecdDate,
+    required String chequeDate,
+    required String chequeNumber,
+    required String neftDetails,
+    required String depositedBank,
+    required String depositedBranch,
+    required String depositedBy,
+    required String depositedDate,
+    File? imageFile,
+  }) async {
+    final Map<String, dynamic> jsonPayload = {
+      "InvoiceID": invoiceID,
+      "CustomerId": customerId,
+      "FinancialYear": financialYear,
+      "InvoiceNumber": invoiceNumber,
+      "Received": received,
+      "ReceivedDate": receivedDate,
+      "PaymentMode": paymentMode,
+      "CreatedBy": createdBy,
+      "CashRecdDate": cashRecdDate,
+      "ChequeDate": chequeDate,
+      "ChequeNumber": chequeNumber,
+      "NEFTDetails": neftDetails,
+      "DepositedBank": depositedBank,
+      "DepositedBranch": depositedBranch,
+      "DepositedBy": depositedBy,
+      "DepositedDate": depositedDate,
+    };
+
+    MultipartFile chequeUpload;
+    if (imageFile != null && await imageFile.exists()) {
+      chequeUpload = await MultipartFile.fromFile(
+        imageFile.path,
+        filename: imageFile.path.split('/').last,
+      );
+    } else {
+      chequeUpload = MultipartFile.fromBytes([], filename: '0000000000.jpg');
+    }
+
+    final formData = FormData.fromMap({
+      'JsonBody': jsonPayload.toString(),
+      'ChequeUpload': chequeUpload,
+    });
+
+    final response = await client.dio.post(
+      AppEndpoint.createpayment,
+      data: formData,
+      options: Options(headers: {'Content-Type': 'multipart/form-data'}),
+    );
+
+    final List data = response.data is List ? response.data : [response.data];
+
+    return Recordcollectionpaymentresponse.fromJson(data.first);
+  }
 }
-
-

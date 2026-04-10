@@ -1,10 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../Values/Colors/app_colors.dart';
-import 'searchable_dropdown.dart';
+import '../components/searchable_dropdown.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Shared Section Header
+// SHARED BANK LIST
+// ─────────────────────────────────────────────────────────────────────────────
+const List<String> kBankList = [
+  'Karur Vysya Bank',
+  'Kotak Mahindra Bank',
+  'ICICI Bank',
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION HEADER
 // ─────────────────────────────────────────────────────────────────────────────
 class PaymentSectionHeader extends StatelessWidget {
   final String title;
@@ -49,6 +58,8 @@ class PaymentSectionHeader extends StatelessWidget {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CASH FORM
+// Fields: Cash Received On, Cash Deposited On, Bank (dropdown), Branch
+// Validation rule: Deposited date must be >= Received date
 // ─────────────────────────────────────────────────────────────────────────────
 class CashPaymentForm extends StatelessWidget {
   final TextEditingController cashReceivedOnController;
@@ -56,12 +67,6 @@ class CashPaymentForm extends StatelessWidget {
   final TextEditingController cashDepositedBranchController;
   final String? selectedBank;
   final ValueChanged<String?> onBankChanged;
-
-  static const List<String> _banks = [
-    'Karur Vysya Bank',
-    'Kotak Mahindra Bank',
-    'ICICI Bank',
-  ];
 
   const CashPaymentForm({
     super.key,
@@ -83,23 +88,27 @@ class CashPaymentForm extends StatelessWidget {
             icon: Icons.account_balance_wallet_outlined,
             color: Color(0xFF059669),
           ),
+          // Cash Received On — max date = today (past picker)
           FormDateField(
             controller: cashReceivedOnController,
             label: 'Cash Received On',
             icon: Icons.calendar_today_outlined,
+            allowFuture: false,
           ),
           const SizedBox(height: 14),
+          // Cash Deposited On — max date = today (past picker)
           FormDateField(
             controller: cashDepositedOnController,
             label: 'Cash Deposited On',
             icon: Icons.calendar_month_outlined,
+            allowFuture: false,
           ),
           const SizedBox(height: 14),
           SearchableDropdown<String>(
             label: 'Cash Deposited Bank',
             hint: 'Select a bank',
             value: selectedBank,
-            items: _banks,
+            items: kBankList,
             itemLabel: (e) => e,
             itemValue: (e) => e,
             onChanged: onBankChanged,
@@ -118,12 +127,18 @@ class CashPaymentForm extends StatelessWidget {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CHEQUE FORM
+// Fields: Cheque Number, Cheque Date (past), Cheque Bank (free text),
+//         Deposit Bank (dropdown), Branch, Deposited Date (past)
+// Validation rule: Deposited date must be >= Cheque date
 // ─────────────────────────────────────────────────────────────────────────────
 class ChequePaymentForm extends StatelessWidget {
   final TextEditingController chequeNumberController;
   final TextEditingController chequeDateController;
   final TextEditingController chequeBankController;
   final TextEditingController chequeDepositedDateController;
+  final TextEditingController chequeBranchController;
+  final String? selectedDepositBank;
+  final ValueChanged<String?> onDepositBankChanged;
 
   const ChequePaymentForm({
     super.key,
@@ -131,6 +146,9 @@ class ChequePaymentForm extends StatelessWidget {
     required this.chequeDateController,
     required this.chequeBankController,
     required this.chequeDepositedDateController,
+    required this.chequeBranchController,
+    required this.selectedDepositBank,
+    required this.onDepositBankChanged,
   });
 
   @override
@@ -152,10 +170,12 @@ class ChequePaymentForm extends StatelessWidget {
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           ),
           const SizedBox(height: 14),
+          // Cheque Date — past only
           FormDateField(
             controller: chequeDateController,
             label: 'Cheque Date',
             icon: Icons.calendar_today_outlined,
+            allowFuture: false,
           ),
           const SizedBox(height: 14),
           FormInputField(
@@ -164,10 +184,29 @@ class ChequePaymentForm extends StatelessWidget {
             icon: Icons.account_balance_outlined,
           ),
           const SizedBox(height: 14),
+          // Deposit Bank — dropdown (Karur Vysya, Kotak, ICICI)
+          SearchableDropdown<String>(
+            label: 'Deposit Bank',
+            hint: 'Select deposit bank',
+            value: selectedDepositBank,
+            items: kBankList,
+            itemLabel: (e) => e,
+            itemValue: (e) => e,
+            onChanged: onDepositBankChanged,
+          ),
+          const SizedBox(height: 14),
+          FormInputField(
+            controller: chequeBranchController,
+            label: 'Deposited Branch',
+            icon: Icons.business_outlined,
+          ),
+          const SizedBox(height: 14),
+          // Cheque Deposited Date — past only
           FormDateField(
             controller: chequeDepositedDateController,
             label: 'Cheque Deposited Date',
             icon: Icons.calendar_month_outlined,
+            allowFuture: false,
           ),
         ],
       ),
@@ -177,14 +216,12 @@ class ChequePaymentForm extends StatelessWidget {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NEFT FORM
+// Fields: Transaction Number only — no date validation needed, goes straight
 // ─────────────────────────────────────────────────────────────────────────────
 class NeftPaymentForm extends StatelessWidget {
   final TextEditingController neftTransactionController;
 
-  const NeftPaymentForm({
-    super.key,
-    required this.neftTransactionController,
-  });
+  const NeftPaymentForm({super.key, required this.neftTransactionController});
 
   @override
   Widget build(BuildContext context) {
@@ -210,6 +247,7 @@ class NeftPaymentForm extends StatelessWidget {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PDC FORM
+// Fields: Cheque No, Cheque Date (future allowed), Bank, Branch
 // ─────────────────────────────────────────────────────────────────────────────
 class PdcPaymentForm extends StatelessWidget {
   final TextEditingController pdcChequeNoController;
@@ -244,10 +282,12 @@ class PdcPaymentForm extends StatelessWidget {
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           ),
           const SizedBox(height: 14),
+          // PDC date — future allowed (post-dated cheque)
           FormDateField(
             controller: pdcChequeDateController,
             label: 'Cheque Date',
             icon: Icons.calendar_today_outlined,
+            allowFuture: true,
           ),
           const SizedBox(height: 14),
           FormInputField(
@@ -268,7 +308,7 @@ class PdcPaymentForm extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Shared: Animated wrapper for smooth show/hide
+// ANIMATED FORM SECTION WRAPPER
 // ─────────────────────────────────────────────────────────────────────────────
 class AnimatedFormSection extends StatefulWidget {
   final Widget child;
@@ -309,16 +349,13 @@ class _AnimatedFormSectionState extends State<AnimatedFormSection>
   Widget build(BuildContext context) {
     return FadeTransition(
       opacity: _fade,
-      child: SlideTransition(
-        position: _slide,
-        child: widget.child,
-      ),
+      child: SlideTransition(position: _slide, child: widget.child),
     );
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Shared: FormInputField
+// FORM INPUT FIELD
 // ─────────────────────────────────────────────────────────────────────────────
 class FormInputField extends StatelessWidget {
   final TextEditingController controller;
@@ -381,26 +418,34 @@ class FormInputField extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Shared: Date picker field
+// FORM DATE FIELD
+// allowFuture = false  → lastDate = today   (cash received, cheque date, etc.)
+// allowFuture = true   → lastDate = 2099    (PDC post-dated cheques)
 // ─────────────────────────────────────────────────────────────────────────────
 class FormDateField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
   final IconData icon;
 
+  /// false = past-only picker (max = today)
+  /// true  = future-allowed picker (PDC)
+  final bool allowFuture;
+
   const FormDateField({
     super.key,
     required this.controller,
     required this.label,
     required this.icon,
+    this.allowFuture = false,
   });
 
   Future<void> _pickDate(BuildContext context) async {
+    final now = DateTime.now();
     final picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2030),
+      initialDate: now,
+      firstDate: DateTime(2017),
+      lastDate: allowFuture ? DateTime(2099) : now,
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -416,7 +461,7 @@ class FormDateField extends StatelessWidget {
     );
     if (picked != null) {
       controller.text =
-      "${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}";
+          "${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}";
     }
   }
 
