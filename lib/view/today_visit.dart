@@ -5,6 +5,7 @@ import 'package:sssbuddy/view/status_report.dart';
 
 import '../Values/Colors/app_colors.dart';
 import '../components/toolbar_layout.dart';
+import '../core/storage/secure_storage.dart';
 import '../viewModel/today_visit_viewmodal.dart';
 
 class TodayVisitPage extends ConsumerStatefulWidget {
@@ -17,7 +18,7 @@ class TodayVisitPage extends ConsumerStatefulWidget {
 class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
   bool isTripStarted = false;
   bool isStartingTrip = false;
-
+  bool isLoadingTrip = true;
   final TextEditingController dateController = TextEditingController();
   final TextEditingController schoolController = TextEditingController();
   final TextEditingController areaController = TextEditingController();
@@ -50,8 +51,26 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
   void initState() {
     super.initState();
     dateController.text = _formattedToday();
+    _initTripState();
   }
 
+  Future<void> _initTripState() async {
+    final storedStarted = await SecureStorage.getTripStarted();
+    final storedDate = await SecureStorage.getTripStartDate();
+
+    final today = _formattedToday();
+
+    if (storedStarted && storedDate != null && storedDate == today) {
+      isTripStarted = true;
+    } else {
+      await SecureStorage.clearTripData();
+      isTripStarted = false;
+    }
+
+    setState(() {
+      isLoadingTrip = false;
+    });
+  }
   String _monthName(int month) {
     const months = [
       'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -130,6 +149,7 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
     if (!mounted) return;
 
     if (success) {
+      await SecureStorage.clearTripData();
       setState(() => isTripStarted = false);
       _clearForm();
       ScaffoldMessenger.of(context).showSnackBar(
@@ -206,7 +226,6 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
                 children: [
                   _buildStatusBanner(),
 
-                  // ✅ Scrollable form content
                   Expanded(
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
@@ -343,6 +362,14 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
   }
 
   Widget _buildStatusBanner() {
+    if (isLoadingTrip) {
+      return const Padding(
+        padding: EdgeInsets.all(20),
+        child: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
     return AnimatedContainer(
       duration: const Duration(milliseconds: 400),
       margin: const EdgeInsets.fromLTRB(20, 20, 20, 16),
@@ -429,7 +456,10 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
                 if (!mounted) return;
                 setState(() => isStartingTrip = false);
                 if (success) {
+                  final today = _formattedToday();
+                  await SecureStorage.saveTripData(true, today);
                   setState(() => isTripStarted = true);
+
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(

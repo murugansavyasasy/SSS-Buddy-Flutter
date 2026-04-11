@@ -11,7 +11,8 @@ class SecureStorage {
   static const String passwordKey = "password";
   static const String loginResponseKey = "loginResponse";
   static const String rememberMeKey = "rememberMe";
-
+  static const String tripStartedKey = "tripStarted";
+  static const String tripStartDateKey = "tripStartDate";
   static Future<void> saveLoginData(
     String employeeId,
     String password,
@@ -41,6 +42,26 @@ class SecureStorage {
     return value == "true";
   }
 
+  // ---------------- NEW METHODS ----------------
+
+  static Future<void> saveTripData(bool isStarted, String date) async {
+    await _storage.write(key: tripStartedKey, value: isStarted.toString());
+    await _storage.write(key: tripStartDateKey, value: date);
+  }
+
+  static Future<bool> getTripStarted() async {
+    final value = await _storage.read(key: tripStartedKey);
+    return value == "true";
+  }
+
+  static Future<String?> getTripStartDate() async {
+    return await _storage.read(key: tripStartDateKey);
+  }
+
+  static Future<void> clearTripData() async {
+    await _storage.delete(key: tripStartedKey);
+    await _storage.delete(key: tripStartDateKey);
+  }
   static Future<void> clearLoginData() async {
     await _storage.deleteAll();
   }

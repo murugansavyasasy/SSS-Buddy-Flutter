@@ -50,8 +50,8 @@ class CustomerDetailsViewmodel extends AsyncNotifier<List<Customerdetailsmodel>>
 
     final response = await repo.getcustomerslist(
       VimIdUser,
-      "0",
       selectedUser,
+      customerId,
     );
     return response;
   }

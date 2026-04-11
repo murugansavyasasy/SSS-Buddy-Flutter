@@ -10,104 +10,129 @@ import '../viewModel/customer_details_viewmodel.dart';
 import '../viewModel/sales_person_viewmodel.dart';
 import 'dashboard.dart';
 
-class CustomerListView extends ConsumerWidget {
+class CustomerListView extends ConsumerStatefulWidget {
   const CustomerListView({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CustomerListView> createState() => _CustomerListViewState();
+}
+
+class _CustomerListViewState extends ConsumerState<CustomerListView> {
+  String? selectedValue;
+
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final salesList = ref.read(salespersonProvider).value ?? [];
+
+      if (salesList.isNotEmpty) {
+        setState(() {
+          selectedValue = salesList.first.nameValue;
+        });
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final customerlistAsync = ref.watch(customerviewProvider);
     final salesAsync = ref.watch(salespersonProvider);
-    final dropdownList = salesAsync.value?.map((e) => e.nameValue ?? "").toList() ?? [];
+    final dropdownList =
+        salesAsync.value?.map((e) => e.nameValue ?? "").toList() ?? [];
     final salesList = salesAsync.value ?? [];
-    String? selectedValue;
+
     return PopScope(
-        onPopInvokedWithResult: (didPop, result) {
-          if (didPop) {
-            ref.read(customerviewProvider.notifier).filter('');
-          }
-        },
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) {
+          ref.read(customerviewProvider.notifier).filter('');
+        }
+      },
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          systemNavigationBarColor: Colors.white,
+          systemNavigationBarIconBrightness: Brightness.dark,
+        ),
+        child: Scaffold(
+          backgroundColor: AppColors.primary,
+          body: Column(
+            children: [
+              ToolbarLayout(
+                title: "Customer List",
+                navigateTo: const Dashboard(),
+                searchHint: "Search school name....",
+                onSearch: (query) =>
+                    ref.read(customerviewProvider.notifier).filter(query),
+                dropdownLists: dropdownList,
+                selectedMonth:
+                selectedValue != null ? selectedValue ?? '0' : null,
+                onMonthChanged: (value) {
+                  if (value == null || salesList.isEmpty) return;
 
-    child: AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
-        systemNavigationBarColor: Colors.white,
-        systemNavigationBarIconBrightness: Brightness.dark,
-      ),
-      child: Scaffold(
-        backgroundColor: AppColors.primary,
-        body: Column(
-          children: [
-            ToolbarLayout(
-              title: "Customer List",
-              navigateTo: const Dashboard(),
-              searchHint: "Search school name....",
+                  setState(() {
+                    selectedValue = value;
+                  });
 
-              onSearch: (query) =>
-                  ref.read(customerviewProvider.notifier).filter(query),
-              dropdownLists: dropdownList,
-              selectedMonth: selectedValue != null
-                  ? selectedValue ?? '0'
-                  : null,
-              onMonthChanged: (value) {
-                if (value == null || salesList.isEmpty) return;
+                  final selected = salesList.firstWhere(
+                        (e) => e.nameValue == value,
+                    orElse: () => salesList.first,
+                  );
 
-                final selected = salesList.firstWhere(
-                      (e) => e.nameValue == value,
-                  orElse: () => salesList.first,
-                );
+                  ref
+                      .read(customerviewProvider.notifier)
+                      .filterBySalesPerson(selected.idValue.toString());
+                },
+              ),
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFF5F6FA),
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(25),
+                      topRight: Radius.circular(25),
+                    ),
+                  ),
+                  child: customerlistAsync.when(
+                    loading: () =>
+                    const Center(child: CircularProgressIndicator()),
+                    error: (e, _) => Center(child: Text("Error: $e")),
+                    data: (list) {
+                      if (list.isEmpty) {
+                        return const Center(child: Text("No Data Found"));
+                      }
+                      return ListView.builder(
+                        padding:
+                        const EdgeInsets.fromLTRB(16, 20, 16, 20),
+                        itemCount: list.length,
+                        itemBuilder: (context, index) {
+                          final item = list[index];
 
-                ref.read(customerviewProvider.notifier)
-                    .filterBySalesPerson(selected.idValue.toString());
-              },
-            ),
-            Expanded(
-              child: Container(
-                width: double.infinity,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFF5F6FA),
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(25),
-                    topRight: Radius.circular(25),
+                          return InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      CustomerInfoView(item: item),
+                                ),
+                              );
+                            },
+                            child: CustomerCardDetails(item: item),
+                          );
+                        },
+                      );
+                    },
                   ),
                 ),
-                child: customerlistAsync.when(
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(child: Text("Error: $e")),
-                  data: (list) {
-                    if (list.isEmpty) {
-
-                      return const Center(child: Text("No Data Found"));
-                    }
-                    return ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
-                      itemCount: list.length,
-                      itemBuilder: (context, index) {
-                        final item = list[index];
-
-                        return InkWell(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    CustomerInfoView(item: item),
-                              ),
-                            );
-                          },
-                          child: CustomerCardDetails(item: item),
-                        );
-                      },
-                    );
-                  },
-                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    )
     );
   }
 }

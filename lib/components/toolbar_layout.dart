@@ -291,6 +291,7 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                           _selectedMonthNotifier.value = val;
                           widget.onMonthChanged?.call(val);
                         }
+
                       },
                     ),
                   ),
