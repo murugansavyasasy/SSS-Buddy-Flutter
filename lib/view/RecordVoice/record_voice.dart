@@ -132,7 +132,6 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
 
     HapticFeedback.mediumImpact();
 
-    // 🔥 FORCE request directly (no status check first time)
     final result = await Permission.microphone.request();
     print("Permission result: $result");
 

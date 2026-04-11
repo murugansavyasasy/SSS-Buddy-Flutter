@@ -18,7 +18,7 @@ import 'package:sssbuddy/view/UsageCount/usage_count.dart';
 import 'package:sssbuddy/view/status_report.dart';
 import 'package:sssbuddy/view/tour_settlement.dart';
 
-import '../../view/alert.dart';
+import '../../view/Alert/alert.dart';
 import '../../view/chat.dart';
 import '../../view/customer_list_view.dart';
 import '../../view/demo_list.dart';

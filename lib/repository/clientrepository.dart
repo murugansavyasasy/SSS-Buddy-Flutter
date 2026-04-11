@@ -7,6 +7,7 @@ import 'package:sssbuddy/repository/app_endpoint.dart';
 import '../auth/model/AddTourExpenceModal.dart';
 import '../auth/model/AdvanceTourExpenseDetailModel.dart';
 import '../auth/model/AdvanceTourExpenseModel.dart';
+import '../auth/model/AlertModel.dart';
 import '../auth/model/ChangePassword.dart';
 import '../auth/model/CircularModel.dart';
 import '../auth/model/CustomerDetailsInfoModelClass.dart';
@@ -539,4 +540,17 @@ class ClientRepository {
 
     return Recordcollectionpaymentresponse.fromJson(data.first);
   }
+
+
+
+  Future<List<AlertModel>> getalertdata() async {
+    final response = await client.schoolPost(
+      AppEndpoint.getalertdata,
+    );
+
+    final List data = response.data['data'] ?? [];
+
+    return data.map((e) => AlertModel.fromJson(e)).toList();
+  }
+
 }

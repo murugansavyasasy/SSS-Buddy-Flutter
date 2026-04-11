@@ -1,6 +1,7 @@
 
 import 'dart:io';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../auth/model/InitiateDemoCallRequest.dart';
@@ -96,8 +97,17 @@ class RecordVoiceViewModel extends AsyncNotifier<UploadState> {
 
       if (!uploaded) throw Exception("Upload returned a failure status.");
 
-    } catch (e) {
+      try {
+        final file = File(audioPath);
+        if (await file.exists()) {
+          await file.delete();
+          debugPrint("Local audio file deleted: $audioPath");
+        }
+      } catch (e) {
+        debugPrint("Could not delete local file: $e");
+      }
 
+    } catch (e) {
       state = AsyncData(UploadState(
         step: UploadStep.failed,
         errorMessage: "Audio upload failed. Tap retry.\n${e.toString()}",
@@ -148,9 +158,9 @@ class RecordVoiceViewModel extends AsyncNotifier<UploadState> {
 
   void _clearIntermediateState() {
     _presignedUrl = null;
-    _fileUrl = null;
-    _audioPath = null;
-    _demoId = null;
+    _fileUrl      = null;
+    _audioPath    = null;
+    _demoId       = null;
     _durationSeconds = 0;
   }
 }

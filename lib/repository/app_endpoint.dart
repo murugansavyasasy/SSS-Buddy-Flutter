@@ -31,5 +31,7 @@ class AppEndpoint {
   static const updateDailyVisit = "AppDetails/UpdateDailyVisitWithLocation";
   static const addTourexpence = "api/AppDetails/ManageTourExpense";
   static const createpayment = "api/ManageDetails/DemoInsertPayment";
+  static const getalertdata = "alert_messages";
+
 
 }
