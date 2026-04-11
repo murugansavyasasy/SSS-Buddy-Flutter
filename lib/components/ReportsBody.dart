@@ -21,11 +21,12 @@ class ReportsBody extends ConsumerWidget {
     final tripsAsync = ref.watch(overallTripProvider);
 
     return SafeArea(
+      top: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
             child: membersAsync.when(
               loading: () => const CustomDropdown(),
               error: (e, _) => Text(
@@ -66,6 +67,7 @@ class ReportsBody extends ConsumerWidget {
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       SummaryChip(
                         label: 'Total',

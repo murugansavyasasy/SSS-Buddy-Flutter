@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:sssbuddy/auth/model/LocalConveyenceModel.dart';
 import 'package:sssbuddy/components/LocalConveyenceActionButton.dart';
@@ -99,8 +98,8 @@ class LocalConveyenceCard extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Gradient accent bar ──
             Container(
               height: 4,
               decoration: BoxDecoration(
@@ -108,20 +107,22 @@ class LocalConveyenceCard extends StatelessWidget {
               ),
             ),
 
-            // ── Header ──
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   _Avatar(name: item.Username, gradient: style.gradient),
                   const SizedBox(width: 12),
+
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
                           item.Username,
-                          maxLines: 1, // ✅ prevent overflow
+                          maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             fontSize: 15,
@@ -132,9 +133,13 @@ class LocalConveyenceCard extends StatelessWidget {
                         const SizedBox(height: 2),
                         Row(
                           children: [
-                            const Icon(Icons.tag_rounded, size: 11, color: Color(0xFFCBD5E1)),
+                            const Icon(
+                              Icons.tag_rounded,
+                              size: 11,
+                              color: Color(0xFFCBD5E1),
+                            ),
                             const SizedBox(width: 2),
-                            Expanded( // ✅ IMPORTANT
+                            Expanded(
                               child: Text(
                                 item.RefId,
                                 maxLines: 1,
@@ -150,23 +155,23 @@ class LocalConveyenceCard extends StatelessWidget {
                       ],
                     ),
                   ),
-              Flexible( // ✅ prevents overflow
-                child: _StatusBadge(
-                  label: item.Status,
-                  color: style.color,
-                  bg: style.bg,
-                  icon: style.icon,
-                ),
-              ),
+                  const SizedBox(width: 8),
+
+
+                  _StatusBadge(
+                    label: item.Status,
+                    color: style.color,
+                    bg: style.bg,
+                    icon: style.icon,
+                  ),
                 ],
               ),
             ),
 
-            // ── Info tiles ──
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-              child:
-              Row(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
                     child: InfoTileLocal(
@@ -189,10 +194,11 @@ class LocalConveyenceCard extends StatelessWidget {
               ),
             ),
 
-            // ── Description & details ──
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   DescriptionRow(description: item.Description),
                   if (item.IsPaid == 1 && item.PaidDate.trim() != '-') ...[
@@ -216,13 +222,15 @@ class LocalConveyenceCard extends StatelessWidget {
               ),
             ),
 
-            // ── Divider ──
             Container(height: 1, color: const Color(0xFFF1F5F9)),
 
-            // ── Action buttons ──
-            Row(children: _buildActionButtons(userType, approved)),
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: _buildActionButtons(userType, approved),
+              ),
+            ),
 
-            // ── Attachment ──
             if (hasFile) ...[
               Container(height: 1, color: const Color(0xFFF1F5F9)),
               _AttachmentButton(
@@ -276,9 +284,10 @@ class LocalConveyenceCard extends StatelessWidget {
     onTap: onDelete,
   );
 
-  Widget _vDivider() =>
-      Container(width: 1, height: 40, color: const Color(0xFFF1F5F9));
-
+  Widget _vDivider() => Container(
+    width: 1,
+    color: const Color(0xFFF1F5F9),
+  );
 }
 
 class _StatusStyle {
@@ -345,6 +354,7 @@ class _StatusBadge extends StatelessWidget {
   final Color color;
   final Color bg;
   final IconData icon;
+
   const _StatusBadge({
     required this.label,
     required this.color,
@@ -355,7 +365,8 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      constraints: const BoxConstraints(maxWidth: 130),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(30),
@@ -365,14 +376,18 @@ class _StatusBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 12, color: color),
-          const SizedBox(width: 5),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: color,
-              letterSpacing: 0.2,
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: color,
+                letterSpacing: 0.2,
+              ),
             ),
           ),
         ],
