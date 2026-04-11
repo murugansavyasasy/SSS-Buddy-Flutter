@@ -23,7 +23,7 @@ dependencies:
 
   # Riverpod 3.x - Correct Compatible Versions
   flutter_riverpod: ^3.3.1
-  riverpod_annotation: ^4.0.2     # ← Updated
+  riverpod_annotation: ^4.0.2
 
   dio: ^5.4.0
   record: ^6.2.0
@@ -38,7 +38,7 @@ dependencies:
   latlong2: ^0.9.0
   flutter_map: ^8.2.2
   geolocator: ^14.0.2
-  intl: ^0.19.0
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:
@@ -46,7 +46,7 @@ dev_dependencies:
 
   build_runner: ^2.4.8
 
-  riverpod_generator: ^4.0.3      # ← Updated
+  riverpod_generator: ^4.0.3
 
 flutter_launcher_icons:
   android: true
