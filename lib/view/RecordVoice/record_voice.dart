@@ -129,26 +129,79 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
   Future<void> _record() async {
     if (_isBusy) return;
     _isBusy = true;
+
     HapticFeedback.mediumImpact();
 
-    if (!isRecording) {
-      final status = await Permission.microphone.request();
-      if (status == PermissionStatus.granted) {
+    // 🔥 FORCE request directly (no status check first time)
+    final result = await Permission.microphone.request();
+    print("Permission result: $result");
+
+    if (result.isGranted) {
+      if (!isRecording) {
         setState(() => isRecording = true);
         await _startRecording();
-      } else if (status == PermissionStatus.denied) {
-        _showSnackBar("Microphone permission denied.", isError: true);
-      } else if (status == PermissionStatus.permanentlyDenied) {
-        openAppSettings();
+      } else {
+        await _stopRecording();
+        setState(() => isRecording = false);
       }
-    } else {
-      await _stopRecording();
-      setState(() => isRecording = false);
+    }
+    else if (result.isPermanentlyDenied) {
+      showMicPermissionDialog(context);
+    }
+    else {
+      _showSnackBar("Microphone permission denied", isError: true);
     }
 
     _isBusy = false;
   }
-
+  void showMicPermissionDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Microphone Access Required"),
+        content: const Text(
+          "Please allow microphone access in Settings to record audio.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await openAppSettings(); // 🔥 opens iOS settings
+            },
+            child: const Text("Open Settings"),
+          ),
+        ],
+      ),
+    );
+  }
+  // void _showPermissionDialog() {
+  //   showDialog(
+  //     context: context,
+  //     builder: (_) => AlertDialog(
+  //       title: const Text("Microphone Permission"),
+  //       content: const Text(
+  //         "Microphone access is permanently denied.\n\nPlease enable it from Settings.",
+  //       ),
+  //       actions: [
+  //         TextButton(
+  //           onPressed: () => Navigator.pop(context),
+  //           child: const Text("Cancel"),
+  //         ),
+  //         TextButton(
+  //           onPressed: () {
+  //             Navigator.pop(context);
+  //             openAppSettings();
+  //           },
+  //           child: const Text("Open Settings"),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
   Future<void> _togglePlay() async {
     if (_audioPath == null) return;
 
