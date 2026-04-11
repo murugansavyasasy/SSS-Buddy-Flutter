@@ -97,7 +97,7 @@ class SchoolDocumentCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
-                  icon: const Icon(Icons.share, size: 18),
+                  icon: const Icon(Icons.share, color: AppColors.primary, size: 18),
                   onPressed: () => _shareDocument(context),
                 ),
                 Icon(Icons.chevron_right_rounded,

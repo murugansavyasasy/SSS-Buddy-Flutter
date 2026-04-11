@@ -84,15 +84,9 @@ class ManagementVideos extends ConsumerWidget {
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            // ✅ Share button
                             IconButton(
-                              icon: Icon(
-                                // ✅ Use platform-specific share icon
-                                Theme.of(context).platform == TargetPlatform.iOS
-                                    ? CupertinoIcons.share
-                                    : Icons.share,
-                                color: AppColors.primary,
-                                size: 22,
+                              icon: Icon(Icons.share, color: AppColors.primary,
+                                size: 18,
                               ),
                               onPressed: () => _shareVideo(video),
                             ),
