@@ -143,7 +143,7 @@ class Circularcard extends StatelessWidget {
                   children: [
                     Expanded(
                       child: StatChip(
-                        label: 'Requested',
+                        label: 'In Progress',
                         value: item.Requested.toString(),
                         color: Colors.orange.shade600,
                         icon: Icons.pending_rounded,
@@ -153,7 +153,7 @@ class Circularcard extends StatelessWidget {
 
                     Expanded(
                       child: StatChip(
-                        label: 'Connected',
+                        label: 'Attended',
                         value: item.Connected.toString(),
                         color: Colors.green.shade600,
                         icon: Icons.check_circle_rounded,

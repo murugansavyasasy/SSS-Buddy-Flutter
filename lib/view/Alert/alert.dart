@@ -48,6 +48,7 @@ class AlertScreen extends ConsumerWidget {
                   ref.read(AlertViewmodelProvider.notifier).filter('');
                   Navigator.pop(context);
                 },
+                onRefresh: () => ref.invalidate(AlertViewmodelProvider),
               ),
               Expanded(
                 child: Container(

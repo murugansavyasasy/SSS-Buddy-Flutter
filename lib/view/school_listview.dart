@@ -39,7 +39,9 @@ class SchoolListview extends ConsumerWidget {
               searchHint: "Search school name....",
               onSearch: (query) =>
                   ref.read(schoolStatsProvider.notifier).filter(query),
-            ),
+               onRefresh: () => ref.invalidate(schoolStatsProvider),
+
+             ),
 
 
 

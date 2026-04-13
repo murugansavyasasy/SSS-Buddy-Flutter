@@ -37,7 +37,7 @@ class CreateButtonWidget extends StatelessWidget {
             ),
           )
               : const Text(
-            "Create",
+            "Send",
             style: TextStyle(fontWeight: FontWeight.w600),
           ),
         ),
