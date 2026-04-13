@@ -57,6 +57,8 @@ class LocalConveyence extends ConsumerWidget {
                 searchHint: "Search name....",
                 onSearch: (query) =>
                     ref.read(localConvienceProvider.notifier).filter(query),
+                onRefresh: () => ref.invalidate(localConvienceProvider),
+
               ),
               Expanded(
                 child: Container(

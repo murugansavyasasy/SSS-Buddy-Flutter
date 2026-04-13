@@ -36,6 +36,8 @@ class DemoListView extends ConsumerWidget {
                 searchHint: "Search school name....",
                 onSearch: (query) =>
                     ref.read(demoviewProvider.notifier).filter(query),
+                onRefresh: () => ref.invalidate(demoviewProvider),
+
                 onBackPressed: () {
                   ref.read(demoviewProvider.notifier).filter('');
                   Navigator.pop(context);

@@ -52,6 +52,8 @@ class AdvanceTourExpense extends ConsumerWidget {
                 searchHint: "Search employee name....",
                 onSearch: (query) =>
                     ref.read(tourexpenseprovider.notifier).filter(query),
+                onRefresh: () => ref.invalidate(tourexpenseprovider),
+
               ),
               Expanded(
                 child: Container(
