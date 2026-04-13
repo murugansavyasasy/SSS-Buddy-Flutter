@@ -14,6 +14,7 @@ class ToolbarLayout extends ConsumerStatefulWidget {
   final String? selectedMonth;
   final VoidCallback? onBackPressed;
   final List<String>? dropdownLists;
+  final VoidCallback? onRefresh;
 
   const ToolbarLayout({
     super.key,
@@ -25,6 +26,7 @@ class ToolbarLayout extends ConsumerStatefulWidget {
     this.selectedMonth,
     this.onBackPressed,
     this.dropdownLists,
+    this.onRefresh,
   });
 
   @override
@@ -49,12 +51,12 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
   ];
 
   bool _searchOpen = false;
+  bool _isRefreshing = false;
   final TextEditingController _controller = TextEditingController();
 
   late final AnimationController _animController;
   late final Animation<double> _fade;
 
-  // New for dropdown_button2 v3.0.0
   late final ValueNotifier<String?> _selectedMonthNotifier;
 
   @override
@@ -153,9 +155,9 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(21),
                     ),
-                    child: Center(
+                    child: const Center(
                       child: Icon(
-                        _searchOpen ? Icons.arrow_back : Icons.arrow_back,
+                        Icons.arrow_back,
                         color: Colors.black,
                         size: 20,
                       ),
@@ -175,6 +177,45 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                     ),
                   ),
                 ),
+
+                if (widget.onRefresh != null && !_searchOpen) ...[
+                  GestureDetector(
+                    onTap: _isRefreshing
+                        ? null
+                        : () async {
+                      setState(() => _isRefreshing = true);
+                      widget.onRefresh?.call();
+                      await Future.delayed(const Duration(milliseconds: 1000));
+                      if (mounted) setState(() => _isRefreshing = false);
+                    },
+                    child: Container(
+                      height: 42,
+                      width: 42,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(21),
+                        border: Border.all(color: Colors.white30),
+                      ),
+                      child: Center(
+                        child: _isRefreshing
+                            ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2.5,
+                          ),
+                        )
+                            : const Icon(
+                          Icons.refresh,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
 
                 if (hasSearch && !_searchOpen)
                   GestureDetector(

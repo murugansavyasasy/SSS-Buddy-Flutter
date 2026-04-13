@@ -38,6 +38,7 @@ class CircularListview extends ConsumerWidget {
               searchHint: "Search school name....",
               onSearch: (query) =>
                   ref.read(circularviewProvider.notifier).filter(query),
+              onRefresh: () => ref.invalidate(circularviewProvider),
             ),
             Expanded(
               child: Container(
