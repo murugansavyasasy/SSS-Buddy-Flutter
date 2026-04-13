@@ -71,7 +71,7 @@ class DemoCard extends StatelessWidget {
                           color: Colors.white, size: 18),
                       SizedBox(width: 6),
                       Text(
-                        "Record",
+                        "Record Voice",
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w500,
