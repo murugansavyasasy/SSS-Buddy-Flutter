@@ -289,17 +289,28 @@ class ClientRepository {
   }
 
   Future<List<PoDetailsModel>> getpodetails(
-    String VimIdUser,
-    String purchaseOrderId,
-  ) async {
+      String VimIdUser,
+      String purchaseOrderId,
+      ) async {
     final response = await client.post(
       AppEndpoint.getindiualpoforapp,
-      body: {"idUser": VimIdUser, "PurchaseOrderID": purchaseOrderId},
+      body: {
+        "idUser": VimIdUser,
+        "PurchaseOrderID": purchaseOrderId
+      },
     );
 
-    final List data = response.data;
+    final responseData = response.data;
 
-    return data.map((e) => PoDetailsModel.fromJson(e)).toList();
+    if (responseData is List) {
+      return responseData
+          .map((e) => PoDetailsModel.fromJson(e))
+          .toList();
+    } else if (responseData is Map<String, dynamic>) {
+      return [PoDetailsModel.fromJson(responseData)];
+    } else {
+      throw Exception("Invalid API response");
+    }
   }
 
   Future<List<Localexpensedetailmodel>> getlocalconviencedetail(
