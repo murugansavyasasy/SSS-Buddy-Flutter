@@ -24,29 +24,40 @@ class InfoRow extends StatelessWidget {
           child: Icon(icon, size: 16, color: teal),
         ),
         const SizedBox(width: 8),
-
-        Text(
-          '$label :',
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey.shade600,
-            fontWeight: FontWeight.w500,
+        SizedBox(
+          width: 75,
+          child: Text(
+            '$label',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
-
+        SizedBox(
+          width:2,
+          child: Text(
+            ':',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
         const SizedBox(width: 6),
 
+        // ✅ Value aligned perfectly
         Expanded(
           child: Text(
             value,
             softWrap: true,
-            maxLines: null,
-            overflow: TextOverflow.visible,
             style: const TextStyle(
               fontSize: 12,
               color: Colors.black87,
               fontWeight: FontWeight.w600,
-              height: 1.4, // ✅ better readability
+              height: 1.4,
             ),
           ),
         ),

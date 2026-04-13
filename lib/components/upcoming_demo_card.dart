@@ -84,6 +84,15 @@ class UpcomingDemoCard extends StatelessWidget {
               ],
             ),
           ),
+          const SizedBox(width: 12),
+          const Padding(
+            padding: EdgeInsets.only(right: 12),
+            child: Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: Colors.grey,
+            ),
+          ),
         ],
       ),
     ),
