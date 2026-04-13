@@ -41,6 +41,13 @@ class AlertScreen extends ConsumerWidget {
               ToolbarLayout(
                 title: "Alerts",
                 navigateTo: const Dashboard(),
+                searchHint: "Search ....",
+                onSearch: (query) =>
+                    ref.read(AlertViewmodelProvider.notifier).filter(query),
+                onBackPressed: () {
+                  ref.read(AlertViewmodelProvider.notifier).filter('');
+                  Navigator.pop(context);
+                },
               ),
               Expanded(
                 child: Container(
@@ -85,27 +92,20 @@ class AlertScreen extends ConsumerWidget {
                               SizedBox(height: 12),
                               Text(
                                 "No alerts found",
-                                style: TextStyle(
-                                    fontSize: 16, color: Colors.grey),
+                                style: TextStyle(fontSize: 16, color: Colors.grey),
                               ),
                             ],
                           ),
                         );
                       }
-                      return RefreshIndicator(
-                        onRefresh: () => ref
-                            .read(AlertViewmodelProvider.notifier)
-                            .refresh(),
-                        child: ListView.separated(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 16),
-                          itemCount: alerts.length,
-                          separatorBuilder: (_, __) =>
-                          const SizedBox(height: 10),
-                          itemBuilder: (context, index) {
-                            return AlertCard(alert: alerts[index]);
-                          },
-                        ),
+
+                      return ListView.separated(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        itemCount: alerts.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 10),
+                        itemBuilder: (context, index) {
+                          return AlertCard(alert: alerts[index]);
+                        },
                       );
                     },
                   ),

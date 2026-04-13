@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../auth/model/CircularModel.dart';
+import '../../../../auth/model/CircularModel.dart';
 import 'stat-chip.dart';
 
 class Circularcard extends StatelessWidget {

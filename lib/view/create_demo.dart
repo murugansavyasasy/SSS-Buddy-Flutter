@@ -9,6 +9,7 @@ import 'package:sssbuddy/viewModel/createdemo_view_model.dart';
 import '../Values/Colors/app_colors.dart';
 import '../components/common_dialog.dart';
 import '../components/toolbar_layout.dart';
+import '../viewModel/demolist_view_model.dart';
 import '../viewModel/login_view_model.dart';
 import 'dashboard.dart';
 
@@ -264,21 +265,23 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
                               );
 
                               if (response?.status == 1) {
-                                // Clear all fields
                                 titleController.clear();
                                 subjectController.clear();
                                 dateController.clear();
+                                setState(() {
+                                  for (final c in parentControllers) {
+                                    c.dispose();
+                                  }
+                                  parentControllers = [TextEditingController()];
+                                });
 
-                                // NEW: Reset parent list to initial state (one empty field)
-                                // (Original .clear() left the list empty and broke UI)
-                                parentControllers.clear();
-                                parentControllers.add(TextEditingController());
 
                                 CommonDialog.showSuccessDialog(
                                   context,
                                   message: "Demo created successfully",
                                   showRecordButton: true,
                                   response: demoItem,
+                                  onClose: () => ref.invalidate(demoviewProvider),
                                 );
                               } else {
                                 ScaffoldMessenger.of(context).showSnackBar(

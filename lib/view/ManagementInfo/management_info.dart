@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sssbuddy/components/toolbar_layout.dart';
-import 'package:sssbuddy/view/ManagementInfo/school_header.dart';
+import 'package:sssbuddy/view/ManagementInfo/widget/school_header.dart';
 import 'package:sssbuddy/view/school_listview.dart';
 import '../../Values/Colors/app_colors.dart';
 import '../../viewModel/management_info_viewmodel.dart';
-import 'member_card.dart';
+import 'widget/member_card.dart';
 
 
 class ManagementInfo extends ConsumerStatefulWidget {

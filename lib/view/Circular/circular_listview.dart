@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../Values/Colors/app_colors.dart';
-import 'CircularCard.dart';
+import 'widget/CircularCard.dart';
 import '../../components/toolbar_layout.dart';
 import '../../viewModel/circular_post_viewmodel.dart';
 import '../dashboard.dart';

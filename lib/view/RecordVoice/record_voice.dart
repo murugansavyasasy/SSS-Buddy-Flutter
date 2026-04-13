@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,6 +10,7 @@ import 'package:record/record.dart';
 import 'package:sssbuddy/view/RecordVoice/widgets/create_button_widget.dart';
 import 'package:sssbuddy/view/RecordVoice/widgets/playback_card_widget.dart';
 import 'package:sssbuddy/view/RecordVoice/widgets/upload_overlay_widget.dart';
+import 'package:sssbuddy/viewModel/demolist_view_model.dart';
 import '../../Values/Colors/app_colors.dart';
 import '../../auth/model/Demolist.dart';
 import '../../auth/model/UploadState.dart';
@@ -31,6 +33,8 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
   bool isRecording = false;
   bool _isPlaying  = false;
   bool _isBusy     = false;
+  Timer? _recordingTimer;
+  int _elapsedSeconds = 0;
 
   late final AudioRecorder _audioRecorder;
   String? _audioPath;
@@ -81,6 +85,7 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
 
   @override
   void dispose() {
+    _recordingTimer?.cancel();
     _audioRecorder.dispose();
     _audioPlayer.dispose();
     super.dispose();
@@ -89,7 +94,7 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
   Future<void> _startRecording() async {
     try {
       final dir = await getApplicationDocumentsDirectory();
-      final id  = List.generate(10, (_) =>
+      final id = List.generate(10, (_) =>
       'abcdefghijklmnopqrstuvwxyz0123456789'[Random().nextInt(36)]).join();
 
       setState(() {
@@ -98,9 +103,15 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
         _duration       = Duration.zero;
         _position       = Duration.zero;
         _recordingStart = null;
+        _elapsedSeconds = 0;
       });
 
       _recordingStart = DateTime.now();
+
+      _recordingTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (mounted) setState(() => _elapsedSeconds++);
+      });
+
       await _audioRecorder.start(
         const RecordConfig(encoder: AudioEncoder.aacLc),
         path: '${dir.path}/$id.m4a',
@@ -119,6 +130,9 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
   }
 
   Future<void> _stopRecording() async {
+    _recordingTimer?.cancel();
+    _recordingTimer = null;
+
     final path = await _audioRecorder.stop();
     if (path != null) {
       setState(() => _audioPath = path);
@@ -279,11 +293,18 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
     ref.listen<AsyncValue<UploadState>>(recordVoiceViewModelProvider, (_, next) {
       final state = next.value;
       if (state == null) return;
+
       if (state.step == UploadStep.success) {
-        _showSnackBar("Demo call initiated successfully!");
+        ScaffoldMessenger.of(context).clearSnackBars();
+
+        ref.invalidate(demoviewProvider);
+
         Future.delayed(const Duration(milliseconds: 500), () {
-          if (mounted) Navigator.pop(context);
+          if (mounted) {
+            Navigator.pop(context);
+          }
         });
+
       } else if (state.step == UploadStep.failed) {
         _showRetrySnackBar(
           message: state.errorMessage ?? "Something went wrong.",
@@ -330,8 +351,45 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
                         children: [
                           const SizedBox(height: 40),
 
-                          if (isRecording) const CustomRecordingWaveWidget(),
+                          if (isRecording) ...[
+                            const CustomRecordingWaveWidget(),
+                            const SizedBox(height: 12),
+
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.red.shade50,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: Colors.red.shade200),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 10,
+                                    height: 10,
+                                    decoration: const BoxDecoration(
+                                      color: Colors.red,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    _formatDuration(_elapsedSeconds),
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.red.shade700,
+                                      fontFeatures: const [FontFeature.tabularFigures()],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+
                           const SizedBox(height: 20),
+
 
                           CustomRecordingButton(
                             isRecording: isRecording,
@@ -369,4 +427,10 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
       ),
     );
   }
+}
+
+String _formatDuration(int seconds) {
+  final m = (seconds ~/ 60).toString().padLeft(2, '0');
+  final s = (seconds % 60).toString().padLeft(2, '0');
+  return '$m:$s';
 }

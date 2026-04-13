@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:sssbuddy/view/UsageCount/value_chip.dart';
+import 'package:sssbuddy/view/UsageCount/widget/value_chip.dart';
 
 class UsageSection extends StatelessWidget {
   final String sectionTitle;
