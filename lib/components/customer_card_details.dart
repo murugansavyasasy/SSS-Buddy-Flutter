@@ -98,6 +98,41 @@ class CustomerCardDetails extends StatelessWidget {
                   ),
                 ),
 
+                // Container(
+                //   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                //   decoration: BoxDecoration(
+                //     color: isActive
+                //         ? const Color(0xFFE8F5E9)
+                //         : const Color(0xFFFFEBEE),
+                //     borderRadius: BorderRadius.circular(20),
+                //   ),
+                //   child: Row(
+                //     mainAxisSize: MainAxisSize.min,
+                //     children: [
+                //       Container(
+                //         width: 6,
+                //         height: 6,
+                //         decoration: BoxDecoration(
+                //           color: isActive
+                //               ? const Color(0xFF43A047)
+                //               : const Color(0xFFE53935),
+                //           shape: BoxShape.circle,
+                //         ),
+                //       ),
+                //       const SizedBox(width: 5),
+                //       Text(
+                //         isActive ? 'Active' : 'Inactive',
+                //         style: TextStyle(
+                //           fontSize: 11,
+                //           fontWeight: FontWeight.w600,
+                //           color: isActive
+                //               ? const Color(0xFF43A047)
+                //               : const Color(0xFFE53935),
+                //         ),
+                //       ),
+                //     ],
+                //   ),
+                // ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
@@ -129,6 +164,16 @@ class CustomerCardDetails extends StatelessWidget {
                               ? const Color(0xFF43A047)
                               : const Color(0xFFE53935),
                         ),
+                      ),
+                      const SizedBox(width: 6),
+
+                      // 🔥 Arrow icon
+                      Icon(
+                        Icons.arrow_forward_ios,
+                        size: 12,
+                        color: isActive
+                            ? const Color(0xFF43A047)
+                            : const Color(0xFFE53935),
                       ),
                     ],
                   ),
