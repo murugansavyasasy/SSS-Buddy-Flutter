@@ -268,8 +268,13 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
                                 titleController.clear();
                                 subjectController.clear();
                                 dateController.clear();
-                                parentControllers.clear();
-                                parentControllers.add(TextEditingController());
+                                setState(() {
+                                  for (final c in parentControllers) {
+                                    c.dispose();
+                                  }
+                                  parentControllers = [TextEditingController()];
+                                });
+
 
                                 CommonDialog.showSuccessDialog(
                                   context,

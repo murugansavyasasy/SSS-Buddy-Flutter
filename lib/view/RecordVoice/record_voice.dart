@@ -293,12 +293,18 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
     ref.listen<AsyncValue<UploadState>>(recordVoiceViewModelProvider, (_, next) {
       final state = next.value;
       if (state == null) return;
+
       if (state.step == UploadStep.success) {
-        _showSnackBar("Demo call initiated successfully!");
+        ScaffoldMessenger.of(context).clearSnackBars();
+
         ref.invalidate(demoviewProvider);
+
         Future.delayed(const Duration(milliseconds: 500), () {
-          if (mounted) Navigator.pop(context);
+          if (mounted) {
+            Navigator.pop(context);
+          }
         });
+
       } else if (state.step == UploadStep.failed) {
         _showRetrySnackBar(
           message: state.errorMessage ?? "Something went wrong.",
