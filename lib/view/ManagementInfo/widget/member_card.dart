@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../../auth/model/ManagementInfo.dart';
+import '../../../auth/model/ManagementInfo.dart';
 import 'info_row.dart';
 
 class MemberCard extends StatelessWidget {

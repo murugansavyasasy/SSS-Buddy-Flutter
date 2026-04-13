@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sssbuddy/components/toolbar_layout.dart';
-import 'package:sssbuddy/view/UsageCount/usage_section.dart';
+import 'package:sssbuddy/view/UsageCount/widget/usage_section.dart';
 import 'package:sssbuddy/view/school_listview.dart';
 import '../../Values/Colors/app_colors.dart';
 import '../../auth/model/UsageCount.dart';
 import '../../viewModel/usagecount_view_model.dart';
-import 'card_header.dart';
-import 'date_button.dart';
+import 'widget/card_header.dart';
+import 'widget/date_button.dart';
 
 class UsageCountScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> item;

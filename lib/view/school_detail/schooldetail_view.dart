@@ -5,22 +5,9 @@ import 'package:sssbuddy/view/school_listview.dart';
 import 'package:sssbuddy/view/UsageCount/usage_count.dart';
 import '../../Values/Colors/app_colors.dart';
 import '../../components/toolbar_layout.dart';
-import '../../utils/routes/routes_name.dart';
 import '../ManagementInfo/management_info.dart';
-import '../dashboard.dart';
-import 'exam_table.dart';
-import 'table_row_model.dart';
-
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sssbuddy/view/school_listview.dart';
-import 'package:sssbuddy/view/UsageCount/usage_count.dart';
-import '../../Values/Colors/app_colors.dart';
-import '../../components/toolbar_layout.dart';
-import '../dashboard.dart';
-import 'exam_table.dart';
-import 'table_row_model.dart';
+import 'widget/exam_table.dart';
+import 'widget/table_row_model.dart';
 
 class SchooldetailView extends ConsumerWidget {
   final Map<String, dynamic> item;

@@ -41,6 +41,13 @@ class AlertScreen extends ConsumerWidget {
               ToolbarLayout(
                 title: "Alerts",
                 navigateTo: const Dashboard(),
+                searchHint: "Search ....",
+                onSearch: (query) =>
+                    ref.read(AlertViewmodelProvider.notifier).filter(query),
+                onBackPressed: () {
+                  ref.read(AlertViewmodelProvider.notifier).filter('');
+                  Navigator.pop(context);
+                },
               ),
               Expanded(
                 child: Container(

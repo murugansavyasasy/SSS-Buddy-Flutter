@@ -4,7 +4,7 @@ import 'package:sssbuddy/auth/model/AdvanceTourExpenseModel.dart';
 import 'package:sssbuddy/view/move_to_toursettlement.dart';
 
 import '../Values/Colors/app_colors.dart';
-import '../view/ManagementInfo/info_row.dart';
+import '../view/ManagementInfo/widget/info_row.dart';
 import '../view/advance_tour_expense_detail.dart';
 import '../view/local_conveyence_detail.dart';
 import 'AmountTile.dart';
