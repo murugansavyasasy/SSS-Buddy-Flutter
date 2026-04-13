@@ -9,6 +9,7 @@ class CommonDialog {
         required String message,
         bool showRecordButton = false,
         dynamic response,
+        VoidCallback? onClose,
       }) {
 
     showDialog(
@@ -74,7 +75,6 @@ class CommonDialog {
                       ),
                     ),
                     onPressed: () {
-
                       if (showRecordButton) {
                         Navigator.pushReplacementNamed(
                           context,
@@ -83,7 +83,7 @@ class CommonDialog {
                         );
 
                       } else {
-
+                        onClose?.call();
                         Navigator.pushReplacementNamed(
                           context,
                           RoutesName.dashboard,
