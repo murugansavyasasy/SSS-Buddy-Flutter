@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import '../../../auth/model/UploadState.dart';
 
+
 class UploadOverlayWidget extends StatelessWidget {
   final UploadStep step;
+  final VoidCallback? onSuccessOkay;
 
-  const UploadOverlayWidget({super.key, required this.step});
+  const UploadOverlayWidget({
+    super.key,
+    required this.step,
+    this.onSuccessOkay,
+  });
 
   String get _label {
     switch (step) {
@@ -14,6 +20,8 @@ class UploadOverlayWidget extends StatelessWidget {
         return "Uploading audio...";
       case UploadStep.initiatingCall:
         return "Initiating demo call...";
+      case UploadStep.success:
+        return "Audio has been uploaded successfully!";
       default:
         return "";
     }
@@ -21,6 +29,8 @@ class UploadOverlayWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isSuccess = step == UploadStep.success;
+
     return Container(
       color: Colors.black.withOpacity(0.45),
       child: Center(
@@ -41,11 +51,28 @@ class UploadOverlayWidget extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
-                strokeWidth: 3,
-              ),
+              if (isSuccess)
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFE8F5E9),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check_rounded,
+                    color: Colors.green,
+                    size: 32,
+                  ),
+                )
+              else
+                const CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
+                  strokeWidth: 3,
+                ),
+
               const SizedBox(height: 20),
+
               Text(
                 _label,
                 textAlign: TextAlign.center,
@@ -55,8 +82,35 @@ class UploadOverlayWidget extends StatelessWidget {
                   color: Color(0xFF333333),
                 ),
               ),
+
               const SizedBox(height: 8),
-              _StepDots(currentStep: step),
+
+              if (isSuccess) ...[
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: onSuccessOkay,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      "Okay",
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ] else
+                _StepDots(currentStep: step),
             ],
           ),
         ),
@@ -84,7 +138,7 @@ class _StepDots extends StatelessWidget {
         final isActive = _steps.indexOf(s) <= _steps.indexOf(currentStep);
         return AnimatedContainer(
           duration: const Duration(milliseconds: 300),
-          width:  isActive ? 10 : 8,
+          width: isActive ? 10 : 8,
           height: isActive ? 10 : 8,
           margin: const EdgeInsets.symmetric(horizontal: 4),
           decoration: BoxDecoration(

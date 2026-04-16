@@ -4,7 +4,7 @@ import '../Values/Colors/app_colors.dart';
 
 class CustomButton extends StatelessWidget {
   final String text;
-  final VoidCallback? onPressed; // ← keep it nullable
+  final VoidCallback? onPressed;
   final bool isOutlined;
   final double height;
 

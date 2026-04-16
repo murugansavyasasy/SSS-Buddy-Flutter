@@ -20,6 +20,7 @@ class AppEndpoint {
   static const getInvoiceValue = "api/GetDetails/DemoGetInvoiceByCustomerID";
   static const getponummerbycustomer = "api/GetDetails/GetPONumbersByCustomer";
   static const getindiualpoforapp = "api/AppDetails/GetIndvidualSchoolPoInfoForApp";
+  static const demoCreateOrEdit = "DemoCreateOrEditDemo";
   static const getlocalconviencedetail = "api/GetDetails/GetLocalExpenseSummary";
   static const gettourexpensedetal = "api/GetDetails/GetTourExpenseSummary";
   static const getsalespersondetails = "api/AppDetails/GetSalesPersonDD";
@@ -32,6 +33,7 @@ class AppEndpoint {
   static const addTourexpence = "api/AppDetails/ManageTourExpense";
   static const createpayment = "api/ManageDetails/DemoInsertPayment";
   static const getalertdata = "alert_messages";
+  static const demoedit = "GetDemoDetailsByDemoId";
 
 
 }

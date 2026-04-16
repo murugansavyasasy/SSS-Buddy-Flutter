@@ -8,6 +8,7 @@ import 'package:sssbuddy/view/change_password.dart';
 import 'package:sssbuddy/view/Circular/circular_listview.dart';
 import 'package:sssbuddy/view/create_demo.dart';
 import 'package:sssbuddy/view/dashboard.dart';
+import 'package:sssbuddy/view/demolist_edit_view.dart';
 import 'package:sssbuddy/view/local_conveyence.dart';
 import 'package:sssbuddy/view/management_videos.dart';
 import 'package:sssbuddy/view/record_collection.dart';
@@ -45,6 +46,11 @@ class Routes {
       case RoutesName.recordvoice:
         final item = settings.arguments as Demolist;
         return MaterialPageRoute(builder: (context) => RecordVoiceScreen(item: item));
+
+      case RoutesName.demoedit:
+        final item = settings.arguments as Demolist;
+        return MaterialPageRoute(builder: (context) => DemolistEditView(item: item));
+
 
       case RoutesName.demolistview:
         return MaterialPageRoute(builder: (context) => DemoListView());

@@ -285,8 +285,12 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
                                 );
                               } else {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text("Failed to create demo"),
+                                  SnackBar(
+                                    content: Text(
+                                      response?.message?.isNotEmpty == true
+                                          ? response!.message!
+                                          : "Failed to create demo",
+                                    ),
                                   ),
                                 );
                               }

@@ -13,6 +13,7 @@ import '../auth/model/CircularModel.dart';
 import '../auth/model/CustomerDetailsInfoModelClass.dart';
 import '../auth/model/CustomerdetailsModel.dart';
 import '../auth/model/Demolist.dart';
+import '../auth/model/DemolistEditModel.dart';
 import '../auth/model/FinancialYearModel.dart';
 import '../auth/model/ImportantInfoModel.dart';
 import '../auth/model/InitiateDemoCall.dart';
@@ -488,6 +489,7 @@ class ClientRepository {
     }
   }
 
+
   Future<Recordcollectionpaymentresponse> createPaymentMultipart({
     required String invoiceID,
     required String customerId,
@@ -507,26 +509,32 @@ class ClientRepository {
     required String depositedDate,
     File? imageFile,
   }) async {
-    final Map<String, dynamic> jsonPayload = {
-      "InvoiceID": invoiceID,
-      "CustomerId": customerId,
-      "FinancialYear": financialYear,
-      "InvoiceNumber": invoiceNumber,
-      "Received": received,
-      "ReceivedDate": receivedDate,
-      "PaymentMode": paymentMode,
-      "CreatedBy": createdBy,
-      "CashRecdDate": cashRecdDate,
-      "ChequeDate": chequeDate,
-      "ChequeNumber": chequeNumber,
-      "NEFTDetails": neftDetails,
-      "DepositedBank": depositedBank,
-      "DepositedBranch": depositedBranch,
-      "DepositedBy": depositedBy,
-      "DepositedDate": depositedDate,
-    };
+
+    final List<Map<String, dynamic>> infoArray = [
+      {
+        "InvoiceID": invoiceID,
+        "CustomerId": customerId,
+        "FinancialYear": financialYear,
+        "InvoiceNumber": invoiceNumber,
+        "Received": received,
+        "ReceivedDate": receivedDate,
+        "PaymentMode": paymentMode,
+        "CreatedBy": createdBy,
+        "CashRecdDate": cashRecdDate,
+        "ChequeDate": chequeDate,
+        "ChequeNumber": chequeNumber,
+        "NEFTDetails": neftDetails,
+        "DepositedBank": depositedBank,
+        "DepositedBranch": depositedBranch,
+        "DepositedBy": depositedBy,
+        "DepositedDate": depositedDate,
+      }
+    ];
+
+    final String infoString = jsonEncode(infoArray);
 
     MultipartFile chequeUpload;
+
     if (imageFile != null && await imageFile.exists()) {
       chequeUpload = await MultipartFile.fromFile(
         imageFile.path,
@@ -537,14 +545,18 @@ class ClientRepository {
     }
 
     final formData = FormData.fromMap({
-      'JsonBody': jsonPayload.toString(),
+      'Info': infoString,
       'ChequeUpload': chequeUpload,
     });
 
     final response = await client.dio.post(
       AppEndpoint.createpayment,
       data: formData,
-      options: Options(headers: {'Content-Type': 'multipart/form-data'}),
+      options: Options(
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      ),
     );
 
     final List data = response.data is List ? response.data : [response.data];
@@ -562,6 +574,38 @@ class ClientRepository {
     final List data = response.data['data'] ?? [];
 
     return data.map((e) => AlertModel.fromJson(e)).toList();
+  }
+
+
+  Future<List<Demolisteditmodel>> getdemolisteditdetail(
+      String Demoid,
+      ) async {
+    final response = await client.schoolget(
+      AppEndpoint.demoedit,
+      query: {
+        "Demoid": Demoid,
+      },
+    );
+
+    final responseData = response.data;
+    if (responseData is List) {
+      return responseData
+          .map((e) => Demolisteditmodel.fromJson(e))
+          .toList();
+    } else if (responseData is Map<String, dynamic>) {
+      return [Demolisteditmodel.fromJson(responseData)];
+    } else {
+      throw Exception("Invalid API response");
+    }
+  }
+
+  Future<List<dynamic>> updateDemo(Map<String, dynamic> body) async {
+    final response = await client.schoolPost(
+      AppEndpoint.demoCreateOrEdit,
+      body: body,
+    );
+
+    return response.data;
   }
 
 }

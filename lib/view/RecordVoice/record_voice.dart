@@ -29,10 +29,9 @@ class RecordVoiceScreen extends ConsumerStatefulWidget {
 }
 
 class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
-
   bool isRecording = false;
-  bool _isPlaying  = false;
-  bool _isBusy     = false;
+  bool _isPlaying = false;
+  bool _isBusy = false;
   Timer? _recordingTimer;
   int _elapsedSeconds = 0;
 
@@ -51,7 +50,10 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
 
   double get _progress {
     if (_duration.inMilliseconds == 0) return 0;
-    return (_position.inMilliseconds / _duration.inMilliseconds).clamp(0.0, 1.0);
+    return (_position.inMilliseconds / _duration.inMilliseconds).clamp(
+      0.0,
+      1.0,
+    );
   }
 
   @override
@@ -94,14 +96,16 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
   Future<void> _startRecording() async {
     try {
       final dir = await getApplicationDocumentsDirectory();
-      final id = List.generate(10, (_) =>
-      'abcdefghijklmnopqrstuvwxyz0123456789'[Random().nextInt(36)]).join();
+      final id = List.generate(
+        10,
+        (_) => 'abcdefghijklmnopqrstuvwxyz0123456789'[Random().nextInt(36)],
+      ).join();
 
       setState(() {
-        _audioPath      = null;
-        _isPlaying      = false;
-        _duration       = Duration.zero;
-        _position       = Duration.zero;
+        _audioPath = null;
+        _isPlaying = false;
+        _duration = Duration.zero;
+        _position = Duration.zero;
         _recordingStart = null;
         _elapsedSeconds = 0;
       });
@@ -157,16 +161,15 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
         await _stopRecording();
         setState(() => isRecording = false);
       }
-    }
-    else if (result.isPermanentlyDenied) {
+    } else if (result.isPermanentlyDenied) {
       showMicPermissionDialog(context);
-    }
-    else {
+    } else {
       _showSnackBar("Microphone permission denied", isError: true);
     }
 
     _isBusy = false;
   }
+
   void showMicPermissionDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -191,6 +194,7 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
       ),
     );
   }
+
   // void _showPermissionDialog() {
   //   showDialog(
   //     context: context,
@@ -238,35 +242,36 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
 
   Future<void> _onCreatePressed() async {
     if (_audioPath == null) return;
-    await ref.read(recordVoiceViewModelProvider.notifier).createAndUpload(
-      audioPath: _audioPath!,
-      demoId: widget.item.demoId.toString(),
-      durationSeconds: _recordedDurationSeconds,
-    );
+    await ref
+        .read(recordVoiceViewModelProvider.notifier)
+        .createAndUpload(
+          audioPath: _audioPath!,
+          demoId: widget.item.demoId.toString(),
+          durationSeconds: _recordedDurationSeconds,
+        );
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(message),
-      backgroundColor: isError ? Colors.red.shade600 : Colors.green.shade600,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      margin: const EdgeInsets.all(16),
-    ));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red.shade600 : Colors.green.shade600,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
   }
 
-  void _showRetrySnackBar({
-    required String message,
-    UploadStep? failedStep,
-  }) {
+  void _showRetrySnackBar({required String message, UploadStep? failedStep}) {
     if (!mounted) return;
 
     final stepLabel = switch (failedStep) {
       UploadStep.gettingPresignedUrl => "Step 1 (Preparing) failed",
-      UploadStep.uploadingToS3       => "Step 2 (Uploading) failed",
-      UploadStep.initiatingCall      => "Step 3 (Initiating call) failed",
-      _                              => "Upload failed",
+      UploadStep.uploadingToS3 => "Step 2 (Uploading) failed",
+      UploadStep.initiatingCall => "Step 3 (Initiating call) failed",
+      _ => "Upload failed",
     };
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -290,22 +295,14 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<AsyncValue<UploadState>>(recordVoiceViewModelProvider, (_, next) {
+    ref.listen<AsyncValue<UploadState>>(recordVoiceViewModelProvider, (
+      _,
+      next,
+    ) {
       final state = next.value;
       if (state == null) return;
 
-      if (state.step == UploadStep.success) {
-        ScaffoldMessenger.of(context).clearSnackBars();
-
-        ref.invalidate(demoviewProvider);
-
-        Future.delayed(const Duration(milliseconds: 500), () {
-          if (mounted) {
-            Navigator.pop(context);
-          }
-        });
-
-      } else if (state.step == UploadStep.failed) {
+      if (state.step == UploadStep.failed) {
         _showRetrySnackBar(
           message: state.errorMessage ?? "Something went wrong.",
           failedStep: state.failedStep,
@@ -314,11 +311,14 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
     });
 
     final uploadState = ref.watch(recordVoiceViewModelProvider).value;
-    final isUploading = uploadState != null && [
-      UploadStep.gettingPresignedUrl,
-      UploadStep.uploadingToS3,
-      UploadStep.initiatingCall,
-    ].contains(uploadState.step);
+    final isUploading =
+        uploadState != null &&
+        [
+          UploadStep.gettingPresignedUrl,
+          UploadStep.uploadingToS3,
+          UploadStep.initiatingCall,
+          UploadStep.success,
+        ].contains(uploadState.step);
 
     return WillPopScope(
       onWillPop: () async => !isUploading,
@@ -356,7 +356,10 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
                             const SizedBox(height: 12),
 
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.red.shade50,
                                 borderRadius: BorderRadius.circular(20),
@@ -380,7 +383,9 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.red.shade700,
-                                      fontFeatures: const [FontFeature.tabularFigures()],
+                                      fontFeatures: const [
+                                        FontFeature.tabularFigures(),
+                                      ],
                                     ),
                                   ),
                                 ],
@@ -390,7 +395,6 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
 
                           const SizedBox(height: 20),
 
-
                           CustomRecordingButton(
                             isRecording: isRecording,
                             onPressed: isUploading ? () {} : _record,
@@ -399,11 +403,11 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
 
                           if (_audioPath != null) ...[
                             PlaybackCardWidget(
-                              isPlaying:     _isPlaying,
-                              progress:      _progress,
-                              position:      _position,
+                              isPlaying: _isPlaying,
+                              progress: _progress,
+                              position: _position,
                               totalDuration: _duration,
-                              onTogglePlay:  _togglePlay,
+                              onTogglePlay: _togglePlay,
                             ),
                             const SizedBox(height: 40),
                             CreateButtonWidget(
@@ -420,7 +424,15 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
                 ],
               ),
               if (isUploading)
-                UploadOverlayWidget(step: uploadState!.step),
+                UploadOverlayWidget(
+                  step: uploadState!.step,
+                  onSuccessOkay: uploadState.step == UploadStep.success
+                      ? () {
+                          ref.invalidate(demoviewProvider);
+                          Navigator.pop(context);
+                        }
+                      : null,
+                ),
             ],
           ),
         ),

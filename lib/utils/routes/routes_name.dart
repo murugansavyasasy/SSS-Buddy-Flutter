@@ -5,6 +5,7 @@ class RoutesName {
   static const String dashboard = "dashboard_screen";
   static const String createdemo = "create_demo";
   static const String recordvoice = "record_voice";
+  static const String demoedit = "demo_edit";
   static const String demolistview = "demo_list";
   static const String schoollistview = "school_list";
   static const String changepassword = "change_password";

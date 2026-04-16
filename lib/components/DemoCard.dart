@@ -53,10 +53,47 @@ class DemoCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
+
               GestureDetector(
                 onTap: () {
                   Navigator.pushNamed(
-                      context, RoutesName.recordvoice,arguments: item);
+                    context,
+                    RoutesName.demoedit,
+                    arguments: item,
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.blue,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.edit, color: Colors.white, size: 18),
+                      SizedBox(width: 6),
+                      Text(
+                        "Edit",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 10),
+
+              GestureDetector(
+                onTap: () {
+                  Navigator.pushNamed(
+                    context,
+                    RoutesName.recordvoice,
+                    arguments: item,
+                  );
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(
