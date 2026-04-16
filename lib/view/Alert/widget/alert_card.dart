@@ -104,27 +104,37 @@ class AlertCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
 
-                  Row(
+                  // 🔸 FIXED: Wrap instead of Row
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      const Icon(Icons.access_time,
-                          size: 13, color: Colors.grey),
-                      const SizedBox(width: 4),
-                      Text(
-                        alert.createdOn,
-                        style: const TextStyle(
-                            fontSize: 11, color: Colors.grey),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.access_time,
+                              size: 13, color: Colors.grey),
+                          const SizedBox(width: 4),
+                          Text(
+                            alert.createdOn,
+                            style: const TextStyle(
+                                fontSize: 11, color: Colors.grey),
+                          ),
+                        ],
                       ),
-                      const Spacer(),
-                      const Icon(Icons.source_outlined,
-                          size: 13, color: Colors.grey),
-                      const SizedBox(width: 4),
-                      Flexible(
-                        child: Text(
-                          alert.createdFrom,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                              fontSize: 11, color: Colors.grey),
-                        ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.source_outlined,
+                              size: 13, color: Colors.grey),
+                          const SizedBox(width: 4),
+                          Text(
+                            alert.createdFrom,
+                            style: const TextStyle(
+                                fontSize: 11, color: Colors.grey),
+                          ),
+                        ],
                       ),
                     ],
                   ),

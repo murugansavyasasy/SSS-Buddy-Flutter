@@ -33,6 +33,7 @@ class SchoolDocumentCard extends StatelessWidget {
           ],
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
               width: 44,
@@ -57,8 +58,6 @@ class SchoolDocumentCard extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF1A1A1A),
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                   ),
                   if (item.DocumentDescription.isNotEmpty) ...[
                     const SizedBox(height: 3),
@@ -68,40 +67,47 @@ class SchoolDocumentCard extends StatelessWidget {
                         fontSize: 12,
                         color: Color(0xFF888780),
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ],
               ),
             ),
             const SizedBox(width: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: typeColor.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(99),
-              ),
-              child: Text(
-                item.DocumentType.toUpperCase(),
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: typeColor,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Row(
-              mainAxisSize: MainAxisSize.min,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                IconButton(
-                  icon: const Icon(Icons.share, color: AppColors.primary, size: 18),
-                  onPressed: () => _shareDocument(context),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: typeColor.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                  child: Text(
+                    item.DocumentType.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: typeColor,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
                 ),
-                Icon(Icons.chevron_right_rounded,
-                    color: Colors.grey.shade400, size: 20),
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      icon: const Icon(Icons.share,
+                          color: AppColors.primary, size: 18),
+                      onPressed: () => _shareDocument(context),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(Icons.chevron_right_rounded,
+                        color: Colors.grey.shade400, size: 20),
+                  ],
+                ),
               ],
             ),
           ],
@@ -152,7 +158,6 @@ class SchoolDocumentCard extends StatelessWidget {
       ),
     );
   }
-
 
   void _handleTap(BuildContext context) {
     if (item.DocumentType == 'video') {
