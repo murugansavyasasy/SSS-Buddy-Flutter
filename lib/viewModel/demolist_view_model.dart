@@ -22,7 +22,10 @@ class DemolistViewModel extends AsyncNotifier<List<Demolist>> {
     final lower = query.toLowerCase();
     state = AsyncData(
       _all.where((item) {
-        return item.schoolName.toLowerCase().contains(lower);
+        return item.schoolName.toLowerCase().contains(lower) ||
+            item.demoId.toString().toLowerCase().contains(lower);
+
+
       }).toList(),
     );
   }

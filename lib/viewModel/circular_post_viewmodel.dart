@@ -23,7 +23,8 @@ class CircularPostViewmodel extends AsyncNotifier<List<Circularmodel>> {
     final lower = query.toLowerCase();
     state = AsyncData(
       _all.where((item) {
-        return item.SchoolName.toLowerCase().contains(lower);
+        return item.SchoolName.toLowerCase().contains(lower) ||
+            item.SchoolId.toString().toLowerCase().contains(lower);
       }).toList(),
     );
   }

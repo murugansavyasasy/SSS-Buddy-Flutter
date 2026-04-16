@@ -24,7 +24,8 @@ class LocalConveyenceViewmodel
     final lower = query.toLowerCase();
     state = AsyncData(
       _all.where((item) {
-        return item.Username.toLowerCase().contains(lower);
+        return item.Username.toLowerCase().contains(lower) ||
+            item.RefId.toLowerCase().contains(lower);
       }).toList(),
     );
   }

@@ -22,7 +22,8 @@ class AdvanceTourexpenseViewmodel
     final lower = query.toLowerCase();
     state = AsyncData(
       _all.where((item) {
-        return item.EmpName.toLowerCase().contains(lower);
+        return item.EmpName.toLowerCase().contains(lower) ||
+            item.TourId.toLowerCase().contains(lower);
       }).toList(),
     );
   }

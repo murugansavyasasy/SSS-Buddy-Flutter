@@ -5,6 +5,12 @@ import '../provider/app_providers.dart';
 import '../auth/model/DemolistEditModel.dart';
 import '../repository/clientrepository.dart';
 
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../provider/app_providers.dart';
+import '../auth/model/DemolistEditModel.dart';
+import '../repository/clientrepository.dart';
+
 class DemolistEditViewmodel
     extends StateNotifier<AsyncValue<List<Demolisteditmodel>>> {
   final ClientRepository _repository;
@@ -26,8 +32,6 @@ class DemolistEditViewmodel
       Map<String, dynamic> body,
       BuildContext context,
       ) async {
-    state = const AsyncLoading();
-
     try {
       final response = await _repository.updateDemo(body);
 
@@ -35,22 +39,24 @@ class DemolistEditViewmodel
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(response[0]['Message'] ?? 'Demo updated successfully'),
+            backgroundColor: Colors.green,
           ),
         );
         Navigator.pop(context);
       } else {
-        throw Exception(
-          response.isNotEmpty
-              ? response[0]['Message'] ?? 'Update failed'
-              : 'Unknown error',
-        );
+        final errorMsg = response.isNotEmpty
+            ? response[0]['Message'] ?? 'Update failed'
+            : 'Unknown error from server';
+        throw Exception(errorMsg);
       }
-    } catch (e, stackTrace) {
-      state = AsyncValue.error(e, stackTrace);
-
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e")),
+        SnackBar(
+          content: Text("Error: ${e.toString()}"),
+          backgroundColor: Colors.red,
+        ),
       );
+      rethrow;
     }
   }
 }

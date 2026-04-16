@@ -47,8 +47,8 @@ class SchoolStatsViewModel extends AsyncNotifier<SchoolStats> {
     final filtered = _orginalList.where((item) {
 
       final SchoolName = item["SchoolName"]?.toString().toLowerCase() ?? "";
-      return SchoolName.contains(lowerQuery);
-
+      final schoolId = item["SchoolID"]?.toString().toLowerCase() ?? ""; // ← NEW: ID search
+      return SchoolName.contains(lowerQuery) || schoolId.contains(lowerQuery);
     }).toList();
 
     final stats = calculateSchoolStatsFromList(filtered);

@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sssbuddy/view/demo_list.dart';
-
 import 'package:sssbuddy/components/custom_text_field.dart';
 import '../Components/CustomButton.dart';
 import '../Values/Colors/app_colors.dart';
 import '../auth/model/Demolist.dart';
 import '../components/toolbar_layout.dart';
+import '../provider/user_session_provider.dart';
 import '../viewModel/demolist_edit_viewmodel.dart';
-
+import '../viewModel/demolist_view_model.dart';
 
 class DemolistEditView extends ConsumerStatefulWidget {
   final Demolist item;
@@ -195,14 +195,24 @@ class _DemolistEditViewState extends ConsumerState<DemolistEditView> {
     );
   }
 
-  void _onUpdate() {
+  void _onUpdate() async {
+    final userAsync = ref.read(userSessionProvider);
+    final loginId = userAsync.value?.VimsIdUser ?? '';
+
+    if (loginId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Session expired. Please login again.")),
+      );
+      return;
+    }
+
     final parentNos = parentControllers
         .map((e) => e.text.trim())
         .where((e) => e.isNotEmpty)
         .join(',');
 
     final body = {
-      "LoginID": "35",
+      "LoginID": loginId,
       "SchoolName": schoolController.text.trim(),
       "MobileNo": mobileController.text.trim(),
       "Email": emailController.text.trim(),
@@ -211,6 +221,15 @@ class _DemolistEditViewState extends ConsumerState<DemolistEditView> {
       "Demoid": widget.item.demoId.toString(),
     };
 
-    ref.read(demolistEditProvider.notifier).updateDemo(body, context);
+    try {
+      await ref
+          .read(demolistEditProvider.notifier)
+          .updateDemo(body, context);
+
+      ref.invalidate(demoviewProvider);
+
+      Navigator.pop(context);
+    } catch (e) {
+    }
   }
 }
