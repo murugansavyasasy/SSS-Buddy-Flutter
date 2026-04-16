@@ -67,24 +67,33 @@ class TodayVisitViewmodel extends AsyncNotifier<TripState?> {
   }
 
   /// Get current location with permission checks
-  Future<Position> _getCurrentLocation() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) throw Exception("Location services are disabled");
-
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        throw Exception("Location permission denied");
+  Future<Position> getLocationWithForce() async {
+    while (true) {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        await Geolocator.openLocationSettings();
+        await Future.delayed(Duration(seconds: 2));
+        continue;
       }
-    }
-    if (permission == LocationPermission.deniedForever) {
-      throw Exception("Location permission permanently denied");
-    }
 
-    return await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-    );
+      LocationPermission permission = await Geolocator.checkPermission();
+
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        continue;
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        await Geolocator.openAppSettings();
+        await Future.delayed(Duration(seconds: 2));
+        continue;
+      }
+
+      // Allowed
+      return await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+    }
   }
 
   /// Start trip tracking from a given point
@@ -166,7 +175,9 @@ class TodayVisitViewmodel extends AsyncNotifier<TripState?> {
       final loginData = ref.read(loginProvider).value;
       if (loginData == null) throw Exception("User not logged in");
 
-      final position = await _getCurrentLocation();
+      // ✅ FIX: use new function
+      final position = await getLocationWithForce();
+
       final latLng = LatLng(position.latitude, position.longitude);
 
       final response = await repo.manageTrip(
@@ -177,25 +188,25 @@ class TodayVisitViewmodel extends AsyncNotifier<TripState?> {
       );
 
       if (type == "start") {
-        // Backend returns status == 1 if trip already started, result == "1" if new trip started
         final backendStatus = response["status"];
         final result = response["result"]?.toString();
 
         if (backendStatus == 1 || result == "1") {
-          // tripStartLocation ??= latLng; // Only set if not already set
-          // tripEndLocation = null;
-          // await startTracking(latLng); // Start tracking if not already
+          tripStartLocation = latLng;
+          await startTracking(latLng); // ✅ start tracking
           return true;
         }
         return false;
       } else if (type == "stop") {
         if (response["result"]?.toString() == "1") {
-          // tripEndLocation = latLng;
-          // stopTracking();
-          // state = AsyncData(state.value?.copyWith(
-          //   isTripStarted: false,
-          //   distance: _calculateTotalDistance(trackedPoints),
-          // ));
+          tripEndLocation = latLng;
+          stopTracking(); // ✅ stop tracking
+
+          state = AsyncData(state.value?.copyWith(
+            isTripStarted: false,
+            distance: _calculateTotalDistance(trackedPoints),
+          ));
+
           return true;
         }
         return false;
@@ -224,7 +235,7 @@ class TodayVisitViewmodel extends AsyncNotifier<TripState?> {
       final loginData = ref.read(loginProvider).value;
       if (loginData == null) throw Exception("User not logged in");
 
-      final position = await _getCurrentLocation();
+      final position = await getLocationWithForce();
 
       final response = await repo.visitRecord(
         loginData.VimsIdUser.toString(),

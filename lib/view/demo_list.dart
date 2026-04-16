@@ -48,7 +48,7 @@ class DemoListView extends ConsumerWidget {
                 child: Container(
                   width: double.infinity,
                   decoration: const BoxDecoration(
-                    color: Colors.white,
+                    color: Color(0xFFF2F5F9),
                     borderRadius: BorderRadius.only(
                       topLeft: Radius.circular(25),
                       topRight: Radius.circular(25),

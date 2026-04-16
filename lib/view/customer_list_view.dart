@@ -24,14 +24,9 @@ class _CustomerListViewState extends ConsumerState<CustomerListView> {
   void initState() {
     super.initState();
 
+    selectedValue = "All";
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final salesList = ref.read(salespersonProvider).value ?? [];
-
-      if (salesList.isNotEmpty) {
-        setState(() {
-          selectedValue = salesList.first.nameValue;
-        });
-      }
+      ref.read(customerviewProvider.notifier).filterBySalesPerson("0"); // ✅ API call
     });
   }
 
@@ -39,8 +34,10 @@ class _CustomerListViewState extends ConsumerState<CustomerListView> {
   Widget build(BuildContext context) {
     final customerlistAsync = ref.watch(customerviewProvider);
     final salesAsync = ref.watch(salespersonProvider);
-    final dropdownList =
-        salesAsync.value?.map((e) => e.nameValue ?? "").toList() ?? [];
+    final dropdownList = [
+      "All",
+      ...?salesAsync.value?.map((e) => e.nameValue ?? "")
+    ];
     final salesList = salesAsync.value ?? [];
 
     return PopScope(
@@ -70,12 +67,15 @@ class _CustomerListViewState extends ConsumerState<CustomerListView> {
                 selectedMonth:
                 selectedValue != null ? selectedValue ?? '0' : null,
                 onMonthChanged: (value) {
-                  if (value == null || salesList.isEmpty) return;
+                  if (value == null) return;
 
                   setState(() {
                     selectedValue = value;
                   });
-
+                  if (value == "All") {
+                    ref.read(customerviewProvider.notifier).filterBySalesPerson("0");
+                    return;
+                  }
                   final selected = salesList.firstWhere(
                         (e) => e.nameValue == value,
                     orElse: () => salesList.first,
