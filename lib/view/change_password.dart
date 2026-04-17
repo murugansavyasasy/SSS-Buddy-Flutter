@@ -1,17 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sssbuddy/viewModel/auth_view_model.dart';
-import 'package:sssbuddy/viewModel/schoollist_view_model.dart';
 import '../Values/Colors/app_colors.dart';
 import '../components/ChangePasswordDialog.dart';
 import '../components/toolbar_layout.dart';
 import '../core/storage/secure_storage.dart';
 import '../main.dart';
-import '../provider/app_providers.dart';
 import '../viewModel/changepassword_view_model.dart';
-import '../viewModel/createdemo_view_model.dart';
-import '../viewModel/demolist_view_model.dart';
 import 'dashboard.dart';
 import 'package:sssbuddy/Components/CustomButton.dart';
 import '../viewModel/login_view_model.dart';
@@ -26,14 +21,19 @@ class ChangePassword extends ConsumerStatefulWidget {
 
 class _ChangePasswordState extends ConsumerState<ChangePassword> {
   final TextEditingController existingpasswordcontroller =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController newpasswordcontroller = TextEditingController();
   final TextEditingController confrimpasswordcontroller =
-      TextEditingController();
+  TextEditingController();
 
   String? existingPasswordError;
   String? newPasswordError;
   String? confirmPasswordError;
+
+  // ── visibility toggles ──
+  bool _existingPasswordVisible = false;
+  bool _newPasswordVisible = false;
+  bool _confirmPasswordVisible = false;
 
   void _validateAndSubmit() async {
     setState(() {
@@ -99,7 +99,8 @@ class _ChangePasswordState extends ConsumerState<ChangePassword> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               ),
               child: const Text(
                 "Cancel",
@@ -113,7 +114,8 @@ class _ChangePasswordState extends ConsumerState<ChangePassword> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               ),
               child: const Text(
                 "Yes, Change",
@@ -126,7 +128,6 @@ class _ChangePasswordState extends ConsumerState<ChangePassword> {
     );
 
     if (confirmed != true) return;
-
 
     final loginState = ref.read(loginProvider);
     final loginData = loginState.value;
@@ -181,6 +182,8 @@ class _ChangePasswordState extends ConsumerState<ChangePassword> {
     required String hint,
     required TextEditingController controller,
     required String? errorText,
+    required bool isVisible,
+    required VoidCallback onToggleVisibility,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -207,7 +210,7 @@ class _ChangePasswordState extends ConsumerState<ChangePassword> {
         const SizedBox(height: 6),
         TextField(
           controller: controller,
-          obscureText: true,
+          obscureText: !isVisible,
           onChanged: (_) {
             setState(() {
               if (controller == existingpasswordcontroller)
@@ -228,6 +231,20 @@ class _ChangePasswordState extends ConsumerState<ChangePassword> {
             fillColor: errorText != null
                 ? Colors.red.withOpacity(0.04)
                 : Colors.grey.withOpacity(0.07),
+            // ── eye icon suffix ──
+            suffixIcon: IconButton(
+              onPressed: onToggleVisibility,
+              icon: Icon(
+                isVisible
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined,
+                size: 20,
+                color: errorText != null
+                    ? Colors.red
+                    : Colors.grey.shade500,
+              ),
+              splashRadius: 20,
+            ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide(
@@ -300,6 +317,11 @@ class _ChangePasswordState extends ConsumerState<ChangePassword> {
                         hint: "Enter old password",
                         controller: existingpasswordcontroller,
                         errorText: existingPasswordError,
+                        isVisible: _existingPasswordVisible,
+                        onToggleVisibility: () => setState(
+                              () => _existingPasswordVisible =
+                          !_existingPasswordVisible,
+                        ),
                       ),
                       const SizedBox(height: 20),
                       _buildLabeledField(
@@ -307,6 +329,10 @@ class _ChangePasswordState extends ConsumerState<ChangePassword> {
                         hint: "Enter new password",
                         controller: newpasswordcontroller,
                         errorText: newPasswordError,
+                        isVisible: _newPasswordVisible,
+                        onToggleVisibility: () => setState(
+                              () => _newPasswordVisible = !_newPasswordVisible,
+                        ),
                       ),
                       const SizedBox(height: 20),
                       _buildLabeledField(
@@ -314,6 +340,11 @@ class _ChangePasswordState extends ConsumerState<ChangePassword> {
                         hint: "Enter confirm password",
                         controller: confrimpasswordcontroller,
                         errorText: confirmPasswordError,
+                        isVisible: _confirmPasswordVisible,
+                        onToggleVisibility: () => setState(
+                              () =>
+                          _confirmPasswordVisible = !_confirmPasswordVisible,
+                        ),
                       ),
                       const SizedBox(height: 28),
                       SizedBox(
