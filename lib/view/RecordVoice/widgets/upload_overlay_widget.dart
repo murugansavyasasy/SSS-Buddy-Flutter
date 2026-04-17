@@ -21,7 +21,7 @@ class UploadOverlayWidget extends StatelessWidget {
       case UploadStep.initiatingCall:
         return "Initiating demo call...";
       case UploadStep.success:
-        return "Audio has been uploaded successfully!";
+        return "Voice has been sent successfully!";
       default:
         return "";
     }
