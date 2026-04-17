@@ -33,7 +33,7 @@ class _CustomPasswordFieldState extends State<CustomPasswordField> {
         floatingLabelStyle: TextStyle(color: AppColors.primary),
         suffixIcon: IconButton(
           icon: Icon(
-            isPasswordHidden ? Icons.visibility : Icons.visibility_off,
+            isPasswordHidden ? Icons.visibility_off : Icons.visibility,
           ),
           onPressed: () {
             setState(() {
