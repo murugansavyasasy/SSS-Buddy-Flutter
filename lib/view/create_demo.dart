@@ -96,6 +96,10 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
                           controller: titleController,
                           validator: (value) =>
                               _validateRequired(value, 'School Name'),
+                          maxLength: 50,
+                          inputFormatters: [
+                            LengthLimitingTextInputFormatter(50),
+                          ],
                         ),
 
                         const SizedBox(height: 20),

@@ -5,18 +5,11 @@ import '../provider/app_providers.dart';
 import '../auth/model/DemolistEditModel.dart';
 import '../repository/clientrepository.dart';
 
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../provider/app_providers.dart';
-import '../auth/model/DemolistEditModel.dart';
-import '../repository/clientrepository.dart';
-
 class DemolistEditViewmodel
     extends StateNotifier<AsyncValue<List<Demolisteditmodel>>> {
   final ClientRepository _repository;
 
-  DemolistEditViewmodel(this._repository)
-      : super(const AsyncValue.loading());
+  DemolistEditViewmodel(this._repository) : super(const AsyncValue.loading());
 
   Future<void> getdemolisteditdetails(String demoId) async {
     state = const AsyncValue.loading();
@@ -28,21 +21,12 @@ class DemolistEditViewmodel
     }
   }
 
-  Future<void> updateDemo(
-      Map<String, dynamic> body,
-      BuildContext context,
-      ) async {
+  Future<bool> updateDemo(Map<String, dynamic> body) async {
     try {
       final response = await _repository.updateDemo(body);
 
       if (response.isNotEmpty && response[0]['Status'] == 1) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(response[0]['Message'] ?? 'Demo updated successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.pop(context);
+        return true;
       } else {
         final errorMsg = response.isNotEmpty
             ? response[0]['Message'] ?? 'Update failed'
@@ -50,19 +34,13 @@ class DemolistEditViewmodel
         throw Exception(errorMsg);
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Error: ${e.toString()}"),
-          backgroundColor: Colors.red,
-        ),
-      );
       rethrow;
     }
   }
 }
 
-final demolistEditProvider =
-StateNotifierProvider<DemolistEditViewmodel, AsyncValue<List<Demolisteditmodel>>>(
+final demolistEditProvider = StateNotifierProvider<DemolistEditViewmodel,
+    AsyncValue<List<Demolisteditmodel>>>(
       (ref) {
     final repo = ref.read(repositoryProvider);
     return DemolistEditViewmodel(repo);

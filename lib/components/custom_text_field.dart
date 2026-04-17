@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../Values/Colors/app_colors.dart';
 
-class CustomTextField extends StatelessWidget {
+class CustomTextField extends StatefulWidget {
   final String label;
   final String hint;
   final TextEditingController controller;
@@ -10,6 +10,7 @@ class CustomTextField extends StatelessWidget {
   final TextInputType? keyboardType;
   final List<TextInputFormatter>? inputFormatters;
   final bool enabled;
+  final int? maxLength;
 
   const CustomTextField({
     super.key,
@@ -20,28 +21,52 @@ class CustomTextField extends StatelessWidget {
     this.keyboardType,
     this.inputFormatters,
     this.enabled = true,
+    this.maxLength,
   });
+
+  @override
+  State<CustomTextField> createState() => _CustomTextFieldState();
+}
+
+class _CustomTextFieldState extends State<CustomTextField> {
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_update);
+  }
+
+  void _update() {
+    setState(() {});
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_update);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      validator: validator,
-      inputFormatters: inputFormatters,
-      enabled: enabled,
-      style: const TextStyle(
-        fontSize: 16,
-        color: Colors.black87,
-      ),
+      controller: widget.controller,
+      keyboardType: widget.keyboardType,
+      validator: widget.validator,
+      inputFormatters: widget.inputFormatters,
+      enabled: widget.enabled,
+      style: const TextStyle(fontSize: 16, color: Colors.black87),
       decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
+        labelText: widget.label,
+        hintText: widget.hint,
         floatingLabelBehavior: FloatingLabelBehavior.always,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 16,
         ),
+
+        counterText: widget.maxLength != null
+            ? "${widget.controller.text.length}/${widget.maxLength}"
+            : "",
+
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Colors.grey, width: 1.5),
