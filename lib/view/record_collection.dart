@@ -219,12 +219,21 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
   }
 
   Future<void> _pickImage(ImageSource source) async {
-    final XFile? file = await _imagePicker.pickImage(
-      source: source,
-      imageQuality: 80,
-    );
-    if (file != null) {
-      setState(() => _selectedImage = File(file.path));
+    try {
+      final XFile? file = await _imagePicker.pickImage(
+        source: source,
+        imageQuality: 50,
+        maxWidth: 800,
+        maxHeight: 800,
+      );
+
+      if (file != null) {
+        setState(() {
+          _selectedImage = File(file.path);
+        });
+      }
+    } catch (e) {
+      print("Image pick error: $e");
     }
   }
 
@@ -302,7 +311,7 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
         transactionId = _neftTransactionCtrl.text;
         break;
 
-      case PaymentMode.pdc: // "4"
+      case PaymentMode.pdc:
         chequenumber = _pdcChequeNoCtrl.text;
         depositeddate = _pdcChequeDateCtrl.text;
         branchname = _pdcChequeBranchCtrl.text;

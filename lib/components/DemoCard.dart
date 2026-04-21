@@ -96,7 +96,6 @@ class DemoCard extends StatelessWidget {
           // Principal Number (Clickable)
           Expanded(
             child: GestureDetector(
-              onTap: () => _openDialPad(item.principalNumber.toString()),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
                 decoration: BoxDecoration(
@@ -182,12 +181,5 @@ class DemoCard extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  Future<void> _openDialPad(String phone) async {
-    final Uri url = Uri(scheme: 'tel', path: phone.trim());
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url);
-    }
   }
 }

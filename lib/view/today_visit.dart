@@ -459,12 +459,8 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
                   final today = _formattedToday();
                   await SecureStorage.saveTripData(true, today);
                   setState(() => isTripStarted = true);
-
                 } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text("Failed to start trip")),
-                  );
+                  setState(() => isTripStarted = false);
                 }
               },
               child: const Text(

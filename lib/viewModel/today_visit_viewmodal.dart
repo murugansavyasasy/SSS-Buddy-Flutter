@@ -67,33 +67,35 @@ class TodayVisitViewmodel extends AsyncNotifier<TripState?> {
   }
 
   /// Get current location with permission checks
-  Future<Position> getLocationWithForce() async {
-    while (true) {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        await Geolocator.openLocationSettings();
-        await Future.delayed(Duration(seconds: 2));
-        continue;
-      }
+  Future<Position?> getLocationSafely() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
 
-      LocationPermission permission = await Geolocator.checkPermission();
+    if (!serviceEnabled) {
+      await Geolocator.openLocationSettings();
+      return null;
+    }
+
+    LocationPermission permission = await Geolocator.checkPermission();
+
+    // 🔹 First time ask
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
 
       if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        continue;
+        return null; // ❌ user denied
       }
-
-      if (permission == LocationPermission.deniedForever) {
-        await Geolocator.openAppSettings();
-        await Future.delayed(Duration(seconds: 2));
-        continue;
-      }
-
-      // Allowed
-      return await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
     }
+
+    // 🔹 Permanently denied
+    if (permission == LocationPermission.deniedForever) {
+      await Geolocator.openAppSettings();
+      return null;
+    }
+
+    // ✅ Permission granted
+    return await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
   }
 
   /// Start trip tracking from a given point
@@ -176,7 +178,11 @@ class TodayVisitViewmodel extends AsyncNotifier<TripState?> {
       if (loginData == null) throw Exception("User not logged in");
 
       // ✅ FIX: use new function
-      final position = await getLocationWithForce();
+      final position = await getLocationSafely();
+
+      if (position == null) {
+        return false; // 🔥 important: stop here
+      }
 
       final latLng = LatLng(position.latitude, position.longitude);
 
@@ -235,7 +241,11 @@ class TodayVisitViewmodel extends AsyncNotifier<TripState?> {
       final loginData = ref.read(loginProvider).value;
       if (loginData == null) throw Exception("User not logged in");
 
-      final position = await getLocationWithForce();
+      final position = await getLocationSafely();
+
+      if (position == null) {
+        return false; // 🔥 important: stop here
+      }
 
       final response = await repo.visitRecord(
         loginData.VimsIdUser.toString(),
