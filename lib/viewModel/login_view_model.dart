@@ -13,10 +13,10 @@ class LoginViewModel extends AsyncNotifier<Validatelogin?> {
   }
 
   Future<bool> login(
-    String employeeId,
-    String password,
-    bool rememberMe,
-  ) async {
+      String employeeId,
+      String password,
+      bool rememberMe,
+      ) async {
     state = const AsyncLoading();
 
     try {
@@ -36,18 +36,21 @@ class LoginViewModel extends AsyncNotifier<Validatelogin?> {
       );
       await ref.read(userSessionProvider.notifier).refreshUser();
 
-      state =   AsyncData(response);
+      // ✅ Global variable-ல store பண்ணு
+      globalVimsIdUser = response.VimsIdUser;
+      print('✅ globalVimsIdUser set: $globalVimsIdUser');
+
+      state = AsyncData(response);
 
       return true;
 
     } catch (e, stack) {
       state = AsyncError(e, stack);
-
       return false;
     }
   }
 }
 
-final loginProvider = AsyncNotifierProvider<LoginViewModel,Validatelogin?>(
-  () => LoginViewModel(),
+final loginProvider = AsyncNotifierProvider<LoginViewModel, Validatelogin?>(
+      () => LoginViewModel(),
 );
