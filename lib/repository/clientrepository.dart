@@ -14,6 +14,7 @@ import '../auth/model/CustomerDetailsInfoModelClass.dart';
 import '../auth/model/CustomerdetailsModel.dart';
 import '../auth/model/Demolist.dart';
 import '../auth/model/DemolistEditModel.dart';
+import '../auth/model/FeedbackModel.dart';
 import '../auth/model/FinancialYearModel.dart';
 import '../auth/model/ImportantInfoModel.dart';
 import '../auth/model/InitiateDemoCall.dart';
@@ -31,6 +32,7 @@ import '../auth/model/SchoolDocuments.dart';
 import '../auth/model/SchoolNameModel.dart';
 import '../auth/model/Validatelogin.dart';
 import '../auth/model/Versioncheck.dart';
+import '../auth/model/ZeroActivityModel.dart';
 import '../auth/model/po_details_modal.dart';
 import '../core/aws/upload_response.dart';
 import '../core/network/DioClient.dart';
@@ -608,4 +610,34 @@ class ClientRepository {
     return response.data;
   }
 
+  Future<List<FeedbackModel>> getFeedbackData(String IdUser) async {
+    final response = await client.get(
+      AppEndpoint.GetFeedbackRequirements,
+      query: {"Userid": IdUser},
+    );
+
+    final List data = response.data;
+
+    return data.map((e) => FeedbackModel.fromJson(e)).toList();
+  }
+  Future<List<Zeroactivitymodel>> getInstuetList(String vimIdUser) async {
+    final response = await client.schoolPost(
+      AppEndpoint.SchoolUsageReport,
+      body: {
+        "User_id": vimIdUser.toString(),
+      },
+    );
+
+    final data = response.data;
+
+    if (data is List) {
+      return data
+          .map<Zeroactivitymodel>((e) => Zeroactivitymodel.fromJson(e))
+          .toList();
+    } else if (data is Map<String, dynamic>) {
+      return [Zeroactivitymodel.fromJson(data)];
+    } else {
+      throw Exception("Invalid response");
+    }
+  }
 }
