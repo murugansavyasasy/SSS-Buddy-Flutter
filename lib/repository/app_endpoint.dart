@@ -34,6 +34,8 @@ class AppEndpoint {
   static const createpayment = "api/ManageDetails/DemoInsertPayment";
   static const getalertdata = "alert_messages";
   static const demoedit = "GetDemoDetailsByDemoId";
+  static const GetFeedbackRequirements = "api/AppDetails/GetFeedbackRequirements";
+  static const SchoolUsageReport = "SchoolUsageReport";
 
 
 }

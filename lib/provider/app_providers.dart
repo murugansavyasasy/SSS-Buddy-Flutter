@@ -4,7 +4,7 @@ import '../auth/model/ReportingMembersModel.dart';
 import '../auth/model/SchoolFilter.dart';
 import '../core/network/DioClient.dart';
 import '../repository/clientrepository.dart';
-
+String globalVimsIdUser = "";
 final dioProvider = Provider<DioClient>((ref) {
   return DioClient();
 });
