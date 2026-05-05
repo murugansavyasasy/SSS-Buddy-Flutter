@@ -20,7 +20,6 @@ class FeedbackViewModel extends AsyncNotifier<List<FeedbackModel>> {
 
   Future<List<FeedbackModel>> _fetchFeedback() async {
     if (globalVimsIdUser.isEmpty) return [];
-
     final repo = ref.read(repositoryProvider);
     final response = await repo.getFeedbackData(globalVimsIdUser);
     return response ?? [];
