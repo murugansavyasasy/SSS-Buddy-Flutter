@@ -23,6 +23,7 @@ import '../auth/model/InvoiceModel.dart';
 import '../auth/model/LocalConveyenceModel.dart';
 import '../auth/model/LocalExpenseDetailModel.dart';
 import '../auth/model/ManagementInfo.dart';
+import '../auth/model/MoveToSettlementTourRequest.dart';
 import '../auth/model/OverallTripDetailsModel.dart';
 import '../auth/model/PO_listModal.dart';
 import '../auth/model/RecordCollectionPaymentResponse.dart';
@@ -491,6 +492,27 @@ class ClientRepository {
     }
   }
 
+
+  Future<TourExpenseResponse?> submitMoveTourExpense(
+      Movetosettlementtourrequest request,
+      ) async {
+    try {
+      final response = await client.post(
+        AppEndpoint.addTourexpence,
+        body: request.toJson(),
+      );
+      final data = response.data;
+      if (data is List && data.isNotEmpty) {
+        return TourExpenseResponse.fromJson(data[0]);
+      } else if (data is Map<String, dynamic>) {
+        return TourExpenseResponse.fromJson(data);
+      }
+      return null;
+    } catch (e) {
+      print("ERROR: $e");
+      return null;
+    }
+  }
 
   Future<Recordcollectionpaymentresponse> createPaymentMultipart({
     required String invoiceID,
