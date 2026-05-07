@@ -31,6 +31,7 @@ class AppEndpoint {
   static const manageTrip = "api/AppDetails/ManageTripDetails";
   static const updateDailyVisit = "AppDetails/UpdateDailyVisitWithLocation";
   static const addTourexpence = "api/AppDetails/ManageTourExpense";
+  static const uploadfiles = "api/AppDetails/UploadExpenseFiles";
   static const createpayment = "api/ManageDetails/DemoInsertPayment";
   static const getalertdata = "alert_messages";
   static const demoedit = "GetDemoDetailsByDemoId";

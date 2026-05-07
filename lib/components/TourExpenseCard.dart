@@ -186,7 +186,7 @@ class TourExpenseCard extends StatelessWidget {
                 const SizedBox(height: 12),
 
 
-                if (helper.canEditDelete) ...[
+                if (false && helper.canEditDelete) ...[
                   Row(
                     children: [
                       Expanded(
