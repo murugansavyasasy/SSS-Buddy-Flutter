@@ -42,8 +42,8 @@ class _ZeroActivityScreenState
 
           /// 🔝 HEADER WITH SEARCH + DROPDOWN
           ToolbarLayout(
-            title: "Customer List",
-            searchHint: "Search school name....",
+            title: "Zero Activity",
+            searchHint: "Search....",
 
             dropdownLists: statusList,
             selectedMonth: selectedValue,
