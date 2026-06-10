@@ -28,7 +28,7 @@ class RecordVoiceScreen extends ConsumerStatefulWidget {
   ConsumerState<RecordVoiceScreen> createState() => _RecordVoiceScreenState();
 }
 
-class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
+class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> with WidgetsBindingObserver  {
   bool isRecording = false;
   bool _isPlaying = false;
   bool _isBusy = false;
@@ -59,6 +59,7 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _audioRecorder = AudioRecorder();
 
     _audioPlayer.durationStream.listen((d) {
@@ -86,7 +87,40 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
+      _handleBackgroundState();
+    }
+  }
+
+  Future<void> _handleBackgroundState() async {
+    if (_audioPlayer.playing) {
+      await _audioPlayer.pause();
+
+      if (mounted) {
+        setState(() {
+          _isPlaying = false;
+        });
+      }
+    }
+
+    if (isRecording) {
+      await _stopRecording();
+
+      if (mounted) {
+        setState(() {
+          isRecording = false;
+        });
+      }
+    }
+  }
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+
     _recordingTimer?.cancel();
     _audioRecorder.dispose();
     _audioPlayer.dispose();
@@ -203,7 +237,7 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
-              await openAppSettings(); // 🔥 opens iOS settings
+              await openAppSettings();
             },
             child: const Text("Open Settings"),
           ),
@@ -220,7 +254,6 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
       setState(() => _isPlaying = false);
     } else {
       try {
-        // ✅ Always reload path — needed after stop() clears the source
         await _audioPlayer.setFilePath(_audioPath!);
 
         await _audioPlayer.seek(Duration.zero);

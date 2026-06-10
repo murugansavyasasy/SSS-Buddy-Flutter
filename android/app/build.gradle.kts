@@ -35,24 +35,24 @@ android {
         versionName = flutter.versionName
     }
 
-    if (keystorePropertiesFile.exists()) {
-        signingConfigs {
-            create("release") {
-                keyAlias = keystoreProperties["keyAlias"] as String
-                keyPassword = keystoreProperties["keyPassword"] as String
-                storeFile = file(keystoreProperties["storeFile"] as String)
-                storePassword = keystoreProperties["storePassword"] as String
-            }
-        }
-    }
-
-    buildTypes {
-        release {
-            signingConfig = signingConfigs.getByName("release")
-            isMinifyEnabled = false
-            isShrinkResources = false
-        }
-    }
+//    if (keystorePropertiesFile.exists()) {
+//        signingConfigs {
+//            create("release") {
+//                keyAlias = keystoreProperties["keyAlias"] as String
+//                keyPassword = keystoreProperties["keyPassword"] as String
+//                storeFile = file(keystoreProperties["storeFile"] as String)
+//                storePassword = keystoreProperties["storePassword"] as String
+//            }
+//        }
+//    }
+//
+//    buildTypes {
+//        release {
+//            signingConfig = signingConfigs.getByName("release")
+//            isMinifyEnabled = false
+//            isShrinkResources = false
+//        }
+//    }
 }
 flutter {
     source = "../.."
