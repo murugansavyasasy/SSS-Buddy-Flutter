@@ -1,4 +1,4 @@
-package com.sss.buddy.sssbuddy
+package com.sss.buddy
 
 import io.flutter.embedding.android.FlutterActivity
 

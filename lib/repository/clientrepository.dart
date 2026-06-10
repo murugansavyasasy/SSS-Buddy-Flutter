@@ -14,6 +14,7 @@ import '../auth/model/CustomerDetailsInfoModelClass.dart';
 import '../auth/model/CustomerdetailsModel.dart';
 import '../auth/model/Demolist.dart';
 import '../auth/model/DemolistEditModel.dart';
+import '../auth/model/FeedbackModel.dart';
 import '../auth/model/FinancialYearModel.dart';
 import '../auth/model/ImportantInfoModel.dart';
 import '../auth/model/InitiateDemoCall.dart';
@@ -22,6 +23,7 @@ import '../auth/model/InvoiceModel.dart';
 import '../auth/model/LocalConveyenceModel.dart';
 import '../auth/model/LocalExpenseDetailModel.dart';
 import '../auth/model/ManagementInfo.dart';
+import '../auth/model/MoveToSettlementTourRequest.dart';
 import '../auth/model/OverallTripDetailsModel.dart';
 import '../auth/model/PO_listModal.dart';
 import '../auth/model/RecordCollectionPaymentResponse.dart';
@@ -31,6 +33,7 @@ import '../auth/model/SchoolDocuments.dart';
 import '../auth/model/SchoolNameModel.dart';
 import '../auth/model/Validatelogin.dart';
 import '../auth/model/Versioncheck.dart';
+import '../auth/model/ZeroActivityModel.dart';
 import '../auth/model/po_details_modal.dart';
 import '../core/aws/upload_response.dart';
 import '../core/network/DioClient.dart';
@@ -490,6 +493,27 @@ class ClientRepository {
   }
 
 
+  Future<TourExpenseResponse?> submitMoveTourExpense(
+      Movetosettlementtourrequest request,
+      ) async {
+    try {
+      final response = await client.post(
+        AppEndpoint.addTourexpence,
+        body: request.toJson(),
+      );
+      final data = response.data;
+      if (data is List && data.isNotEmpty) {
+        return TourExpenseResponse.fromJson(data[0]);
+      } else if (data is Map<String, dynamic>) {
+        return TourExpenseResponse.fromJson(data);
+      }
+      return null;
+    } catch (e) {
+      print("ERROR: $e");
+      return null;
+    }
+  }
+
   Future<Recordcollectionpaymentresponse> createPaymentMultipart({
     required String invoiceID,
     required String customerId,
@@ -608,4 +632,34 @@ class ClientRepository {
     return response.data;
   }
 
+  Future<List<FeedbackModel>> getFeedbackData(String IdUser) async {
+    final response = await client.get(
+      AppEndpoint.GetFeedbackRequirements,
+      query: {"Userid": IdUser},
+    );
+
+    final List data = response.data;
+
+    return data.map((e) => FeedbackModel.fromJson(e)).toList();
+  }
+  Future<List<Zeroactivitymodel>> getInstuetList(String vimIdUser) async {
+    final response = await client.schoolPost(
+      AppEndpoint.SchoolUsageReport,
+      body: {
+        "User_id": vimIdUser.toString(),
+      },
+    );
+
+    final data = response.data;
+
+    if (data is List) {
+      return data
+          .map<Zeroactivitymodel>((e) => Zeroactivitymodel.fromJson(e))
+          .toList();
+    } else if (data is Map<String, dynamic>) {
+      return [Zeroactivitymodel.fromJson(data)];
+    } else {
+      throw Exception("Invalid response");
+    }
+  }
 }

@@ -2,13 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../Values/Colors/app_colors.dart';
+import '../auth/model/AddTourExpenceModal.dart';
 import '../auth/model/AdvanceTourExpenseDetailModel.dart';
 import '../auth/model/AdvanceTourExpenseModel.dart';
+import '../auth/model/MoveToSettlementTourRequest.dart';
 import '../components/FormSectionHeader.dart';
 import '../components/GrandTotalCard.dart';
 import '../components/SectionHeader.dart';
 import '../components/toolbar_layout.dart';
+import '../provider/user_session_provider.dart';
 import '../viewModel/advance_tour_detail_viewmodel.dart';
+import '../viewModel/movetosettlement_viewmodal.dart';
 import 'advance_tour_expense.dart';
 
 class MoveToToursettlement extends ConsumerStatefulWidget {
@@ -21,6 +25,7 @@ class MoveToToursettlement extends ConsumerStatefulWidget {
 }
 
 class _MoveToToursettlementState extends ConsumerState<MoveToToursettlement> {
+
   // ── General Info Controllers ───────────────────────────────
   late TextEditingController _tourNameController;
   late TextEditingController _descriptionController;
@@ -225,16 +230,112 @@ class _MoveToToursettlementState extends ConsumerState<MoveToToursettlement> {
     }
   }
 
-  void _onSubmit() {
+  String _monthToNumber(String? abbr) {
+    if (abbr == null) return '';
+    final index = _months.indexOf(abbr);
+    return index >= 0 ? (index + 1).toString() : '';
+  }
+
+  Future<void> _onSubmit() async {
     if (!_formKey.currentState!.validate()) return;
-    // TODO: wire up to your submit API / provider
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text("Settlement submitted successfully!"),
-        backgroundColor: AppColors.primary,
-        behavior: SnackBarBehavior.floating,
-      ),
+    String _fmt(DateTime? dt) {
+      if (dt == null) return '';
+      return '${dt.day.toString().padLeft(2, '0')}/'
+          '${dt.month.toString().padLeft(2, '0')}/'
+          '${dt.year}';
+    }
+
+    final grandTotal = _totalWithBill + _totalWithoutBill;
+
+    final userAsync = ref.read(userSessionProvider);
+    final idUser = userAsync.value?.VimsIdUser ?? '';
+
+    if (idUser.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Session expired. Please login again.")),
+      );
+      return;
+    }
+    final request = Movetosettlementtourrequest(
+      idTourExpense: widget.item.idTourExpense.toString(),
+      idUser: idUser,
+      tourPurpose: _purposeController.text.trim(),
+      monthOfClaim: _monthToNumber(_selectedMonth),
+      tourName: _tourNameController.text.trim(),
+      tourId: widget.item.TourId,
+      startDate: _fmt(_startDate),
+      endDate: _fmt(_endDate),
+      tourPlace1: _place1Controller.text.trim(),
+      tourPlace2: _place2Controller.text.trim(),
+      tourPlace3: _place3Controller.text.trim(),
+      remarks: '',
+      description: _descriptionController.text.trim(),
+      totalTourExpense: grandTotal.toStringAsFixed(1),
+      processBy: idUser,
+      processType: 'AdvanceToDirect',
+      tourItemList: [
+        TourItem(
+          boardLodge: _boardLodgeCtrl.text.isEmpty ? '0.0' : _boardLodgeCtrl.text,
+          businessPromo: _businessPromoCtrl.text.isEmpty ? '0.0' : _businessPromoCtrl.text,
+          convTravel: _convTravelCtrl.text.isEmpty ? '0.0' : _convTravelCtrl.text,
+          food: _foodCtrl.text.isEmpty ? '0.0' : _foodCtrl.text,
+          fuel: _fuelCtrl.text.isEmpty ? '0.0' : _fuelCtrl.text,
+          postageCourier: _postageCourierCtrl.text.isEmpty ? '0.0' : _postageCourierCtrl.text,
+          printing: _printingCtrl.text.isEmpty ? '0.0' : _printingCtrl.text,
+          travel: _travelCtrl.text.isEmpty ? '0.0' : _travelCtrl.text,
+          misc: _miscCtrl.text.isEmpty ? '0.0' : _miscCtrl.text,
+        ),
+      ],
+      tourItemListWithoutBill: [
+        TourItem(
+          boardLodge: _boardLodgeWBCtrl.text.isEmpty ? '0.0' : _boardLodgeWBCtrl.text,
+          businessPromo: _businessPromoWBCtrl.text.isEmpty ? '0.0' : _businessPromoWBCtrl.text,
+          convTravel: _convTravelWBCtrl.text.isEmpty ? '0.0' : _convTravelWBCtrl.text,
+          food: _foodWBCtrl.text.isEmpty ? '0.0' : _foodWBCtrl.text,
+          fuel: _fuelWBCtrl.text.isEmpty ? '0.0' : _fuelWBCtrl.text,
+          postageCourier: _postageCourierWBCtrl.text.isEmpty ? '0.0' : _postageCourierWBCtrl.text,
+          printing: _printingWBCtrl.text.isEmpty ? '0.0' : _printingWBCtrl.text,
+          travel: _travelWBCtrl.text.isEmpty ? '0.0' : _travelWBCtrl.text,
+          misc: _miscWBCtrl.text.isEmpty ? '0.0' : _miscWBCtrl.text,
+        ),
+      ],
     );
+    await ref.read(movetourExpenseProvider.notifier).submitMoveTourExpense(request);
+    final result = ref.read(movetourExpenseProvider);
+    result.whenOrNull(
+      data: (res) {
+        if (res != null && res.result == 1) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(res.resultMessage.isNotEmpty
+                  ? res.resultMessage
+                  : "Settlement submitted successfully!"),
+              backgroundColor: AppColors.primary,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          Navigator.pop(context);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(res?.resultMessage ?? "Submission failed."),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      },
+      error: (e, _) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error: $e"),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      },
+    );
+
   }
 
   @override
@@ -376,7 +477,7 @@ class _MoveToToursettlementState extends ConsumerState<MoveToToursettlement> {
                     label: "Start Date",
                     child: _buildDateButton(
                       date: _startDate,
-                      onTap: () => _pickDate(context, true),
+                      onTap: () {},
                     ),
                   ),
                 ),
@@ -386,7 +487,7 @@ class _MoveToToursettlementState extends ConsumerState<MoveToToursettlement> {
                     label: "End Date",
                     child: _buildDateButton(
                       date: _endDate,
-                      onTap: () => _pickDate(context, false),
+                      onTap: () {},
                     ),
                   ),
                 ),

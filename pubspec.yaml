@@ -2,7 +2,7 @@ name: sssbuddy
 description: "A new version of sssbuddy project"
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 1.0.0+4
 
 environment:
   sdk: ^3.11.0
@@ -26,13 +26,13 @@ dependencies:
   riverpod_annotation: ^4.0.2
 
   dio: ^5.4.0
-  record: ^6.2.0
+  record: ^7.0.0
   permission_handler: ^12.0.1
   just_audio: ^0.10.5
   url_launcher: ^6.2.5
   cached_network_image: ^3.3.1
   webview_flutter: ^4.7.0
-  share_plus: ^12.0.1
+  share_plus: ^13.1.0
   image_picker: ^1.2.1
   dropdown_button2: ^3.0.0
   latlong2: ^0.9.0

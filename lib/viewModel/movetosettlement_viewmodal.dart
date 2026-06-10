@@ -1,6 +1,7 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../auth/model/AddTourExpenceModal.dart';
+import '../auth/model/MoveToSettlementTourRequest.dart';
 import '../provider/app_providers.dart';
 
 class MovetosettlementViewmodal
@@ -11,12 +12,12 @@ class MovetosettlementViewmodal
     return null;
   }
 
-  Future<void> submitTourExpense(TourExpenseRequest request) async {
+  Future<void> submitMoveTourExpense(Movetosettlementtourrequest request) async {
     try {
       state = const AsyncValue.loading();
 
       final repo = ref.read(repositoryProvider);
-      final res = await repo.submitTourExpense(request);
+      final res = await repo.submitMoveTourExpense(request);
 
       state = AsyncValue.data(res);
     } catch (e, st) {
@@ -25,7 +26,7 @@ class MovetosettlementViewmodal
   }
 }
 
-final tourExpenseProvider =
+final movetourExpenseProvider =
 AsyncNotifierProvider<MovetosettlementViewmodal, TourExpenseResponse?>(
       () => MovetosettlementViewmodal(),
 );
