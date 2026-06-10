@@ -34,7 +34,7 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
   bool _isBusy = false;
   Timer? _recordingTimer;
   int _elapsedSeconds = 0;
-
+  static const int maxRecordingSeconds = 181;
   late final AudioRecorder _audioRecorder;
   String? _audioPath;
   DateTime? _recordingStart;
@@ -112,8 +112,25 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
 
       _recordingStart = DateTime.now();
 
-      _recordingTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-        if (mounted) setState(() => _elapsedSeconds++);
+      _recordingTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
+        if (!mounted) return;
+
+        setState(() => _elapsedSeconds++);
+
+        if (_elapsedSeconds >= maxRecordingSeconds) {
+          timer.cancel();
+
+          await _stopRecording();
+
+          setState(() {
+            isRecording = false;
+          });
+
+          _showSnackBar(
+            "Maximum recording limit (3 minutes) reached",
+            isError: false,
+          );
+        }
       });
 
       await _audioRecorder.start(
@@ -195,30 +212,6 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
     );
   }
 
-  // void _showPermissionDialog() {
-  //   showDialog(
-  //     context: context,
-  //     builder: (_) => AlertDialog(
-  //       title: const Text("Microphone Permission"),
-  //       content: const Text(
-  //         "Microphone access is permanently denied.\n\nPlease enable it from Settings.",
-  //       ),
-  //       actions: [
-  //         TextButton(
-  //           onPressed: () => Navigator.pop(context),
-  //           child: const Text("Cancel"),
-  //         ),
-  //         TextButton(
-  //           onPressed: () {
-  //             Navigator.pop(context);
-  //             openAppSettings();
-  //           },
-  //           child: const Text("Open Settings"),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
   Future<void> _togglePlay() async {
     if (_audioPath == null) return;
 
@@ -378,14 +371,11 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> {
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    _formatDuration(_elapsedSeconds),
+                                    "${_formatDuration(_elapsedSeconds)} / 03:00",
                                     style: TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.red.shade700,
-                                      fontFeatures: const [
-                                        FontFeature.tabularFigures(),
-                                      ],
                                     ),
                                   ),
                                 ],
