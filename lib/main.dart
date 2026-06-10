@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sssbuddy/utils/network_utils.dart';
 import 'package:sssbuddy/utils/routes/routes.dart';
 import 'package:sssbuddy/utils/routes/routes_name.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+  ]);
+
   runApp(const AppRoot());
 }
-
 
 class AppRoot extends StatefulWidget  {
   const AppRoot({super.key});

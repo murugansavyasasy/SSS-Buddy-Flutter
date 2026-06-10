@@ -254,11 +254,12 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> with Widg
       setState(() => _isPlaying = false);
     } else {
       try {
-        await _audioPlayer.setFilePath(_audioPath!);
 
-        await _audioPlayer.seek(Duration.zero);
+        if (_audioPlayer.audioSource == null) {
+          await _audioPlayer.setFilePath(_audioPath!);
+        }
+
         await _audioPlayer.play();
-
         setState(() => _isPlaying = true);
       } catch (e) {
         debugPrint("Playback error: $e");
