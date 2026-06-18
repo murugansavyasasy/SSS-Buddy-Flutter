@@ -175,16 +175,21 @@ class TodayVisitViewmodel extends AsyncNotifier<TripState?> {
   Future<bool> manageTrip(String type) async {
     try {
       final loginData = ref.read(loginProvider).value;
-      if (loginData == null) throw Exception("User not logged in");
 
-      // ✅ FIX: use new function
+      if (loginData == null) {
+        throw Exception("User not logged in");
+      }
+
       final position = await getLocationSafely();
 
       if (position == null) {
-        return false; // 🔥 important: stop here
+        return false;
       }
 
-      final latLng = LatLng(position.latitude, position.longitude);
+      final latLng = LatLng(
+        position.latitude,
+        position.longitude,
+      );
 
       final response = await repo.manageTrip(
         position.latitude.toString(),
@@ -193,33 +198,51 @@ class TodayVisitViewmodel extends AsyncNotifier<TripState?> {
         loginData.VimsIdUser.toString(),
       );
 
-      if (type == "start") {
-        final backendStatus = response["status"];
-        final result = response["result"]?.toString();
+      print("ManageTrip Response => $response");
 
-        if (backendStatus == 1 || result == "1") {
-          tripStartLocation = latLng;
-          await startTracking(latLng); // ✅ start tracking
-          return true;
-        }
+      final backendStatus = response["status"];
+      final result = response["result"]?.toString();
+
+      // Success condition for both start & stop
+      final isSuccess = backendStatus == 1 || result == "1";
+
+      if (!isSuccess) {
         return false;
-      } else if (type == "stop") {
-        if (response["result"]?.toString() == "1") {
-          tripEndLocation = latLng;
-          stopTracking(); // ✅ stop tracking
+      }
 
-          state = AsyncData(state.value?.copyWith(
+      if (type == "start") {
+        tripStartLocation = latLng;
+        await startTracking(latLng);
+
+        state = AsyncData(
+          state.value?.copyWith(
+            isTripStarted: true,
+          ),
+        );
+
+        return true;
+      }
+
+      if (type == "stop") {
+        tripEndLocation = latLng;
+
+        stopTracking();
+
+        state = AsyncData(
+          state.value?.copyWith(
             isTripStarted: false,
             distance: _calculateTotalDistance(trackedPoints),
-          ));
+          ),
+        );
 
-          return true;
-        }
-        return false;
+        return true;
       }
 
       return false;
     } catch (e, st) {
+      print("ManageTrip Error => $e");
+      print("StackTrace => $st");
+
       state = AsyncError(e, st);
       return false;
     }
@@ -242,28 +265,32 @@ class TodayVisitViewmodel extends AsyncNotifier<TripState?> {
       if (loginData == null) throw Exception("User not logged in");
 
       final position = await getLocationSafely();
+      if (position == null) return false;
 
-      if (position == null) {
-        return false; // 🔥 important: stop here
-      }
+      final visitData = [
+        {
+          "login_id": loginData.VimsIdUser,
+          "school_name": schoolName,
+          "area": area,
+          "district": district,
+          "person_name": personName,
+          "contact_number": contactNumber,
+          "remarks": remarks,
+          "reason_of_visit": reasonOfVisit,
+          "person_met": personMet,
+          "date_of_visit": dateOfVisit,
+          "latitude": position.latitude,
+          "longitude": position.longitude,
+        }
+      ];
 
-      final response = await repo.visitRecord(
-        loginData.VimsIdUser.toString(),
-        schoolName,
-        area,
-        district,
-        personName,
-        contactNumber,
-        remarks,
-        reasonOfVisit,
-        personMet,
-        dateOfVisit,
-        position.latitude.toString(),
-        position.longitude.toString(),
-      );
+      final response = await repo.visitRecord(visitData);
 
-      return response.isNotEmpty && response[0]["result"] == "1";
-    } catch (e, st) {
+      // Safe access — no implicit dynamic cast
+      if (response.isEmpty) return false;
+      return response.first["result"] == "1";
+
+    } on Exception catch (e, st) {
       state = AsyncError(e, st);
       return false;
     }

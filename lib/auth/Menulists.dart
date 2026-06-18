@@ -18,5 +18,5 @@ final List<MenuItem> menuItems = [
   MenuItem(id: 14, title: "Zero Activity",         icon: Icons.do_not_disturb,        color: Colors.blueGrey),
   // MenuItem(id: 15, title: "Chat",                  icon: Icons.chat_bubble_outline,   color: Colors.lightBlue),
   MenuItem(id: 16, title: "Alerts",                 icon: Icons.notifications_active,  color: Colors.red),
-  MenuItem(id: 17, title: "Feedback",              icon: Icons.rate_review,           color: Colors.amber),
+  // MenuItem(id: 17, title: "Feedback",              icon: Icons.rate_review,           color: Colors.amber),
 ];

@@ -48,7 +48,6 @@ class Dashboard extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      /// 🔥 DASHBOARD CARDS (HORIZONTAL)
                       SizedBox(
                         height: 200,
                         child: schoolStats.when(
@@ -322,9 +321,6 @@ class Dashboard extends ConsumerWidget {
                       ),
 
                       const SizedBox(height: 15),
-
-                      /// 🔥 GRID MENU
-
                       Wrap(
                         spacing: 12,
                         runSpacing: 12,

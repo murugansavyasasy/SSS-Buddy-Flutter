@@ -436,39 +436,17 @@ class ClientRepository {
     return response.data;
   }
 
-  Future<List<dynamic>> visitRecord(
-    String loginId,
-    String schoolName,
-    String area,
-    String district,
-    String personName,
-    String contactNumber,
-    String remarks,
-    String reasonOfVisit,
-    String personMet,
-    String dateOfVisit,
-    String latitude,
-    String longitude,
-  ) async {
+  Future<List<Map<String, dynamic>>> visitRecord(
+      List<Map<String, dynamic>> visitData,
+      ) async {
     final response = await client.post(
       AppEndpoint.updateDailyVisit,
-      body: {
-        "login_id": loginId,
-        "school_name": schoolName,
-        "area": area,
-        "district": district,
-        "person_name": personName,
-        "contact_number": contactNumber,
-        "remarks": remarks,
-        "reason_of_visit": reasonOfVisit,
-        "person_met": personMet,
-        "date_of_visit": dateOfVisit,
-        "latitude": latitude,
-        "longitude": longitude,
-      },
+      body: visitData, // ✅ passes List directly, no wrapping needed
     );
 
-    return response.data;
+    return List<Map<String, dynamic>>.from(
+      (response.data as List).map((e) => Map<String, dynamic>.from(e)),
+    );
   }
 
   Future<TourExpenseResponse?> submitTourExpense(

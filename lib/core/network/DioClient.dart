@@ -33,7 +33,7 @@ class DioClient {
     return await _vimsClient.get(path, queryParameters: query);
   }
 
-  Future<Response> post(String path, {Map<String, dynamic>? body}) async {
+  Future<Response> post(String path, {Object? body}) async {
     return await _vimsClient.post(path, data: body);
   }
 

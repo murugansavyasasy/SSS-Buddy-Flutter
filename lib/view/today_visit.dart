@@ -30,13 +30,23 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
   String? selectedPerson;
   String? selectedReason;
 
-  final List<String> persons = ["Principal", "Teacher", "Admin", "Other"];
+  final List<String> persons = [
+    "Owner",
+    "Chairman",
+    "Principle",
+    "Admin",
+    "Others",
+  ];
   final List<String> reasons = [
-    "Demo",
-    "Follow-up",
-    "Collection",
-    "Support",
-    "Other",
+    "Couldn't meet",
+    "Met, couldn't give demo",
+    "Met and demo given",
+    "To sign/set up POC",
+    "To sign PO",
+    "Training to existing POC/live school",
+    "General visit",
+    "Payment collection",
+    "Others",
   ];
 
   // Colors
@@ -144,10 +154,8 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
       return;
     }
 
-    final success =
-    await ref.read(todayVisitProvider.notifier).manageTrip("stop");
+    final success = await ref.read(todayVisitProvider.notifier).manageTrip("stop");
     if (!mounted) return;
-
     if (success) {
       await SecureStorage.clearTripData();
       setState(() => isTripStarted = false);
@@ -325,8 +333,6 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
                       ),
                     ),
                   ),
-
-                  // ✅ Fixed bottom action buttons (always visible)
                   _buildFixedBottomButtons(),
                 ],
               ),
@@ -684,6 +690,7 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
           const SizedBox(height: 6),
           DropdownButtonFormField<String>(
             value: value,
+            isExpanded: true,
             icon: Icon(
               Icons.keyboard_arrow_down_rounded,
               color: isEnabled ? accentColor : mutedText,

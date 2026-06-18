@@ -29,7 +29,7 @@ class AppEndpoint {
   static const getpresignedurl = "get-s3-presigned-url";
   static const postInitiateCall = "InitiateDemoCallByDemoID";
   static const manageTrip = "api/AppDetails/ManageTripDetails";
-  static const updateDailyVisit = "AppDetails/UpdateDailyVisitWithLocation";
+  static const updateDailyVisit = "api/AppDetails/UpdateDailyVisitWithLocation";
   static const addTourexpence = "api/AppDetails/ManageTourExpense";
   static const uploadfiles = "api/AppDetails/UploadExpenseFiles";
   static const createpayment = "api/ManageDetails/DemoInsertPayment";

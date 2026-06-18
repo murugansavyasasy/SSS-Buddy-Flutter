@@ -64,7 +64,6 @@ SchoolStats calculateSchoolStatsFromJson(String jsonString) {
   );
 }
 
-
 SchoolStats calculateSchoolStatsFromList(List<dynamic> data) {
   int totalSchools = data.length;
   int liveActive = 0;

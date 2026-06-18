@@ -64,7 +64,7 @@ class _CustomerPOViewState extends ConsumerState<CustomerPOView> {
                   error: (e, s) =>
                   const Center(child: Text("Failed to load data")),
                   data: (poList) {
-                    if (poList.isEmpty) {
+                    if (poList.isEmpty || poList.first.idValue == 0) {
                       return const Center(child: Text("No PO Found"));
                     }
 
