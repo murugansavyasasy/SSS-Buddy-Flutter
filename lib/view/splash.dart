@@ -55,8 +55,8 @@ class Splash extends ConsumerWidget {
     Navigator.pushReplacementNamed(context, RoutesName.login);
   }
   Future<void> openStore() async {
-    const androidUrl = "https://play.google.com/store/apps/details?id=pkg.vs.schoolsdemo.voicensapschoolsdemo";
-    const iosUrl = "https://apps.apple.com/app/idYOUR_APP_ID";
+    const androidUrl = "https://play.google.com/store/apps/details?id=com.sss.buddy";
+    const iosUrl = "https://apps.apple.com/in/app/sss-buddy/id6762454498";
 
     final url = Platform.isAndroid ? androidUrl : iosUrl;
     final uri = Uri.parse(url);
@@ -94,7 +94,7 @@ class Splash extends ConsumerWidget {
               ),
             ElevatedButton(
               onPressed: () {
-                //openStore();
+                openStore();
               },
               child: const Text("Update"),
             ),
