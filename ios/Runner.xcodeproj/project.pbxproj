@@ -470,8 +470,8 @@
 				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = VPA36TGVRS;
 				ENABLE_BITCODE = NO;
-				FLUTTER_BUILD_NAME = 1.0.3;
-				FLUTTER_BUILD_NUMBER = 6;
+				FLUTTER_BUILD_NAME = 1.0.4;
+				FLUTTER_BUILD_NUMBER = 7;
 				INFOPLIST_FILE = Runner/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -660,8 +660,8 @@
 				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = VPA36TGVRS;
 				ENABLE_BITCODE = NO;
-				FLUTTER_BUILD_NAME = 1.0.3;
-				FLUTTER_BUILD_NUMBER = 6;
+				FLUTTER_BUILD_NAME = 1.0.4;
+				FLUTTER_BUILD_NUMBER = 7;
 				INFOPLIST_FILE = Runner/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -690,8 +690,8 @@
 				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = VPA36TGVRS;
 				ENABLE_BITCODE = NO;
-				FLUTTER_BUILD_NAME = 1.0.3;
-				FLUTTER_BUILD_NUMBER = 6;
+				FLUTTER_BUILD_NAME = 1.0.4;
+				FLUTTER_BUILD_NUMBER = 7;
 				INFOPLIST_FILE = Runner/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				LD_RUNPATH_SEARCH_PATHS = (
