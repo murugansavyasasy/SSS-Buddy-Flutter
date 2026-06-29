@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
@@ -292,14 +293,14 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
     String transactionId = '';
 
     switch (selectedPaymentMode) {
-      case PaymentMode.cash: // "1"
+      case PaymentMode.cash:
         cashreceiveddate = _cashReceivedOnCtrl.text;
         depositeddate = _cashDepositedOnCtrl.text;
         branchname = _cashDepositedBranchCtrl.text;
         depositedbankname = _selectedCashBank ?? '';
         break;
 
-      case PaymentMode.cheque: // "2"
+      case PaymentMode.cheque:
         chequenumber = _chequeNumberCtrl.text;
         chequedate = _chequeDateCtrl.text;
         depositeddate = _chequeDepositedDateCtrl.text;
@@ -307,7 +308,7 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
         depositedbankname = _selectedChequeDepositBank ?? '';
         break;
 
-      case PaymentMode.neft: // "3"
+      case PaymentMode.neft:
         transactionId = _neftTransactionCtrl.text;
         break;
 
@@ -322,7 +323,7 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
         break;
     }
 
-    return {
+    final payload = {
       'InvoiceID': _invoiceId ?? '0',
       'CustomerId': selectedSchoolCusId ?? '0',
       'FinancialYear': selectedFinancialYearName ?? '',
@@ -340,14 +341,17 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
       'DepositedBy': '',
       'DepositedDate': depositeddate,
     };
+
+    return payload;
   }
 
   Future<void> _onSubmit() async {
     final amount = _amountController.text.trim();
     final financialYear = selectedFinancialYearName ?? '';
 
+    // Common validations
     if (selectedSchoolCusId == null || selectedSchoolCusId == '0') {
-      _showAlert('Select Your school name');
+      _showAlert('Select your school name');
       return;
     }
 
@@ -362,7 +366,7 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
     }
 
     if (selectedPaymentMode == PaymentMode.none) {
-      _showAlert('Select Mode of Payment');
+      _showAlert('Select mode of payment');
       return;
     }
 
@@ -373,30 +377,35 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
         final branch = _cashDepositedBranchCtrl.text.trim();
 
         if (receivedDate.isEmpty) {
-          _showAlert('Enter the received date');
+          _showAlert('Enter received date');
           return;
         }
+
         if (depositedDate.isEmpty) {
-          _showAlert('Enter the Deposited date');
+          _showAlert('Enter deposited date');
           return;
         }
+
         if (_selectedCashBank == null || _selectedCashBank!.isEmpty) {
           _showAlert('Select bank');
           return;
         }
+
         if (branch.isEmpty) {
-          _showAlert('Enter the cash Deposited branch');
+          _showAlert('Enter deposited branch');
           return;
         }
 
-        final dDeposited = _parseDate(depositedDate);
         final dReceived = _parseDate(receivedDate);
-        if (dDeposited == null || dReceived == null) {
+        final dDeposited = _parseDate(depositedDate);
+
+        if (dReceived == null || dDeposited == null) {
           _showAlert('Invalid date format');
           return;
         }
+
         if (dDeposited.isBefore(dReceived)) {
-          _showAlert('Enter the deposited date after received date');
+          _showAlert('Deposited date should be after received date');
           return;
         }
         break;
@@ -409,37 +418,42 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
         final branch = _chequeBranchCtrl.text.trim();
 
         if (chequeNo.isEmpty) {
-          _showAlert('Enter the cheque number');
-          return;
-        }
-        if (chequeDate.isEmpty) {
-          _showAlert('Enter the cheque date');
-          return;
-        }
-        if (chequeBank.isEmpty) {
-          _showAlert('Enter the cheque bank');
-          return;
-        }
-        if (_selectedChequeDepositBank == null ||
-            _selectedChequeDepositBank!.isEmpty) {
-          _showAlert('Select Bank');
-          return;
-        }
-        if (branch.isEmpty) {
-          _showAlert('Enter the cash Deposited branch');
+          _showAlert('Enter cheque number');
           return;
         }
 
+        if (chequeDate.isEmpty) {
+          _showAlert('Enter cheque date');
+          return;
+        }
+
+        if (chequeBank.isEmpty) {
+          _showAlert('Enter cheque bank');
+          return;
+        }
+
+        if (_selectedChequeDepositBank == null || _selectedChequeDepositBank!.isEmpty) {
+          _showAlert('Select bank');
+          return;
+        }
+
+        if (branch.isEmpty) {
+          _showAlert('Enter deposited branch');
+          return;
+        }
+
+        final dCheque = _parseDate(chequeDate);
         final dDeposited = _parseDate(
           depositedDate.isEmpty ? chequeDate : depositedDate,
         );
-        final dCheque = _parseDate(chequeDate);
-        if (dDeposited == null || dCheque == null) {
+
+        if (dCheque == null || dDeposited == null) {
           _showAlert('Invalid date format');
           return;
         }
+
         if (depositedDate.isNotEmpty && dDeposited.isBefore(dCheque)) {
-          _showAlert('Enter the deposited date after received date');
+          _showAlert('Deposited date should be after cheque date');
           return;
         }
         break;
@@ -449,66 +463,77 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
 
       case PaymentMode.pdc:
         if (_pdcChequeNoCtrl.text.trim().isEmpty) {
-          _showAlert('Enter the Cheque number');
+          _showAlert('Enter cheque number');
           return;
         }
+
         if (_pdcChequeDateCtrl.text.trim().isEmpty) {
-          _showAlert('Enter the Cheque date');
+          _showAlert('Enter cheque date');
           return;
         }
+
         if (_pdcChequeBankCtrl.text.trim().isEmpty) {
-          _showAlert('Enter the cheque bank');
+          _showAlert('Enter cheque bank');
           return;
         }
+
         if (_pdcChequeBranchCtrl.text.trim().isEmpty) {
-          _showAlert('Enter the cheque bank branch');
+          _showAlert('Enter cheque bank branch');
           return;
         }
         break;
 
-      default:
-        break;
+      case PaymentMode.none:
+        return;
     }
 
-    final payload = _buildPayload();
+    try {
+      final payload = _buildPayload();
+      final loginState = await ref.read(loginProvider.future);
+      final userId = loginState?.SchoolLoginId?.toString();
 
+      if (userId == null || userId.isEmpty) {
+        _showAlert('User login details not found');
+        return;
+      }
 
-    final loginState = ref.read(loginProvider).value;
-    final userId = loginState?.VimsIdUser?.toString() ?? '';
-
-    final success = await ref
-        .read(createPaymentProvider.notifier)
-        .createPayment(
-          invoiceID: payload['InvoiceID']!,
-          customerId: payload['CustomerId']!,
-          financialYear: payload['FinancialYear']!,
-          invoiceNumber: payload['InvoiceNumber']!,
-          received: payload['Received']!,
-          receivedDate: payload['ReceivedDate']!,
-          paymentMode: payload['PaymentMode']!,
-          createdBy: userId,
-          cashRecdDate: payload['CashRecdDate']!,
-          chequeDate: payload['ChequeDate']!,
-          chequeNumber: payload['ChequeNumber']!,
-          neftDetails: payload['NEFTDetails']!,
-          depositedBank: payload['DepositedBank']!,
-          depositedBranch: payload['DepositedBranch']!,
-          depositedBy: userId,
-          depositedDate: payload['DepositedDate']!,
-          imageFile: _selectedImage,
-        );
-
-    if (success) {
-      final result = ref.read(createPaymentProvider).value;
-      _showSuccessAlert(
-        result?.resultMessage ?? 'Payment Successfully Updated',
+      final success = await ref
+          .read(createPaymentProvider.notifier)
+          .createPayment(
+        invoiceID: payload['InvoiceID'] ?? '',
+        customerId: payload['CustomerId'] ?? '',
+        financialYear: payload['FinancialYear'] ?? '',
+        invoiceNumber: payload['InvoiceNumber'] ?? '',
+        received: payload['Received'] ?? '',
+        receivedDate: payload['ReceivedDate'] ?? '',
+        paymentMode: payload['PaymentMode'] ?? '',
+        createdBy: userId,
+        cashRecdDate: payload['CashRecdDate'] ?? '',
+        chequeDate: payload['ChequeDate'] ?? '',
+        chequeNumber: payload['ChequeNumber'] ?? '',
+        neftDetails: payload['NEFTDetails'] ?? '',
+        depositedBank: payload['DepositedBank'] ?? '',
+        depositedBranch: payload['DepositedBranch'] ?? '',
+        depositedBy: userId,
+        depositedDate: payload['DepositedDate'] ?? '',
+        imageFile: _selectedImage,
       );
-    } else {
-      final err = ref.read(createPaymentProvider).error;
-      _showAlert(err?.toString() ?? 'Payment submission failed');
+
+      if (success) {
+        final result = ref.read(createPaymentProvider).value;
+        _showSuccessAlert(
+          result?.resultMessage ?? 'Payment successfully updated',
+        );
+      } else {
+        final err = ref.read(createPaymentProvider).error;
+        _showAlert(
+          err?.toString() ?? 'Payment submission failed',
+        );
+      }
+    } catch (e) {
+      _showAlert("Error: $e");
     }
   }
-
   @override
   Widget build(BuildContext context) {
     final schoolnameAsync = ref.watch(schoolnameProvider);

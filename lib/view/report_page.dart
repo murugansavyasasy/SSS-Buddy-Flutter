@@ -24,7 +24,7 @@ class ReportsPage extends ConsumerWidget {
           body: Column(
             children: [
               ToolbarLayout(
-                title: "Report",
+                title: "Reports",
                 navigateTo: const Dashboard(),
               ),
 
