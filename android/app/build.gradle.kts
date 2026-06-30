@@ -6,6 +6,7 @@ plugins {
     id("kotlin-android")
     id("dev.flutter.flutter-gradle-plugin")
 }
+
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
 
@@ -48,15 +49,22 @@ android {
 
     buildTypes {
         release {
-             signingConfig = signingConfigs.getByName("release")
+            signingConfig = if (keystorePropertiesFile.exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
+
             isMinifyEnabled = false
             isShrinkResources = false
         }
     }
 }
+
 flutter {
     source = "../.."
 }
+
 dependencies {
     implementation("com.google.android.material:material:1.11.0")
 }

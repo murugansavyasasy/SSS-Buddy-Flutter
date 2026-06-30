@@ -27,6 +27,7 @@ class UpcomingDemoCard extends StatelessWidget {
         ),
         child: Row(
           children: [
+            // Left Icon Block
             Container(
               width: 70,
               height: double.infinity,
@@ -48,6 +49,7 @@ class UpcomingDemoCard extends StatelessWidget {
 
             const SizedBox(width: 12),
 
+            // Text Content
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 10),
@@ -55,47 +57,41 @@ class UpcomingDemoCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        demoId,
-                        maxLines: 1,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
+                    // Demo ID
+                    Text(
+                      demoId,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis, // ✅ dots
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
 
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        schoolName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
+                    // School Name
+                    Text(
+                      schoolName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis, // ✅ dots
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
 
                     // Principal Number
-                    FittedBox( // ✅ Scales text down if font size is large
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        "$principalNumber",
-                        maxLines: 1,
-                        style: const TextStyle(fontSize: 12),
-                      ),
+                    Text(
+                      "$principalNumber",
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis, // ✅ dots
+                      style: const TextStyle(fontSize: 12),
                     ),
                   ],
                 ),
               ),
             ),
+
+            // Arrow Icon
             const Padding(
               padding: EdgeInsets.only(right: 12),
               child: Icon(

@@ -82,14 +82,14 @@ class ImportantInfoScreen extends ConsumerWidget {
   List<AppStoreLink> _getAppLinks(info) {
     return [
       AppStoreLink(
-        appName: "SchoolChimes",
+        appName: "School Chimes",
         storeName: "Android",
         storeLabel: "Play Store",
         url: info.playStoreLinkSchoolChimes,
         isApple: false,
       ),
       AppStoreLink(
-        appName: "SchoolChimes",
+        appName: "School Chimes",
         storeName: "iOS",
         storeLabel: "App Store",
         url: "https://apps.apple.com/in/app/school-chimes-ss/id6758079127",
@@ -110,7 +110,7 @@ class ImportantInfoScreen extends ConsumerWidget {
         isApple: true,
       ),
       AppStoreLink(
-        appName: "LetsReach",
+        appName: "Let's Reach",
         storeName: "Android",
         storeLabel: "Play Store",
         url: "https://play.google.com/store/apps/details?id=vs.ca.letsreach",
@@ -124,7 +124,6 @@ class ImportantInfoScreen extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
       children: [
-        // ── Support ───────────────────────────────────────────
         const SectionLabel(label: "Support"),
         InfoCard(items: [
           InfoRowData(
