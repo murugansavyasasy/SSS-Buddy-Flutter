@@ -131,9 +131,9 @@ class _ChangePasswordState extends ConsumerState<ChangePassword> {
 
     final loginState = ref.read(loginProvider);
     final loginData = loginState.value;
-    final idUser = loginData?.VimsIdUser;
+    final idUser = loginData?.userId;
 
-    if (idUser == null || idUser.isEmpty) {
+    if (idUser == null) {
       ChangePasswordDialog.show(
         context,
         message: "User session not found. Please login again.",
@@ -144,7 +144,7 @@ class _ChangePasswordState extends ConsumerState<ChangePassword> {
 
     final response = await ref
         .read(changepasswordProvider.notifier)
-        .changepassword(idUser, oldPassword, newPassword);
+        .changepassword(idUser as String, oldPassword, newPassword);
 
     if (response != null) {
       final isSuccess = response.result == 1;

@@ -18,7 +18,7 @@ class AdvanceTourExpense extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final tourAsync = ref.watch(tourexpenseprovider);
     final loginData = ref.read(loginProvider).value;
-    final directorLogin = loginData?.VimsUserTypeId;
+    final directorLogin = loginData?.userId;
     return PopScope(
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) {
@@ -78,7 +78,7 @@ class AdvanceTourExpense extends ConsumerWidget {
                         itemCount: list.length,
                         itemBuilder: (context, index) {
                           final item = list[index];
-                          return TourExpenseCard(item: item, directorLogin: directorLogin ?? '');
+                          return TourExpenseCard(item: item, directorLogin: '');
                         },
                       );
                     },

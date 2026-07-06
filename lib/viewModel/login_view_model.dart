@@ -1,14 +1,16 @@
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sssbuddy/auth/model/Validatelogin.dart';
 import 'package:sssbuddy/core/storage/secure_storage.dart';
 import 'package:sssbuddy/provider/user_session_provider.dart';
+import '../auth/model/Validatelogin.dart';
 import '../provider/app_providers.dart';
 
-class LoginViewModel extends AsyncNotifier<Validatelogin?> {
+String globalUserId = "";
+
+class LoginViewModel extends AsyncNotifier<LoginData?> {
   @override
-  Future<Validatelogin?> build() async {
+  Future<LoginData?> build() async {
     return null;
   }
 
@@ -22,28 +24,37 @@ class LoginViewModel extends AsyncNotifier<Validatelogin?> {
     try {
       final repo = ref.read(repositoryProvider);
 
-      final response = await repo.apilogin(employeeId, password);
+      // API call
+      final LoginResponse response =
+      await repo.apilogin(employeeId, password);
 
-      if (response.result != 1) {
-        throw Exception(response.resultMessage);
+      // validation
+      if (response.status != "success") {
+        throw Exception("Login failed");
       }
 
+      final user = response.data;
+
+      // Save data locally
       await SecureStorage.saveLoginData(
         employeeId,
         password,
         jsonEncode(response.toJson()),
         rememberMe,
       );
+
       await ref.read(userSessionProvider.notifier).refreshUser();
 
-      // ✅ Global variable-ல store பண்ணு
-      globalVimsIdUser = response.VimsIdUser;
-      print('✅ globalVimsIdUser set: $globalVimsIdUser');
+      // Global variable store
+      globalUserId = user.userId.toString();
 
-      state = AsyncData(response);
+      print("✅ User ID: ${user.userId}");
+      print("✅ Name: ${user.name}");
+      print("✅ Token: ${user.token}");
+
+      state = AsyncData(user);
 
       return true;
-
     } catch (e, stack) {
       state = AsyncError(e, stack);
       return false;
@@ -51,6 +62,7 @@ class LoginViewModel extends AsyncNotifier<Validatelogin?> {
   }
 }
 
-final loginProvider = AsyncNotifierProvider<LoginViewModel, Validatelogin?>(
+final loginProvider =
+AsyncNotifierProvider<LoginViewModel, LoginData?>(
       () => LoginViewModel(),
 );

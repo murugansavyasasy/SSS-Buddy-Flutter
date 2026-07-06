@@ -6,9 +6,7 @@ import '../Values/Colors/app_colors.dart';
 import '../auth/model/AddTourExpenceModal.dart';
 import '../auth/model/AdvanceTourExpenseModel.dart';
 import '../components/toolbar_layout.dart';
-import '../provider/app_providers.dart';
 import '../viewModel/addAdvace_tour_viewmodal.dart';
-import '../viewModel/advance_tourexpense_viewmodel.dart';
 import '../viewModel/login_view_model.dart';
 import 'advance_tour_expense.dart';
 
@@ -149,7 +147,7 @@ class _AddAdvanceTourExpenseState extends ConsumerState<AddAdvanceTourExpense> {
 
     final request = TourExpenseRequest(
       idTourExpense: "0",
-      idUser: loginData.VimsIdUser.toString(),
+      idUser: loginData.userId.toString(),
       tourPurpose: _purposeController.text,
       monthOfClaim:
       (_months.indexOf(_selectedMonth ?? "Jan") + 1).toString(),
@@ -165,7 +163,7 @@ class _AddAdvanceTourExpenseState extends ConsumerState<AddAdvanceTourExpense> {
       remarksWithoutBill: _remarksController.text,
       description: _descriptionController.text,
       totalTourExpense: _totalExpense.toString(),
-      processBy: loginData.VimsIdUser.toString(),
+      processBy: loginData.roleSlug.toString(),
       processType: "AdvanceTour",
       tourItemList: [
         TourItem(

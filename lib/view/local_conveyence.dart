@@ -19,7 +19,7 @@ class LocalConveyence extends ConsumerWidget {
     final localconveyenceAsync = ref.watch(localConvienceProvider);
     final loginState = ref.watch(loginProvider);
     final loginData = loginState.value;
-    final VimsUserTypeId = loginData?.VimsUserTypeId;
+    final VimsUserTypeId = loginData?.roleName;
 
     return PopScope(
       onPopInvokedWithResult: (didPop, result) {

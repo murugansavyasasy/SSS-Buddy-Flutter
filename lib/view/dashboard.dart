@@ -25,8 +25,8 @@ class Dashboard extends ConsumerWidget {
 
     final menus = loginData.when(
       data: (data) => getMenuItems(
-        vimsUserType: data?.VimsUserTypeId ?? "",
-        schoolUserType: data?.SchooluserType ?? "",
+        vimsUserType: data?.roleName ?? "",
+        schoolUserType: data?.roleCode ?? "",
       ),
       loading: () => <MenuItem>[],
       error: (_, __) => <MenuItem>[],
