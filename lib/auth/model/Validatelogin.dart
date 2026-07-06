@@ -1,61 +1,71 @@
-class Validatelogin {
-  String VimsIdUser;
-  String VimsUserName;
-  String VimsEmployeeId;
-  String VimsUserTypeId;
-  String SchooluserType;
-  String SchoolLoginId;
-  String VimsNumber;
-  String Location;
-  String Region;
-  int result;
-  String SchoolStatus;
-  String resultMessage;
+class LoginResponse {
+  final String status;
+  final LoginData data;
 
-  Validatelogin({
-    required this.VimsIdUser,
-    required this.VimsUserName,
-    required this.VimsEmployeeId,
-    required this.VimsUserTypeId,
-    required this.SchooluserType,
-    required this.SchoolLoginId,
-    required this.VimsNumber,
-    required this.Location,
-    required this.Region,
-    required this.result,
-    required this.SchoolStatus,
-    required this.resultMessage,
+  LoginResponse({
+    required this.status,
+    required this.data,
   });
 
-  factory Validatelogin.fromJson(Map<String, dynamic> json) {
-    return Validatelogin(
-      VimsIdUser: json["VimsIdUser"] ?? "",
-      VimsUserName: json["VimsUserName"] ?? "",
-      VimsEmployeeId: json["VimsEmployeeId"] ?? "",
-      VimsUserTypeId: json["VimsUserTypeId"] ?? "",
-      SchooluserType: json["SchooluserType"] ?? "",
-      SchoolLoginId: json["SchoolLoginId"] ?? "",
-      VimsNumber: json["VimsNumber"] ?? "",
-      Location: json["Location"] ?? "",
-      Region: json["Region"] ?? "",
-      result: json["result"] ?? 0,
-      SchoolStatus: json["SchoolStatus"] ?? "",
-      resultMessage: json["resultMessage"] ?? "",
+  factory LoginResponse.fromJson(Map<String, dynamic> json) {
+    return LoginResponse(
+      status: json['status'] ?? '',
+      data: LoginData.fromJson(json['data'] ?? {}),
     );
   }
 
   Map<String, dynamic> toJson() => {
-    "VimsIdUser": VimsIdUser,
-    "VimsUserName": VimsUserName,
-    "VimsEmployeeId": VimsEmployeeId,
-    "VimsUserTypeId": VimsUserTypeId,
-    "SchooluserType": SchooluserType,
-    "SchoolLoginId": SchoolLoginId,
-    "VimsNumber": VimsNumber,
-    "Location": Location,
-    "Region": Region,
-    "result": result,
-    "SchoolStatus": SchoolStatus,
-    "resultMessage": resultMessage,
+    'status': status,
+    'data': data.toJson(),
+  };
+}
+
+class LoginData {
+  final String token;
+  final int userId;
+  final String employeeId;
+  final String name;
+  final String email;
+  final int roleId;
+  final String roleCode;
+  final String roleSlug;
+  final String roleName;
+
+  LoginData({
+    required this.token,
+    required this.userId,
+    required this.employeeId,
+    required this.name,
+    required this.email,
+    required this.roleId,
+    required this.roleCode,
+    required this.roleSlug,
+    required this.roleName,
+  });
+
+  factory LoginData.fromJson(Map<String, dynamic> json) {
+    return LoginData(
+      token: json['token'] ?? '',
+      userId: json['userId'] ?? 0,
+      employeeId: json['employeeId'] ?? '',
+      name: json['name'] ?? '',
+      email: json['email'] ?? '',
+      roleId: json['roleId'] ?? 0,
+      roleCode: json['roleCode'] ?? '',
+      roleSlug: json['roleSlug'] ?? '',
+      roleName: json['roleName'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'token': token,
+    'userId': userId,
+    'employeeId': employeeId,
+    'name': name,
+    'email': email,
+    'roleId': roleId,
+    'roleCode': roleCode,
+    'roleSlug': roleSlug,
+    'roleName': roleName,
   };
 }

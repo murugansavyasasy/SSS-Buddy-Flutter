@@ -35,7 +35,7 @@ class CircularPostViewmodel extends AsyncNotifier<List<Circularmodel>> {
 
     if (loginData == null) return [];
 
-    final schoolLoginId = loginData.SchoolLoginId;
+    final schoolLoginId = loginData.employeeId;
     final repo = ref.read(repositoryProvider);
 
     final response = await repo.getcircularlist(schoolLoginId);

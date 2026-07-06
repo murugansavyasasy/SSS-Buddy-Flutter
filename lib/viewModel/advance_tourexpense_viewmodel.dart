@@ -34,7 +34,7 @@ class AdvanceTourexpenseViewmodel
 
     if (loginData == null) return [];
 
-    final VimsIdUser = loginData.VimsIdUser;
+    final VimsIdUser = loginData.userId.toString();
     final repo = ref.read(repositoryProvider);
 
     final response = await repo.getadvancetourdata(VimsIdUser);

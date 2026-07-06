@@ -235,7 +235,7 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
 
                               final loginData = ref.read(loginProvider);
                               final loginvalue = loginData.value;
-                              final loginId = loginvalue?.SchoolLoginId ?? "";
+                              final loginId = (loginvalue?.roleId ?? 0).toString();
 
                               final schoolName = titleController.text;
                               final mobileNo = subjectController.text;

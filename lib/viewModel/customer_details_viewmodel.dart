@@ -43,7 +43,7 @@ class CustomerDetailsViewmodel extends AsyncNotifier<List<Customerdetailsmodel>>
 
     if (loginData == null) return [];
 
-    final VimIdUser = loginData.VimsIdUser;
+    final VimIdUser = loginData.userId;
     final repo = ref.read(repositoryProvider);
 
     var selectedUser = "0";

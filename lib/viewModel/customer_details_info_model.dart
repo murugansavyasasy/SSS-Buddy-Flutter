@@ -16,7 +16,7 @@ class CustomerDetailsInfoModel
     try {
       final loginState = ref.read(loginProvider);
       final loginData = loginState.value;
-      final vimIdUser = loginData?.VimsIdUser;
+      final vimIdUser = loginData?.userId.toString();
       final repo = ref.read(repositoryProvider);
       const selectedUser = "0";
 

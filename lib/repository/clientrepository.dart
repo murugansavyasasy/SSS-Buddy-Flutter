@@ -53,12 +53,19 @@ class ClientRepository {
     return Versioncheck.fromJson(response.data);
   }
 
-  Future<Validatelogin> apilogin(String employeeId, String password) async {
+  Future<LoginResponse> apilogin(
+      String employeeId,
+      String password,
+      ) async {
     final response = await client.post(
       AppEndpoint.validateloginendpoint,
-      body: {"EmployeeId": employeeId, "Password": password},
+      body: {
+        "EmployeeId": employeeId,
+        "Password": password,
+      },
     );
-    return Validatelogin.fromJson(response.data);
+
+    return LoginResponse.fromJson(response.data);
   }
 
   Future<List<Demolist>> getdemolist(String schoolLoginId) async {
