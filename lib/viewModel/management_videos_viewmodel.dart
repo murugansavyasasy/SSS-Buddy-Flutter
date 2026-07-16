@@ -15,7 +15,7 @@ class ManagementVideosViewmodel extends AsyncNotifier<List<Managementvideosmodel
 
     if (loginData == null) return [];
 
-    final vimIdUSer = loginData.VimsIdUser;
+    final vimIdUSer = loginData.userId.toString();
     final repo = ref.read(repositoryProvider);
 
     final response = await repo.getmanagementvideos(vimIdUSer);

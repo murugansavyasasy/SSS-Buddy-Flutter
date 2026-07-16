@@ -60,8 +60,8 @@ class ClientRepository {
     final response = await client.post(
       AppEndpoint.validateloginendpoint,
       body: {
-        "EmployeeId": employeeId,
-        "Password": password,
+        "employeeId": employeeId,
+        "password": password,
       },
     );
 

@@ -6,21 +6,26 @@ class UserSession {
   final String employeeName;
   final String employeeId;
   final String employeerole;
-  final String VimsIdUser;
+  final String userId;
+  final String token;
 
   UserSession({
     required this.employeeName,
     required this.employeeId,
     required this.employeerole,
-    required this.VimsIdUser,
+    required this.userId,
+    required this.token,
   });
 
   factory UserSession.fromJson(Map<String, dynamic> json) {
+    final data = json["data"] ?? {};
+
     return UserSession(
-      employeeName: json["VimsUserName"] ?? "",
-      employeeId: json["VimsEmployeeId"] ?? "",
-      employeerole: json["SchooluserType"] ?? "",
-      VimsIdUser: json["VimsIdUser"] ?? "",
+      employeeName: data["name"] ?? "",
+      employeeId: data["employeeId"] ?? "",
+      employeerole: data["roleName"] ?? "",
+      userId: data["userId"].toString(),
+      token: data["token"] ?? "",
     );
   }
 }

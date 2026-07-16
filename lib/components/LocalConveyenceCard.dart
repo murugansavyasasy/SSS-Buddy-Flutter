@@ -73,7 +73,7 @@ class LocalConveyenceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = _statusStyle(item.Status);
-    final hasFile = item.FilePath != null && item.FilePath!.isNotEmpty;
+    final hasFile = item.FilePath != null && item.FilePath.isNotEmpty;
     final userType = VimsUserTypeId ?? "";
     final approved = item.IsApproved;
 
@@ -234,7 +234,7 @@ class LocalConveyenceCard extends StatelessWidget {
             if (hasFile) ...[
               Container(height: 1, color: const Color(0xFFF1F5F9)),
               _AttachmentButton(
-                onTap: () => _openFile(item.FilePath!),
+                onTap: () => _openFile(item.FilePath),
                 gradient: style.gradient,
               ),
             ],

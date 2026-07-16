@@ -33,7 +33,7 @@ class SchooldocumentsViewModel extends AsyncNotifier <List<Schooldocuments>> {
 
     if (loginData == null) return [];
 
-    final vimIDuser = loginData.VimsIdUser;
+    final vimIDuser = loginData.userId.toString();
     final repo = ref.read(repositoryProvider);
 
     final response = await repo.getSchoolDocuments(vimIDuser);
