@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../auth/model/Demolist.dart';
 import '../utils/routes/routes_name.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class DemoCard extends StatelessWidget {
   final Demolist item;

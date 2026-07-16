@@ -43,7 +43,7 @@ class RecordVoiceViewModel extends AsyncNotifier<UploadState> {
     _durationSeconds = durationSeconds;
 
     final repo = ref.read(repositoryProvider);
-    final loginId = user.VimsIdUser;
+    final loginId = user.userId.toString();
 
 
     if (_presignedUrl == null || _fileUrl == null) {

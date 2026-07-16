@@ -14,7 +14,7 @@ class ReportingMembersDdViewmodel extends AsyncNotifier<List<Reportingmembersmod
       data: (loginData) async {
         if (loginData == null) return [];
 
-        final IdUser = loginData.VimsIdUser;
+        final IdUser = loginData.userId.toString();
         final repo = ref.read(repositoryProvider);
 
         final response = await repo.getreportingmembers(IdUser);

@@ -490,7 +490,7 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
     try {
       final payload = _buildPayload();
       final loginState = await ref.read(loginProvider.future);
-      final userId = loginState?.SchoolLoginId?.toString();
+      final userId = loginState?.employeeId.toString();
 
       if (userId == null || userId.isEmpty) {
         _showAlert('User login details not found');

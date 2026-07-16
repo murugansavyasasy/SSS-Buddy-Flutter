@@ -248,7 +248,7 @@ class _MoveToToursettlementState extends ConsumerState<MoveToToursettlement> {
     final grandTotal = _totalWithBill + _totalWithoutBill;
 
     final userAsync = ref.read(userSessionProvider);
-    final idUser = userAsync.value?.VimsIdUser ?? '';
+    final idUser = userAsync.value?.userId.toString() ?? '';
 
     if (idUser.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(

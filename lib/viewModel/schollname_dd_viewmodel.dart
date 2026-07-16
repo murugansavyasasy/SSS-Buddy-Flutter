@@ -18,7 +18,7 @@ class SchollnameDdViewmodel extends AsyncNotifier<List<Schoolnamemodel>> {
     if (loginData == null) return [];
 
     final repo = ref.read(repositoryProvider);
-    final response = await repo.getschoolname(loginData.VimsIdUser);
+    final response = await repo.getschoolname(loginData.userId.toString());
     _cache = response;
     return response;
   }

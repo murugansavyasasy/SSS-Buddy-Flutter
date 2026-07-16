@@ -25,7 +25,7 @@ class PoDetailsViewmodel extends AsyncNotifier<List<PoDetailsModel>> {
       }
 
       final response = await repo.getpodetails(
-        loginData.VimsIdUser,
+        loginData.userId.toString(),
         purchaseOrderId,
       );
 
