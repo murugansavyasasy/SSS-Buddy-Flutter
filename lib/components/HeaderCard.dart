@@ -1,14 +1,19 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../auth/model/CustomerDetailsInfoModelClass.dart';
+import '../auth/model/CustomerdetailsModel.dart';
 
 class HeaderCard extends StatelessWidget {
-  final Customerdetailsinfomodelclass item;
+  final Customerdetailsmodel item;
   const HeaderCard({required this.item});
 
   @override
   Widget build(BuildContext context) {
+    final isActive = item.status.toLowerCase() == 'active';
+    final customerName = item.customerName ?? '';
+    final customerTypeName = item.customerTypeName ?? '';
+    final customerBranchType = item.customerBranchType ?? '';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -18,16 +23,16 @@ class HeaderCard extends StatelessWidget {
               width: 8,
               height: 8,
               decoration: BoxDecoration(
-                color: item.isActive ? Colors.green : Colors.red,
+                color: isActive ? Colors.green : Colors.red,
                 shape: BoxShape.circle,
               ),
             ),
             const SizedBox(width: 6),
             Text(
-              "STATUS: ${item.isActive ? 'ACTIVE' : 'INACTIVE'}",
+              "STATUS: ${item.status.toUpperCase()}",
               style: TextStyle(
                 fontSize: 11,
-                color: item.isActive ? Colors.green : Colors.red,
+                color: isActive ? Colors.green : Colors.red,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 0.5,
               ),
@@ -43,13 +48,13 @@ class HeaderCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    item.customerName,
+                    customerName,
                     style: const TextStyle(
                         fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    item.companyNameVs,
+                    item.companyName,
                     style: const TextStyle(color: Colors.grey, fontSize: 13),
                   ),
                 ],
@@ -71,17 +76,18 @@ class HeaderCard extends StatelessWidget {
         // ── Tags  (customerTypeName  +  customerBranchType) ───────
         Row(
           children: [
-            if (item.customerTypeName.isNotEmpty)
-              _TagChip(label: item.customerTypeName.toUpperCase()),
+            if (customerTypeName.isNotEmpty)
+              _TagChip(label: customerTypeName.toUpperCase()),
             const SizedBox(width: 8),
-            if (item.customerBranchType.isNotEmpty)
-              _TagChip(label: item.customerBranchType),
+            if (customerBranchType.isNotEmpty)
+              _TagChip(label: customerBranchType),
           ],
         ),
       ],
     );
   }
 }
+
 class _TagChip extends StatelessWidget {
   final String label;
   const _TagChip({required this.label});

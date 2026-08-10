@@ -29,8 +29,18 @@ class DioClient {
     )..interceptors.add(LogInterceptor(requestBody: true, responseBody: true));
   }
 
-  Future<Response> get(String path, {Map<String, dynamic>? query}) async {
-    return await _vimsClient.get(path, queryParameters: query);
+  Future<Response> get(
+      String path, {
+        Map<String, dynamic>? query,
+        Map<String, dynamic>? headers,
+      }) async {
+    return await _vimsClient.get(
+      path,
+      queryParameters: query,
+      options: Options(
+        headers: headers,
+      ),
+    );
   }
 
   Future<Response> post(String path, {Object? body}) async {

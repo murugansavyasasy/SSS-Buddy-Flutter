@@ -9,7 +9,7 @@ class LoginResponse {
 
   factory LoginResponse.fromJson(Map<String, dynamic> json) {
     return LoginResponse(
-      status: json['status'] ?? '',
+      status: json['status']?.toString() ?? '',
       data: LoginData.fromJson(json['data'] ?? {}),
     );
   }
@@ -24,6 +24,7 @@ class LoginData {
   final String token;
   final int userId;
   final String employeeId;
+  final String? schoolUserId;
   final String name;
   final String email;
   final int roleId;
@@ -35,6 +36,7 @@ class LoginData {
     required this.token,
     required this.userId,
     required this.employeeId,
+    this.schoolUserId,
     required this.name,
     required this.email,
     required this.roleId,
@@ -45,15 +47,16 @@ class LoginData {
 
   factory LoginData.fromJson(Map<String, dynamic> json) {
     return LoginData(
-      token: json['token'] ?? '',
+      token: json['token']?.toString() ?? '',
       userId: json['userId'] ?? 0,
-      employeeId: json['employeeId'] ?? '',
-      name: json['name'] ?? '',
-      email: json['email'] ?? '',
+      employeeId: json['employeeId']?.toString() ?? '',
+      schoolUserId: json['schoolUserId']?.toString(),
+      name: json['name']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
       roleId: json['roleId'] ?? 0,
-      roleCode: json['roleCode'] ?? '',
-      roleSlug: json['roleSlug'] ?? '',
-      roleName: json['roleName'] ?? '',
+      roleCode: json['roleCode']?.toString() ?? '',
+      roleSlug: json['roleSlug']?.toString() ?? '',
+      roleName: json['roleName']?.toString() ?? '',
     );
   }
 
@@ -61,6 +64,7 @@ class LoginData {
     'token': token,
     'userId': userId,
     'employeeId': employeeId,
+    'schoolUserId': schoolUserId,
     'name': name,
     'email': email,
     'roleId': roleId,

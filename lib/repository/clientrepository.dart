@@ -174,23 +174,22 @@ class ClientRepository {
     return data.map((e) => Managementvideosmodel.fromJson(e)).toList();
   }
 
-  Future<List<Customerdetailsmodel>> getcustomerslist(
-    String VimIdUser,
-    String customerId,
-    String selectedUser,
-  ) async {
-    final response = await client.post(
+  Future<List<Customerdetailsmodel>> getCustomersList(String token) async {
+    final response = await client.get(
       AppEndpoint.customerslist,
-      body: {
-        "idUser": VimIdUser,
-        "customerId": customerId,
-        "selectedUser": selectedUser,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
       },
     );
 
-    final List data = response.data;
+    final Map<String, dynamic> json = response.data;
 
-    return data.map((e) => Customerdetailsmodel.fromJson(e)).toList();
+    final List data = json['data'] ?? [];
+
+    return data
+        .map((e) => Customerdetailsmodel.fromJson(e))
+        .toList();
   }
 
   Future<List<Customerdetailsinfomodelclass>> getcustomerinfo(
@@ -269,9 +268,13 @@ class ClientRepository {
     return data.map((e) => Schoolnamemodel.fromJson(e)).toList();
   }
 
-  Future<List<Financialyearmodel>> getfinancialyear() async {
-    final response = await client.get(AppEndpoint.getFinancialyear);
-
+  Future<List<Financialyearmodel>> getfinancialyear(String token) async {
+    final response = await client.get(AppEndpoint.getFinancialyear,
+      headers: {
+      'Authorization': 'Bearer $token',
+      'Accept': 'application/json',
+      },
+    );
     final List data = response.data;
 
     return data.map((e) => Financialyearmodel.fromJson(e)).toList();
@@ -288,15 +291,16 @@ class ClientRepository {
     return data.map((e) => Invoicemodel.fromJson(e)).toList();
   }
 
-  Future<List<PoListModel>> getpolist(String cusId) async {
+  Future<PurchaseOrderResponse> getPoList(String customerId, String token) async {
     final response = await client.get(
-      AppEndpoint.getponummerbycustomer,
-      query: {"cusId": cusId},
+      AppEndpoint.getPoNumberByCustomer(customerId),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
     );
 
-    final List data = response.data;
-
-    return data.map((e) => PoListModel.fromJson(e)).toList();
+    return PurchaseOrderResponse.fromJson(response.data);
   }
 
   Future<List<PoDetailsModel>> getpodetails(

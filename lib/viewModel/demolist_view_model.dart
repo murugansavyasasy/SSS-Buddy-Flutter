@@ -35,9 +35,9 @@ class DemolistViewModel extends AsyncNotifier<List<Demolist>> {
     final loginState = ref.read(loginProvider);
     final loginData = loginState.value;
     if (loginData == null) return [];
-    final schoolLoginId = loginData.employeeId.toString();
+    final schoolLoginId = loginData.schoolUserId;
     final repo = ref.read(repositoryProvider);
-    final response = await repo.getdemolist(schoolLoginId);
+    final response = await repo.getdemolist(schoolLoginId ?? '');
     return response;
 
   }

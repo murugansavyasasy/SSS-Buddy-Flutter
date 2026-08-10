@@ -89,7 +89,6 @@ class _AddLocalConveyenceState extends State<AddLocalConveyence> {
   double get _overallTotal => _withBillTotal + _withoutBillTotal;
 
   void _submit() {
-    // TODO: wire up to your ViewModel / API call
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(

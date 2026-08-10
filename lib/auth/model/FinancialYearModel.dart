@@ -1,28 +1,35 @@
 class Financialyearmodel {
-  int idValue;
-  String nameValue;
-  int processby;
-  dynamic tallyCustomerId;
-  dynamic extraString;
-  int UserType;
+  final int id;
+  final String label;
+  final String startDate;
+  final String endDate;
+  final bool isActive;
 
   Financialyearmodel({
-    required this.idValue,
-    required this.nameValue,
-    required this.processby,
-    required this.tallyCustomerId,
-    required this.extraString,
-    required this.UserType,
-});
+    required this.id,
+    required this.label,
+    required this.startDate,
+    required this.endDate,
+    required this.isActive,
+  });
 
-  factory Financialyearmodel.fromJson(Map<String,dynamic> json) {
+  factory Financialyearmodel.fromJson(Map<String, dynamic> json) {
     return Financialyearmodel(
-      idValue: json["idValue"] ?? "",
-      nameValue: json["nameValue"] ?? "",
-      processby: json["processby"] ?? "",
-      tallyCustomerId: json["tallyCustomerId"] ?? "",
-      extraString: json["extraString"] ?? "",
-      UserType: json["UserType"] ?? "",
+      id: json['id'] ?? 0,
+      label: json['label'] ?? '',
+      startDate: json['startDate'] ?? '',
+      endDate: json['endDate'] ?? '',
+      isActive: json['isActive'] ?? false,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'label': label,
+      'startDate': startDate,
+      'endDate': endDate,
+      'isActive': isActive,
+    };
   }
 }
