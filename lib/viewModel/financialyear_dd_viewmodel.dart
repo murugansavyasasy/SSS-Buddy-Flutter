@@ -6,6 +6,7 @@ import '../provider/app_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sssbuddy/auth/model/FinancialYearModel.dart';
 import '../provider/app_providers.dart';
+import 'login_view_model.dart';
 
 class FinancialyearDdViewmodel extends AsyncNotifier<List<Financialyearmodel>> {
   List<Financialyearmodel>? _cache;
@@ -17,8 +18,11 @@ class FinancialyearDdViewmodel extends AsyncNotifier<List<Financialyearmodel>> {
   }
 
   Future<List<Financialyearmodel>> _fetch() async {
+    final loginState = ref.read(loginProvider);
+    final loginData = loginState.value;
+    if (loginData == null) return [];
     final repo = ref.read(repositoryProvider);
-    final response = await repo.getfinancialyear();
+    final response = await repo.getfinancialyear(loginData.token);
     _cache = response;
     return response;
   }

@@ -1,95 +1,211 @@
 class Customerdetailsmodel {
-  int idCustomer;
-  String tallyCustomerId;
-  String SchoolServerId;
-  String customerName;
-  String customerTypeName;
-  String customerBranchTypeName;
-  String headCustomerName;
-  String contactPerson;
-  String contactNumber;
-  String customerMailId;
-  String salesPersonName;
-  bool isActive;
-  String billingPersonName;
-  String billingPhoneNumber;
-  String billingAddress;
-  String billingCity;
-  String billingDistrict;
-  String billingState;
-  String billingCountry;
-  String billingPincode;
-  int result;
-  String resultMessage;
-  String customerOtherName;
-  int customerBranchType;
-  String companyNameVS;
-  String createdByName;
-  String createdOn;
-  String modifiedByName;
-  String modifiedOn;
+  // Required — always present in API response
+  final int id;
+  final String customerCode;
+  final String companyName;
+  final String? invoiceName;
+  final String dashboardId;
+  final String? city;
+  final String state;
+  final String status;
+  final String accountManager;
+
+  // Optional — everything else
+  String? tallyCustomerId;
+  String? customerName;
+  String? customerOtherName;
+  String? customerBranchType;
+  dynamic customerBranchTypeName;
+  String? customerType;
+  String? customerTypeName;
+  String? contactPerson;
+  String? contactNumber;
+  String? contactPersonDesignation;
+  String? mailId;
+  dynamic alternateContactPerson;
+  dynamic alternateContactNumber;
+  dynamic alternateMailId;
+  dynamic alternatePersonDesignation;
+  dynamic fax;
+  String? panNumber;
+  String? tinNumber;
+  String? stcNumber;
+  String? gstinNumber;
+  String? billingAddress;
+  String? billingCity;
+  String? billingDistrict;
+  String? billingState;
+  String? billingCountry;
+  String? billingPincode;
+  String? billingPhoneNumber;
+  String? billingPersonName;
+  String? shipAddress;
+  String? shipCity;
+  String? shipDistrict;
+  String? shipState;
+  String? shipCountry;
+  String? shipPincode;
+  dynamic shipPhoneNumber;
+  dynamic shipPersonName;
+  dynamic remarks;
+  String? salesPersonId;
+  String? salesPersonName;
+  dynamic headCustomerId;
+  dynamic headCustomerName;
+  bool? isActive;
+  bool? isDelete;
+  int? createdBy;
+  dynamic createdByName;
+  dynamic createdOn;
+  int? modifiedBy;
+  dynamic modifiedByName;
+  dynamic modifiedOn;
+  int? result;
+  String? resultMessage;
+  dynamic billingPersonNamePre;
+  dynamic shipPersonNamePre;
+  int? schoolServerId;
+  int? collegeServerId;
+  dynamic huddleServerId;
+
   Customerdetailsmodel({
-    required this.idCustomer,
-    required this.tallyCustomerId,
-    required this.SchoolServerId,
-    required this.customerName,
-    required this.customerTypeName,
-    required this.customerBranchTypeName,
-    required this.headCustomerName,
-    required this.contactPerson,
-    required this.contactNumber,
-    required this.customerMailId,
-    required this.salesPersonName,
-    required this.isActive,
-    required this.billingPersonName,
-    required this.billingPhoneNumber,
-    required this.billingAddress,
-    required this.billingCity,
-    required this.billingDistrict,
-    required this.billingState,
-    required this.billingCountry,
-    required this.billingPincode,
-    required this.result,
-    required this.resultMessage,
-    required this.customerOtherName,
-    required this.customerBranchType,
-    required this.companyNameVS,
-    required this.createdOn,
-    required this.createdByName,
-    required this.modifiedByName,
-    required this.modifiedOn,
+    required this.id,
+    required this.customerCode,
+    required this.companyName,
+    required this.dashboardId,
+    required this.state,
+    required this.status,
+    required this.accountManager,
+    this.invoiceName,
+    this.city,
+    this.tallyCustomerId,
+    this.customerName,
+    this.customerOtherName,
+    this.customerBranchType,
+    this.customerBranchTypeName,
+    this.customerType,
+    this.customerTypeName,
+    this.contactPerson,
+    this.contactNumber,
+    this.contactPersonDesignation,
+    this.mailId,
+    this.alternateContactPerson,
+    this.alternateContactNumber,
+    this.alternateMailId,
+    this.alternatePersonDesignation,
+    this.fax,
+    this.panNumber,
+    this.tinNumber,
+    this.stcNumber,
+    this.gstinNumber,
+    this.billingAddress,
+    this.billingCity,
+    this.billingDistrict,
+    this.billingState,
+    this.billingCountry,
+    this.billingPincode,
+    this.billingPhoneNumber,
+    this.billingPersonName,
+    this.shipAddress,
+    this.shipCity,
+    this.shipDistrict,
+    this.shipState,
+    this.shipCountry,
+    this.shipPincode,
+    this.shipPhoneNumber,
+    this.shipPersonName,
+    this.remarks,
+    this.salesPersonId,
+    this.salesPersonName,
+    this.headCustomerId,
+    this.headCustomerName,
+    this.isActive,
+    this.isDelete,
+    this.createdBy,
+    this.createdByName,
+    this.createdOn,
+    this.modifiedBy,
+    this.modifiedByName,
+    this.modifiedOn,
+    this.result,
+    this.resultMessage,
+    this.billingPersonNamePre,
+    this.shipPersonNamePre,
+    this.schoolServerId,
+    this.collegeServerId,
+    this.huddleServerId,
   });
+
   factory Customerdetailsmodel.fromJson(Map<String, dynamic> json) {
     return Customerdetailsmodel(
-      idCustomer: json["idCustomer"] ?? 0,
-      tallyCustomerId: json["tallyCustomerId"] ?? "",
-      SchoolServerId: json["SchoolServerId"] ?? "",
-      customerName: json["customerName"] ?? "",
-      customerTypeName: json["customerTypeName"] ?? "",
-      customerBranchTypeName: json["customerBranchTypeName"] ?? "",
-      headCustomerName: json["headCustomerName"] ?? "",
-      contactPerson: json["contactPerson"] ?? "",
-      contactNumber: json["contactNumber"] ?? "",
-      customerMailId: json["customerMailId"] ?? "",
-      salesPersonName: json["salesPersonName"] ?? "",
-      isActive: json["isActive"] ?? "",
-      billingPersonName: json["billingPersonName"] ?? "",
-      billingPhoneNumber: json["billingPhoneNumber"] ?? "",
-      billingAddress: json["billingAddress"] ?? "",
-      billingCity: json["billingCity"] ?? "",
-      billingDistrict: json["billingDistrict"] ?? "",
-      billingState: json["billingState"] ?? "",
-      billingCountry: json["billingCountry"] ?? "",
-      billingPincode: json["billingPincode"] ?? "",
-      result: json["result"] ?? "",
-      resultMessage: json["resultMessage"] ?? "",
-      customerOtherName: json["customerOtherName"] ?? "",
-      customerBranchType: json["customerBranchType"] ?? "",
-      companyNameVS: json["companyNameVS"] ?? "",
-      createdByName: json["createdByName"] ?? "",
-      createdOn: json["createdOn"] ?? "",
-      modifiedByName: json["modifiedByName"] ?? "",
-      modifiedOn: json["modifiedOn"] ?? "",
+      // Required
+      id: json["id"] ?? 0,
+      customerCode: json["customerCode"]?.toString() ?? "",
+      companyName: json["companyName"]?.toString() ?? "",
+      dashboardId: json["dashboardId"]?.toString() ?? "",
+      state: json["state"]?.toString() ?? "",
+      status: json["status"]?.toString() ?? "",
+      accountManager: json["accountManager"]?.toString() ?? "",
+
+      // Optional
+      invoiceName: json["invoiceName"]?.toString(),
+      city: json["city"]?.toString(),
+      tallyCustomerId: json["tallyCustomerId"],
+      customerName: json["customerName"],
+      customerOtherName: json["customerOtherName"],
+      customerBranchType: json["customerBranchType"],
+      customerBranchTypeName: json["customerBranchTypeName"],
+      customerType: json["customerType"],
+      customerTypeName: json["customerTypeName"],
+      contactPerson: json["contactPerson"],
+      contactNumber: json["contactNumber"],
+      contactPersonDesignation: json["contactPersonDesignation"],
+      mailId: json["mailId"],
+      alternateContactPerson: json["alternateContactPerson"],
+      alternateContactNumber: json["alternateContactNumber"],
+      alternateMailId: json["alternateMailId"],
+      alternatePersonDesignation: json["alternatePersonDesignation"],
+      fax: json["fax"],
+      panNumber: json["PANNumber"],
+      tinNumber: json["TINNumber"],
+      stcNumber: json["STCNumber"],
+      gstinNumber: json["GSTINNumber"],
+      billingAddress: json["billingAddress"],
+      billingCity: json["billingCity"],
+      billingDistrict: json["billingDistrict"],
+      billingState: json["billingState"],
+      billingCountry: json["billingCountry"],
+      billingPincode: json["billingPincode"],
+      billingPhoneNumber: json["billingPhoneNumber"],
+      billingPersonName: json["billingPersonName"],
+      shipAddress: json["shipAddress"],
+      shipCity: json["shipCity"],
+      shipDistrict: json["shipDistrict"],
+      shipState: json["shipState"],
+      shipCountry: json["shipCountry"],
+      shipPincode: json["shipPincode"],
+      shipPhoneNumber: json["shipPhoneNumber"],
+      shipPersonName: json["shipPersonName"],
+      remarks: json["remarks"],
+      salesPersonId: json["salesPersonId"],
+      salesPersonName: json["salesPersonName"],
+      headCustomerId: json["headCustomerId"],
+      headCustomerName: json["headCustomerName"],
+      isActive: json["isActive"],
+      isDelete: json["isDelete"],
+      createdBy: json["createdBy"],
+      createdByName: json["createdByName"],
+      createdOn: json["createdOn"],
+      modifiedBy: json["modifiedBy"],
+      modifiedByName: json["modifiedByName"],
+      modifiedOn: json["modifiedOn"],
+      result: json["result"],
+      resultMessage: json["resultMessage"],
+      billingPersonNamePre: json["billingPersonNamePre"],
+      shipPersonNamePre: json["shipPersonNamePre"],
+      schoolServerId: json["schoolServerID"],
+      collegeServerId: json["collegeServerID"],
+      huddleServerId: json["HuddleServerID"],
     );
   }
 }

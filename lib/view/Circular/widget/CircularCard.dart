@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import '../../../../auth/model/CircularModel.dart';
 import 'stat-chip.dart';
 
@@ -136,6 +137,9 @@ class Circularcard extends StatelessWidget {
                     ),
                   ],
                 ),
+                const SizedBox(height: 6),
+
+                _ExpandableMessageId(text: item.MessageId),
 
                 const SizedBox(height: 12),
 
@@ -174,6 +178,110 @@ class Circularcard extends StatelessWidget {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ExpandableMessageId extends StatefulWidget {
+  final String text;
+  const _ExpandableMessageId({required this.text});
+
+  @override
+  State<_ExpandableMessageId> createState() => _ExpandableMessageIdState();
+}
+
+class _ExpandableMessageIdState extends State<_ExpandableMessageId> {
+  final GlobalKey _textKey = GlobalKey();
+  bool _isOverflowing = false;
+
+  static const TextStyle _style = TextStyle(
+    fontSize: 11.5,
+    fontWeight: FontWeight.w500,
+    color: Colors.black54,
+    height: 1.3,
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkOverflow());
+  }
+
+  @override
+  void didUpdateWidget(covariant _ExpandableMessageId oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.text != widget.text) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _checkOverflow());
+    }
+  }
+
+  void _checkOverflow() {
+    final renderObject = _textKey.currentContext?.findRenderObject();
+    if (renderObject is RenderParagraph) {
+      final exceeded = renderObject.didExceedMaxLines;
+      if (exceeded != _isOverflowing && mounted) {
+        setState(() => _isOverflowing = exceeded);
+      }
+    }
+  }
+
+  void _showPopup(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(
+          'Message ID',
+          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+        ),
+        content: SingleChildScrollView(
+          child: Text(widget.text, style: const TextStyle(fontSize: 13, height: 1.4)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F3F5),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: const Color(0xFFE0E3E7), width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            widget.text,
+            key: _textKey,
+            style: _style,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+          ),
+          if (_isOverflowing) ...[
+            const SizedBox(height: 4),
+            GestureDetector(
+              onTap: () => _showPopup(context),
+              child: const Text(
+                'See more',
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1A3A5C),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

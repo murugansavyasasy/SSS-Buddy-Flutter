@@ -10,15 +10,16 @@ class AppEndpoint {
   static const circularreport = "GetVoiceCircularReport";
   static const managementvideos = "api/AppDetails/GetVideos";
   static const localconveyence = "api/AppDetails/ViewExpenses";
-  static const customerslist = "api/AppDetails/GetCustomersList";
+  static const customerslist = "api/mobile/customers";
   static const customerinfo = "api/AppDetails/GetIndvidualCustomerInfo";
   static const schooldocuments = "api/AppDetails/GetSchoolDocuments";
   static const getimportantinfo = "GetImportantInfo";
   static const getAdvanceTourExpenses = "api/AppDetails/GetAdvanceTourExpenses";
   static const getSchoolName = "api/GetDetails/DemoGetCustomerList";
-  static const getFinancialyear = "api/GetDetails/getFinancialYearForApp";
+  static const getFinancialyear = "/api/mobile/financial-years";
   static const getInvoiceValue = "api/GetDetails/DemoGetInvoiceByCustomerID";
-  static const getponummerbycustomer = "api/GetDetails/GetPONumbersByCustomer";
+  static String getPoNumberByCustomer(String customerId) =>
+      "api/mobile/customers/$customerId/purchase-orders";
   static const getindiualpoforapp = "api/AppDetails/GetIndvidualSchoolPoInfoForApp";
   static const demoCreateOrEdit = "DemoCreateOrEditDemo";
   static const getlocalconviencedetail = "api/GetDetails/GetLocalExpenseSummary";

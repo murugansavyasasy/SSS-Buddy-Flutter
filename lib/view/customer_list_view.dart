@@ -18,27 +18,15 @@ class CustomerListView extends ConsumerStatefulWidget {
 }
 
 class _CustomerListViewState extends ConsumerState<CustomerListView> {
-  String? selectedValue;
 
   @override
   void initState() {
     super.initState();
-
-    selectedValue = "All";
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(customerviewProvider.notifier).filterBySalesPerson("0"); // ✅ API call
-    });
   }
 
   @override
   Widget build(BuildContext context) {
     final customerlistAsync = ref.watch(customerviewProvider);
-    final salesAsync = ref.watch(salespersonProvider);
-    final dropdownList = [
-      "All",
-      ...?salesAsync.value?.map((e) => e.nameValue ?? "")
-    ];
-    final salesList = salesAsync.value ?? [];
 
     return PopScope(
       onPopInvokedWithResult: (didPop, result) {
@@ -63,28 +51,6 @@ class _CustomerListViewState extends ConsumerState<CustomerListView> {
                 searchHint: "Search school name....",
                 onSearch: (query) =>
                     ref.read(customerviewProvider.notifier).filter(query),
-                dropdownLists: dropdownList,
-                selectedMonth:
-                selectedValue != null ? selectedValue ?? '0' : null,
-                onMonthChanged: (value) {
-                  if (value == null) return;
-
-                  setState(() {
-                    selectedValue = value;
-                  });
-                  if (value == "All") {
-                    ref.read(customerviewProvider.notifier).filterBySalesPerson("0");
-                    return;
-                  }
-                  final selected = salesList.firstWhere(
-                        (e) => e.nameValue == value,
-                    orElse: () => salesList.first,
-                  );
-
-                  ref
-                      .read(customerviewProvider.notifier)
-                      .filterBySalesPerson(selected.idValue.toString());
-                },
               ),
               Expanded(
                 child: Container(

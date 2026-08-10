@@ -1,6 +1,4 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-
 import '../Values/Colors/app_colors.dart';
 import '../auth/model/CustomerdetailsModel.dart';
 import 'info_tilecustomer.dart';
@@ -8,20 +6,29 @@ import 'info_tilecustomer.dart';
 class CustomerCardDetails extends StatelessWidget {
   final Customerdetailsmodel item;
 
-  const CustomerCardDetails({super.key, required this.item});
+  const CustomerCardDetails({
+    super.key,
+    required this.item,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final String customerName = item.customerName;
-    final String billingCity = item.billingCity;
-    final String billingPerson = item.billingPersonName;
-    final String tallyId = item.tallyCustomerId;
-    final String salesPerson = item.salesPersonName;
-    final bool isActive = item.isActive;
+    final String customerName = item.companyName;
+    final String customerCode = item.customerCode;
+    final String city = item.city ?? "-";
+    final String state = item.state;
+    final String accountManager = item.accountManager;
+    final bool isActive = item.status.toLowerCase() == "active";
 
     final String initials = customerName.trim().isNotEmpty
-        ? customerName.trim().split(' ').take(2).map((w) => w[0]).join().toUpperCase()
-        : '??';
+        ? customerName
+        .trim()
+        .split(' ')
+        .take(2)
+        .map((e) => e[0])
+        .join()
+        .toUpperCase()
+        : "??";
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -48,9 +55,10 @@ class CustomerCardDetails extends StatelessWidget {
                   height: 48,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [AppColors.primary, AppColors.primary.withOpacity(0.7)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                      colors: [
+                        AppColors.primary,
+                        AppColors.primary.withOpacity(0.7),
+                      ],
                     ),
                     shape: BoxShape.circle,
                   ),
@@ -61,11 +69,12 @@ class CustomerCardDetails extends StatelessWidget {
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
-                      letterSpacing: 1,
                     ),
                   ),
                 ),
+
                 const SizedBox(width: 12),
+
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -76,20 +85,24 @@ class CustomerCardDetails extends StatelessWidget {
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF1A1A2E),
-                          height: 1.3,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 5),
                       Row(
                         children: [
-                          const Icon(Icons.tag, size: 13, color: Color(0xFF8E8EA0)),
-                          const SizedBox(width: 3),
-                          Text(
-                            tallyId,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF8E8EA0),
-                              fontWeight: FontWeight.w500,
+                          const Icon(
+                            Icons.tag,
+                            size: 13,
+                            color: Color(0xFF8E8EA0),
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              customerCode,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF8E8EA0),
+                              ),
                             ),
                           ),
                         ],
@@ -98,43 +111,11 @@ class CustomerCardDetails extends StatelessWidget {
                   ),
                 ),
 
-                // Container(
-                //   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                //   decoration: BoxDecoration(
-                //     color: isActive
-                //         ? const Color(0xFFE8F5E9)
-                //         : const Color(0xFFFFEBEE),
-                //     borderRadius: BorderRadius.circular(20),
-                //   ),
-                //   child: Row(
-                //     mainAxisSize: MainAxisSize.min,
-                //     children: [
-                //       Container(
-                //         width: 6,
-                //         height: 6,
-                //         decoration: BoxDecoration(
-                //           color: isActive
-                //               ? const Color(0xFF43A047)
-                //               : const Color(0xFFE53935),
-                //           shape: BoxShape.circle,
-                //         ),
-                //       ),
-                //       const SizedBox(width: 5),
-                //       Text(
-                //         isActive ? 'Active' : 'Inactive',
-                //         style: TextStyle(
-                //           fontSize: 11,
-                //           fontWeight: FontWeight.w600,
-                //           color: isActive
-                //               ? const Color(0xFF43A047)
-                //               : const Color(0xFFE53935),
-                //         ),
-                //       ),
-                //     ],
-                //   ),
-                // ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: isActive
                         ? const Color(0xFFE8F5E9)
@@ -156,7 +137,7 @@ class CustomerCardDetails extends StatelessWidget {
                       ),
                       const SizedBox(width: 5),
                       Text(
-                        isActive ? 'Active' : 'Inactive',
+                        isActive ? "Active" : "Inactive",
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
@@ -165,16 +146,6 @@ class CustomerCardDetails extends StatelessWidget {
                               : const Color(0xFFE53935),
                         ),
                       ),
-                      const SizedBox(width: 6),
-
-                      // 🔥 Arrow icon
-                      Icon(
-                        Icons.arrow_forward_ios,
-                        size: 12,
-                        color: isActive
-                            ? const Color(0xFF43A047)
-                            : const Color(0xFFE53935),
-                      ),
                     ],
                   ),
                 ),
@@ -182,48 +153,48 @@ class CustomerCardDetails extends StatelessWidget {
             ),
           ),
 
-          const Divider(height: 1, thickness: 1, color: Color(0xFFF0F0F5)),
+          const Divider(),
 
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            padding: const EdgeInsets.all(16),
             child: Row(
               children: [
                 Expanded(
                   child: InfoTile(
-                    icon: Icons.location_on_outlined,
-                    label: 'City',
-                    value: billingCity,
-                    iconColor: const Color(0xFFEF5350),
+                    icon: Icons.location_city,
+                    label: "City",
+                    value: city,
+                    iconColor: Colors.orange,
                   ),
                 ),
 
                 Container(
                   width: 1,
                   height: 36,
-                  color: const Color(0xFFF0F0F5),
+                  color: Colors.grey.shade300,
                 ),
 
                 Expanded(
                   child: InfoTile(
-                    icon: Icons.person_outline,
-                    label: 'Billing Person',
-                    value: billingPerson,
-                    iconColor: const Color(0xFF5C6BC0),
+                    icon: Icons.map,
+                    label: "State",
+                    value: state,
+                    iconColor: Colors.blue,
                   ),
                 ),
 
                 Container(
                   width: 1,
                   height: 36,
-                  color: const Color(0xFFF0F0F5),
+                  color: Colors.grey.shade300,
                 ),
 
                 Expanded(
                   child: InfoTile(
-                    icon: Icons.support_agent_outlined,
-                    label: 'Sales Person',
-                    value: salesPerson,
-                    iconColor: const Color(0xFF26A69A),
+                    icon: Icons.person,
+                    label: "Account Manager",
+                    value: accountManager,
+                    iconColor: Colors.teal,
                   ),
                 ),
               ],
@@ -234,4 +205,3 @@ class CustomerCardDetails extends StatelessWidget {
     );
   }
 }
-

@@ -631,11 +631,11 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
                             if (v == null) return;
                             try {
                               final match = years.firstWhere(
-                                (e) => e.nameValue == v,
+                                (e) => e.label == v,
                               );
                               _onFinancialYearChanged(
-                                match.nameValue,
-                                match.idValue?.toString() ?? '0',
+                                match.label,
+                                match.id?.toString() ?? '0',
                               );
                             } catch (_) {
                               _onFinancialYearChanged(v, '0');

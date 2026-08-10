@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../Values/Colors/app_colors.dart';
-import '../auth/model/CustomerDetailsInfoModelClass.dart';
 import '../auth/model/CustomerdetailsModel.dart';
 import '../components/AppCard.dart';
 import '../components/BillingSection.dart';
@@ -13,7 +12,6 @@ import '../components/SalesSection.dart';
 import '../components/ShippingSection.dart';
 import '../components/toolbar_layout.dart';
 import '../view/customer_list_view.dart';
-import '../viewModel/customer_details_info_model.dart';
 import 'customerpo_view.dart';
 
 class CustomerInfoView extends ConsumerStatefulWidget {
@@ -26,21 +24,7 @@ class CustomerInfoView extends ConsumerStatefulWidget {
 
 class _CustomerInfoScreenState extends ConsumerState<CustomerInfoView> {
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _fetchData());
-  }
-
-  Future<void> _fetchData() async {
-    await ref
-        .read(customerviewinfoProvider.notifier)
-        .fetchCustomerInfo(widget.item.idCustomer);
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final state = ref.watch(customerviewinfoProvider);
-
     return Scaffold(
       backgroundColor: AppColors.primary,
       body: Column(
@@ -55,16 +39,9 @@ class _CustomerInfoScreenState extends ConsumerState<CustomerInfoView> {
                 color: Color(0xFFF5F6FA),
                 borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
               ),
-              child: state.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Center(child: Text("Error: $e")),
-                data: (data) {
-                  if (data.isEmpty) return const Center(child: Text("No data"));
-                  return SingleChildScrollView(
-                    padding: const EdgeInsets.all(14),
-                    child: CustomerInfoBody(item: data.first),
-                  );
-                },
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(14),
+                child: CustomerInfoBody(item: widget.item),
               ),
             ),
           ),
@@ -77,7 +54,7 @@ class _CustomerInfoScreenState extends ConsumerState<CustomerInfoView> {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.secondaryprimary,
-                    foregroundColor: Colors.white,
+                  foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -87,7 +64,7 @@ class _CustomerInfoScreenState extends ConsumerState<CustomerInfoView> {
                     context,
                     MaterialPageRoute(
                       builder: (_) =>
-                          CustomerPOView(customerId: widget.item.idCustomer),
+                          CustomerPOView(customerId: widget.item.id),
                     ),
                   );
                 },
@@ -109,7 +86,7 @@ class _CustomerInfoScreenState extends ConsumerState<CustomerInfoView> {
 }
 
 class CustomerInfoBody extends StatelessWidget {
-  final Customerdetailsinfomodelclass item;
+  final Customerdetailsmodel item;
   const CustomerInfoBody({super.key, required this.item});
 
   @override
