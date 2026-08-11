@@ -269,17 +269,32 @@ class ClientRepository {
   }
 
   Future<List<Financialyearmodel>> getfinancialyear(String token) async {
-    final response = await client.get(AppEndpoint.getFinancialyear,
+    final response = await client.get(
+      AppEndpoint.getFinancialyear,
       headers: {
-      'Authorization': 'Bearer $token',
-      'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
       },
     );
-    final List data = response.data;
 
+    final List data = response.data['data']; // was: response.data
     return data.map((e) => Financialyearmodel.fromJson(e)).toList();
   }
+  Future<List<Paymentmodemodel>> getPaymentMode(String token) async {
+    final response = await client.get(
+      AppEndpoint.getPaymentMode,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
+    );
 
+    final List data = response.data['data'] ?? [];
+
+    return data
+        .map((e) => Paymentmodemodel.fromJson(e))
+        .toList();
+  }
   Future<List<Invoicemodel>> getinvoicevalue(String customerId) async {
     final response = await client.get(
       AppEndpoint.getInvoiceValue,

@@ -17,6 +17,7 @@ class AppEndpoint {
   static const getAdvanceTourExpenses = "api/AppDetails/GetAdvanceTourExpenses";
   static const getSchoolName = "api/GetDetails/DemoGetCustomerList";
   static const getFinancialyear = "/api/mobile/financial-years";
+  static const getPaymentMode = "/api/mobile/payment-modes";
   static const getInvoiceValue = "api/GetDetails/DemoGetInvoiceByCustomerID";
   static String getPoNumberByCustomer(String customerId) =>
       "api/mobile/customers/$customerId/purchase-orders";

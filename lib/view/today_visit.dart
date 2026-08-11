@@ -343,7 +343,6 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
     );
   }
 
-  // ✅ NEW: Fixed bottom buttons — always visible, never scrolls away
   Widget _buildFixedBottomButtons() {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
@@ -406,8 +405,6 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
             ),
           ),
           const SizedBox(width: 14),
-
-          // TEXT
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -433,7 +430,6 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
             ),
           ),
 
-          // BUTTON / LOADER
           if (!isTripStarted)
             isStartingTrip
                 ? const SizedBox(

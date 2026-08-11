@@ -49,165 +49,67 @@ class Overalltripdetailsmodel {
       end_longitude: json["end_longitude"],
       is_closed: json["is_closed"] ?? 0,
       visit_details: visits,
-      totalDistanceKm: _calculateTotalDistance(
-        json["start_latitude"] ?? '',
-        json["start_longitude"] ?? '',
-        json["end_latitude"],
-        json["end_longitude"],
-        visits,
+      totalDistanceKm: DistanceCalculator.totalApproximateRoadDistance(
+        _buildPoints(
+          json["start_latitude"] ?? '',
+          json["start_longitude"] ?? '',
+          json["end_latitude"],
+          json["end_longitude"],
+          visits,
+        ),
       ),
     );
   }
 
-
-
-  static const bool AUTO_FIX_SUSPICIOUS_COORDS = true;
-  static const double SAME_LAT_LNG_EPS = 1e-6;
-  static const double LONGITUDE_JUMP_DEGREES = 5.0;
-
-  static double _calculateTotalDistance(
+  /// Mirrors the Android adapter's point-building logic exactly:
+  /// start -> each visit (if lat & lng both present) -> end (if present).
+  /// No sanitization — matches TripDetailsAdapter.onBindViewHolder as-is.
+  static List<List<double>> _buildPoints(
       String startLatStr,
       String startLonStr,
       String? endLatStr,
       String? endLonStr,
       List<VisitDetail> visits,
       ) {
-    final startLat = _parseCoordinate(startLatStr);
-    final startLon = _parseCoordinate(startLonStr);
+    final List<List<double>> points = [];
 
-    if (!_isValidCoordinate(startLat, startLon)) {
-      return 0.0;
+    try {
+      final startLat = DistanceCalculator.parseCoordinate(startLatStr);
+      final startLon = DistanceCalculator.parseCoordinate(startLonStr);
+      points.add([startLat, startLon]);
+    } catch (e) {
+      return []; // matches Android: if start missing, no distance shown
     }
 
-    final endLat = endLatStr != null ? _parseCoordinate(endLatStr) : double.nan;
-    final endLon = endLonStr != null ? _parseCoordinate(endLonStr) : double.nan;
-
-    final List<(double, double)> points = [];
-    points.add((startLat, startLon));
-
-    double prevLat = startLat;
-    double prevLon = startLon;
-
     for (var visit in visits) {
-      final rawLat = _parseCoordinate(visit.school_latitude ?? '');
-      final rawLon = _parseCoordinate(visit.school_longitude ?? '');
-
-      final fixed = _sanitizeSchoolPoint(
-        prevLat,
-        prevLon,
-        endLon,
-        rawLat,
-        rawLon,
-      );
-
-      if (_isValidCoordinate(fixed[0], fixed[1])) {
-        points.add((fixed[0], fixed[1]));
-        prevLat = fixed[0];
-        prevLon = fixed[1];
+      if (visit.school_latitude != null &&
+          visit.school_longitude != null &&
+          visit.school_latitude!.isNotEmpty &&
+          visit.school_longitude!.isNotEmpty) {
+        try {
+          final lat = DistanceCalculator.parseCoordinate(visit.school_latitude!);
+          final lon = DistanceCalculator.parseCoordinate(visit.school_longitude!);
+          points.add([lat, lon]);
+        } catch (e) {
+          // skip invalid visit point, same as Android silently skipping
+        }
       }
     }
 
-    if (_isValidCoordinate(endLat, endLon)) {
-      points.add((endLat, endLon));
+    if (endLatStr != null &&
+        endLonStr != null &&
+        endLatStr.isNotEmpty &&
+        endLonStr.isNotEmpty) {
+      try {
+        final endLat = DistanceCalculator.parseCoordinate(endLatStr);
+        final endLon = DistanceCalculator.parseCoordinate(endLonStr);
+        points.add([endLat, endLon]);
+      } catch (e) {
+        // skip invalid end point
+      }
     }
 
-    if (points.length < 2) return 0.0;
-
-    double totalKm = 0.0;
-    for (int i = 0; i < points.length - 1; i++) {
-      totalKm += _haversineKm(
-        points[i].$1,
-        points[i].$2,
-        points[i + 1].$1,
-        points[i + 1].$2,
-      );
-    }
-
-    return totalKm;
-  }
-
-  static double _parseCoordinate(String? coord) {
-    if (coord == null) return double.nan;
-    String s = coord.trim();
-    if (s.isEmpty || s.toLowerCase() == 'null') return double.nan;
-
-    try {
-      final isSouth = s.toUpperCase().contains('S');
-      final isWest = s.toUpperCase().contains('W');
-
-      s = s.replaceAll('°', ' ').replaceAll('º', ' ').replaceAll(',', ' ').trim();
-      s = s.replaceAll(RegExp(r'[^0-9+\-\.]'), '');
-
-      if (s.isEmpty) return double.nan;
-
-      double value = double.parse(s);
-      if (isSouth || isWest) value = -value;
-      return value;
-    } catch (e) {
-      return double.nan;
-    }
-  }
-
-  static bool _isValidLat(double lat) =>
-      !lat.isNaN && lat >= -90 && lat <= 90;
-
-  static bool _isValidLng(double lng) =>
-      !lng.isNaN && lng >= -180 && lng <= 180;
-
-  static bool _isValidCoordinate(double lat, double lng) =>
-      _isValidLat(lat) && _isValidLng(lng);
-
-  static List<double> _sanitizeSchoolPoint(
-      double prevLat,
-      double prevLng,
-      double endLng,
-      double schoolLat,
-      double schoolLng,
-      ) {
-    if (!_isValidLat(schoolLat)) {
-      return [double.nan, double.nan];
-    }
-
-    if (!_isValidLng(schoolLng)) {
-      if (_isValidLng(prevLng)) return [schoolLat, prevLng];
-      if (_isValidLng(endLng)) return [schoolLat, endLng];
-      return [double.nan, double.nan];
-    }
-
-    if (!AUTO_FIX_SUSPICIOUS_COORDS) {
-      return _isValidCoordinate(schoolLat, schoolLng)
-          ? [schoolLat, schoolLng]
-          : [double.nan, double.nan];
-    }
-
-    final latEqualsLng = (schoolLat - schoolLng).abs() <= SAME_LAT_LNG_EPS;
-    final lonJumpPrev = _isValidLng(prevLng) &&
-        (schoolLng - prevLng).abs() > LONGITUDE_JUMP_DEGREES;
-    final lonJumpEnd = _isValidLng(endLng) &&
-        (schoolLng - endLng).abs() > LONGITUDE_JUMP_DEGREES;
-
-    if (latEqualsLng || (lonJumpPrev && lonJumpEnd)) {
-      if (_isValidLng(prevLng)) return [schoolLat, prevLng];
-      if (_isValidLng(endLng)) return [schoolLat, endLng];
-      return [double.nan, double.nan];
-    }
-
-    return [schoolLat, schoolLng];
-  }
-
-  static double _haversineKm(double lat1, double lon1, double lat2, double lon2) {
-    const double R = 6371.0;
-    final dLat = (lat2 - lat1) * (math.pi / 180);
-    final dLon = (lon2 - lon1) * (math.pi / 180);
-
-    final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
-        math.cos(lat1 * math.pi / 180) *
-            math.cos(lat2 * math.pi / 180) *
-            math.sin(dLon / 2) *
-            math.sin(dLon / 2);
-
-    final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
-    return R * c;
+    return points;
   }
 }
 
@@ -238,4 +140,68 @@ class VisitDetail {
       remarks: json["remarks"] as String?,
     );
   }
+}
+
+class DistanceCalculator {
+  static double distanceBetween(
+      double lat1, double lon1, double lat2, double lon2) {
+    const double R = 6371e3;
+    final phi1 = _toRadians(lat1);
+    final phi2 = _toRadians(lat2);
+    final deltaPhi = _toRadians(lat2 - lat1);
+    final deltaLambda = _toRadians(lon2 - lon1);
+
+    final a = math.sin(deltaPhi / 2) * math.sin(deltaPhi / 2) +
+        math.cos(phi1) *
+            math.cos(phi2) *
+            math.sin(deltaLambda / 2) *
+            math.sin(deltaLambda / 2);
+
+    final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+    return R * c;
+  }
+
+  static double totalApproximateRoadDistance(List<List<double>> points) {
+    if (points.length < 2) return 0.0;
+
+    double totalDistance = 0.0;
+    for (int i = 0; i < points.length - 1; i++) {
+      final p1 = points[i];
+      final p2 = points[i + 1];
+      totalDistance += distanceBetween(p1[0], p1[1], p2[0], p2[1]);
+    }
+
+    final distanceKm = totalDistance / 1000.0;
+    const double roadMultiplier = 1.3;
+    return distanceKm * roadMultiplier;
+  }
+
+  static double parseCoordinate(String coord) {
+    if (coord.isEmpty) {
+      throw ArgumentError("Coordinate is null or empty");
+    }
+    coord = coord.trim();
+
+    final upper = coord.toUpperCase();
+    if (coord.contains("°") ||
+        upper.contains("N") ||
+        upper.contains("S") ||
+        upper.contains("E") ||
+        upper.contains("W")) {
+      coord = coord.replaceAll("°", "").trim();
+      final parts = coord.split(RegExp(r'\s+'));
+      double value = double.parse(parts[0]);
+      if (parts.length > 1) {
+        final dir = parts[1].toUpperCase();
+        if (dir == "S" || dir == "W") {
+          value = -value;
+        }
+      }
+      return value;
+    } else {
+      return double.parse(coord);
+    }
+  }
+
+  static double _toRadians(double degrees) => degrees * (math.pi / 180);
 }

@@ -33,3 +33,26 @@ class Financialyearmodel {
     };
   }
 }
+class Paymentmodemodel {
+  final String value;
+  final String label;
+
+  Paymentmodemodel({
+    required this.value,
+    required this.label,
+  });
+
+  factory Paymentmodemodel.fromJson(Map<String, dynamic> json) {
+    return Paymentmodemodel(
+      value: json['value'] ?? '',
+      label: json['label'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'value': value,
+      'label': label,
+    };
+  }
+}
