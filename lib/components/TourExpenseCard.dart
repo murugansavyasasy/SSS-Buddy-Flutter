@@ -50,9 +50,14 @@ class TourExpenseCard extends StatelessWidget {
     final String tourPurpose  = item.TourPurpose      ?? '-';
     final String date         = item.Date             ?? '-';
     final String tourPlace    = item.TourPlace        ?? '-';
-    final String totalExpense = item.TotalTourExpense ?? '0.00';
-    final String paidAmount   = item.PaidAmount       ?? '0.00';
-    final String balanceAmount= item.BalanceAmount    ?? '0.00';
+    final String totalExpense =
+        '${item.TotalTourExpense.toStringAsFixed(2)}';
+
+    final String paidAmount =
+        '${item.PaidAmount.toStringAsFixed(2)}';
+
+    final String balanceAmount =
+        '${item.BalanceAmount.toStringAsFixed(2)}';
     final String description  = item.Description      ?? '-';
     final String monthOfClaim = item.monthOfClaim     ?? '-';
     final String status       = item.Status           ?? 'Unknown';

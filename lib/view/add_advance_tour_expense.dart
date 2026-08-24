@@ -73,7 +73,7 @@ class _AddAdvanceTourExpenseState extends ConsumerState<AddAdvanceTourExpense> {
       _place1Controller.text = data.TourPlace;
       _selectedMonth = _months[int.parse(data.monthOfClaim) - 1];
 
-      _totalExpense = double.tryParse(data.TotalTourExpense) ?? 0.0;
+      _totalExpense = (data.TotalTourExpense).toDouble();
     }
 
     for (final ctrl in _summaryControllers) {

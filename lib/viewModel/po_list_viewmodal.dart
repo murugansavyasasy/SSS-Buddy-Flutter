@@ -40,20 +40,14 @@ class PoListViewmodal extends AsyncNotifier<List<PurchaseOrder>> {
         return;
       }
 
-      final token = loginData.token; // adjust field name below if different
-
-      print("🟡 [PoListViewmodal] API call starting -> customerId: $customerId, token: $token");
+      final token = loginData.token;
 
       final repo = ref.read(repositoryProvider);
       final response = await repo.getPoList(customerId.toString(), token);
-
-      print("🟢 [PoListViewmodal] API response received: status=${response.status}, poCount=${response.data.purchaseOrders.length}");
-
       _all = response.data.purchaseOrders;
 
       state = AsyncData(_all);
     } catch (e, s) {
-      print("🔴 [PoListViewmodal] API call failed: $e");
       state = AsyncError(e, s);
     }
   }

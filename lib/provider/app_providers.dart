@@ -6,7 +6,7 @@ import '../core/network/DioClient.dart';
 import '../repository/clientrepository.dart';
 String globalVimsIdUser = "";
 final dioProvider = Provider<DioClient>((ref) {
-  return DioClient();
+  return DioClient(ref);
 });
 
 final repositoryProvider = Provider<ClientRepository>((ref) {

@@ -9,42 +9,67 @@ import 'login_view_model.dart';
 // Invoice
 // ---------------------------------------------------------------------------
 
-class InvoiceDdViewmodel extends AsyncNotifier<List<Invoicemodel>> {
+class InvoiceDdViewmodel
+    extends AsyncNotifier<List<Invoicemodel>> {
+
   List<Invoicemodel>? _invoiceCache;
   String? _lastCustomerId;
 
   @override
-  Future<List<Invoicemodel>> build() async => [];
+  Future<List<Invoicemodel>> build() async {
+    return [];
+  }
 
   Future<void> fetchForCustomer(String customerId) async {
-    if (_lastCustomerId == customerId && _invoiceCache != null) {
-      state = AsyncData(_invoiceCache!);
-      return;
-    }
+    try {
+      if (_lastCustomerId == customerId &&
+          _invoiceCache != null) {
+        state = AsyncData(_invoiceCache!);
+        return;
+      }
 
-    state = const AsyncLoading();
+      state = const AsyncLoading();
 
-    state = await AsyncValue.guard(() async {
       final loginData = ref.read(loginProvider).value;
 
       if (loginData == null) {
-        return [];
+        state = AsyncData([]);
+        return;
       }
+
+      final token = loginData.token;
 
       final repo = ref.read(repositoryProvider);
 
-      final response = await repo.getinvoicevalue(customerId);
+      final response = await repo.getPoList(
+        customerId,
+        token,
+      );
+      final invoiceList =
+      response.data.pendingInvoices.map((invoice) {
+        return Invoicemodel(
+          InvoiceId: invoice.id.toString(),
+          InvoiceNumber: invoice.invoiceNumber,
+          PendingAmount: invoice.pendingAmount.toString(),
+        );
+      }).toList();
 
-      _invoiceCache = response;
+      _invoiceCache = invoiceList;
       _lastCustomerId = customerId;
+      state = AsyncData(invoiceList);
 
-      return response;
-    });
+    } catch (e, stackTrace) {
+      state = AsyncError(
+        e,
+        stackTrace,
+      );
+    }
   }
 
   void clear() {
     _invoiceCache = null;
     _lastCustomerId = null;
+
     state = const AsyncData([]);
   }
 }
