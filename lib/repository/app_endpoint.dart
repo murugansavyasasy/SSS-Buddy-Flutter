@@ -9,16 +9,17 @@ class AppEndpoint {
   static const managementinfo = "GetManagementNumbers";
   static const circularreport = "GetVoiceCircularReport";
   static const managementvideos = "api/AppDetails/GetVideos";
-  static const localconveyence = "api/AppDetails/ViewExpenses";
+  static const localconveyence = "/api/mobile/ViewExpenses";
   static const customerslist = "api/mobile/customers";
   static const customerinfo = "api/AppDetails/GetIndvidualCustomerInfo";
   static const schooldocuments = "api/AppDetails/GetSchoolDocuments";
   static const getimportantinfo = "GetImportantInfo";
-  static const getAdvanceTourExpenses = "api/AppDetails/GetAdvanceTourExpenses";
+  static const getAdvanceTourExpenses = "api/mobile/GetAdvanceTourExpenses";
   static const getSchoolName = "api/GetDetails/DemoGetCustomerList";
   static const getFinancialyear = "/api/mobile/financial-years";
   static const getPaymentMode = "/api/mobile/payment-modes";
   static const getInvoiceValue = "api/GetDetails/DemoGetInvoiceByCustomerID";
+
   static String getPoNumberByCustomer(String customerId) =>
       "api/mobile/customers/$customerId/purchase-orders";
   static const getindiualpoforapp = "api/AppDetails/GetIndvidualSchoolPoInfoForApp";
@@ -32,13 +33,11 @@ class AppEndpoint {
   static const postInitiateCall = "InitiateDemoCallByDemoID";
   static const manageTrip = "api/AppDetails/ManageTripDetails";
   static const updateDailyVisit = "api/AppDetails/UpdateDailyVisitWithLocation";
-  static const addTourexpence = "api/AppDetails/ManageTourExpense";
+  static const addTourexpence = "/api/mobile/ManageTourExpense";
   static const uploadfiles = "api/AppDetails/UploadExpenseFiles";
-  static const createpayment = "api/ManageDetails/DemoInsertPayment";
+  static const createpayment = "api/mobile/payments";
   static const getalertdata = "alert_messages";
   static const demoedit = "GetDemoDetailsByDemoId";
   static const GetFeedbackRequirements = "api/AppDetails/GetFeedbackRequirements";
   static const SchoolUsageReport = "SchoolUsageReport";
-
-
 }

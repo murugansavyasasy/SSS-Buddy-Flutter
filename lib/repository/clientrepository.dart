@@ -234,22 +234,26 @@ class ClientRepository {
   }
 
   Future<List<Localconveyencemodel>> getlocalconveyence(
-    String vimIdUSer,
+    String token,
   ) async {
     final response = await client.get(
       AppEndpoint.localconveyence,
-      query: {"idUser": vimIdUSer},
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
     );
     final List data = response.data;
     return data.map((e) => Localconveyencemodel.fromJson(e)).toList();
   }
 
-  Future<List<Advancetourexpensemodel>> getadvancetourdata(
-    String VimsIdUser,
-  ) async {
+  Future<List<Advancetourexpensemodel>> getadvancetourdata(String token) async {
     final response = await client.get(
       AppEndpoint.getAdvanceTourExpenses,
-      query: {"idUser": VimsIdUser},
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
     );
 
     final List data = response.data;
@@ -467,7 +471,7 @@ class ClientRepository {
       ) async {
     final response = await client.post(
       AppEndpoint.updateDailyVisit,
-      body: visitData, // ✅ passes List directly, no wrapping needed
+      body: visitData,
     );
 
     return List<Map<String, dynamic>>.from(
@@ -476,22 +480,25 @@ class ClientRepository {
   }
 
   Future<TourExpenseResponse?> submitTourExpense(
-    TourExpenseRequest request,
-  ) async {
+      TourExpenseRequest request) async {
     try {
       final response = await client.post(
         AppEndpoint.addTourexpence,
-        body: request.toJson(),
-      );
+        body: request.toJson());
+
       final data = response.data;
+
       if (data is List && data.isNotEmpty) {
         return TourExpenseResponse.fromJson(data[0]);
-      } else if (data is Map<String, dynamic>) {
+      }
+
+      if (data is Map<String, dynamic>) {
         return TourExpenseResponse.fromJson(data);
       }
+
       return null;
     } catch (e) {
-      print("ERROR: $e");
+      print("submitTourExpense ERROR: $e");
       return null;
     }
   }

@@ -1,5 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:sssbuddy/repository/app_url.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../viewModel/login_view_model.dart';
 
 class DioClient {
   late final Dio _vimsClient;
@@ -7,7 +10,9 @@ class DioClient {
   late final Dio _awsClient;
   late final Dio _s3Client;
 
-  DioClient() {
+  final Ref ref;
+
+  DioClient(this.ref) {
     _vimsClient = _buildDio(AppUrl.vimsUrl);
     _schoolClient = _buildDio(AppUrl.schoolUrl);
     _awsClient = _buildDio(AppUrl.aws_url);
@@ -26,7 +31,12 @@ class DioClient {
         connectTimeout: const Duration(seconds: 30),
         receiveTimeout: const Duration(seconds: 30),
       ),
-    )..interceptors.add(LogInterceptor(requestBody: true, responseBody: true));
+    )..interceptors.add(
+      LogInterceptor(
+        requestBody: true,
+        responseBody: true,
+      ),
+    );
   }
 
   Future<Response> get(
@@ -43,20 +53,66 @@ class DioClient {
     );
   }
 
-  Future<Response> post(String path, {Object? body}) async {
-    return await _vimsClient.post(path, data: body);
+  Future<Response> post(
+      String path, {
+        Object? body,
+      }) async {
+    final token = await getToken();
+
+    return await _vimsClient.post(
+      path,
+      data: body,
+      options: Options(
+        headers: {
+          if (token != null && token.isNotEmpty)
+            'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      ),
+    );
   }
 
-  Future<Response> schoolPost(String path, {Map<String, dynamic>? body}) async {
-    return await _schoolClient.post(path, data: body);
+  Future<String?> getToken() async {
+    final loginState = ref.read(loginProvider);
+
+    final loginData = loginState.value;
+
+    if (loginData == null) {
+      return null;
+    }
+
+    return loginData.token;
   }
 
-  Future<Response> schoolget(String path, {Map<String, dynamic>? query}) async {
-    return await _schoolClient.get(path, queryParameters: query);
+  Future<Response> schoolPost(
+      String path, {
+        Map<String, dynamic>? body,
+      }) async {
+    return await _schoolClient.post(
+      path,
+      data: body,
+    );
   }
 
-  Future<Response> awsGet(String path, {Map<String, dynamic>? query}) async {
-    return await _awsClient.get(path, queryParameters: query);
+  Future<Response> schoolget(
+      String path, {
+        Map<String, dynamic>? query,
+      }) async {
+    return await _schoolClient.get(
+      path,
+      queryParameters: query,
+    );
+  }
+
+  Future<Response> awsGet(
+      String path, {
+        Map<String, dynamic>? query,
+      }) async {
+    return await _awsClient.get(
+      path,
+      queryParameters: query,
+    );
   }
 
   Future<Response> s3Put({
@@ -66,14 +122,17 @@ class DioClient {
   }) async {
     return await _s3Client.put(
       presignedUrl,
-      data: Stream.fromIterable(fileBytes.map((e) => [e])),
+      data: Stream.fromIterable(
+        fileBytes.map((e) => [e]),
+      ),
       options: Options(
         headers: {
           'Content-Type': contentType,
           'Content-Length': fileBytes.length,
         },
         followRedirects: false,
-        validateStatus: (status) => status != null && status < 400,
+        validateStatus: (status) =>
+        status != null && status < 400,
       ),
     );
   }
