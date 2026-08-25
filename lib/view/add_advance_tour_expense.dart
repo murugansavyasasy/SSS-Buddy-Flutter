@@ -6,9 +6,7 @@ import '../Values/Colors/app_colors.dart';
 import '../auth/model/AddTourExpenceModal.dart';
 import '../auth/model/AdvanceTourExpenseModel.dart';
 import '../components/toolbar_layout.dart';
-import '../provider/app_providers.dart';
 import '../viewModel/addAdvace_tour_viewmodal.dart';
-import '../viewModel/advance_tourexpense_viewmodel.dart';
 import '../viewModel/login_view_model.dart';
 import 'advance_tour_expense.dart';
 
@@ -75,7 +73,7 @@ class _AddAdvanceTourExpenseState extends ConsumerState<AddAdvanceTourExpense> {
       _place1Controller.text = data.TourPlace;
       _selectedMonth = _months[int.parse(data.monthOfClaim) - 1];
 
-      _totalExpense = double.tryParse(data.TotalTourExpense) ?? 0.0;
+      _totalExpense = (data.TotalTourExpense).toDouble();
     }
 
     for (final ctrl in _summaryControllers) {
@@ -149,7 +147,7 @@ class _AddAdvanceTourExpenseState extends ConsumerState<AddAdvanceTourExpense> {
 
     final request = TourExpenseRequest(
       idTourExpense: "0",
-      idUser: loginData.VimsIdUser.toString(),
+      idUser: loginData.userId.toString(),
       tourPurpose: _purposeController.text,
       monthOfClaim:
       (_months.indexOf(_selectedMonth ?? "Jan") + 1).toString(),
@@ -165,7 +163,7 @@ class _AddAdvanceTourExpenseState extends ConsumerState<AddAdvanceTourExpense> {
       remarksWithoutBill: _remarksController.text,
       description: _descriptionController.text,
       totalTourExpense: _totalExpense.toString(),
-      processBy: loginData.VimsIdUser.toString(),
+      processBy: loginData.roleSlug.toString(),
       processType: "AdvanceTour",
       tourItemList: [
         TourItem(
@@ -294,7 +292,9 @@ class _AddAdvanceTourExpenseState extends ConsumerState<AddAdvanceTourExpense> {
           (previous, next) {
         next.when(
           data: (res) {
-            if (res != null && res.result == 1) {
+            if (res == null) return;
+
+            if (res.result == 1) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text(res.resultMessage)),
               );
@@ -303,19 +303,25 @@ class _AddAdvanceTourExpenseState extends ConsumerState<AddAdvanceTourExpense> {
               Navigator.pop(context, true);
             } else {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(res?.resultMessage ?? "Failed")),
+                SnackBar(
+                  content: Text(res.resultMessage),
+                ),
               );
             }
           },
           loading: () {},
           error: (e, st) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Submission Failed ❌")),
+              const SnackBar(
+                content: Text("Submission Failed ❌"),
+              ),
             );
           },
         );
       },
     );
+
+    // rest of your build...
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,

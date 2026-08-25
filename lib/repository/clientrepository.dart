@@ -48,17 +48,24 @@ class ClientRepository {
   Future<Versioncheck> getVersionCheckDetails() async {
     final response = await client.get(
       AppEndpoint.versioncheckendpoint,
-      query: {"VersionID": "57"},
+      query: {"VersionID": "58"},
     );
     return Versioncheck.fromJson(response.data);
   }
 
-  Future<Validatelogin> apilogin(String employeeId, String password) async {
+  Future<LoginResponse> apilogin(
+      String employeeId,
+      String password,
+      ) async {
     final response = await client.post(
       AppEndpoint.validateloginendpoint,
-      body: {"EmployeeId": employeeId, "Password": password},
+      body: {
+        "employeeId": employeeId,
+        "password": password,
+      },
     );
-    return Validatelogin.fromJson(response.data);
+
+    return LoginResponse.fromJson(response.data);
   }
 
   Future<List<Demolist>> getdemolist(String schoolLoginId) async {
@@ -157,33 +164,35 @@ class ClientRepository {
   }
 
   Future<List<Managementvideosmodel>> getmanagementvideos(
-    String vimIdUSer,
+    String token,
   ) async {
     final response = await client.get(
       AppEndpoint.managementvideos,
-      query: {"UserId": vimIdUSer},
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
     );
     final List data = response.data;
     return data.map((e) => Managementvideosmodel.fromJson(e)).toList();
   }
 
-  Future<List<Customerdetailsmodel>> getcustomerslist(
-    String VimIdUser,
-    String customerId,
-    String selectedUser,
-  ) async {
-    final response = await client.post(
+  Future<List<Customerdetailsmodel>> getCustomersList(String token) async {
+    final response = await client.get(
       AppEndpoint.customerslist,
-      body: {
-        "idUser": VimIdUser,
-        "customerId": customerId,
-        "selectedUser": selectedUser,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
       },
     );
 
-    final List data = response.data;
+    final Map<String, dynamic> json = response.data;
 
-    return data.map((e) => Customerdetailsmodel.fromJson(e)).toList();
+    final List data = json['data'] ?? [];
+
+    return data
+        .map((e) => Customerdetailsmodel.fromJson(e))
+        .toList();
   }
 
   Future<List<Customerdetailsinfomodelclass>> getcustomerinfo(
@@ -205,10 +214,13 @@ class ClientRepository {
     return data.map((e) => Customerdetailsinfomodelclass.fromJson(e)).toList();
   }
 
-  Future<List<Schooldocuments>> getSchoolDocuments(String vimIDuser) async {
+  Future<List<Schooldocuments>> getSchoolDocuments(String token) async {
     final response = await client.get(
       AppEndpoint.schooldocuments,
-      query: {"UserId": vimIDuser},
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
     );
 
     final List data = response.data;
@@ -228,22 +240,26 @@ class ClientRepository {
   }
 
   Future<List<Localconveyencemodel>> getlocalconveyence(
-    String vimIdUSer,
+    String token,
   ) async {
     final response = await client.get(
       AppEndpoint.localconveyence,
-      query: {"idUser": vimIdUSer},
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
     );
     final List data = response.data;
     return data.map((e) => Localconveyencemodel.fromJson(e)).toList();
   }
 
-  Future<List<Advancetourexpensemodel>> getadvancetourdata(
-    String VimsIdUser,
-  ) async {
+  Future<List<Advancetourexpensemodel>> getadvancetourdata(String token) async {
     final response = await client.get(
       AppEndpoint.getAdvanceTourExpenses,
-      query: {"idUser": VimsIdUser},
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
     );
 
     final List data = response.data;
@@ -262,14 +278,33 @@ class ClientRepository {
     return data.map((e) => Schoolnamemodel.fromJson(e)).toList();
   }
 
-  Future<List<Financialyearmodel>> getfinancialyear() async {
-    final response = await client.get(AppEndpoint.getFinancialyear);
+  Future<List<Financialyearmodel>> getfinancialyear(String token) async {
+    final response = await client.get(
+      AppEndpoint.getFinancialyear,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
+    );
 
-    final List data = response.data;
-
+    final List data = response.data['data']; // was: response.data
     return data.map((e) => Financialyearmodel.fromJson(e)).toList();
   }
+  Future<List<Paymentmodemodel>> getPaymentMode(String token) async {
+    final response = await client.get(
+      AppEndpoint.getPaymentMode,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
+    );
 
+    final List data = response.data['data'] ?? [];
+
+    return data
+        .map((e) => Paymentmodemodel.fromJson(e))
+        .toList();
+  }
   Future<List<Invoicemodel>> getinvoicevalue(String customerId) async {
     final response = await client.get(
       AppEndpoint.getInvoiceValue,
@@ -281,15 +316,16 @@ class ClientRepository {
     return data.map((e) => Invoicemodel.fromJson(e)).toList();
   }
 
-  Future<List<PoListModel>> getpolist(String cusId) async {
+  Future<PurchaseOrderResponse> getPoList(String customerId, String token) async {
     final response = await client.get(
-      AppEndpoint.getponummerbycustomer,
-      query: {"cusId": cusId},
+      AppEndpoint.getPoNumberByCustomer(customerId),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
     );
 
-    final List data = response.data;
-
-    return data.map((e) => PoListModel.fromJson(e)).toList();
+    return PurchaseOrderResponse.fromJson(response.data);
   }
 
   Future<List<PoDetailsModel>> getpodetails(
@@ -350,10 +386,13 @@ class ClientRepository {
     return data.map((e) => Salespersonmodel.fromJson(e)).toList();
   }
 
-  Future<List<Reportingmembersmodel>> getreportingmembers(String IdUser) async {
+  Future<List<Reportingmembersmodel>> getreportingmembers(String token) async {
     final response = await client.get(
       AppEndpoint.getreportingmembers,
-      query: {"UserId": IdUser},
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
     );
 
     final List data = response.data;
@@ -362,11 +401,14 @@ class ClientRepository {
   }
 
   Future<List<Overalltripdetailsmodel>> getoveralldetails(
-    String idMember,
+    String token, String? userId,
   ) async {
     final response = await client.get(
-      AppEndpoint.getOverallDetails,
-      query: {"UserId": idMember},
+      AppEndpoint.getOverallDetails(userId ?? ""),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
     );
 
     final List data = response.data;
@@ -441,7 +483,7 @@ class ClientRepository {
       ) async {
     final response = await client.post(
       AppEndpoint.updateDailyVisit,
-      body: visitData, // ✅ passes List directly, no wrapping needed
+      body: visitData,
     );
 
     return List<Map<String, dynamic>>.from(
@@ -450,22 +492,25 @@ class ClientRepository {
   }
 
   Future<TourExpenseResponse?> submitTourExpense(
-    TourExpenseRequest request,
-  ) async {
+      TourExpenseRequest request) async {
     try {
       final response = await client.post(
         AppEndpoint.addTourexpence,
-        body: request.toJson(),
-      );
+        body: request.toJson());
+
       final data = response.data;
+
       if (data is List && data.isNotEmpty) {
         return TourExpenseResponse.fromJson(data[0]);
-      } else if (data is Map<String, dynamic>) {
+      }
+
+      if (data is Map<String, dynamic>) {
         return TourExpenseResponse.fromJson(data);
       }
+
       return null;
     } catch (e) {
-      print("ERROR: $e");
+      print("submitTourExpense ERROR: $e");
       return null;
     }
   }

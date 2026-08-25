@@ -11,12 +11,20 @@ import '../utils/routes/routes_name.dart';
 class HeaderToolbar extends ConsumerWidget {
   const HeaderToolbar({super.key});
 
-  String getInitials(String name) {
-    final words = name.trim().split(" ");
-    if (words.length >= 2) {
-      return (words.first[0] + words.last[0]).toUpperCase();
+  String getInitials(String? name) {
+    if (name == null || name.trim().isEmpty) {
+      return "?";
     }
-    return words.first[0].toUpperCase();
+
+    final words = name.trim().split(RegExp(r'\s+'));
+
+    if (words.length == 1) {
+      return words.first.isNotEmpty
+          ? words.first[0].toUpperCase()
+          : "?";
+    }
+
+    return "${words.first[0]}${words.last[0]}".toUpperCase();
   }
 
   void confirmationLogout(BuildContext context) {

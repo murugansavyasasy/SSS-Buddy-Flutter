@@ -7,10 +7,10 @@ class Advancetourexpensemodel {
   String TourId;
   String Date;
   String TourPlace;
-  String PaidAmount;
-  String BalanceAmount;
+  int PaidAmount;
+  int BalanceAmount;
   String Description;
-  String TotalTourExpense;
+  int TotalTourExpense;
   int isApproved;
   int isClaimed;
   int result;
@@ -51,34 +51,43 @@ class Advancetourexpensemodel {
       TourId: json["TourId"] ?? "",
       Date: json["Date"] ?? "",
       TourPlace: json["TourPlace"] ?? "",
-      PaidAmount: json["PaidAmount"] ?? "",
-      BalanceAmount: json["BalanceAmount"] ?? "",
+      PaidAmount: json["PaidAmount"] ?? 0,
+      BalanceAmount: json["BalanceAmount"] ?? 0,
       Description: json["Description"] ?? "",
-      TotalTourExpense: json["TotalTourExpense"] ?? "",
-      isApproved: json["isApproved"] ?? "",
-      isClaimed: json["isClaimed"] ?? "",
-      result: json["result"] ?? "",
+      TotalTourExpense: json["TotalTourExpense"] ?? 0,
+      isApproved: json["isApproved"] ?? 0,
+      isClaimed: json["isClaimed"] ?? 0,
+      result: json["result"] ?? 0,
       resultMessage: json["resultMessage"] ?? "",
       Status: json["Status"] ?? "",
-      IsTeamHeadVerfied: json["IsTeamHeadVerfied"] ?? "",
-      FinalApproval: json["FinalApproval"] ?? "",
+      IsTeamHeadVerfied: json["IsTeamHeadVerfied"] ?? 0,
+      FinalApproval: json["FinalApproval"] ?? 0,
     );
   }
 }
+
 class ButtonVisibilityHelper {
   final Advancetourexpensemodel item;
   final String directorLogin;
 
-  ButtonVisibilityHelper(this.item, this.directorLogin);
+  ButtonVisibilityHelper(
+      this.item,
+      this.directorLogin,
+      );
 
   bool get canEditDelete {
+    // Director + Pending approval
     if (item.isApproved == 0 && directorLogin == "3") {
       return false;
     }
+
+    // Non-director + Pending approval
+    // OR rejected
     if ((directorLogin != "3" && item.isApproved == 0) ||
         item.isApproved == 2) {
       return true;
     }
+
     return false;
   }
 

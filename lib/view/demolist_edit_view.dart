@@ -197,7 +197,7 @@ class _DemolistEditViewState extends ConsumerState<DemolistEditView> {
 
   void _onUpdate() async {
     final userAsync = ref.read(userSessionProvider);
-    final loginId = userAsync.value?.VimsIdUser ?? '';
+    final loginId = userAsync.value?.userId.toString() ?? '';
 
     if (loginId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(

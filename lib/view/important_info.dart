@@ -116,6 +116,13 @@ class ImportantInfoScreen extends ConsumerWidget {
         url: "https://play.google.com/store/apps/details?id=vs.ca.letsreach",
         isApple: false,
       ),
+      AppStoreLink(
+        appName: "Let's Reach",
+        storeName: "iOS",
+        storeLabel: "App Store",
+        url: "https://apps.apple.com/es/app/lets-reach/id6796220074",
+        isApple: true,
+      ),
     ].where((app) => app.url.isNotEmpty).toList();
   }
   Widget _buildContent(info) {

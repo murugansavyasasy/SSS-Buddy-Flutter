@@ -2,13 +2,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../auth/model/PO_listModal.dart';
 import '../provider/app_providers.dart';
+import 'login_view_model.dart';
 
-class PoListViewmodal extends AsyncNotifier<List<PoListModel>> {
-  List<PoListModel> _all = [];
+class PoListViewmodal extends AsyncNotifier<PurchaseOrderData> {
+  PurchaseOrderData _all = PurchaseOrderData.fromJson({});
 
   @override
-  Future<List<PoListModel>> build() async {
-    return [];
+  Future<PurchaseOrderData> build() async {
+    return PurchaseOrderData.fromJson({});
   }
 
   void filter(String query) {
@@ -19,11 +20,18 @@ class PoListViewmodal extends AsyncNotifier<List<PoListModel>> {
 
     final lower = query.toLowerCase();
 
+    final filteredOrders = _all.purchaseOrders.where((item) {
+      return item.poNumber.toLowerCase().contains(lower) ||
+          item.id.toString().contains(lower);
+    }).toList();
+
     state = AsyncData(
-      _all.where((item) {
-        return item.nameValue.toLowerCase().contains(lower) ||
-            item.idValue.toString().contains(lower);
-      }).toList(),
+      PurchaseOrderData(
+        customer: _all.customer,
+        purchaseOrders: filteredOrders,
+        pendingInvoices: _all.pendingInvoices,
+        pendingTotal: _all.pendingTotal,
+      ),
     );
   }
 
@@ -31,19 +39,27 @@ class PoListViewmodal extends AsyncNotifier<List<PoListModel>> {
     state = const AsyncLoading();
 
     try {
+      final loginState = ref.read(loginProvider);
+      final loginData = loginState.value;
+
+      if (loginData == null) {
+        state = AsyncError("User not logged in", StackTrace.current);
+        return;
+      }
+
+      final token = loginData.token;
+
       final repo = ref.read(repositoryProvider);
+      final response = await repo.getPoList(customerId.toString(), token);
+      _all = response.data;
 
-      final response =
-      await repo.getpolist(customerId.toString());
-
-      _all = response;
-
-      state = AsyncData(response);
+      state = AsyncData(_all);
     } catch (e, s) {
       state = AsyncError(e, s);
     }
   }
 }
+
 final PoListviewProvider =
-AsyncNotifierProvider<PoListViewmodal, List<PoListModel>>(
+AsyncNotifierProvider<PoListViewmodal, PurchaseOrderData>(
         () => PoListViewmodal());

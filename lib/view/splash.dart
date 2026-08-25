@@ -31,6 +31,7 @@ class Splash extends ConsumerWidget {
               version.IsForceUpdateRequired == 0) {
             _goToLogin(context);
           } else {
+            _goToLogin(context);
             _showUpdateDialog(
               context,
               version.IsVersionUpdateAvailable,
@@ -39,11 +40,14 @@ class Splash extends ConsumerWidget {
           }
         });
 
-        return const Scaffold(
+        return Scaffold(
           backgroundColor: Colors.white,
           body: Center(
-            child: Image(
-              image: AssetImage("assets/images/buddy_logo.png"),
+            child: Image.asset(
+              "assets/images/logo.png",
+              width: 160,
+              height: 160,
+              fit: BoxFit.contain,
             ),
           ),
         );
@@ -101,6 +105,38 @@ class Splash extends ConsumerWidget {
           ],
         );
       },
+    );
+  }
+}
+// class Splash extends ConsumerStatefulWidget {
+//   const Splash({super.key});
+//
+//   @override
+//   ConsumerState<Splash> createState() => _SplashState();
+// }
+
+class _SplashState extends ConsumerState<Splash> {
+  @override
+  void initState() {
+    super.initState();
+
+    Future.delayed(const Duration(seconds: 2), () {
+      Navigator.pushReplacementNamed(context, RoutesName.login);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Center(
+        child: Image.asset(
+          "assets/images/logo.png",
+          width: 160,
+          height: 160,
+          fit: BoxFit.contain,
+        ),
+      ),
     );
   }
 }

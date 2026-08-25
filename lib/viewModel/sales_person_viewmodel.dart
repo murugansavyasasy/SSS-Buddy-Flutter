@@ -19,7 +19,7 @@ class SalesPersonViewmodel extends AsyncNotifier<List<Salespersonmodel>>{
 
     if (loginData == null) return [];
 
-    final IdUser = loginData.VimsIdUser;
+    final IdUser = loginData.userId.toString();
 
     final repo = ref.read(repositoryProvider);
     final response = await repo.getsalesperson(IdUser);

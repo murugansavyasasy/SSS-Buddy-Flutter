@@ -1,11 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../auth/model/CustomerDetailsInfoModelClass.dart';
+import '../auth/model/CustomerdetailsModel.dart';
 import 'AppInfoField.dart';
 
 class ContactSection extends StatelessWidget {
-  final Customerdetailsinfomodelclass item;
+  final Customerdetailsmodel item;
   const ContactSection({required this.item});
 
   @override
@@ -13,17 +13,18 @@ class ContactSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        AppInfoField(label: "Contact Person", value: item.contactPerson),
+        AppInfoField(
+            label: "Contact Person", value: item.contactPerson ?? ""),
         const SizedBox(height: 12),
         AppInfoField(
           label: "Contact Number",
-          value: item.contactNumber,
+          value: item.contactNumber ?? "",
           prefixIcon: Icons.phone_outlined,
         ),
         const SizedBox(height: 12),
         AppInfoField(
           label: "Email ID",
-          value: item.mailId,
+          value: item.mailId ?? "",
           prefixIcon: Icons.email_outlined,
         ),
       ],

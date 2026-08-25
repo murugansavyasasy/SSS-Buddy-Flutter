@@ -12,6 +12,7 @@ import 'package:sssbuddy/viewModel/schollname_dd_viewmodel.dart';
 import 'package:sssbuddy/viewModel/record_collection_payment_viewmodel.dart';
 
 import '../Values/Colors/app_colors.dart';
+import '../auth/model/FinancialYearModel.dart';
 import '../components/DropdownError.dart';
 import '../components/DropdownSkeleton.dart';
 import '../components/payment_forms.dart';
@@ -77,6 +78,9 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
   String? _pendingAmount;
 
   PaymentMode selectedPaymentMode = PaymentMode.none;
+  // Actual value returned by the payment-mode API for the selected mode —
+  // this is what gets sent to the server, instead of the old hardcoded apiValue.
+  String? selectedPaymentModeApiValue;
 
   // ── Cash controllers ──────────────────────────────────────────────────────
   final _cashReceivedOnCtrl = TextEditingController();
@@ -104,8 +108,6 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
   // ── Image ─────────────────────────────────────────────────────────────────
   File? _selectedImage;
   final ImagePicker _imagePicker = ImagePicker();
-
-  static const _paymentModes = ['Cash', 'Cheque', 'NEFT', 'PDC'];
 
   // ── Today's date string for ReceivedDate field ────────────────────────────
   String get _todayFormatted => DateFormat('dd/MM/yyyy').format(DateTime.now());
@@ -157,8 +159,8 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
 
     final schoolNotSelected =
         selectedSchoolCusId == null ||
-        selectedSchoolCusId!.isEmpty ||
-        selectedSchoolCusId == 'null';
+            selectedSchoolCusId!.isEmpty ||
+            selectedSchoolCusId == 'null';
 
     if (schoolNotSelected) {
       _showAlert('Select the school name');
@@ -330,7 +332,9 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
       'InvoiceNumber': _invoiceNumber ?? 'No Invoices Found',
       'Received': _amountController.text,
       'ReceivedDate': _todayFormatted,
-      'PaymentMode': selectedPaymentMode.apiValue,
+      // Now uses the value returned by the payment-mode API instead of the
+      // old hardcoded PaymentMode.apiValue.
+      'PaymentMode': selectedPaymentModeApiValue ?? selectedPaymentMode.apiValue,
       'CreatedBy': '',
       'CashRecdDate': cashreceiveddate,
       'ChequeDate': chequedate,
@@ -490,7 +494,7 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
     try {
       final payload = _buildPayload();
       final loginState = await ref.read(loginProvider.future);
-      final userId = loginState?.SchoolLoginId?.toString();
+      final userId = loginState?.employeeId.toString();
 
       if (userId == null || userId.isEmpty) {
         _showAlert('User login details not found');
@@ -539,6 +543,7 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
     final schoolnameAsync = ref.watch(schoolnameProvider);
     final financialAsync = ref.watch(financialyearProvider);
     final invoiceAsync = ref.watch(invoiceProvider);
+    final paymentModeAsync = ref.watch(paymentModeProvider);
     final submitState = ref.watch(createPaymentProvider);
 
     final bool isSubmitting = submitState.isLoading;
@@ -578,7 +583,7 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
 
                       schoolnameAsync.when(
                         loading: () =>
-                            const DropdownSkeleton(label: "Select School"),
+                        const DropdownSkeleton(label: "Select School"),
                         error: (e, _) => DropdownError(
                           label: "Select School",
                           onRetry: () =>
@@ -595,7 +600,7 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
                             if (v == null) return;
                             try {
                               final match = schools.firstWhere(
-                                (e) => e.CustomerName == v,
+                                    (e) => e.CustomerName == v,
                               );
                               _onSchoolSelected(
                                 match.CustomerName,
@@ -614,34 +619,40 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
                         loading: () => const DropdownSkeleton(
                           label: "Select Financial Year",
                         ),
+
                         error: (e, _) => DropdownError(
                           label: "Select Financial Year",
-                          onRetry: () => ref
-                              .read(financialyearProvider.notifier)
-                              .refresh(),
-                        ),
-                        data: (years) => SearchableDropdown<dynamic>(
-                          label: "Select Financial Year",
-                          hint: "Choose a year",
-                          value: selectedFinancialYearName,
-                          items: years,
-                          itemLabel: (e) => e.nameValue ?? "",
-                          itemValue: (e) => e.nameValue ?? "",
-                          onChanged: (v) {
-                            if (v == null) return;
-                            try {
-                              final match = years.firstWhere(
-                                (e) => e.nameValue == v,
-                              );
-                              _onFinancialYearChanged(
-                                match.nameValue,
-                                match.idValue?.toString() ?? '0',
-                              );
-                            } catch (_) {
-                              _onFinancialYearChanged(v, '0');
-                            }
+                          onRetry: () {
+                            ref.read(financialyearProvider.notifier).refresh();
                           },
                         ),
+
+                        data: (years) {
+                          return SearchableDropdown<Financialyearmodel>(
+                            label: "Select Financial Year",
+                            hint: "Choose a year",
+                            value: selectedFinancialYearName,
+
+                            items: years,
+
+                            itemLabel: (e) => e.label,
+
+                            itemValue: (e) => e.label,
+
+                            onChanged: (value) {
+                              if (value == null) return;
+
+                              final selectedYear = years.firstWhere(
+                                    (e) => e.label == value,
+                              );
+
+                              _onFinancialYearChanged(
+                                selectedYear.label,
+                                selectedYear.id.toString(),
+                              );
+                            },
+                          );
+                        },
                       ),
 
                       const SizedBox(height: 24),
@@ -654,7 +665,7 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
 
                         invoiceAsync.when(
                           loading: () =>
-                              const DropdownSkeleton(label: "Invoice Details"),
+                          const DropdownSkeleton(label: "Invoice Details"),
                           error: (e, _) => DropdownError(
                             label: "Invoice Details",
                             onRetry: () {
@@ -668,7 +679,7 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
                           data: (invoices) {
                             if (invoices.isEmpty) {
                               WidgetsBinding.instance.addPostFrameCallback(
-                                (_) => setState(() {
+                                    (_) => setState(() {
                                   _invoiceId = null;
                                   _invoiceNumber = null;
                                 }),
@@ -679,14 +690,14 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
                             }
 
                             WidgetsBinding.instance.addPostFrameCallback(
-                              (_) => setState(() {
+                                  (_) => setState(() {
                                 _invoiceId =
                                     invoices.first.InvoiceId?.toString() ?? '0';
                                 _invoiceNumber =
                                     invoices.first.InvoiceNumber ?? '';
                                 _pendingAmount =
                                     invoices.first.PendingAmount?.toString() ??
-                                    '0';
+                                        '0';
                               }),
                             );
 
@@ -724,16 +735,48 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
                       const _SectionLabel(label: "Payment Details"),
                       const SizedBox(height: 12),
 
-                      SearchableDropdown<String>(
-                        label: "Mode of Payment",
-                        hint: "Select payment mode",
-                        value: selectedPaymentMode == PaymentMode.none
-                            ? null
-                            : selectedPaymentMode.label,
-                        items: _paymentModes,
-                        itemLabel: (e) => e,
-                        itemValue: (e) => e,
-                        onChanged: _onPaymentModeChanged,
+                      paymentModeAsync.when(
+                        loading: () =>
+                        const DropdownSkeleton(label: "Mode of Payment"),
+                        error: (e, _) => DropdownError(
+                          label: "Mode of Payment",
+                          onRetry: () =>
+                              ref.read(paymentModeProvider.notifier).refresh(),
+                        ),
+                        data: (modes) {
+                          if (modes.isEmpty) {
+                            return const _InactiveDropdownHint(
+                              hint: "No payment modes found",
+                            );
+                          }
+                          return SearchableDropdown<String>(
+                            label: "Mode of Payment",
+                            hint: "Select payment mode",
+                            value: selectedPaymentModeApiValue,
+                            items: modes.map((e) => e.value.toString()).toList(),
+                            itemLabel: (v) => modes
+                                .firstWhere(
+                                  (m) => m.value.toString() == v,
+                              orElse: () => modes.first,
+                            )
+                                .label,
+                            itemValue: (v) => v,
+                            onChanged: (v) {
+                              if (v == null) return;
+                              final match = modes.firstWhere(
+                                    (m) => m.value.toString() == v,
+                                orElse: () => modes.first,
+                              );
+                              setState(() {
+                                selectedPaymentModeApiValue =
+                                    match.value.toString();
+                              });
+                              // Keeps the existing Cash/Cheque/NEFT/PDC UI-switch
+                              // logic working unchanged, driven off the API's label.
+                              _onPaymentModeChanged(match.label);
+                            },
+                          );
+                        },
                       ),
 
                       if (selectedPaymentMode != PaymentMode.none) ...[
@@ -772,31 +815,31 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
                           ),
                           child: isSubmitting
                               ? const SizedBox(
-                                  width: 22,
-                                  height: 22,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2.5,
-                                  ),
-                                )
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
+                            ),
+                          )
                               : const Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.check_circle_outline_rounded,
-                                      size: 20,
-                                    ),
-                                    SizedBox(width: 8),
-                                    Text(
-                                      "Submit Collection",
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: 0.3,
-                                      ),
-                                    ),
-                                  ],
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.check_circle_outline_rounded,
+                                size: 20,
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                "Submit Collection",
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.3,
                                 ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],

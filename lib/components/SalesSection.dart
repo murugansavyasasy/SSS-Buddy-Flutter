@@ -1,15 +1,15 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../auth/model/CustomerDetailsInfoModelClass.dart';
+import '../auth/model/CustomerdetailsModel.dart';
 
 class SalesSection extends StatelessWidget {
-  final Customerdetailsinfomodelclass item;
+  final Customerdetailsmodel item;
   const SalesSection({required this.item});
 
   @override
   Widget build(BuildContext context) {
-    final name = item.salesPersonName;
+    final name = item.salesPersonName ?? '';
     final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
 
     return Container(

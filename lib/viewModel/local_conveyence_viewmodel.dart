@@ -35,11 +35,9 @@ class LocalConveyenceViewmodel
     final loginData = loginState.value;
 
     if (loginData == null) return [];
-
-    final vimIdUSer = loginData.VimsIdUser;
     final repo = ref.read(repositoryProvider);
 
-    final response = await repo.getlocalconveyence(vimIdUSer);
+    final response = await repo.getlocalconveyence(loginData.token);
 
     return response;
   }

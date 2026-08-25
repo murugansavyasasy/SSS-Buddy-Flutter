@@ -53,6 +53,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  String _extractErrorMessage(Object? error) {
+    if (error == null) return "Something went wrong. Please try again.";
+    final raw = error.toString();
+    // Strip the "Exception: " prefix Dart adds to thrown Exceptions
+    // so the user sees a clean message instead of the Dart type name.
+    return raw.startsWith("Exception: ")
+        ? raw.substring("Exception: ".length)
+        : raw;
+  }
+
   @override
   Widget build(BuildContext context) {
     final loginState = ref.watch(loginProvider);
@@ -137,7 +147,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 value: rememberMe,
                                 onChanged: (value) {
                                   ref.read(rememberMeProvider.notifier).state =
-                                      value!;
+                                  value!;
                                 },
                               ),
                               const Text(
@@ -179,59 +189,59 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     onPressed: loginState.isLoading
                                         ? null
                                         : () async {
-                                            if (_formKey.currentState!
-                                                .validate()) {
-                                              final success = await ref
-                                                  .read(loginProvider.notifier)
-                                                  .login(
-                                                    emailController.text,
-                                                    passwordController.text,
-                                                    rememberMe,
-                                                  );
+                                      if (_formKey.currentState!
+                                          .validate()) {
+                                        final success = await ref
+                                            .read(loginProvider.notifier)
+                                            .login(
+                                          emailController.text,
+                                          passwordController.text,
+                                          rememberMe,
+                                        );
 
-                                              if (success && context.mounted) {
-                                                Navigator.pushReplacementNamed(
-                                                  context,
-                                                  RoutesName.dashboard,
-                                                );
-                                              }
+                                        if (success && context.mounted) {
+                                          Navigator.pushReplacementNamed(
+                                            context,
+                                            RoutesName.dashboard,
+                                          );
+                                        }
 
-                                              if (!success && context.mounted) {
-                                                final error = ref
-                                                    .read(loginProvider)
-                                                    .error;
+                                        if (!success && context.mounted) {
+                                          final error = ref
+                                              .read(loginProvider)
+                                              .error;
 
-                                                if (error != null) {
-                                                  ScaffoldMessenger.of(
-                                                    context,
-                                                  ).showSnackBar(
-                                                    SnackBar(
-                                                      content: Text(
-                                                        error.toString(),
-                                                      ),
-                                                    ),
-                                                  );
-                                                }
-                                              }
-                                            }
-                                          },
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                _extractErrorMessage(error),
+                                              ),
+                                              backgroundColor:
+                                              Colors.red[700],
+                                            ),
+                                          );
+                                        }
+                                      }
+                                    },
 
                                     child: loginState.isLoading
                                         ? const SizedBox(
-                                            height: 18,
-                                            width: 18,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              color: Colors.white,
-                                            ),
-                                          )
+                                      height: 18,
+                                      width: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
                                         : const Text(
-                                            Strings.login,
-                                            style: TextStyle(
-                                              fontSize: 15,
-                                              color: Colors.white,
-                                            ),
-                                          ),
+                                      Strings.login,
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        color: Colors.white,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),

@@ -195,7 +195,7 @@ class TodayVisitViewmodel extends AsyncNotifier<TripState?> {
         position.latitude.toString(),
         position.longitude.toString(),
         type,
-        loginData.VimsIdUser.toString(),
+        loginData.userId.toString(),
       );
 
       print("ManageTrip Response => $response");
@@ -269,7 +269,7 @@ class TodayVisitViewmodel extends AsyncNotifier<TripState?> {
 
       final visitData = [
         {
-          "login_id": loginData.VimsIdUser,
+          "login_id": loginData.userId.toString(),
           "school_name": schoolName,
           "area": area,
           "district": district,
@@ -288,7 +288,7 @@ class TodayVisitViewmodel extends AsyncNotifier<TripState?> {
 
       // Safe access — no implicit dynamic cast
       if (response.isEmpty) return false;
-      return response.first["result"] == "1";
+      return response.first["result"].toString() == "1";
 
     } on Exception catch (e, st) {
       state = AsyncError(e, st);
