@@ -262,28 +262,28 @@ class TourExpenseCard extends StatelessWidget {
                       const SizedBox(width: 8),
                     ],
 
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => AdavanceTourExpenseDetail(item: item),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.info_outline_rounded, size: 16),
-                        label: const Text("Details", style: TextStyle(fontSize: 12)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                      ),
-                    ),
+                    // Expanded(
+                    //   child: ElevatedButton.icon(
+                    //     onPressed: () {
+                    //       Navigator.of(context).push(
+                    //         MaterialPageRoute(
+                    //           builder: (_) => AdavanceTourExpenseDetail(item: item),
+                    //         ),
+                    //       );
+                    //     },
+                    //     icon: const Icon(Icons.info_outline_rounded, size: 16),
+                    //     label: const Text("Details", style: TextStyle(fontSize: 12)),
+                    //     style: ElevatedButton.styleFrom(
+                    //       backgroundColor: AppColors.primary,
+                    //       foregroundColor: Colors.white,
+                    //       padding: const EdgeInsets.symmetric(vertical: 10),
+                    //       elevation: 0,
+                    //       shape: RoundedRectangleBorder(
+                    //         borderRadius: BorderRadius.circular(8),
+                    //       ),
+                    //     ),
+                    //   ),
+                    // ),
                   ],
                 ),
 

@@ -1,4 +1,7 @@
+import 'dart:convert';
 import 'dart:math' as math;
+
+import 'package:http/http.dart' as http;
 
 class Overalltripdetailsmodel {
   int status;
@@ -12,7 +15,9 @@ class Overalltripdetailsmodel {
   String? end_latitude;
   String? end_longitude;
   int is_closed;
+
   List<VisitDetail> visit_details;
+
   double totalDistanceKm;
 
   Overalltripdetailsmodel({
@@ -31,39 +36,61 @@ class Overalltripdetailsmodel {
     required this.totalDistanceKm,
   });
 
-  factory Overalltripdetailsmodel.fromJson(Map<String, dynamic> json) {
-    final visits = (json["visit_details"] as List<dynamic>? ?? [])
-        .map((item) => VisitDetail.fromJson(item as Map<String, dynamic>))
+  factory Overalltripdetailsmodel.fromJson(
+      Map<String, dynamic> json,
+      ) {
+    final visits =
+    (json["visit_details"] as List<dynamic>? ?? [])
+        .map(
+          (item) => VisitDetail.fromJson(
+        item as Map<String, dynamic>,
+      ),
+    )
         .toList();
 
     return Overalltripdetailsmodel(
       status: json["status"] ?? 0,
-      message: json["message"] ?? '',
+      message: json["message"]?.toString() ?? '',
       trip_id: json["trip_id"] ?? 0,
-      username: json["username"] ?? '',
-      start_time: json["start_time"] ?? '',
-      start_latitude: json["start_latitude"] ?? '',
-      start_longitude: json["start_longitude"] ?? '',
-      end_time: json["end_time"],
-      end_latitude: json["end_latitude"],
-      end_longitude: json["end_longitude"],
+      username: json["username"]?.toString() ?? '',
+      start_time: json["start_time"]?.toString() ?? '',
+
+      start_latitude:
+      json["start_latitude"]?.toString() ?? '',
+
+      start_longitude:
+      json["start_longitude"]?.toString() ?? '',
+
+      end_time:
+      json["end_time"]?.toString(),
+
+      end_latitude:
+      json["end_latitude"]?.toString(),
+
+      end_longitude:
+      json["end_longitude"]?.toString(),
+
       is_closed: json["is_closed"] ?? 0,
+
       visit_details: visits,
-      totalDistanceKm: DistanceCalculator.totalApproximateRoadDistance(
+
+      totalDistanceKm:
+      DistanceCalculator.totalApproximateRoadDistance(
         _buildPoints(
-          json["start_latitude"] ?? '',
-          json["start_longitude"] ?? '',
-          json["end_latitude"],
-          json["end_longitude"],
+          json["start_latitude"]?.toString() ?? '',
+          json["start_longitude"]?.toString() ?? '',
+          json["end_latitude"]?.toString(),
+          json["end_longitude"]?.toString(),
           visits,
         ),
       ),
     );
   }
 
-  /// Mirrors the Android adapter's point-building logic exactly:
-  /// start -> each visit (if lat & lng both present) -> end (if present).
-  /// No sanitization — matches TripDetailsAdapter.onBindViewHolder as-is.
+  // ============================================================
+  // BUILD DISTANCE POINTS
+  // ============================================================
+
   static List<List<double>> _buildPoints(
       String startLatStr,
       String startLonStr,
@@ -73,39 +100,71 @@ class Overalltripdetailsmodel {
       ) {
     final List<List<double>> points = [];
 
+    // START
     try {
-      final startLat = DistanceCalculator.parseCoordinate(startLatStr);
-      final startLon = DistanceCalculator.parseCoordinate(startLonStr);
-      points.add([startLat, startLon]);
-    } catch (e) {
-      return []; // matches Android: if start missing, no distance shown
+      final startLat =
+      DistanceCalculator.parseCoordinate(startLatStr);
+
+      final startLon =
+      DistanceCalculator.parseCoordinate(startLonStr);
+
+      points.add([
+        startLat,
+        startLon,
+      ]);
+    } catch (_) {
+      return [];
     }
 
-    for (var visit in visits) {
+    // VISITS
+    for (final visit in visits) {
       if (visit.school_latitude != null &&
           visit.school_longitude != null &&
           visit.school_latitude!.isNotEmpty &&
           visit.school_longitude!.isNotEmpty) {
         try {
-          final lat = DistanceCalculator.parseCoordinate(visit.school_latitude!);
-          final lon = DistanceCalculator.parseCoordinate(visit.school_longitude!);
-          points.add([lat, lon]);
-        } catch (e) {
-          // skip invalid visit point, same as Android silently skipping
+          final lat =
+          DistanceCalculator.parseCoordinate(
+            visit.school_latitude!,
+          );
+
+          final lon =
+          DistanceCalculator.parseCoordinate(
+            visit.school_longitude!,
+          );
+
+          points.add([
+            lat,
+            lon,
+          ]);
+        } catch (_) {
+          // Invalid coordinate
         }
       }
     }
 
+    // END
     if (endLatStr != null &&
         endLonStr != null &&
         endLatStr.isNotEmpty &&
         endLonStr.isNotEmpty) {
       try {
-        final endLat = DistanceCalculator.parseCoordinate(endLatStr);
-        final endLon = DistanceCalculator.parseCoordinate(endLonStr);
-        points.add([endLat, endLon]);
-      } catch (e) {
-        // skip invalid end point
+        final endLat =
+        DistanceCalculator.parseCoordinate(
+          endLatStr,
+        );
+
+        final endLon =
+        DistanceCalculator.parseCoordinate(
+          endLonStr,
+        );
+
+        points.add([
+          endLat,
+          endLon,
+        ]);
+      } catch (_) {
+        // Invalid end coordinate
       }
     }
 
@@ -113,13 +172,22 @@ class Overalltripdetailsmodel {
   }
 }
 
+
+// ============================================================
+// VISIT DETAIL
+// ============================================================
+
 class VisitDetail {
   String? school_latitude;
   String? school_longitude;
+
   String? school_name;
   String? person_name;
   String? reason_of_visit;
   String? remarks;
+
+  // Reverse geocoded address
+  String? address;
 
   VisitDetail({
     this.school_latitude,
@@ -128,80 +196,299 @@ class VisitDetail {
     this.person_name,
     this.reason_of_visit,
     this.remarks,
+    this.address,
   });
 
-  factory VisitDetail.fromJson(Map<String, dynamic> json) {
+  factory VisitDetail.fromJson(
+      Map<String, dynamic> json,
+      ) {
     return VisitDetail(
-      school_latitude: json["school_latitude"] as String?,
-      school_longitude: json["school_longitude"] as String?,
-      school_name: json["school_name"] as String?,
-      person_name: json["person_name"] as String?,
-      reason_of_visit: json["reason_of_visit"] as String?,
-      remarks: json["remarks"] as String?,
+      school_latitude:
+      json["school_latitude"]?.toString(),
+
+      school_longitude:
+      json["school_longitude"]?.toString(),
+
+      school_name:
+      json["school_name"]?.toString(),
+
+      person_name:
+      json["person_name"]?.toString(),
+
+      reason_of_visit:
+      json["reason_of_visit"]?.toString(),
+
+      remarks:
+      json["remarks"]?.toString(),
+
+      address: null,
     );
+  }
+
+  double? get latitude {
+    if (school_latitude == null ||
+        school_latitude!.trim().isEmpty) {
+      return null;
+    }
+
+    try {
+      return DistanceCalculator.parseCoordinate(
+        school_latitude!,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  double? get longitude {
+    if (school_longitude == null ||
+        school_longitude!.trim().isEmpty) {
+      return null;
+    }
+
+    try {
+      return DistanceCalculator.parseCoordinate(
+        school_longitude!,
+      );
+    } catch (_) {
+      return null;
+    }
   }
 }
 
+
+// ============================================================
+// DISTANCE CALCULATOR
+// ============================================================
+
 class DistanceCalculator {
+
   static double distanceBetween(
-      double lat1, double lon1, double lat2, double lon2) {
+      double lat1,
+      double lon1,
+      double lat2,
+      double lon2,
+      ) {
     const double R = 6371e3;
-    final phi1 = _toRadians(lat1);
-    final phi2 = _toRadians(lat2);
-    final deltaPhi = _toRadians(lat2 - lat1);
-    final deltaLambda = _toRadians(lon2 - lon1);
 
-    final a = math.sin(deltaPhi / 2) * math.sin(deltaPhi / 2) +
-        math.cos(phi1) *
-            math.cos(phi2) *
-            math.sin(deltaLambda / 2) *
-            math.sin(deltaLambda / 2);
+    final phi1 =
+    _toRadians(lat1);
 
-    final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+    final phi2 =
+    _toRadians(lat2);
+
+    final deltaPhi =
+    _toRadians(lat2 - lat1);
+
+    final deltaLambda =
+    _toRadians(lon2 - lon1);
+
+    final a =
+        math.sin(deltaPhi / 2) *
+            math.sin(deltaPhi / 2) +
+            math.cos(phi1) *
+                math.cos(phi2) *
+                math.sin(deltaLambda / 2) *
+                math.sin(deltaLambda / 2);
+
+    final c =
+        2 *
+            math.atan2(
+              math.sqrt(a),
+              math.sqrt(1 - a),
+            );
+
     return R * c;
   }
 
-  static double totalApproximateRoadDistance(List<List<double>> points) {
-    if (points.length < 2) return 0.0;
-
-    double totalDistance = 0.0;
-    for (int i = 0; i < points.length - 1; i++) {
-      final p1 = points[i];
-      final p2 = points[i + 1];
-      totalDistance += distanceBetween(p1[0], p1[1], p2[0], p2[1]);
+  static double totalApproximateRoadDistance(
+      List<List<double>> points,
+      ) {
+    if (points.length < 2) {
+      return 0.0;
     }
 
-    final distanceKm = totalDistance / 1000.0;
+    double totalDistance = 0;
+
+    for (int i = 0;
+    i < points.length - 1;
+    i++) {
+
+      final p1 = points[i];
+      final p2 = points[i + 1];
+
+      totalDistance += distanceBetween(
+        p1[0],
+        p1[1],
+        p2[0],
+        p2[1],
+      );
+    }
+
+    final distanceKm =
+        totalDistance / 1000.0;
+
+    // Approximate road distance
     const double roadMultiplier = 1.3;
+
     return distanceKm * roadMultiplier;
   }
 
-  static double parseCoordinate(String coord) {
-    if (coord.isEmpty) {
-      throw ArgumentError("Coordinate is null or empty");
+  static double parseCoordinate(
+      String coord,
+      ) {
+    if (coord.trim().isEmpty) {
+      throw ArgumentError(
+        "Coordinate is null or empty",
+      );
     }
+
     coord = coord.trim();
 
-    final upper = coord.toUpperCase();
+    final upper =
+    coord.toUpperCase();
+
     if (coord.contains("°") ||
         upper.contains("N") ||
         upper.contains("S") ||
         upper.contains("E") ||
         upper.contains("W")) {
-      coord = coord.replaceAll("°", "").trim();
-      final parts = coord.split(RegExp(r'\s+'));
-      double value = double.parse(parts[0]);
+
+      coord =
+          coord.replaceAll("°", "").trim();
+
+      final parts =
+      coord.split(RegExp(r'\s+'));
+
+      double value =
+      double.parse(parts[0]);
+
       if (parts.length > 1) {
-        final dir = parts[1].toUpperCase();
-        if (dir == "S" || dir == "W") {
+        final direction =
+        parts[1].toUpperCase();
+
+        if (direction == "S" ||
+            direction == "W") {
           value = -value;
         }
       }
+
       return value;
-    } else {
-      return double.parse(coord);
     }
+
+    return double.parse(coord);
   }
 
-  static double _toRadians(double degrees) => degrees * (math.pi / 180);
+  static double _toRadians(
+      double degrees,
+      ) {
+    return degrees *
+        (math.pi / 180);
+  }
+}
+
+
+// ============================================================
+// ADDRESS SERVICE
+// ============================================================
+
+class AddressService {
+
+  static Future<String> getAddress({
+    required double latitude,
+    required double longitude,
+  }) async {
+
+    try {
+
+      final url = Uri.https(
+        'nominatim.openstreetmap.org',
+        '/reverse',
+        {
+          'format': 'json',
+          'lat': latitude.toString(),
+          'lon': longitude.toString(),
+          'zoom': '18',
+          'addressdetails': '1',
+        },
+      );
+
+      final response =
+      await http.get(
+        url,
+        headers: {
+          'User-Agent':
+          'SSSBuddyFlutterApp/1.0',
+          'Accept':
+          'application/json',
+        },
+      );
+
+      if (response.statusCode != 200) {
+        return "Address unavailable";
+      }
+
+      final data =
+      jsonDecode(response.body);
+
+      final displayName =
+      data["display_name"];
+
+      if (displayName != null &&
+          displayName
+              .toString()
+              .trim()
+              .isNotEmpty) {
+
+        return displayName.toString();
+      }
+
+      return "Address unavailable";
+
+    } catch (e) {
+
+      return "Address unavailable";
+    }
+  }
+}
+
+
+// ============================================================
+// LOAD ADDRESS FOR ALL TRIPS
+// ============================================================
+
+class TripAddressLoader {
+
+  static Future<void> loadAddresses(
+      List<Overalltripdetailsmodel> trips,
+      ) async {
+
+    for (final trip in trips) {
+
+      for (final visit
+      in trip.visit_details) {
+
+        final latitude =
+            visit.latitude;
+
+        final longitude =
+            visit.longitude;
+
+        if (latitude == null ||
+            longitude == null) {
+
+          visit.address =
+          "Address unavailable";
+
+          continue;
+        }
+
+        visit.address =
+        await AddressService.getAddress(
+          latitude: latitude,
+          longitude: longitude,
+        );
+      }
+    }
+  }
 }

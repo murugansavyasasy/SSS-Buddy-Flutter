@@ -292,7 +292,9 @@ class _AddAdvanceTourExpenseState extends ConsumerState<AddAdvanceTourExpense> {
           (previous, next) {
         next.when(
           data: (res) {
-            if (res != null && res.result == 1) {
+            if (res == null) return;
+
+            if (res.result == 1) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text(res.resultMessage)),
               );
@@ -301,19 +303,25 @@ class _AddAdvanceTourExpenseState extends ConsumerState<AddAdvanceTourExpense> {
               Navigator.pop(context, true);
             } else {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(res?.resultMessage ?? "Failed")),
+                SnackBar(
+                  content: Text(res.resultMessage),
+                ),
               );
             }
           },
           loading: () {},
           error: (e, st) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Submission Failed ❌")),
+              const SnackBar(
+                content: Text("Submission Failed ❌"),
+              ),
             );
           },
         );
       },
     );
+
+    // rest of your build...
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,

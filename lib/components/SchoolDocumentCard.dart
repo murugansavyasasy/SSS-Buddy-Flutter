@@ -12,8 +12,8 @@ class SchoolDocumentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typeColor = _typeColor(item.DocumentType);
-    final icon = _typeIcon(item.DocumentType);
+    final typeColor = _typeColor(item.documentType);
+    final icon = _typeIcon(item.documentType);
 
     return GestureDetector(
       onTap: () => _handleTap(context),
@@ -52,17 +52,17 @@ class SchoolDocumentCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    item.DocumentName,
+                    item.documentName,
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF1A1A1A),
                     ),
                   ),
-                  if (item.DocumentDescription.isNotEmpty) ...[
+                  if (item.documentDescription.isNotEmpty) ...[
                     const SizedBox(height: 3),
                     Text(
-                      item.DocumentDescription,
+                      item.documentDescription,
                       style: const TextStyle(
                         fontSize: 12,
                         color: Color(0xFF888780),
@@ -83,7 +83,7 @@ class SchoolDocumentCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(99),
                   ),
                   child: Text(
-                    item.DocumentType.toUpperCase(),
+                    item.documentType.toUpperCase(),
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
@@ -117,7 +117,7 @@ class SchoolDocumentCard extends StatelessWidget {
   }
 
   void _shareDocument(BuildContext context) {
-    if (item.DocumentType == 'video') {
+    if (item.documentType == 'video') {
       _shareVideoList();
     } else {
       _shareSingleFile();
@@ -125,8 +125,8 @@ class SchoolDocumentCard extends StatelessWidget {
   }
 
   void _shareSingleFile() {
-    final title = item.DocumentName;
-    final url = item.DocumentURL;
+    final title = item.documentName;
+    final url = item.documentUrl;
 
     if (url.isEmpty) return;
 
@@ -139,12 +139,12 @@ class SchoolDocumentCard extends StatelessWidget {
   }
 
   void _shareVideoList() {
-    final List<dynamic> videos = jsonDecode(item.DocumentURL);
+    final List<dynamic> videos = jsonDecode(item.documentUrl);
 
     if (videos.isEmpty) return;
 
     final buffer = StringBuffer();
-    buffer.writeln("🎬 ${item.DocumentName}\n");
+    buffer.writeln("🎬 ${item.documentName}\n");
 
     for (var v in videos) {
       buffer.writeln("• ${v['VideoName']}");
@@ -154,21 +154,21 @@ class SchoolDocumentCard extends StatelessWidget {
     SharePlus.instance.share(
       ShareParams(
         text: buffer.toString(),
-        subject: item.DocumentName,
+        subject: item.documentName,
       ),
     );
   }
 
   void _handleTap(BuildContext context) {
-    if (item.DocumentType == 'video') {
+    if (item.documentType == 'video') {
       _showVideoBottomSheet(context);
     } else {
-      _launchURL(item.DocumentURL);
+      _launchURL(item.documentUrl);
     }
   }
 
   void _showVideoBottomSheet(BuildContext context) {
-    final List<dynamic> videos = jsonDecode(item.DocumentURL);
+    final List<dynamic> videos = jsonDecode(item.documentUrl);
 
     showModalBottomSheet(
       context: context,

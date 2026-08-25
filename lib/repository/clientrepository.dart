@@ -48,7 +48,7 @@ class ClientRepository {
   Future<Versioncheck> getVersionCheckDetails() async {
     final response = await client.get(
       AppEndpoint.versioncheckendpoint,
-      query: {"VersionID": "57"},
+      query: {"VersionID": "58"},
     );
     return Versioncheck.fromJson(response.data);
   }
@@ -164,11 +164,14 @@ class ClientRepository {
   }
 
   Future<List<Managementvideosmodel>> getmanagementvideos(
-    String vimIdUSer,
+    String token,
   ) async {
     final response = await client.get(
       AppEndpoint.managementvideos,
-      query: {"UserId": vimIdUSer},
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
     );
     final List data = response.data;
     return data.map((e) => Managementvideosmodel.fromJson(e)).toList();
@@ -211,10 +214,13 @@ class ClientRepository {
     return data.map((e) => Customerdetailsinfomodelclass.fromJson(e)).toList();
   }
 
-  Future<List<Schooldocuments>> getSchoolDocuments(String vimIDuser) async {
+  Future<List<Schooldocuments>> getSchoolDocuments(String token) async {
     final response = await client.get(
       AppEndpoint.schooldocuments,
-      query: {"UserId": vimIDuser},
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
     );
 
     final List data = response.data;
@@ -380,10 +386,13 @@ class ClientRepository {
     return data.map((e) => Salespersonmodel.fromJson(e)).toList();
   }
 
-  Future<List<Reportingmembersmodel>> getreportingmembers(String IdUser) async {
+  Future<List<Reportingmembersmodel>> getreportingmembers(String token) async {
     final response = await client.get(
       AppEndpoint.getreportingmembers,
-      query: {"UserId": IdUser},
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
     );
 
     final List data = response.data;
@@ -392,11 +401,14 @@ class ClientRepository {
   }
 
   Future<List<Overalltripdetailsmodel>> getoveralldetails(
-    String idMember,
+    String token, String? userId,
   ) async {
     final response = await client.get(
-      AppEndpoint.getOverallDetails,
-      query: {"UserId": idMember},
+      AppEndpoint.getOverallDetails(userId ?? ""),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
     );
 
     final List data = response.data;

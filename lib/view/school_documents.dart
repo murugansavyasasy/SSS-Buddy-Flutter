@@ -64,9 +64,9 @@ class SchoolDocuments extends ConsumerWidget {
 
                       final Map<String, List<Schooldocuments>> grouped = {};
                       for (final item in list) {
-                        final key = item.project_type.isEmpty
+                        final key = item.projectType.isEmpty
                             ? 'Videos'
-                            : item.project_type;
+                            : item.projectType;
                         grouped.putIfAbsent(key, () => []).add(item);
                       }
                       final sections = grouped.entries.toList();

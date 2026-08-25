@@ -22,7 +22,7 @@ class SchooldocumentsViewModel extends AsyncNotifier <List<Schooldocuments>> {
     final lower = query.toLowerCase();
     state = AsyncData(
       _all.where((item) {
-        return item.DocumentName.toLowerCase().contains(lower);
+        return item.documentName.toLowerCase().contains(lower);
       }).toList(),
     );
   }
@@ -32,11 +32,9 @@ class SchooldocumentsViewModel extends AsyncNotifier <List<Schooldocuments>> {
     final loginData = loginState.value;
 
     if (loginData == null) return [];
-
-    final vimIDuser = loginData.userId.toString();
     final repo = ref.read(repositoryProvider);
 
-    final response = await repo.getSchoolDocuments(vimIDuser);
+    final response = await repo.getSchoolDocuments(loginData.token);
 
     return response;
 
