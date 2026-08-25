@@ -147,6 +147,9 @@ class DioClient {
           "Something went wrong. Please try again.",
           statusCode: response?.statusCode,
         );
+      case DioExceptionType.transformTimeout:
+        // TODO: Handle this case.
+        throw UnimplementedError();
     }
   }
 
