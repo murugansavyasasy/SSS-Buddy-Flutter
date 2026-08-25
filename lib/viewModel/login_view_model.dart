@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sssbuddy/core/storage/secure_storage.dart';
 import 'package:sssbuddy/provider/user_session_provider.dart';
@@ -30,10 +31,18 @@ class LoginViewModel extends AsyncNotifier<LoginData?> {
 
       // validation
       if (response.status != "success") {
-        throw Exception("Login failed");
+        throw Exception(
+          (response.message.isNotEmpty)
+              ? response.message
+              : "Login failed",
+        );
       }
 
       final user = response.data;
+
+      if (user == null) {
+        throw Exception("Invalid response from server");
+      }
 
       // Save data locally
       await SecureStorage.saveLoginData(

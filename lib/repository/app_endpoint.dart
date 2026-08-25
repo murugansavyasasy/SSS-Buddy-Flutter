@@ -1,5 +1,5 @@
 class AppEndpoint {
-  static const versioncheckendpoint = "/api/AppDetails/VersionCheckForApp";
+  static const versioncheckendpoint = "api/mobile/VersionCheckForApp";
   static const validateloginendpoint = "api/mobile/login";
   static const demolistendpoint = "GetDemosByLoginId";
   static const schoollistendpoint = "DemoMySchoolList";
@@ -8,11 +8,11 @@ class AppEndpoint {
   static const getusagecount = "GetUsageReport";
   static const managementinfo = "GetManagementNumbers";
   static const circularreport = "GetVoiceCircularReport";
-  static const managementvideos = "api/AppDetails/GetVideos";
+  static const managementvideos = "api/mobile/GetVideos";
   static const localconveyence = "/api/mobile/ViewExpenses";
   static const customerslist = "api/mobile/customers";
   static const customerinfo = "api/AppDetails/GetIndvidualCustomerInfo";
-  static const schooldocuments = "api/AppDetails/GetSchoolDocuments";
+  static const schooldocuments = "api/mobile/GetSchoolDocuments";
   static const getimportantinfo = "GetImportantInfo";
   static const getAdvanceTourExpenses = "api/mobile/GetAdvanceTourExpenses";
   static const getSchoolName = "api/GetDetails/DemoGetCustomerList";
@@ -27,12 +27,13 @@ class AppEndpoint {
   static const getlocalconviencedetail = "api/GetDetails/GetLocalExpenseSummary";
   static const gettourexpensedetal = "api/GetDetails/GetTourExpenseSummary";
   static const getsalespersondetails = "api/AppDetails/GetSalesPersonDD";
-  static const getreportingmembers = "api/AppDetails/GetReportingMembersByHierarchy";
-  static const getOverallDetails = "api/AppDetails/GetOverallTripDetails";
+  static const getreportingmembers = "api/mobile/GetReportingMembersByHierarchy";
+  static String getOverallDetails(String memberId) =>
+      "api/mobile/GetOverallTripDetails?UserId=$memberId";
   static const getpresignedurl = "get-s3-presigned-url";
   static const postInitiateCall = "InitiateDemoCallByDemoID";
-  static const manageTrip = "api/AppDetails/ManageTripDetails";
-  static const updateDailyVisit = "api/AppDetails/UpdateDailyVisitWithLocation";
+  static const manageTrip = "/api/mobile/ManageTripDetails";
+  static const updateDailyVisit = "/api/mobile/UpdateDailyVisitWithLocation";
   static const addTourexpence = "/api/mobile/ManageTourExpense";
   static const uploadfiles = "api/AppDetails/UploadExpenseFiles";
   static const createpayment = "api/mobile/payments";

@@ -8,6 +8,7 @@ import '../components/customer_card_details.dart';
 import '../components/toolbar_layout.dart';
 import '../viewModel/customer_details_viewmodel.dart';
 import '../viewModel/sales_person_viewmodel.dart';
+import 'customerpo_view.dart';
 import 'dashboard.dart';
 
 class CustomerListView extends ConsumerStatefulWidget {
@@ -83,7 +84,8 @@ class _CustomerListViewState extends ConsumerState<CustomerListView> {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) =>
-                                      CustomerInfoView(item: item),
+                                      // CustomerInfoView(item: item),
+                                    CustomerPOView(customerId: item.id),
                                 ),
                               );
                             },

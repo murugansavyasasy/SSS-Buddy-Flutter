@@ -19,16 +19,16 @@ class OverallTripViewmodel extends AsyncNotifier<List<Overalltripdetailsmodel>> 
   }
 
   Future<List<Overalltripdetailsmodel>> _fetch(int idMember) async {
-    print('🔌 _fetch STARTED for member $idMember');
-
-
+    final loginData = ref.read(loginProvider).value;
+    if (loginData == null) {
+      throw Exception("User not logged in");
+    }
+    final token = loginData.token;
     final repo = ref.read(repositoryProvider);
-    print('✅ Calling repo.getoveralldetails(UserId: $idMember)');
+    final response = await repo.getoveralldetails(token, idMember.toString());
+    await TripAddressLoader.loadAddresses(response);
 
-    final response = await repo.getoveralldetails(idMember.toString());
     _all = response;
-
-    print('📦 API SUCCESS → Received ${response.length} trips');
     return response;
   }
 
