@@ -23,6 +23,8 @@ class RoutesName {
   static const String zero_activity = "zero_activity";
   static const String chat = "chat";
   static const String alert = "alert";
+  static const String otp = "otp";
   static const String feedback = "feedback";
+  static const String renewalPOs = "renewal_pos";
 }
 

@@ -144,7 +144,7 @@ class _ChangePasswordState extends ConsumerState<ChangePassword> {
 
     final response = await ref
         .read(changepasswordProvider.notifier)
-        .changepassword(idUser as String, oldPassword, newPassword);
+        .changepassword(oldPassword, newPassword);
 
     if (response != null) {
       final isSuccess = response.result == 1;

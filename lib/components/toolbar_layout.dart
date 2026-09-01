@@ -15,6 +15,10 @@ class ToolbarLayout extends ConsumerStatefulWidget {
   final VoidCallback? onBackPressed;
   final List<String>? dropdownLists;
   final VoidCallback? onRefresh;
+  final Widget? trailing;
+  final List<Map<String, String>>? financialYearList;
+  final String? selectedFinancialYearId;
+  final void Function(String id, String name)? onFinancialYearChanged;
 
   const ToolbarLayout({
     super.key,
@@ -27,6 +31,10 @@ class ToolbarLayout extends ConsumerStatefulWidget {
     this.onBackPressed,
     this.dropdownLists,
     this.onRefresh,
+    this.trailing,
+    this.financialYearList,
+    this.selectedFinancialYearId,
+    this.onFinancialYearChanged,
   });
 
   @override
@@ -35,21 +43,6 @@ class ToolbarLayout extends ConsumerStatefulWidget {
 
 class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
     with SingleTickerProviderStateMixin {
-  final List<String> _months = const [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
-
   bool _searchOpen = false;
   bool _isRefreshing = false;
   final TextEditingController _controller = TextEditingController();
@@ -58,6 +51,9 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
   late final Animation<double> _fade;
 
   late final ValueNotifier<String?> _selectedMonthNotifier;
+
+  // NEW: holds the selected FY *name* for display in the dropdown button
+  late final ValueNotifier<String?> _selectedFyNameNotifier;
 
   @override
   void initState() {
@@ -75,6 +71,30 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
           ? widget.selectedMonth
           : (lists.isNotEmpty ? lists.first : null),
     );
+
+    _selectedFyNameNotifier = ValueNotifier(_resolveFyName());
+  }
+
+  // Finds the display name matching widget.selectedFinancialYearId,
+  // falling back to the first item in the list.
+  String? _resolveFyName() {
+    final fyList = widget.financialYearList ?? [];
+
+    if (fyList.isEmpty) {
+      return null;
+    }
+
+    if (widget.selectedFinancialYearId != null) {
+      final match = fyList.where(
+            (item) => item['id'] == widget.selectedFinancialYearId,
+      );
+
+      if (match.isNotEmpty) {
+        return match.first['name'];
+      }
+    }
+
+    return fyList.first['name'];
   }
 
   @override
@@ -89,13 +109,20 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
     if (_selectedMonthNotifier.value != newValue) {
       _selectedMonthNotifier.value = newValue;
     }
+
+    final newFyName = _resolveFyName();
+
+    if (_selectedFyNameNotifier.value != newFyName) {
+      _selectedFyNameNotifier.value = newFyName;
+    }
   }
 
   @override
   void dispose() {
     _controller.dispose();
     _animController.dispose();
-    _selectedMonthNotifier.dispose();   // ← Important
+    _selectedMonthNotifier.dispose();
+    _selectedFyNameNotifier.dispose();
     super.dispose();
   }
 
@@ -117,6 +144,8 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
     final double topPadding = MediaQuery.of(context).padding.top;
     final bool hasSearch = widget.onSearch != null;
     final List<String> dropdownLists = widget.dropdownLists ?? [];
+    final List<Map<String, String>> fyList = widget.financialYearList ?? [];
+    final bool hasFyDropdown = fyList.isNotEmpty;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
@@ -175,8 +204,20 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
+
+                // NEW: Financial Year dropdown (shows name, returns id)
+                if (hasFyDropdown && !_searchOpen) ...[
+                  _financialYearDropdown(fyList),
+                  const SizedBox(width: 8),
+                ],
+
+                if (widget.trailing != null && !_searchOpen) ...[
+                  widget.trailing!,
+                  const SizedBox(width: 8),
+                ],
 
                 if (widget.onRefresh != null && !_searchOpen) ...[
                   GestureDetector(
@@ -332,13 +373,89 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                           _selectedMonthNotifier.value = val;
                           widget.onMonthChanged?.call(val);
                         }
-
                       },
                     ),
                   ),
                 ),
               ),
           ],
+        ),
+      ),
+    );
+  }
+
+  // MARK: - Financial Year Dropdown (compact, sits next to the title)
+
+  Widget _financialYearDropdown(List<Map<String, String>> fyList) {
+    return Container(
+      height: 36,
+      constraints: const BoxConstraints(maxWidth: 130),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white30),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton2<String>(
+          isExpanded: true,
+          valueListenable: _selectedFyNameNotifier,
+          customButton: ValueListenableBuilder<String?>(
+            valueListenable: _selectedFyNameNotifier,
+            builder: (context, value, _) {
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      value ?? "FY",
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 2),
+                  const Icon(
+                    Icons.keyboard_arrow_down,
+                    size: 16,
+                    color: Colors.white,
+                  ),
+                ],
+              );
+            },
+          ),
+          dropdownStyleData: DropdownStyleData(
+            width: 150,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              color: Colors.white,
+            ),
+            offset: const Offset(-20, 8),
+          ),
+          items: fyList.map((year) {
+            return DropdownItem<String>(
+              value: year['id'],
+              child: Text(
+                year['name'] ?? '',
+                style: const TextStyle(fontSize: 13),
+              ),
+            );
+          }).toList(),
+          onChanged: (selectedId) {
+            if (selectedId == null) return;
+
+            final matched = fyList.firstWhere(
+                  (item) => item['id'] == selectedId,
+              orElse: () => {},
+            );
+
+            final name = matched['name'] ?? '';
+            _selectedFyNameNotifier.value = name;
+            widget.onFinancialYearChanged?.call(selectedId, name);
+          },
         ),
       ),
     );

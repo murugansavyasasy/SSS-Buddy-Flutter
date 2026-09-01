@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../Values/Colors/app_colors.dart';
 import '../components/toolbar_layout.dart';
+import '../viewModel/local_conveyence_viewmodel.dart';
 import 'local_conveyence.dart';
 
 class ExpenseEntry {
@@ -16,14 +18,15 @@ class ExpenseEntry {
   void dispose() => controller.dispose();
 }
 
-class AddLocalConveyence extends StatefulWidget {
+class AddLocalConveyence extends ConsumerStatefulWidget {
   const AddLocalConveyence({super.key});
 
   @override
-  State<AddLocalConveyence> createState() => _AddLocalConveyenceState();
+  ConsumerState<AddLocalConveyence> createState() =>
+      _AddLocalConveyenceState();
 }
 
-class _AddLocalConveyenceState extends State<AddLocalConveyence> {
+class _AddLocalConveyenceState extends ConsumerState<AddLocalConveyence> {
   static const List<String> _fieldLabels = [
     'Boarding & Lodging',
     'Local Conveyance',
@@ -48,6 +51,7 @@ class _AddLocalConveyenceState extends State<AddLocalConveyence> {
   ];
 
   late String selectedMonth = months[DateTime.now().month - 1];
+
   @override
   void initState() {
     super.initState();
@@ -88,15 +92,59 @@ class _AddLocalConveyenceState extends State<AddLocalConveyence> {
 
   double get _overallTotal => _withBillTotal + _withoutBillTotal;
 
-  void _submit() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Claim submitted — ₹ ${_overallTotal.toStringAsFixed(2)}',
+  Future<void> _submit() async {
+    final localItemList = <Map<String, dynamic>>[];
+
+    for (int i = 0; i < _fieldLabels.length; i++) {
+      final withBill = _withBillEntries[i].value;
+      final withoutBill = _withoutBillEntries[i].value;
+
+      if (withBill == 0 && withoutBill == 0) {
+        continue;
+      }
+
+      localItemList.add({
+        "ExpenseHead": _fieldLabels[i],
+        "WithBill": withBill,
+        "WithoutBill": withoutBill,
+      });
+    }
+
+    if (localItemList.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please enter expense amount"),
         ),
-        behavior: SnackBarBehavior.floating,
-      ),
+      );
+      return;
+    }
+
+    final success = await ref.read(localConvienceProvider.notifier)
+        .addLocalExpense(
+      monthOfClaim: months.indexOf(selectedMonth) + 1,
+      description: "Monthly local travel",
+      remarksWithoutBill: _withoutBillRemarks.text,
+      totalLocalExpense: _overallTotal,
+      localItemList: localItemList,
     );
+
+    if (!mounted) return;
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Local Expense Added Successfully"),
+        ),
+      );
+
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Failed to add Local Expense"),
+        ),
+      );
+    }
   }
 
   @override
@@ -108,7 +156,6 @@ class _AddLocalConveyenceState extends State<AddLocalConveyence> {
           ToolbarLayout(
             title: "Add Local Expenses",
             navigateTo: const LocalConveyence(),
-            // ✅ ADD THIS
             dropdownLists: months,
             selectedMonth: selectedMonth,
             onMonthChanged: (value) {
@@ -191,6 +238,7 @@ class _AddLocalConveyenceState extends State<AddLocalConveyence> {
     );
   }
 }
+
 class _ExpenseSectionCard extends StatelessWidget {
   final String title;
   final String badge;
@@ -224,7 +272,6 @@ class _ExpenseSectionCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header row
             Row(
               children: [
                 Text(
@@ -259,14 +306,12 @@ class _ExpenseSectionCard extends StatelessWidget {
             const SizedBox(height: 12),
             const Divider(height: 1),
 
-            // Expense rows
             ...entries.map(
                   (entry) => _ExpenseFieldRow(entry: entry),
             ),
 
             const SizedBox(height: 12),
 
-            // Remarks
             TextField(
               controller: remarksController,
               maxLines: 2,
@@ -290,7 +335,6 @@ class _ExpenseSectionCard extends StatelessWidget {
 
             const SizedBox(height: 12),
 
-            // Section total
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -318,6 +362,7 @@ class _ExpenseSectionCard extends StatelessWidget {
     );
   }
 }
+
 class _ExpenseFieldRow extends StatelessWidget {
   final ExpenseEntry entry;
 

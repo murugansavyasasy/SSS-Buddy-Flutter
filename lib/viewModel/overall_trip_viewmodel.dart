@@ -3,7 +3,8 @@ import 'package:sssbuddy/auth/model/OverallTripDetailsModel.dart';
 import '../provider/app_providers.dart';
 import 'login_view_model.dart';
 
-class OverallTripViewmodel extends AsyncNotifier<List<Overalltripdetailsmodel>> {
+class OverallTripViewmodel
+    extends AsyncNotifier<List<Overalltripdetailsmodel>> {
   List<Overalltripdetailsmodel> _all = [];
 
   @override
@@ -13,7 +14,6 @@ class OverallTripViewmodel extends AsyncNotifier<List<Overalltripdetailsmodel>> 
   }
 
   Future<void> loadForMember(int idMember) async {
-    print('📡 loadForMember CALLED → ID: $idMember');
     state = const AsyncLoading();
     state = await AsyncValue.guard(() => _fetch(idMember));
   }
@@ -23,10 +23,12 @@ class OverallTripViewmodel extends AsyncNotifier<List<Overalltripdetailsmodel>> 
     if (loginData == null) {
       throw Exception("User not logged in");
     }
+
     final token = loginData.token;
     final repo = ref.read(repositoryProvider);
-    final response = await repo.getoveralldetails(token, idMember.toString());
-    await TripAddressLoader.loadAddresses(response);
+
+    final response =
+    await repo.getoveralldetails(token, idMember.toString());
 
     _all = response;
     return response;
@@ -39,7 +41,11 @@ class OverallTripViewmodel extends AsyncNotifier<List<Overalltripdetailsmodel>> 
     }
     final lower = query.toLowerCase();
     state = AsyncData(
-      _all.where((item) => item.username.toLowerCase().contains(lower)).toList(),
+      _all
+          .where(
+            (item) => item.username.toLowerCase().contains(lower),
+      )
+          .toList(),
     );
   }
 }
