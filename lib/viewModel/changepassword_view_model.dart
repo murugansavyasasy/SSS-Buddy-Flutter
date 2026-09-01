@@ -10,7 +10,6 @@ class ChangepasswordViewModel extends AsyncNotifier<Changepassword?> {
   }
 
   Future<Changepassword?> changepassword(
-      String idUser,
       String oldPassword,
       String newPassword,
       ) async {
@@ -21,7 +20,6 @@ class ChangepasswordViewModel extends AsyncNotifier<Changepassword?> {
       final repo = ref.read(repositoryProvider);
 
       final response = await repo.changepassword(
-        idUser,
         oldPassword,
         newPassword,
       );

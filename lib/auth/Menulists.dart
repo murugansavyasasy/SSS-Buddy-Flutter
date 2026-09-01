@@ -94,7 +94,6 @@ List<MenuItem> getMenuItems({
     }
   }
 
-  // VIMS section
   if (!(vimsUserType == "19" ||
       schoolUserType == "MyTeam")) {
     menus.addAll([
@@ -104,6 +103,12 @@ List<MenuItem> getMenuItems({
         icon: Icons.business,
         color: Colors.cyan,
       ),
+      // MenuItem(
+      //   id: 15,
+      //   title: "Renewal POs",
+      //   icon: Icons.autorenew,
+      //   color: Colors.teal,
+      // ),
       MenuItem(
         id: 9,
         title: "Local Conveyence",

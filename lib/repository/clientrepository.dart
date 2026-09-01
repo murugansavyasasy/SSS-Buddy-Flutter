@@ -20,13 +20,14 @@ import '../auth/model/ImportantInfoModel.dart';
 import '../auth/model/InitiateDemoCall.dart';
 import '../auth/model/InitiateDemoCallRequest.dart';
 import '../auth/model/InvoiceModel.dart';
-import '../auth/model/LocalConveyenceModel.dart';
+import '../auth/model/LocalConveyenceModel.dart' hide TourExpenseResponse;
 import '../auth/model/LocalExpenseDetailModel.dart';
 import '../auth/model/ManagementInfo.dart';
 import '../auth/model/MoveToSettlementTourRequest.dart';
 import '../auth/model/OverallTripDetailsModel.dart';
 import '../auth/model/PO_listModal.dart';
 import '../auth/model/RecordCollectionPaymentResponse.dart';
+import '../auth/model/RenewalPOModal.dart';
 import '../auth/model/ReportingMembersModel.dart';
 import '../auth/model/SalesPersonModel.dart';
 import '../auth/model/SchoolDocuments.dart';
@@ -48,7 +49,7 @@ class ClientRepository {
   Future<Versioncheck> getVersionCheckDetails() async {
     final response = await client.get(
       AppEndpoint.versioncheckendpoint,
-      query: {"VersionID": "58"},
+      query: {"VersionID": "59"},
     );
     return Versioncheck.fromJson(response.data);
   }
@@ -67,7 +68,22 @@ class ClientRepository {
 
     return LoginResponse.fromJson(response.data);
   }
+  Future<dynamic> forgotPassword({
+    required String empId,
+  }) async {
+    try {
+      final response = await client.post(
+        AppEndpoint.forgetPassword,
+        body: {
+          "employeeId": empId,
+        },
+      );
 
+      return response.data;
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
   Future<List<Demolist>> getdemolist(String schoolLoginId) async {
     final response = await client.schoolget(
       AppEndpoint.demolistendpoint,
@@ -114,14 +130,12 @@ class ClientRepository {
   }
 
   Future<Changepassword> changepassword(
-    String idUser,
     String oldPassword,
     String newPassword,
   ) async {
-    final response = await client.get(
+    final response = await client.post(
       AppEndpoint.changepasswordendpoint,
-      query: {
-        "idUser": idUser,
+      body: {
         "OldPassword": oldPassword,
         "NewPassword": newPassword,
       },
@@ -327,7 +341,27 @@ class ClientRepository {
 
     return PurchaseOrderResponse.fromJson(response.data);
   }
+  Future<RenewalPOResponse> getRenivals({
+    required String customerId,
+    required String token,
+    String? financialYearId,
+    String? months,
+    bool expiredNotRenewed = false,
+  }) async {
+    final response = await client.get(
+      AppEndpoint.getReniwedPos(
+        financialYearId ?? '',
+        months ?? '',
+        expiredNotRenewed,
+      ),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
+    );
 
+    return RenewalPOResponse.fromJson(response.data);
+  }
   Future<List<PoDetailsModel>> getpodetails(
       String VimIdUser,
       String purchaseOrderId,
@@ -683,6 +717,33 @@ class ClientRepository {
       return [Zeroactivitymodel.fromJson(data)];
     } else {
       throw Exception("Invalid response");
+    }
+  }
+  Future<bool> addLocalExpense({
+    required Map<String, dynamic> body,
+  }) async {
+    try {
+      final response = await client.post(
+        AppEndpoint.addTourexpence,
+        body: body,
+      );
+
+      final data = response.data;
+
+      if (data is List && data.isNotEmpty) {
+        final result = data[0];
+
+        if (result["result"] == 1) {
+          print("Local Conveyance Added Successfully");
+          print("Local Expense ID: ${result["idLocalExpense"]}");
+          return true;
+        }
+      }
+
+      return false;
+    } catch (e) {
+      print("addLocalExpense ERROR: $e");
+      return false;
     }
   }
 }

@@ -395,7 +395,7 @@ class Dashboard extends ConsumerWidget {
                                   Navigator.pushNamed(context, RoutesName.zero_activity);
                                   break;
                                 case 15:
-                                  Navigator.pushNamed(context, RoutesName.chat);
+                                  Navigator.pushNamed(context, RoutesName.renewalPOs);
                                   break;
                                 case 16:
                                   Navigator.pushNamed(context, RoutesName.alert);

@@ -69,6 +69,44 @@ class LoginViewModel extends AsyncNotifier<LoginData?> {
       return false;
     }
   }
+  Future<Map<String, dynamic>> forgotPassword({required String empId}) async {
+    try {
+      final repo = ref.read(repositoryProvider);
+
+      final response = await repo.forgotPassword(empId: empId);
+
+      dynamic data = response;
+      if (data is List && data.isNotEmpty) {
+        data = data.first;
+      }
+
+      if (data is Map) {
+        final status = data["Status"];
+
+        if (status == 1 || status == "1") {
+          return {
+            "success": true,
+            "message": data["Message"] ?? "",
+            "dialNumbers": data["DialNumbers"] ?? [],
+            "moreInfo": data["MoreInfo"] ?? "",
+            "forgetOtpMessage":
+            data["ForgetOTPMessage"] ??
+                data["ForgetOtpMessage"] ??
+                "",
+          };
+        }
+
+        throw Exception(
+          data["Message"]?.toString() ??
+              "Unable to send OTP",
+        );
+      }
+
+      throw Exception("Invalid response from server");
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
 }
 
 final loginProvider =

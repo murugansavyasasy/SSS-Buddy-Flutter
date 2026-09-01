@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Overalltripdetailsmodel {
   int status;
@@ -164,15 +165,12 @@ class Overalltripdetailsmodel {
           endLon,
         ]);
       } catch (_) {
-        // Invalid end coordinate
       }
     }
 
     return points;
   }
 }
-
-
 // ============================================================
 // VISIT DETAIL
 // ============================================================
@@ -185,8 +183,6 @@ class VisitDetail {
   String? person_name;
   String? reason_of_visit;
   String? remarks;
-
-  // Reverse geocoded address
   String? address;
 
   VisitDetail({
@@ -398,9 +394,7 @@ class AddressService {
     required double latitude,
     required double longitude,
   }) async {
-
     try {
-
       final url = Uri.https(
         'nominatim.openstreetmap.org',
         '/reverse',
@@ -413,40 +407,37 @@ class AddressService {
         },
       );
 
-      final response =
-      await http.get(
+      final response = await http.get(
         url,
         headers: {
-          'User-Agent':
-          'SSSBuddyFlutterApp/1.0',
-          'Accept':
-          'application/json',
+          'User-Agent': 'SSSBuddyFlutterApp/1.0 (contact@yourapp.com)',
+          'Accept': 'application/json',
         },
+      ).timeout(
+        const Duration(seconds: 6),
+        onTimeout: () => http.Response('TIMEOUT', 408),
       );
 
-      if (response.statusCode != 200) {
+      if (response.statusCode == 429) {
+        print('🚫 Nominatim rate-limited us [$latitude,$longitude]');
         return "Address unavailable";
       }
 
-      final data =
-      jsonDecode(response.body);
+      if (response.statusCode != 200) {
+        print('⚠️ Address lookup non-200 [$latitude,$longitude] → ${response.statusCode}');
+        return "Address unavailable";
+      }
 
-      final displayName =
-      data["display_name"];
+      final data = jsonDecode(response.body);
+      final displayName = data["display_name"];
 
-      if (displayName != null &&
-          displayName
-              .toString()
-              .trim()
-              .isNotEmpty) {
-
+      if (displayName != null && displayName.toString().trim().isNotEmpty) {
         return displayName.toString();
       }
 
       return "Address unavailable";
-
     } catch (e) {
-
+      print('❌ Address lookup error [$latitude,$longitude]: $e');
       return "Address unavailable";
     }
   }
@@ -454,41 +445,37 @@ class AddressService {
 
 
 // ============================================================
-// LOAD ADDRESS FOR ALL TRIPS
+// TRIP ADDRESS LOADER (single-coordinate, cached)
 // ============================================================
 
 class TripAddressLoader {
 
-  static Future<void> loadAddresses(
-      List<Overalltripdetailsmodel> trips,
-      ) async {
+  static String cacheKey(double lat, double lon) {
+    final latKey = lat.toStringAsFixed(5);
+    final lonKey = lon.toStringAsFixed(5);
+    return 'address_cache_${latKey}_$lonKey';
+  }
+  static Future<String> getCachedAddress({
+    required double latitude,
+    required double longitude,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = cacheKey(latitude, longitude);
 
-    for (final trip in trips) {
-
-      for (final visit
-      in trip.visit_details) {
-
-        final latitude =
-            visit.latitude;
-
-        final longitude =
-            visit.longitude;
-
-        if (latitude == null ||
-            longitude == null) {
-
-          visit.address =
-          "Address unavailable";
-
-          continue;
-        }
-
-        visit.address =
-        await AddressService.getAddress(
-          latitude: latitude,
-          longitude: longitude,
-        );
-      }
+    final cached = prefs.getString(key);
+    if (cached != null && cached.isNotEmpty) {
+      return cached;
     }
+
+    final address = await AddressService.getAddress(
+      latitude: latitude,
+      longitude: longitude,
+    );
+
+    if (address != "Address unavailable") {
+      await prefs.setString(key, address);
+    }
+
+    return address;
   }
 }

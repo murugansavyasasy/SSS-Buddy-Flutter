@@ -1,10 +1,11 @@
 class AppEndpoint {
   static const versioncheckendpoint = "api/mobile/VersionCheckForApp";
   static const validateloginendpoint = "api/mobile/login";
+  static const forgetPassword = "api/mobile/forgot-password";
   static const demolistendpoint = "GetDemosByLoginId";
   static const schoollistendpoint = "DemoMySchoolList";
   static const createdemoendpoint = "DemoCreateOrEditDemo";
-  static const changepasswordendpoint = "api/AppDetails/ChangePassword";
+  static const changepasswordendpoint = "api/mobile/change-password";
   static const getusagecount = "GetUsageReport";
   static const managementinfo = "GetManagementNumbers";
   static const circularreport = "GetVoiceCircularReport";
@@ -22,6 +23,9 @@ class AppEndpoint {
 
   static String getPoNumberByCustomer(String customerId) =>
       "api/mobile/customers/$customerId/purchase-orders";
+  static String getReniwedPos(String financialYearId,
+      String months,
+      bool expiredNotRenewed) =>"api/mobile/renewal-po?financialYearId=$financialYearId,months=$months,expiredNotRenewed=$expiredNotRenewed";
   static const getindiualpoforapp = "api/AppDetails/GetIndvidualSchoolPoInfoForApp";
   static const demoCreateOrEdit = "DemoCreateOrEditDemo";
   static const getlocalconviencedetail = "api/GetDetails/GetLocalExpenseSummary";
@@ -41,4 +45,5 @@ class AppEndpoint {
   static const demoedit = "GetDemoDetailsByDemoId";
   static const GetFeedbackRequirements = "api/AppDetails/GetFeedbackRequirements";
   static const SchoolUsageReport = "SchoolUsageReport";
+  static const addLocalExpense = "api/mobile/ManageLocalExpense";
 }
