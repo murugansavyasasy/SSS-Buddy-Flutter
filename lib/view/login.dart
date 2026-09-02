@@ -366,23 +366,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                           // MARK: - Forgot Password
 
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                              onPressed: isLoading
-                                  ? null
-                                  : _showForgotPasswordConfirmation,
-                              child: const Text(
-                                "Forgot Password?",
-                                style: TextStyle(
-                                  color:
-                                  AppColors.secondaryprimary,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ),
-                          ),
+                          // Align(
+                          //   alignment: Alignment.centerRight,
+                          //   child: TextButton(
+                          //     onPressed: isLoading
+                          //         ? null
+                          //         : _showForgotPasswordConfirmation,
+                          //     child: const Text(
+                          //       "Forgot Password?",
+                          //       style: TextStyle(
+                          //         color:
+                          //         AppColors.secondaryprimary,
+                          //         fontWeight: FontWeight.w600,
+                          //         fontSize: 14,
+                          //       ),
+                          //     ),
+                          //   ),
+                          // ),
 
                           // MARK: - Remember Me
 
