@@ -1,3 +1,7 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
+import 'package:file_picker/file_picker.dart' as fp;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -51,6 +55,9 @@ class _AddLocalConveyenceState extends ConsumerState<AddLocalConveyence> {
   ];
 
   late String selectedMonth = months[DateTime.now().month - 1];
+
+  bool _isSubmitting = false;
+  bool _isUploading = false;
 
   @override
   void initState() {
@@ -119,7 +126,13 @@ class _AddLocalConveyenceState extends ConsumerState<AddLocalConveyence> {
       return;
     }
 
-    final success = await ref.read(localConvienceProvider.notifier)
+    setState(() => _isSubmitting = true);
+
+    // NOTE: this now expects addLocalExpense() in the viewmodel to return
+    // int? (the new idLocalExpense) instead of bool, so the id can be
+    // reused below for the file upload call. See viewmodel changes.
+    final idLocalExpense = await ref
+        .read(localConvienceProvider.notifier)
         .addLocalExpense(
       monthOfClaim: months.indexOf(selectedMonth) + 1,
       description: "Monthly local travel",
@@ -130,13 +143,41 @@ class _AddLocalConveyenceState extends ConsumerState<AddLocalConveyence> {
 
     if (!mounted) return;
 
-    if (success) {
+    setState(() => _isSubmitting = false);
+
+    if (idLocalExpense != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Local Expense Added Successfully"),
         ),
       );
 
+      final wantsUpload = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          title: const Text("Upload Bill"),
+          content: const Text(
+            "Do you want to upload the bill / receipt (PDF)?",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text("Skip"),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text("Upload Now"),
+            ),
+          ],
+        ),
+      );
+
+      if (wantsUpload == true) {
+        await _pickAndUploadPdf(idLocalExpense);
+      }
+
+      if (!mounted) return;
       Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -147,92 +188,153 @@ class _AddLocalConveyenceState extends ConsumerState<AddLocalConveyence> {
     }
   }
 
+  Future<void> _pickAndUploadPdf(int idLocalExpense) async {
+    final result = await FilePicker.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf'],
+    );
+
+    if (result.isEmpty || result.first.path == null) {
+      return;
+    }
+
+    final pickedFile = File(result.first.path!);
+
+    setState(() => _isUploading = true);
+
+    final uploadSuccess = await ref
+        .read(localConvienceProvider.notifier)
+        .uploadExpenseFile(
+      idLocalExpense: idLocalExpense,
+      nameValue: "Local", // Local | Tour | Director
+      pdfFile: pickedFile,
+    );
+
+    if (!mounted) return;
+
+    setState(() => _isUploading = false);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          uploadSuccess
+              ? "Bill uploaded successfully"
+              : "Failed to upload bill",
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isBusy = _isSubmitting || _isUploading;
+
     return Scaffold(
       backgroundColor: AppColors.primary,
-      body: Column(
+      body: Stack(
         children: [
-          ToolbarLayout(
-            title: "Add Local Expenses",
-            navigateTo: const LocalConveyence(),
-            dropdownLists: months,
-            selectedMonth: selectedMonth,
-            onMonthChanged: (value) {
-              setState(() {
-                selectedMonth = value;
-              });
-            },
-          ),
-          Expanded(
-            child: Container(
-              width: double.infinity,
-              decoration: const BoxDecoration(
-                color: Color(0xFFF5F6FA),
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(25),
-                  topRight: Radius.circular(25),
-                ),
+          Column(
+            children: [
+              ToolbarLayout(
+                title: "Add Local Expenses",
+                navigateTo: const LocalConveyence(),
+                dropdownLists: months,
+                selectedMonth: selectedMonth,
+                onMonthChanged: (value) {
+                  setState(() {
+                    selectedMonth = value;
+                  });
+                },
               ),
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  _ExpenseSectionCard(
-                    title: 'With Bill',
-                    badge: 'Receipts required',
-                    badgeColor: Colors.green,
-                    entries: _withBillEntries,
-                    remarksController: _withBillRemarks,
-                    sectionTotal: _withBillTotal,
-                    onChanged: _recalculate,
-                  ),
-
-                  const SizedBox(height: 16),
-                  _ExpenseSectionCard(
-                    title: 'Without Bill',
-                    badge: 'Estimate only',
-                    badgeColor: Colors.orange,
-                    entries: _withoutBillEntries,
-                    remarksController: _withoutBillRemarks,
-                    sectionTotal: _withoutBillTotal,
-                    onChanged: _recalculate,
-                  ),
-
-                  const SizedBox(height: 16),
-                  _OverallTotalCard(total: _overallTotal),
-
-                  const SizedBox(height: 20),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(30, 12, 30, 24),
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: _submit,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.secondaryprimary,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text("Submit"),
-                            SizedBox(width: 8),
-                            Icon(Icons.arrow_forward),
-                          ],
-                        ),
-                      ),
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFF5F6FA),
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(25),
+                      topRight: Radius.circular(25),
                     ),
                   ),
-                  const SizedBox(height: 20),
-                ],
+                  child: ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      _ExpenseSectionCard(
+                        title: 'With Bill',
+                        badge: 'Receipts required',
+                        badgeColor: Colors.green,
+                        entries: _withBillEntries,
+                        remarksController: _withBillRemarks,
+                        sectionTotal: _withBillTotal,
+                        onChanged: _recalculate,
+                      ),
+
+                      const SizedBox(height: 16),
+                      _ExpenseSectionCard(
+                        title: 'Without Bill',
+                        badge: 'Estimate only',
+                        badgeColor: Colors.orange,
+                        entries: _withoutBillEntries,
+                        remarksController: _withoutBillRemarks,
+                        sectionTotal: _withoutBillTotal,
+                        onChanged: _recalculate,
+                      ),
+
+                      const SizedBox(height: 16),
+                      _OverallTotalCard(total: _overallTotal),
+
+                      const SizedBox(height: 20),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(30, 12, 30, 24),
+                        child: SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton(
+                            onPressed: isBusy ? null : _submit,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.secondaryprimary,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: _isSubmitting
+                                ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                                : const Row(
+                              mainAxisAlignment:
+                              MainAxisAlignment.center,
+                              children: [
+                                Text("Submit"),
+                                SizedBox(width: 8),
+                                Icon(Icons.arrow_forward),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          if (_isUploading)
+            Container(
+              color: Colors.black.withOpacity(0.3),
+              child: const Center(
+                child: CircularProgressIndicator(),
               ),
             ),
-          ),
         ],
       ),
     );

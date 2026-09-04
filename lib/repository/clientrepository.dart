@@ -191,9 +191,17 @@ class ClientRepository {
     return data.map((e) => Managementvideosmodel.fromJson(e)).toList();
   }
 
-  Future<List<Customerdetailsmodel>> getCustomersList(String token) async {
+  Future<CustomerListResponse> getCustomersList(
+      String token, {
+        int page = 1,
+        int limit = 25,
+      }) async {
     final response = await client.get(
       AppEndpoint.customerslist,
+      query: {
+        'page': page,
+        'limit': limit,
+      },
       headers: {
         'Authorization': 'Bearer $token',
         'Accept': 'application/json',
@@ -202,11 +210,7 @@ class ClientRepository {
 
     final Map<String, dynamic> json = response.data;
 
-    final List data = json['data'] ?? [];
-
-    return data
-        .map((e) => Customerdetailsmodel.fromJson(e))
-        .toList();
+    return CustomerListResponse.fromJson(json);
   }
 
   Future<List<Customerdetailsinfomodelclass>> getcustomerinfo(
@@ -699,11 +703,11 @@ class ClientRepository {
 
     return data.map((e) => FeedbackModel.fromJson(e)).toList();
   }
-  Future<List<Zeroactivitymodel>> getInstuetList(String vimIdUser) async {
+  Future<List<ZeroActivityModel>> getInstuetList(String vimIdUser) async {
     final response = await client.schoolPost(
       AppEndpoint.SchoolUsageReport,
       body: {
-        "User_id": vimIdUser.toString(),
+        "User_id": vimIdUser,
       },
     );
 
@@ -711,20 +715,54 @@ class ClientRepository {
 
     if (data is List) {
       return data
-          .map<Zeroactivitymodel>((e) => Zeroactivitymodel.fromJson(e))
+          .map((e) => ZeroActivityModel.fromJson(
+        Map<String, dynamic>.from(e),
+      ))
           .toList();
-    } else if (data is Map<String, dynamic>) {
-      return [Zeroactivitymodel.fromJson(data)];
-    } else {
-      throw Exception("Invalid response");
     }
+
+    if (data is Map<String, dynamic>) {
+      return [
+        ZeroActivityModel.fromJson(data),
+      ];
+    }
+
+    throw Exception("Invalid response format");
   }
-  Future<bool> addLocalExpense({
+  Future<int?> addLocalExpense({
     required Map<String, dynamic> body,
   }) async {
     try {
       final response = await client.post(
-        AppEndpoint.addTourexpence,
+        AppEndpoint.addLocalExpense, // your existing endpoint constant
+        body: body,
+      );
+
+      final data = response.data;
+
+      if (data is List && data.isNotEmpty) {
+        final result = data[0];
+
+        if (result["result"] == 1) {
+          print("Local Conveyance Added Successfully");
+          print("Local Expense ID: ${result["idLocalExpense"]}");
+          return result["idLocalExpense"] as int;
+        }
+      }
+
+      return null;
+    } catch (e) {
+      print("addLocalExpense ERROR: $e");
+      return null;
+    }
+  }
+
+  Future<bool> uploadExpenseFile({
+    required FormData body,   // ← changed from Map<String, dynamic>
+  }) async {
+    try {
+      final response = await client.post(
+        AppEndpoint.uploadfiles,
         body: body,
       );
 
@@ -745,5 +783,23 @@ class ClientRepository {
       print("addLocalExpense ERROR: $e");
       return false;
     }
+  }
+  Future<dynamic> resetPassword({
+    required String empId,
+    required String otp,
+    required String newPassword,
+  }) async {
+    final body = {
+      "employeeId": empId,
+      "otp": otp,
+      "newPassword": newPassword,
+    };
+
+    final response = await client.post(
+      AppEndpoint.resetPassword,
+      body: body,
+    );
+
+    return response.data;
   }
 }

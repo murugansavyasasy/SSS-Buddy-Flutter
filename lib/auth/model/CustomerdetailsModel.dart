@@ -209,3 +209,31 @@ class Customerdetailsmodel {
     );
   }
 }
+class CustomerListResponse {
+  final List<Customerdetailsmodel> data;
+  final int page;
+  final int limit;
+  final int total;
+  final int totalPages;
+
+  CustomerListResponse({
+    required this.data,
+    required this.page,
+    required this.limit,
+    required this.total,
+    required this.totalPages,
+  });
+
+  factory CustomerListResponse.fromJson(Map<String, dynamic> json) {
+    final pagination = json['pagination'] ?? {};
+    return CustomerListResponse(
+      data: (json['data'] as List? ?? [])
+          .map((e) => Customerdetailsmodel.fromJson(e))
+          .toList(),
+      page: pagination['page'] ?? 1,
+      limit: pagination['limit'] ?? 25,
+      total: pagination['total'] ?? 0,
+      totalPages: pagination['totalPages'] ?? 1,
+    );
+  }
+}

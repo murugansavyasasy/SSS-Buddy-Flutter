@@ -39,11 +39,13 @@ class AppEndpoint {
   static const manageTrip = "/api/mobile/ManageTripDetails";
   static const updateDailyVisit = "/api/mobile/UpdateDailyVisitWithLocation";
   static const addTourexpence = "/api/mobile/ManageTourExpense";
-  static const uploadfiles = "api/AppDetails/UploadExpenseFiles";
+  // static const uploadfiles = "api/AppDetails/UploadExpenseFiles";
+  static const uploadfiles = "api/mobile/UploadExpenseFiles";
   static const createpayment = "api/mobile/payments";
   static const getalertdata = "alert_messages";
   static const demoedit = "GetDemoDetailsByDemoId";
   static const GetFeedbackRequirements = "api/AppDetails/GetFeedbackRequirements";
   static const SchoolUsageReport = "SchoolUsageReport";
   static const addLocalExpense = "api/mobile/ManageLocalExpense";
+  static const resetPassword = "api/mobile/reset-password";
 }

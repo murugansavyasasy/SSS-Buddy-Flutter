@@ -14,7 +14,7 @@ class OtpScreen extends ConsumerStatefulWidget {
   const OtpScreen({
     super.key,
     required this.empId,
-    this.message = "",
+    required this.message
   });
 
   @override
@@ -22,13 +22,14 @@ class OtpScreen extends ConsumerStatefulWidget {
 }
 
 class _OtpScreenState extends ConsumerState<OtpScreen> {
+  static const int _otpLength = 6;
+
   final List<TextEditingController> _otpControllers =
-  List.generate(4, (_) => TextEditingController());
+  List.generate(_otpLength, (_) => TextEditingController());
 
   final List<FocusNode> _focusNodes =
-  List.generate(4, (_) => FocusNode());
+  List.generate(_otpLength, (_) => FocusNode());
 
-  bool _isLoading = false;
   bool _isResending = false;
 
   int _seconds = 60;
@@ -76,10 +77,10 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
   Future<void> _verifyOtp() async {
     final otp = _otpCode;
 
-    if (otp.length != 4) {
+    if (otp.length != _otpLength) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Enter valid 4-digit OTP"),
+          content: Text("Enter valid 6-digit OTP"),
           backgroundColor: Colors.red,
         ),
       );
@@ -87,46 +88,14 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      /*
-       * If backend has separate OTP verification API,
-       * call that API here.
-       *
-       * Currently OTP is passed to Change Password screen.
-       */
-
-      if (!mounted) return;
-
-      Navigator.pushNamed(
-        context,
-        RoutesName.changepassword,
-        arguments: {
-          "empId": widget.empId,
-          "otp": otp,
-        },
-      );
-    } catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _extractErrorMessage(e),
-          ),
-          backgroundColor: Colors.red[700],
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
+    Navigator.pushNamed(
+      context,
+      RoutesName.resetpassword,
+      arguments: {
+        "empId": widget.empId,
+        "otp": otp,
+      },
+    );
   }
 
   // MARK: - Resend OTP
@@ -152,9 +121,6 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
     });
 
     try {
-      // Same Forgot Password API call
-      // using the Employee ID received from Login screen.
-
       final response = await ref
           .read(loginProvider.notifier)
           .forgotPassword(
@@ -164,10 +130,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
       if (!mounted) return;
 
       if (response["success"] == true) {
-        // Restart 60 seconds timer
         _startTimer();
-
-        // Clear old OTP
         for (final controller in _otpControllers) {
           controller.clear();
         }
@@ -238,8 +201,8 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
 
   Widget _otpBox(int index) {
     return SizedBox(
-      width: 65,
-      height: 65,
+      width: 46,
+      height: 56,
       child: TextField(
         controller: _otpControllers[index],
         focusNode: _focusNodes[index],
@@ -250,20 +213,21 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
           FilteringTextInputFormatter.digitsOnly,
         ],
         style: const TextStyle(
-          fontSize: 24,
+          fontSize: 20,
           fontWeight: FontWeight.bold,
         ),
         decoration: InputDecoration(
           counterText: "",
+          contentPadding: const EdgeInsets.symmetric(vertical: 10),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
             borderSide: const BorderSide(
               color: AppColors.primary,
               width: 1.5,
             ),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
             borderSide: const BorderSide(
               color: AppColors.primary,
               width: 2,
@@ -271,7 +235,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
           ),
         ),
         onChanged: (value) {
-          if (value.isNotEmpty && index < 3) {
+          if (value.isNotEmpty && index < _otpLength - 1) {
             FocusScope.of(context).requestFocus(
               _focusNodes[index + 1],
             );
@@ -340,7 +304,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                     // MARK: - Title
 
                     const Text(
-                      "Verify your email",
+                      "Verify your OTP",
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 26,
@@ -356,7 +320,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                     Text(
                       widget.message.isNotEmpty
                           ? widget.message
-                          : "We just sent a 4-digit OTP to your registered email address.",
+                          : "We just sent a 6-digit OTP to your registered email address.",
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontSize: 15,
@@ -377,30 +341,20 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                     ),
 
                     const SizedBox(height: 40),
-
-                    // MARK: - OTP Fields
-
-                    Row(
-                      mainAxisAlignment:
+                    Row(mainAxisAlignment:
                       MainAxisAlignment.spaceEvenly,
                       children: List.generate(
-                        4,
+                        _otpLength,
                         _otpBox,
                       ),
                     ),
 
                     const SizedBox(height: 40),
-
-                    // MARK: - Continue Button
-
                     SizedBox(
                       width: double.infinity,
                       height: 56,
                       child: ElevatedButton(
-                        onPressed:
-                        _isLoading || _isResending
-                            ? null
-                            : _verifyOtp,
+                        onPressed: _isResending ? null : _verifyOtp,
                         style: ElevatedButton.styleFrom(
                           backgroundColor:
                           AppColors.primary,
@@ -412,17 +366,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                             BorderRadius.circular(14),
                           ),
                         ),
-                        child: _isLoading
-                            ? const SizedBox(
-                          height: 22,
-                          width: 22,
-                          child:
-                          CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                            : const Text(
+                        child: const Text(
                           "Continue",
                           style: TextStyle(
                             fontSize: 18,
@@ -435,9 +379,6 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                     ),
 
                     const SizedBox(height: 24),
-
-                    // MARK: - Resend
-
                     const Text(
                       "Didn't receive code?",
                       style: TextStyle(
@@ -534,9 +475,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                               size: 20,
                             ),
                           ),
-
                           const SizedBox(width: 12),
-
                           const Expanded(
                             child: Column(
                               crossAxisAlignment:
@@ -565,7 +504,6 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                         ],
                       ),
                     ),
-
                     const SizedBox(height: 24),
                   ],
                 ),

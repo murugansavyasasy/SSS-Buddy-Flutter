@@ -19,15 +19,32 @@ class CustomerListView extends ConsumerStatefulWidget {
 }
 
 class _CustomerListViewState extends ConsumerState<CustomerListView> {
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      ref.read(customerviewProvider.notifier).loadMore();
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final customerlistAsync = ref.watch(customerviewProvider);
+    final isLoadingMore = ref.watch(isLoadingMoreProvider);
 
     return PopScope(
       onPopInvokedWithResult: (didPop, result) {
@@ -72,10 +89,20 @@ class _CustomerListViewState extends ConsumerState<CustomerListView> {
                         return const Center(child: Text("No Data Found"));
                       }
                       return ListView.builder(
+                        controller: _scrollController,
                         padding:
                         const EdgeInsets.fromLTRB(16, 20, 16, 20),
-                        itemCount: list.length,
+                        itemCount: list.length + (isLoadingMore ? 1 : 0),
                         itemBuilder: (context, index) {
+                          if (index >= list.length) {
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 16),
+                              child: Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                            );
+                          }
+
                           final item = list[index];
 
                           return InkWell(
@@ -84,8 +111,8 @@ class _CustomerListViewState extends ConsumerState<CustomerListView> {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) =>
-                                      // CustomerInfoView(item: item),
-                                    CustomerPOView(customerId: item.id),
+                                  // CustomerInfoView(item: item),
+                                  CustomerPOView(customerId: item.id),
                                 ),
                               );
                             },

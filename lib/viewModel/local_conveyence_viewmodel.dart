@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sssbuddy/auth/model/LocalConveyenceModel.dart';
 
@@ -45,8 +48,10 @@ class LocalConveyenceViewmodel
     return response;
   }
 
-  // ADD LOCAL EXPENSE
-  Future<bool> addLocalExpense({
+
+
+  // ADD LOCAL EXPENSE — now returns the new expense id (or null on failure)
+  Future<int?> addLocalExpense({
     required int monthOfClaim,
     required String description,
     required String remarksWithoutBill,
@@ -58,13 +63,13 @@ class LocalConveyenceViewmodel
       final loginData = loginState.value;
 
       if (loginData == null) {
-        return false;
+        return null;
       }
 
       final repo = ref.read(repositoryProvider);
 
       final body = {
-        "idUser": 28,
+        "idUser": loginData.userId,
         "monthOfClaim": monthOfClaim,
         "Description": description,
         "RemarksWithoutBill": remarksWithoutBill,
@@ -73,19 +78,54 @@ class LocalConveyenceViewmodel
         "LocalItemList": localItemList,
       };
 
-      final success = await repo.addLocalExpense(
+      final idLocalExpense = await repo.addLocalExpense(
         body: body,
+      );
+
+      return idLocalExpense;
+    } catch (e) {
+      print("LocalConveyenceViewmodel addLocalExpense ERROR: $e");
+      return null;
+    }
+  }
+
+  // UPLOAD EXPENSE FILE (BILL / PROOF)
+  Future<bool> uploadExpenseFile({
+    required int idLocalExpense,
+    required String nameValue, // Local | Tour | Director
+    required File pdfFile,
+  }) async {
+    try {
+      final loginState = ref.read(loginProvider);
+      final loginData = loginState.value;
+
+      if (loginData == null) {
+        return false; // ← was `return null;`, fixed
+      }
+
+      final repo = ref.read(repositoryProvider);
+
+      final formData = FormData.fromMap({
+        "idValue": idLocalExpense.toString(),
+        "nameValue": nameValue,
+        "processby": loginData.userId.toString(), // ignored server-side, user taken from token
+        "pdf": await MultipartFile.fromFile(
+          pdfFile.path,
+          filename: pdfFile.path.split('/').last,
+        ),
+      });
+
+      final success = await repo.uploadExpenseFile(
+        body: formData,
       );
 
       return success;
     } catch (e) {
-      print("LocalConveyenceViewmodel ERROR: $e");
+      print("uploadExpenseFile ERROR: $e");
       return false;
     }
   }
 }
-
-
 
 final localConvienceProvider =
 AsyncNotifierProvider<LocalConveyenceViewmodel, List<Localconveyencemodel>>(

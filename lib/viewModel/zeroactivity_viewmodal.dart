@@ -2,64 +2,94 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../auth/model/ZeroActivityModel.dart';
 import '../provider/app_providers.dart';
+import 'login_view_model.dart';
 
-class ZeroactivityViewmodal extends AsyncNotifier<List<Zeroactivitymodel>> {
-  List<Zeroactivitymodel> _all = [];
+class ZeroactivityViewmodal
+    extends AsyncNotifier<List<ZeroActivityModel>> {
+  List<ZeroActivityModel> _all = [];
+
   String status = "All";
+  String searchQuery = "";
 
   @override
-  Future<List<Zeroactivitymodel>> build() async {
-    if (globalVimsIdUser.isEmpty) {
-      print('❌ globalVimsIdUser empty');
-      return [];
+  Future<List<ZeroActivityModel>> build() async {
+    final loginData = ref.read(loginProvider).value;
+
+    if (loginData == null) {
+      throw Exception("User not logged in");
     }
 
-    print('🚀 API Call Started');
-    print('👤 VimsIdUser: $globalVimsIdUser');
-
     final repo = ref.read(repositoryProvider);
-    final response = await repo.getInstuetList(globalVimsIdUser);
 
-    print('✅ Total Records: ${response.length}');
-
+    final response = await repo.getInstuetList(
+      loginData.userId.toString(),
+    );
     _all = response;
+
     return response;
   }
+
+  List<String> get statusList {
+    final uniqueStatus = _all
+        .map((item) => item.instituteStatus.trim())
+        .where((status) => status.isNotEmpty)
+        .toSet()
+        .toList();
+
+    return [
+      "All",
+      ...uniqueStatus,
+    ];
+  }
+
 
   void filterByStatus(String selectedStatus) {
     status = selectedStatus;
 
-    if (selectedStatus == "All") {
-      state = AsyncData(_all);
-      return;
-    }
-
-    state = AsyncData(
-      _all.where((item) =>
-      (item.instituteStatus ?? "").toLowerCase() ==
-          selectedStatus.toLowerCase()
-      ).toList(),
-    );
+    _applyFilters();
   }
 
   void filter(String query) {
-    if (query.trim().isEmpty) {
-      state = AsyncData(_all);
-      return;
+    searchQuery = query;
+
+    _applyFilters();
+  }
+
+  void _applyFilters() {
+    List<ZeroActivityModel> filtered = List.from(_all);
+
+    if (status != "All") {
+      filtered = filtered.where((item) {
+        return item.instituteStatus.toLowerCase() ==
+            status.toLowerCase();
+      }).toList();
     }
 
-    final lower = query.toLowerCase();
+    if (searchQuery.trim().isNotEmpty) {
+      final lowerQuery =
+      searchQuery.trim().toLowerCase();
 
-    state = AsyncData(
-      _all.where((item) =>
-      (item.instituteName ?? "").toLowerCase().contains(lower) ||
-          (item.salesPerson ?? "").toLowerCase().contains(lower)
-      ).toList(),
-    );
+      filtered = filtered.where((item) {
+        return item.instituteName
+            .toLowerCase()
+            .contains(lowerQuery) ||
+            item.salesPerson
+                .toLowerCase()
+                .contains(lowerQuery) ||
+            item.instituteId
+                .toString()
+                .contains(lowerQuery);
+      }).toList();
+    }
+
+    state = AsyncData(filtered);
   }
 }
 
 final zeroActivityProvider =
-AsyncNotifierProvider<ZeroactivityViewmodal, List<Zeroactivitymodel>>(
+AsyncNotifierProvider<
+    ZeroactivityViewmodal,
+    List<ZeroActivityModel>
+>(
   ZeroactivityViewmodal.new,
 );

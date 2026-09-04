@@ -1,4 +1,4 @@
-class Zeroactivitymodel {
+class ZeroActivityModel {
   final int instituteId;
   final String instituteName;
   final String lastWebLogin;
@@ -6,7 +6,7 @@ class Zeroactivitymodel {
   final String salesPerson;
   final String instituteStatus;
 
-  Zeroactivitymodel({
+  ZeroActivityModel({
     required this.instituteId,
     required this.instituteName,
     required this.lastWebLogin,
@@ -15,8 +15,8 @@ class Zeroactivitymodel {
     required this.instituteStatus,
   });
 
-  factory Zeroactivitymodel.fromJson(Map<String, dynamic> json) {
-    return Zeroactivitymodel(
+  factory ZeroActivityModel.fromJson(Map<String, dynamic> json) {
+    return ZeroActivityModel(
       instituteId: json['institute_id'] ?? 0,
       instituteName: json['institude_name'] ?? '',
       lastWebLogin: json['last_web_login'] ?? '',
@@ -27,6 +27,13 @@ class Zeroactivitymodel {
   }
 
   String get displayStatus {
-    return instituteStatus == "LIVE" ? "Active" : "Inactive";
+    switch (instituteStatus.toUpperCase()) {
+      case 'LIVE':
+        return 'Active';
+      case 'POC':
+        return 'POC';
+      default:
+        return 'Inactive';
+    }
   }
 }

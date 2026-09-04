@@ -25,6 +25,7 @@ class RoutesName {
   static const String alert = "alert";
   static const String otp = "otp";
   static const String feedback = "feedback";
+  static const String resetpassword = "/resetpassword";
   static const String renewalPOs = "renewal_pos";
 }
 

@@ -62,7 +62,6 @@ class LoginViewModel extends AsyncNotifier<LoginData?> {
       print("✅ Token: ${user.token}");
 
       state = AsyncData(user);
-
       return true;
     } catch (e, stack) {
       state = AsyncError(e, stack);
@@ -81,24 +80,56 @@ class LoginViewModel extends AsyncNotifier<LoginData?> {
       }
 
       if (data is Map) {
-        final status = data["Status"];
+        final status = data["status"]?.toString().toLowerCase();
 
-        if (status == 1 || status == "1") {
+        if (status == "success") {
           return {
             "success": true,
-            "message": data["Message"] ?? "",
-            "dialNumbers": data["DialNumbers"] ?? [],
-            "moreInfo": data["MoreInfo"] ?? "",
-            "forgetOtpMessage":
-            data["ForgetOTPMessage"] ??
-                data["ForgetOtpMessage"] ??
-                "",
+            "message": data["message"] ?? "",
           };
         }
 
         throw Exception(
-          data["Message"]?.toString() ??
-              "Unable to send OTP",
+          data["message"]?.toString() ?? "Unable to send OTP",
+        );
+      }
+
+      throw Exception("Invalid response from server");
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
+  Future<Map<String, dynamic>> resetPassword({
+    required String empId,
+    required String otp,
+    required String newPassword,
+  }) async {
+    try {
+      final repo = ref.read(repositoryProvider);
+
+      final response = await repo.resetPassword(
+        empId: empId,
+        otp: otp,
+        newPassword: newPassword,
+      );
+
+      dynamic data = response;
+      if (data is List && data.isNotEmpty) {
+        data = data.first;
+      }
+
+      if (data is Map) {
+        final status = data["status"]?.toString().toLowerCase();
+
+        if (status == "success") {
+          return {
+            "success": true,
+            "message": data["message"] ?? "",
+          };
+        }
+
+        throw Exception(
+          data["message"]?.toString() ?? "Unable to reset password",
         );
       }
 

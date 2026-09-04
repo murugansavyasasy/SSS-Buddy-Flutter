@@ -23,13 +23,13 @@ class CustomerCardDetails extends StatelessWidget {
     final String initials = customerName.trim().isNotEmpty
         ? customerName
         .trim()
-        .split(' ')
+        .split(RegExp(r'\s+'))
+        .where((e) => e.isNotEmpty)
         .take(2)
         .map((e) => e[0])
         .join()
         .toUpperCase()
         : "??";
-
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(

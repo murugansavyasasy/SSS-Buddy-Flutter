@@ -1,23 +1,24 @@
 class Localconveyencemodel {
-  String idLocalExpense;
-  String Username;
-  String monthOfClaim;
-  String RefId;
-  double TotalLocalExpense;
-  String Description;
-  dynamic processBy;
-  dynamic processType;
-  int IsApproved;
-  int IsPaid;
-  dynamic Remarks;
-  dynamic RemarksWithoutBill;
-  int Result;
-  String ResultMessage;
-  String Status ;
-  int FinalApproval;
-  String PaidDate;
-  String FilePath;
-  dynamic LocalExpenseItems;
+  final String idLocalExpense;
+  final String Username;
+  final String monthOfClaim;
+  final String RefId;
+  final double TotalLocalExpense;
+  final String Description;
+  final dynamic processBy;
+  final dynamic processType;
+  final int IsApproved;
+  final int IsPaid;
+  final dynamic Remarks;
+  final dynamic RemarksWithoutBill;
+  final int Result;
+  final String ResultMessage;
+  final String Status;
+  final int FinalApproval;
+  final String PaidDate;
+  final String FilePath;
+
+  final dynamic LocalExpenseItems;
 
   Localconveyencemodel({
     required this.idLocalExpense,
@@ -41,28 +42,28 @@ class Localconveyencemodel {
     required this.LocalExpenseItems,
   });
 
-  factory Localconveyencemodel.fromJson(Map<String,dynamic> json) {
+  factory Localconveyencemodel.fromJson( Map<String, dynamic> json,) {
     return Localconveyencemodel(
-      idLocalExpense: json["idLocalExpense"] ?? "",
-      Username: json["Username"] ?? "",
-      monthOfClaim: json["monthOfClaim"] ?? "",
-      RefId: json["RefId"] ?? "",
-      TotalLocalExpense: json["TotalLocalExpense"] ?? 0,
-      Description: json["Description"] ?? "",
-      processBy: json["processBy"] ?? "",
-      processType: json["processType"] ?? "",
-      IsApproved: json["IsApproved"] ?? 0,
-      IsPaid: json["IsPaid"] ?? 0,
-      Remarks: json["Remarks"] ?? "",
-      RemarksWithoutBill: json["RemarksWithoutBill"] ?? "",
-      Result: json["Result"] ?? 0,
-      ResultMessage: json["ResultMessage"] ?? "",
-      Status: json["Status"] ?? "",
-      FinalApproval: json["FinalApproval"] ?? 0,
-      PaidDate: json["PaidDate"] ?? "",
-      FilePath: json["FilePath"] ?? "",
-      LocalExpenseItems: json["LocalExpenseItems"] ?? "",
+      idLocalExpense:json["idLocalExpense"]?.toString() ?? "",
+      Username:json["Username"]?.toString() ?? "",
+      monthOfClaim:json["monthOfClaim"]?.toString() ?? "",
+      RefId:json["RefId"]?.toString() ?? "",
+      TotalLocalExpense:double.tryParse(json["TotalLocalExpense"]?.toString() ?? "0",) ?? 0.0,
+      Description:
+      json["Description"]?.toString() ?? "",
+      processBy:json["processBy"],
+      processType:json["processType"],
+      IsApproved:int.tryParse(json["IsApproved"]?.toString() ?? "0",) ?? 0,
+      IsPaid:int.tryParse(json["IsPaid"]?.toString() ?? "0",) ?? 0,
+      Remarks:json["Remarks"],
+      RemarksWithoutBill:json["RemarksWithoutBill"],
+      Result:int.tryParse(json["Result"]?.toString() ?? "0",) ?? 0,
+      ResultMessage:json["ResultMessage"]?.toString() ?? "",
+      Status:json["Status"]?.toString() ?? "",
+      FinalApproval: int.tryParse(json["FinalApproval"]?.toString() ?? "0",) ?? 0,
+      PaidDate:json["PaidDate"]?.toString() ?? "",
+      FilePath:json["FilePath"]?.toString() ?? "",
+      LocalExpenseItems:json["LocalExpenseItems"],
     );
   }
-
 }

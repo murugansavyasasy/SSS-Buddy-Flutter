@@ -156,9 +156,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   void _showForgotPasswordConfirmation() {
     final empId = emailController.text.trim();
-
-    // IMPORTANT:
-    // Employee ID இல்லாமல் confirmation/API எதுவும் செய்யக்கூடாது.
     if (empId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -205,8 +202,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
               onPressed: () {
                 Navigator.pop(dialogContext);
-
-                // Employee ID already validated above.
                 _forgotPassword();
               },
               child: const Text("Send OTP"),
@@ -363,56 +358,47 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               return null;
                             },
                           ),
-
-                          // MARK: - Forgot Password
-
-                          // Align(
-                          //   alignment: Alignment.centerRight,
-                          //   child: TextButton(
-                          //     onPressed: isLoading
-                          //         ? null
-                          //         : _showForgotPasswordConfirmation,
-                          //     child: const Text(
-                          //       "Forgot Password?",
-                          //       style: TextStyle(
-                          //         color:
-                          //         AppColors.secondaryprimary,
-                          //         fontWeight: FontWeight.w600,
-                          //         fontSize: 14,
-                          //       ),
-                          //     ),
-                          //   ),
-                          // ),
-
-                          // MARK: - Remember Me
-
+                          const SizedBox(height: 10),
                           Row(
-                            mainAxisAlignment:
-                            MainAxisAlignment.center,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Checkbox(
-                                value: rememberMe,
-                                onChanged: isLoading
-                                    ? null
-                                    : (value) {
-                                  ref
-                                      .read(
-                                    rememberMeProvider
-                                        .notifier,
-                                  )
-                                      .state =
-                                      value ?? false;
-                                },
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Checkbox(
+                                    value: rememberMe,
+                                    onChanged: isLoading
+                                        ? null
+                                        : (value) {
+                                      ref
+                                          .read(rememberMeProvider.notifier)
+                                          .state = value ?? false;
+                                    },
+                                  ),
+                                  const Text(
+                                    Strings.rememberMe,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const Text(
-                                Strings.rememberMe,
-                                style: TextStyle(
-                                  fontSize: 14,
+
+                              // Forgot Password — right side
+                              TextButton(
+                                onPressed:
+                                isLoading ? null : _showForgotPasswordConfirmation,
+                                child: const Text(
+                                  "Forgot Password?",
+                                  style: TextStyle(
+                                    color: AppColors.secondaryprimary,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
-
                           const SizedBox(height: 20),
 
                           // MARK: - Login Buttons

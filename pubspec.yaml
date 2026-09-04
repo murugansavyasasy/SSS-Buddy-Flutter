@@ -24,7 +24,7 @@ dependencies:
   # Riverpod 3.x - Correct Compatible Versions
   flutter_riverpod: ^3.3.1
   riverpod_annotation: ^4.0.2
-
+  file_picker: ^12.2.0
   dio: ^5.4.0
   record: ^7.0.0
   permission_handler: ^13.0.1

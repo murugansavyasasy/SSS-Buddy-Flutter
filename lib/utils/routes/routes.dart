@@ -26,7 +26,8 @@ import '../../view/customer_list_view.dart';
 import '../../view/demo_list.dart';
 import '../../view/feedback.dart';
 import '../../view/important_info.dart';
-import '../../view/school_detail/schooldetail_view.dart';
+import '../../view/otp_screen.dart';
+import '../../view/reset_password_screen.dart';
 import '../../view/zero_activity.dart';
 
 class Routes {
@@ -105,6 +106,22 @@ class Routes {
 
       case RoutesName.alert:
         return MaterialPageRoute(builder: (context) => AlertScreen());
+      case RoutesName.otp:
+        final args = settings.arguments as Map<String, dynamic>? ?? {};
+        final empId = args["empId"] as String? ?? "";
+        final message = args["message"] as String? ?? "";
+        return MaterialPageRoute(
+          builder: (context) => OtpScreen(empId: empId, message: message),
+        );
+    // in your onGenerateRoute switch
+      case RoutesName.resetpassword:
+        final args = settings.arguments as Map<String, dynamic>? ?? {};
+        final empId = args["empId"] as String? ?? "";
+        final otp = args["otp"] as String? ?? "";
+
+        return MaterialPageRoute(
+          builder: (context) => ResetPasswordScreen(empId: empId, otp: otp),
+        );
       case RoutesName.renewalPOs:
         return MaterialPageRoute(builder: (context) => const RenewalPOsPage());
       default:
