@@ -38,29 +38,24 @@ class CustomerDetailsViewmodel
       _all = [..._all, ...response.data];
       _page = nextPage;
       _totalPages = response.totalPages;
-      state = AsyncData(_searchQuery.isEmpty ? _all : _filtered());
+      state = AsyncData(_all);
     } finally {
       ref.read(isLoadingMoreProvider.notifier).state = false;
     }
   }
 
-  void filter(String query) {
+  // Now calls API instead of local filtering
+  Future<void> filter(String query) async {
     _searchQuery = query;
+    _page = 1;
 
-    if (query.trim().isEmpty) {
-      state = AsyncData(_all);
-      return;
-    }
-
-    state = AsyncData(_filtered());
-  }
-
-  List<Customerdetailsmodel> _filtered() {
-    final lower = _searchQuery.toLowerCase();
-    return _all.where((item) {
-      return item.companyName.toLowerCase().contains(lower) ||
-          item.accountManager.toLowerCase().contains(lower);
-    }).toList();
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      final response = await _fetchPage(_page);
+      _all = response.data;
+      _totalPages = response.totalPages;
+      return _all;
+    });
   }
 
   Future<CustomerListResponse> _fetchPage(int page) async {
@@ -79,7 +74,12 @@ class CustomerDetailsViewmodel
 
     final repo = ref.read(repositoryProvider);
 
-    return repo.getCustomersList(loginData.token, page: page, limit: _limit);
+    return repo.getCustomersList(
+      loginData.token,
+      page: page,
+      limit: _limit,
+      search: _searchQuery,
+    );
   }
 }
 

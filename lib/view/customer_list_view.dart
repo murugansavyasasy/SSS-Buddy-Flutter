@@ -66,9 +66,12 @@ class _CustomerListViewState extends ConsumerState<CustomerListView> {
               ToolbarLayout(
                 title: "Customer List",
                 navigateTo: const Dashboard(),
+                backendSearch: true,
                 searchHint: "Search school name....",
-                onSearch: (query) =>
-                    ref.read(customerviewProvider.notifier).filter(query),
+                onSearch: (query) {
+                  print("🔍 onSearch called with query: '$query'");
+                  ref.read(customerviewProvider.notifier).filter(query);
+                },
               ),
               Expanded(
                 child: Container(

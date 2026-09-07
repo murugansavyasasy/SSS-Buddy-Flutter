@@ -86,6 +86,9 @@ class LocalConveyence extends ConsumerWidget {
                           return LocalConveyenceCard(
                             item: item,
                             VimsUserTypeId: VimsUserTypeId,
+                            onDelete: () {
+                              print("Delete Type: $item");
+                            },
                             onDetails: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute(

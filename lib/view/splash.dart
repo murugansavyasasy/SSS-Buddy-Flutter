@@ -108,12 +108,6 @@ class Splash extends ConsumerWidget {
     );
   }
 }
-// class Splash extends ConsumerStatefulWidget {
-//   const Splash({super.key});
-//
-//   @override
-//   ConsumerState<Splash> createState() => _SplashState();
-// }
 
 class _SplashState extends ConsumerState<Splash> {
   @override

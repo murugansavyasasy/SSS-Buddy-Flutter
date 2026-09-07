@@ -19,6 +19,7 @@ class ToolbarLayout extends ConsumerStatefulWidget {
   final List<Map<String, String>>? financialYearList;
   final String? selectedFinancialYearId;
   final void Function(String id, String name)? onFinancialYearChanged;
+  final bool backendSearch; // NEW: if true, search fires only on button/submit tap
 
   const ToolbarLayout({
     super.key,
@@ -35,6 +36,7 @@ class ToolbarLayout extends ConsumerStatefulWidget {
     this.financialYearList,
     this.selectedFinancialYearId,
     this.onFinancialYearChanged,
+    this.backendSearch = false, // NEW
   });
 
   @override
@@ -135,7 +137,9 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
     _animController.reverse().then((_) {
       setState(() => _searchOpen = false);
       _controller.clear();
+     if (!widget.backendSearch){
       widget.onSearch?.call('');
+      }
     });
   }
 
@@ -293,7 +297,16 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                     child: TextField(
                       controller: _controller,
                       autofocus: true,
-                      onChanged: widget.onSearch,
+                      onChanged: (val) {
+                        if (widget.backendSearch) {
+                          setState(() {});
+                        } else {
+                          widget.onSearch?.call(val);
+                        }
+                      },
+                      onSubmitted: widget.backendSearch
+                          ? (val) => widget.onSearch?.call(val)
+                          : null,
                       style: const TextStyle(
                         fontSize: 14,
                         color: Colors.black87,
@@ -309,18 +322,41 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                           color: Colors.grey.shade400,
                           size: 20,
                         ),
-                        suffixIcon: _controller.text.isNotEmpty
-                            ? GestureDetector(
-                          onTap: () {
-                            _controller.clear();
-                            widget.onSearch?.call('');
-                            setState(() {});
-                          },
-                          child: Icon(
-                            Icons.close,
-                            color: Colors.grey.shade400,
-                            size: 18,
-                          ),
+                        suffixIcon: (widget.backendSearch ||
+                            _controller.text.isNotEmpty)
+                            ? Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (_controller.text.isNotEmpty)
+                              GestureDetector(
+                                onTap: () {
+                                  _controller.clear();
+                                  widget.onSearch?.call('');
+                                  setState(() {});
+                                },
+                                child: Icon(
+                                  Icons.close,
+                                  color: Colors.grey.shade400,
+                                  size: 18,
+                                ),
+                              ),
+                            if (widget.backendSearch) ...[
+                              const SizedBox(width: 8),
+                              GestureDetector(
+                                onTap: () => widget.onSearch
+                                    ?.call(_controller.text),
+                                child: Padding(
+                                  padding:
+                                  const EdgeInsets.only(right: 4),
+                                  child: Icon(
+                                    Icons.search,
+                                    color: AppColors.primary,
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
                         )
                             : null,
                         border: InputBorder.none,

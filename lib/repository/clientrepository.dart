@@ -49,7 +49,7 @@ class ClientRepository {
   Future<Versioncheck> getVersionCheckDetails() async {
     final response = await client.get(
       AppEndpoint.versioncheckendpoint,
-      query: {"VersionID": "60"},
+      query: {"VersionID": "61"},
     );
     return Versioncheck.fromJson(response.data);
   }
@@ -195,12 +195,14 @@ class ClientRepository {
       String token, {
         int page = 1,
         int limit = 25,
+        String? search,
       }) async {
     final response = await client.get(
       AppEndpoint.customerslist,
       query: {
         'page': page,
         'limit': limit,
+        if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
       },
       headers: {
         'Authorization': 'Bearer $token',
