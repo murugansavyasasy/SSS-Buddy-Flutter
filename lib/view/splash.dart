@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../repository/app_url.dart';
 import '../utils/routes/routes_name.dart';
 import '../viewModel/auth_view_model.dart';
+import '../viewModel/login_view_model.dart';
 
 
 class Splash extends ConsumerWidget {
@@ -27,17 +28,7 @@ class Splash extends ConsumerWidget {
 
       data: (version) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (version.IsVersionUpdateAvailable == 0 &&
-              version.IsForceUpdateRequired == 0) {
-            _goToLogin(context);
-          } else {
-            _goToLogin(context);
-            _showUpdateDialog(
-              context,
-              version.IsVersionUpdateAvailable,
-              version.IsForceUpdateRequired,
-            );
-          }
+          _handleVersion(context, ref, version);
         });
 
         return Scaffold(
@@ -55,8 +46,56 @@ class Splash extends ConsumerWidget {
     );
   }
 
-  void _goToLogin(BuildContext context) {
-    Navigator.pushReplacementNamed(context, RoutesName.login);
+  /// Decides what to do once the version check completes:
+  /// - Force update  -> stay on splash and show a blocking update dialog.
+  /// - Otherwise     -> auto-login if a session exists, else go to login,
+  ///                    showing a dismissible update dialog when available.
+  Future<void> _handleVersion(
+    BuildContext context,
+    WidgetRef ref,
+    dynamic version,
+  ) async {
+    final updateAvailable = version.IsVersionUpdateAvailable == 1;
+    final forceUpdate = updateAvailable && version.IsForceUpdateRequired == 1;
+
+    if (forceUpdate) {
+      _showUpdateDialog(
+        context,
+        version.IsVersionUpdateAvailable,
+        version.IsForceUpdateRequired,
+      );
+      return;
+    }
+
+    await _routeNext(context, ref);
+
+    if (!context.mounted) return;
+
+    if (updateAvailable) {
+      _showUpdateDialog(
+        context,
+        version.IsVersionUpdateAvailable,
+        version.IsForceUpdateRequired,
+      );
+    }
+  }
+
+  /// Restores the saved session and navigates to the dashboard when logged in,
+  /// otherwise to the login screen.
+  Future<void> _routeNext(BuildContext context, WidgetRef ref) async {
+    bool loggedIn = false;
+    try {
+      loggedIn = await ref.read(loginProvider.notifier).restoreSession();
+    } catch (_) {
+      loggedIn = false;
+    }
+
+    if (!context.mounted) return;
+
+    Navigator.pushReplacementNamed(
+      context,
+      loggedIn ? RoutesName.dashboard : RoutesName.login,
+    );
   }
   Future<void> openStore() async {
     const androidUrl = "https://play.google.com/store/apps/details?id=com.sss.buddy";
@@ -92,7 +131,6 @@ class Splash extends ConsumerWidget {
               TextButton(
                 onPressed: () {
                   Navigator.pop(context);
-                  _goToLogin(context);
                 },
                 child: const Text("Later"),
               ),

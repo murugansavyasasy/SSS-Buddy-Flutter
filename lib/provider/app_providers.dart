@@ -14,8 +14,6 @@ final repositoryProvider = Provider<ClientRepository>((ref) {
   return ClientRepository(dio);
 });
 
-final rememberMeProvider = StateProvider<bool>((ref) => false);
-
 final selectedFilterProvider = StateProvider<SchoolFilter>(
       (ref) => SchoolFilter.all,
 );

@@ -68,6 +68,37 @@ class LoginViewModel extends AsyncNotifier<LoginData?> {
       return false;
     }
   }
+  /// Restores a previously saved session so the user skips the login screen.
+  ///
+  /// Auto-login happens whenever a valid stored login response exists,
+  /// regardless of the optional "Remember me" flag. It only stops once the
+  /// user logs out (which clears the stored data). On success [loginProvider]
+  /// is populated so the dashboard and all feature screens have the user's
+  /// data/token available.
+  Future<bool> restoreSession() async {
+    final stored = await SecureStorage.getLoginResponse();
+    if (stored == null || stored.isEmpty) return false;
+
+    try {
+      final decoded = jsonDecode(stored);
+      final response = LoginResponse.fromJson(
+        Map<String, dynamic>.from(decoded as Map),
+      );
+
+      final user = response.data;
+      if (user == null) return false;
+
+      globalUserId = user.userId.toString();
+
+      state = AsyncData(user);
+      await ref.read(userSessionProvider.notifier).refreshUser();
+
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<Map<String, dynamic>> forgotPassword({required String empId}) async {
     try {
       final repo = ref.read(repositoryProvider);

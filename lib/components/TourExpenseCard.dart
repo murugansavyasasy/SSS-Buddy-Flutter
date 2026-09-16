@@ -34,11 +34,12 @@ class TourExpenseCard extends StatelessWidget {
   });
 
   Color _statusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'paid':     return const Color(0xFF22C55E);
-      case 'pending':  return const Color(0xFFF59E0B);
-      case 'rejected': return const Color(0xFFEF4444);
-      default:         return const Color(0xFF6B7280);
+    switch (status.toLowerCase().trim()) {
+      case 'approved':
+      case 'paid':     return const Color(0xFF22C55E); // green
+      case 'pending':  return const Color(0xFFEAB308); // yellow
+      case 'rejected': return const Color(0xFFEF4444); // red
+      default:         return const Color(0xFF6B7280); // grey
     }
   }
 

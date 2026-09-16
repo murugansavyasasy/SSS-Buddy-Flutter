@@ -8,8 +8,6 @@ import '../Components/CustomPasswordField.dart';
 import '../Components/CustomButton.dart';
 import '../Components/CustomTextField.dart';
 import '../Components/header_container.dart';
-import '../core/storage/secure_storage.dart';
-import '../provider/app_providers.dart';
 import '../utils/routes/routes_name.dart';
 import '../viewModel/login_view_model.dart';
 
@@ -29,38 +27,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _forgotPasswordLoading = false;
 
   @override
-  void initState() {
-    super.initState();
-    loadSavedLogin();
-  }
-
-  @override
   void dispose() {
     emailController.dispose();
     passwordController.dispose();
     super.dispose();
-  }
-
-  // MARK: - Load Saved Login
-
-  Future<void> loadSavedLogin() async {
-    final rememberMe = await SecureStorage.getRememberMe();
-
-    if (!rememberMe) return;
-
-    final employeeId = await SecureStorage.getEmployeeId();
-    final password = await SecureStorage.getPassword();
-
-    if (employeeId != null && password != null) {
-      if (!mounted) return;
-
-      setState(() {
-        emailController.text = employeeId;
-        passwordController.text = password;
-      });
-
-      ref.read(rememberMeProvider.notifier).state = true;
-    }
   }
 
   // MARK: - Error Message
@@ -219,14 +189,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return;
     }
 
-    final rememberMe = ref.read(rememberMeProvider);
-
     final success = await ref
         .read(loginProvider.notifier)
         .login(
       emailController.text.trim(),
       passwordController.text,
-      rememberMe,
+      true,
     );
 
     if (!mounted) return;
@@ -256,14 +224,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   void _clearFields() {
     emailController.clear();
     passwordController.clear();
-
-    ref.read(rememberMeProvider.notifier).state = false;
   }
 
   @override
   Widget build(BuildContext context) {
     final loginState = ref.watch(loginProvider);
-    final rememberMe = ref.watch(rememberMeProvider);
 
     final isLoginLoading = loginState.isLoading;
 
@@ -358,46 +323,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               return null;
                             },
                           ),
-                          const SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Checkbox(
-                                    value: rememberMe,
-                                    onChanged: isLoading
-                                        ? null
-                                        : (value) {
-                                      ref
-                                          .read(rememberMeProvider.notifier)
-                                          .state = value ?? false;
-                                    },
-                                  ),
-                                  const Text(
-                                    Strings.rememberMe,
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ],
-                              ),
-
-                              // Forgot Password — right side
-                              TextButton(
-                                onPressed:
-                                isLoading ? null : _showForgotPasswordConfirmation,
-                                child: const Text(
-                                  "Forgot Password?",
-                                  style: TextStyle(
-                                    color: AppColors.secondaryprimary,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                  ),
+                          const SizedBox(height: 6),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: isLoading
+                                  ? null
+                                  : _showForgotPasswordConfirmation,
+                              child: const Text(
+                                "Forgot Password?",
+                                style: TextStyle(
+                                  color: AppColors.secondaryprimary,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
                                 ),
                               ),
-                            ],
+                            ),
                           ),
                           const SizedBox(height: 20),
 

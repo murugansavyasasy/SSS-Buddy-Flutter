@@ -24,6 +24,14 @@ class _UsageCountScreenState extends ConsumerState<UsageCountScreen> {
   bool _isLoading = false;
   Usagecount? _usage;
 
+  @override
+  void initState() {
+    super.initState();
+    // Default both From Date and To Date to the current date.
+    final today = DateTime.now();
+    _fromDate = today;
+    _toDate = today;
+  }
 
   Future<void> _pickDate(BuildContext context, bool isFrom) async {
     final DateTime? picked = await showDatePicker(
