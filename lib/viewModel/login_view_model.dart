@@ -84,17 +84,12 @@ class LoginViewModel extends AsyncNotifier<LoginData?> {
 
     try {
       final repo = ref.read(repositoryProvider);
-
-      // Re-validate the stored credentials against the Login API so we get a
-      // fresh user object/token instead of replaying the cached response.
       final LoginResponse response = await repo.apilogin(employeeId, password);
 
       if (response.status != "success") return false;
 
       final user = response.data;
       if (user == null) return false;
-
-      // Refresh the locally stored login response with the latest data.
       await SecureStorage.saveLoginData(
         employeeId,
         password,

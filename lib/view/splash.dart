@@ -80,8 +80,6 @@ class Splash extends ConsumerWidget {
     }
   }
 
-  /// Restores the saved session and navigates to the dashboard when logged in,
-  /// otherwise to the login screen.
   Future<void> _routeNext(BuildContext context, WidgetRef ref) async {
     bool loggedIn = false;
     try {
