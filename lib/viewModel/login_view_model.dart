@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sssbuddy/core/storage/secure_storage.dart';
 import 'package:sssbuddy/provider/user_session_provider.dart';
@@ -18,7 +17,6 @@ class LoginViewModel extends AsyncNotifier<LoginData?> {
   Future<bool> login(
       String employeeId,
       String password,
-      bool rememberMe,
       ) async {
     state = const AsyncLoading();
 
@@ -49,7 +47,6 @@ class LoginViewModel extends AsyncNotifier<LoginData?> {
         employeeId,
         password,
         jsonEncode(response.toJson()),
-        rememberMe,
       );
 
       await ref.read(userSessionProvider.notifier).refreshUser();

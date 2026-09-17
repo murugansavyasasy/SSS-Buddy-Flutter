@@ -194,7 +194,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         .login(
       emailController.text.trim(),
       passwordController.text,
-      true,
     );
 
     if (!mounted) return;
