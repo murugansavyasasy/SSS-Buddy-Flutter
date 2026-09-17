@@ -73,17 +73,33 @@ class LoginViewModel extends AsyncNotifier<LoginData?> {
   /// is populated so the dashboard and all feature screens have the user's
   /// data/token available.
   Future<bool> restoreSession() async {
-    final stored = await SecureStorage.getLoginResponse();
-    if (stored == null || stored.isEmpty) return false;
+    final employeeId = await SecureStorage.getEmployeeId();
+    final password = await SecureStorage.getPassword();
+    if (employeeId == null ||
+        employeeId.isEmpty ||
+        password == null ||
+        password.isEmpty) {
+      return false;
+    }
 
     try {
-      final decoded = jsonDecode(stored);
-      final response = LoginResponse.fromJson(
-        Map<String, dynamic>.from(decoded as Map),
-      );
+      final repo = ref.read(repositoryProvider);
+
+      // Re-validate the stored credentials against the Login API so we get a
+      // fresh user object/token instead of replaying the cached response.
+      final LoginResponse response = await repo.apilogin(employeeId, password);
+
+      if (response.status != "success") return false;
 
       final user = response.data;
       if (user == null) return false;
+
+      // Refresh the locally stored login response with the latest data.
+      await SecureStorage.saveLoginData(
+        employeeId,
+        password,
+        jsonEncode(response.toJson()),
+      );
 
       globalUserId = user.userId.toString();
 
