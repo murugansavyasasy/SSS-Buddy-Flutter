@@ -127,8 +127,18 @@ class SchooldetailView extends ConsumerWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF1A3A5C),
                 foregroundColor: Colors.white,
+                minimumSize: const Size.fromHeight(44),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
-              child: const Text("Usage Count"),
+              child: const Text(
+                "Usage Count",
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ),
           const SizedBox(width: 10),
@@ -142,7 +152,21 @@ class SchooldetailView extends ConsumerWidget {
                   ),
                 );
               },
-              child: const Text("Management Info"),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF1A3A5C),
+                minimumSize: const Size.fromHeight(44),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                side: const BorderSide(color: Color(0xFF1A3A5C)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text(
+                "Management Info",
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ),
         ],

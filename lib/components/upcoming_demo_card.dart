@@ -14,34 +14,45 @@ class UpcomingDemoCard extends StatelessWidget {
     this.onTap,
   });
 
+  static const Color _navy = Color(0xFF2E4F7D);
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 260,
+        width: 268,
         height: 90,
+        clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
-          color: const Color(0xfff8f6f6),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFECEEF1)),
+          boxShadow: [
+            BoxShadow(
+              color: _navy.withOpacity(0.08),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Row(
           children: [
-            // Left Icon Block
+            // ── Left icon panel ──────────────────────────────
             Container(
-              width: 70,
+              width: 62,
               height: double.infinity,
               decoration: const BoxDecoration(
-                color: Color(0xff2E4F7D),
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  bottomLeft: Radius.circular(16),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF3A6098), _navy],
                 ),
               ),
               child: const Center(
                 child: Icon(
                   Icons.keyboard_voice_rounded,
-                  size: 40,
+                  size: 30,
                   color: Colors.white,
                 ),
               ),
@@ -49,57 +60,79 @@ class UpcomingDemoCard extends StatelessWidget {
 
             const SizedBox(width: 12),
 
-            // Text Content
+            // ── Content ──────────────────────────────────────
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Demo ID
-                    Text(
-                      demoId,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis, // ✅ dots
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "DEMO #$demoId",
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.6,
+                      color: Color(0xFF9099A3),
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    schoolName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF1A2530),
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.phone_rounded,
+                        size: 12,
+                        color: Color(0xFF7A828C),
                       ),
-                    ),
-
-                    // School Name
-                    Text(
-                      schoolName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis, // ✅ dots
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          "$principalNumber",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF6B7280),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                       ),
-                    ),
-
-                    // Principal Number
-                    Text(
-                      "$principalNumber",
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis, // ✅ dots
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                ],
               ),
             ),
 
-            // Arrow Icon
-            const Padding(
-              padding: EdgeInsets.only(right: 12),
-              child: Icon(
-                Icons.arrow_forward_ios,
-                size: 16,
-                color: Colors.grey,
+            const SizedBox(width: 8),
+
+            // ── Action button ────────────────────────────────
+            Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                color: _navy.withOpacity(0.10),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 13,
+                color: _navy,
               ),
             ),
+
+            const SizedBox(width: 12),
           ],
         ),
       ),
