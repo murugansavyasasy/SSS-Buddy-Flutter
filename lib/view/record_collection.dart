@@ -113,6 +113,27 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
   String get _todayFormatted => DateFormat('dd/MM/yyyy').format(DateTime.now());
 
   @override
+  void initState() {
+    super.initState();
+
+    // ------------------------------------------------------------
+    // Every time this page opens, force a fresh API call for the
+    // school dropdown instead of showing whatever schoolnameProvider
+    // had cached from a previous visit (e.g. a leftover filtered
+    // search result). schoolnameProvider is not autoDispose, so it
+    // stays alive across navigations unless explicitly refreshed here.
+    //
+    // Deferred to the next frame because this triggers a state change
+    // (AsyncLoading -> AsyncData) on the provider, which must not run
+    // synchronously during this widget's very first build.
+    // ------------------------------------------------------------
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(schoolnameProvider.notifier).refresh();
+    });
+  }
+
+  @override
   void dispose() {
     _amountController.dispose();
     _cashReceivedOnCtrl.dispose();
@@ -131,6 +152,14 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
     super.dispose();
   }
 
+  // ============================================================
+  // SCHOOL SELECTED
+  // ============================================================
+  //
+  // Fires the Invoice API the moment a school is picked — no need to
+  // wait for the Financial Year to also be selected. This was already
+  // correct before; the bug was purely in the UI section below not
+  // showing until financialYearId was also set.
   void _onSchoolSelected(String? customerName, String? cusId) {
     setState(() {
       selectedSchool = customerName;
@@ -147,7 +176,6 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
       ref.read(invoiceProvider.notifier).clear();
     }
   }
-
 
   void _onFinancialYearChanged(String? yearName, String? yearId) {
     setState(() {
@@ -167,6 +195,7 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
       return;
     }
 
+    // Re-fetch on year change too, in case invoices differ by year.
     ref.read(invoiceProvider.notifier).fetchForCustomer(selectedSchoolCusId!);
   }
 
@@ -551,6 +580,14 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
     final bool hasValidInvoice =
         _invoiceId != null && _invoiceId != '0' && _invoiceId!.isNotEmpty;
 
+    // Only depends on a school being selected — Financial Year no
+    // longer blocks the Invoice Details / pending-amount section from
+    // showing. The moment a school is picked, _onSchoolSelected()
+    // already fires the invoice API call, so the UI should reflect
+    // that immediately instead of waiting on the year too.
+    final bool schoolIsSelected =
+        selectedSchoolCusId != null && selectedSchoolCusId!.isNotEmpty;
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -580,39 +617,59 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
                     children: [
                       const _SectionLabel(label: "Basic Information"),
                       const SizedBox(height: 12),
-
-                      schoolnameAsync.when(
-                        loading: () =>
-                        const DropdownSkeleton(label: "Select School"),
-                        error: (e, _) => DropdownError(
+                      if (!schoolnameAsync.hasValue && schoolnameAsync.isLoading)
+                        const DropdownSkeleton(label: "Select School")
+                      else if (schoolnameAsync.hasError && !schoolnameAsync.hasValue)
+                        DropdownError(
                           label: "Select School",
                           onRetry: () =>
                               ref.read(schoolnameProvider.notifier).refresh(),
-                        ),
-                        data: (schools) => SearchableDropdown<dynamic>(
+                        )
+                      else
+                        SearchableDropdown<dynamic>(
+                          key: const ValueKey('school_dropdown'),
                           label: "Select School",
                           hint: "Choose a school",
-                          value: selectedSchool,
-                          items: schools,
+                          value: selectedSchoolCusId,
+                          items: schoolnameAsync.value ?? [],
                           itemLabel: (e) => e.CustomerName ?? "",
-                          itemValue: (e) => e.CustomerName ?? "",
-                          onChanged: (v) {
-                            if (v == null) return;
+                          itemValue: (e) =>e.CustomerID ?? "",
+                          showSearchButtonOnEmpty: true,
+                          isLoading: schoolnameAsync.isLoading,
+                          // Fires the moment the user taps to OPEN this
+                          // dropdown — before picking anything. Forces a
+                          // fresh school-list API call right then, so the
+                          // list shown is never stale from a previous
+                          // visit or an earlier search.
+                          onOpen: () {
+                            ref.read(schoolnameProvider.notifier).refresh();
+                          },
+                          onSearch: (query) {
+                            ref
+                                .read(schoolnameProvider.notifier)
+                                .searchSchool(query);
+                          },
+
+                          onChanged: (value) {
+                            if (value == null) return;
+
                             try {
-                              final match = schools.firstWhere(
-                                    (e) => e.CustomerName == v,
+                              final match = (schoolnameAsync.value ?? [])
+                                  .firstWhere(
+                                    (e) => e.CustomerID == value,
                               );
+
                               _onSchoolSelected(
                                 match.CustomerName,
-                                match.CustomerID?.toString() ?? '',
+                                match.CustomerID,
                               );
                             } catch (_) {
-                              _onSchoolSelected(v, null);
+                              _showAlert(
+                                'Could not select that school, please try again',
+                              );
                             }
                           },
                         ),
-                      ),
-
                       const SizedBox(height: 16),
 
                       financialAsync.when(
@@ -657,9 +714,14 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
 
                       const SizedBox(height: 24),
 
-                      if (selectedSchoolCusId != null &&
-                          selectedFinancialYearId != null &&
-                          selectedFinancialYearId != '0') ...[
+                      // ──────────────────────────────────────────────
+                      // INVOICE DETAILS / PENDING AMOUNT
+                      // ──────────────────────────────────────────────
+                      // Shows as soon as a school is picked. Financial
+                      // Year is no longer required to reveal this
+                      // section — the API call already fires from
+                      // _onSchoolSelected() regardless of year.
+                      if (schoolIsSelected) ...[
                         const _SectionLabel(label: "Invoice Details"),
                         const SizedBox(height: 12),
 
@@ -678,31 +740,44 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
                           ),
                           data: (invoices) {
                             if (invoices.isEmpty) {
-                              WidgetsBinding.instance.addPostFrameCallback(
-                                    (_) => setState(() {
-                                  _invoiceId = null;
-                                  _invoiceNumber = null;
-                                }),
-                              );
+                              if (_invoiceId != null || _invoiceNumber != null) {
+                                WidgetsBinding.instance.addPostFrameCallback(
+                                      (_) => setState(() {
+                                    _invoiceId = null;
+                                    _invoiceNumber = null;
+                                    _pendingAmount = null;
+                                  }),
+                                );
+                              }
                               return const _InactiveDropdownHint(
                                 hint: "No invoices found",
                               );
                             }
 
-                            WidgetsBinding.instance.addPostFrameCallback(
-                                  (_) => setState(() {
-                                _invoiceId =
-                                    invoices.first.InvoiceId?.toString() ?? '0';
-                                _invoiceNumber =
-                                    invoices.first.InvoiceNumber ?? '';
-                                _pendingAmount =
-                                    invoices.first.PendingAmount?.toString() ??
-                                        '0';
-                              }),
-                            );
+                            final newInvoiceId =
+                            invoices.first.InvoiceId.toString();
+                            final newInvoiceNumber =
+                                invoices.first.InvoiceNumber;
+                            final newPendingAmount =
+                                invoices.first.PendingAmount;
 
+                            if (_invoiceId != newInvoiceId ||
+                                _invoiceNumber != newInvoiceNumber ||
+                                _pendingAmount != newPendingAmount) {
+                              WidgetsBinding.instance.addPostFrameCallback(
+                                    (_) => setState(() {
+                                  _invoiceId = newInvoiceId;
+                                  _invoiceNumber = newInvoiceNumber;
+                                  _pendingAmount = newPendingAmount;
+                                }),
+                              );
+                            }
+
+                            // Shows exactly how much is pending for this
+                            // invoice, formatted with a currency symbol
+                            // so it reads clearly at a glance.
                             final displayText =
-                                "${invoices.first.InvoiceNumber ?? ''} - Pending ${invoices.first.PendingAmount ?? '0'}";
+                                "${invoices.first.InvoiceNumber} - Pending ₹${invoices.first.PendingAmount}";
 
                             return FormInputField(
                               controller: TextEditingController(
