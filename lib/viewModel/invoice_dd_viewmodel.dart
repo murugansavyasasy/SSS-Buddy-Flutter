@@ -78,13 +78,6 @@ final invoiceProvider =
 AsyncNotifierProvider<InvoiceDdViewmodel, List<Invoicemodel>>(
   InvoiceDdViewmodel.new,
 );
-
-// ---------------------------------------------------------------------------
-// Payment Mode
-// Kept in this file per request, but as its own AsyncNotifier so Riverpod
-// actually tracks the state and widgets rebuild when data arrives.
-// ---------------------------------------------------------------------------
-
 class PaymentModeViewmodel extends AsyncNotifier<List<Paymentmodemodel>> {
   List<Paymentmodemodel>? _cache;
 

@@ -25,6 +25,10 @@ class _CustomerListViewState extends ConsumerState<CustomerListView> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(customerviewProvider.notifier).refreshList();
+    });
   }
 
   void _onScroll() {

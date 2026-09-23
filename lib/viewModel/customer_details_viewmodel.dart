@@ -10,7 +10,7 @@ class CustomerDetailsViewmodel
 
   List<Customerdetailsmodel> _all = [];
   int _page = 1;
-  final int _limit = 25;
+  final int _limit = 100;
   int _totalPages = 1;
   String _searchQuery = '';
 
@@ -47,6 +47,31 @@ class CustomerDetailsViewmodel
   // Now calls API instead of local filtering
   Future<void> filter(String query) async {
     _searchQuery = query;
+    _page = 1;
+
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      final response = await _fetchPage(_page);
+      _all = response.data;
+      _totalPages = response.totalPages;
+      return _all;
+    });
+  }
+
+  // ============================================================
+  // REFRESH LIST — called every time the Customer List page opens.
+  // ============================================================
+  //
+  // customerviewProvider is a plain AsyncNotifierProvider (not
+  // autoDispose), so it stays alive and keeps its old search query /
+  // page across navigations. Without this, re-opening the page just
+  // showed whatever was cached from the last visit (possibly still
+  // filtered) instead of doing a fresh call.
+  //
+  // This always resets the search box + pagination and re-fetches
+  // page 1 from the server, regardless of what the previous state was.
+  Future<void> refreshList() async {
+    _searchQuery = '';
     _page = 1;
 
     state = const AsyncLoading();
