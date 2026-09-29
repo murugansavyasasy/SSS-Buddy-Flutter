@@ -3,18 +3,10 @@ import 'package:flutter/services.dart';
 import '../Values/Colors/app_colors.dart';
 import '../components/searchable_dropdown.dart';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SHARED BANK LIST
-// ─────────────────────────────────────────────────────────────────────────────
 const List<String> kBankList = [
-  'Karur Vysya Bank',
-  'Kotak Mahindra Bank',
   'ICICI Bank',
 ];
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SECTION HEADER
-// ─────────────────────────────────────────────────────────────────────────────
 class PaymentSectionHeader extends StatelessWidget {
   final String title;
   final IconData icon;
@@ -56,13 +48,7 @@ class PaymentSectionHeader extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CASH FORM
-// Fields: Cash Received On, Cash Deposited On, Bank (dropdown), Branch
-// Validation rule: Deposited date must be >= Received date
-// ─────────────────────────────────────────────────────────────────────────────
 class CashPaymentForm extends StatelessWidget {
-  final TextEditingController cashReceivedOnController;
   final TextEditingController cashDepositedOnController;
   final TextEditingController cashDepositedBranchController;
   final String? selectedBank;
@@ -70,7 +56,6 @@ class CashPaymentForm extends StatelessWidget {
 
   const CashPaymentForm({
     super.key,
-    required this.cashReceivedOnController,
     required this.cashDepositedOnController,
     required this.cashDepositedBranchController,
     required this.selectedBank,
@@ -88,14 +73,6 @@ class CashPaymentForm extends StatelessWidget {
             icon: Icons.account_balance_wallet_outlined,
             color: Color(0xFF059669),
           ),
-          // Cash Received On — max date = today (past picker)
-          FormDateField(
-            controller: cashReceivedOnController,
-            label: 'Cash Received On',
-            icon: Icons.calendar_today_outlined,
-            allowFuture: false,
-          ),
-          const SizedBox(height: 14),
           // Cash Deposited On — max date = today (past picker)
           FormDateField(
             controller: cashDepositedOnController,
@@ -125,18 +102,11 @@ class CashPaymentForm extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CHEQUE FORM
-// Fields: Cheque Number, Cheque Date (past), Cheque Bank (free text),
-//         Deposit Bank (dropdown), Branch, Deposited Date (past)
-// Validation rule: Deposited date must be >= Cheque date
-// ─────────────────────────────────────────────────────────────────────────────
 class ChequePaymentForm extends StatelessWidget {
   final TextEditingController chequeNumberController;
   final TextEditingController chequeDateController;
   final TextEditingController chequeBankController;
   final TextEditingController chequeDepositedDateController;
-  final TextEditingController chequeBranchController;
   final String? selectedDepositBank;
   final ValueChanged<String?> onDepositBankChanged;
 
@@ -146,7 +116,6 @@ class ChequePaymentForm extends StatelessWidget {
     required this.chequeDateController,
     required this.chequeBankController,
     required this.chequeDepositedDateController,
-    required this.chequeBranchController,
     required this.selectedDepositBank,
     required this.onDepositBankChanged,
   });
@@ -184,7 +153,7 @@ class ChequePaymentForm extends StatelessWidget {
             icon: Icons.account_balance_outlined,
           ),
           const SizedBox(height: 14),
-          // Deposit Bank — dropdown (Karur Vysya, Kotak, ICICI)
+          // Deposit Bank — dropdown (ICICI only)
           SearchableDropdown<String>(
             label: 'Deposit Bank',
             hint: 'Select deposit bank',
@@ -193,12 +162,6 @@ class ChequePaymentForm extends StatelessWidget {
             itemLabel: (e) => e,
             itemValue: (e) => e,
             onChanged: onDepositBankChanged,
-          ),
-          const SizedBox(height: 14),
-          FormInputField(
-            controller: chequeBranchController,
-            label: 'Deposited Branch',
-            icon: Icons.business_outlined,
           ),
           const SizedBox(height: 14),
           // Cheque Deposited Date — past only
@@ -214,10 +177,6 @@ class ChequePaymentForm extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// NEFT FORM
-// Fields: Transaction Number only — no date validation needed, goes straight
-// ─────────────────────────────────────────────────────────────────────────────
 class NeftPaymentForm extends StatelessWidget {
   final TextEditingController neftTransactionController;
 
@@ -245,10 +204,120 @@ class NeftPaymentForm extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PDC FORM
-// Fields: Cheque No, Cheque Date (future allowed), Bank, Branch
-// ─────────────────────────────────────────────────────────────────────────────
+class RtgsPaymentForm extends StatelessWidget {
+  final TextEditingController rtgsTransactionController;
+  final TextEditingController rtgsBankNameController;
+
+  const RtgsPaymentForm({
+    super.key,
+    required this.rtgsTransactionController,
+    required this.rtgsBankNameController,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedFormSection(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const PaymentSectionHeader(
+            title: 'RTGS Details',
+            icon: Icons.swap_horiz_rounded,
+            color: Color(0xFF0891B2),
+          ),
+          FormInputField(
+            controller: rtgsTransactionController,
+            label: 'RTGS Reference Number (UTR)',
+            icon: Icons.confirmation_number_outlined,
+          ),
+          const SizedBox(height: 14),
+          FormInputField(
+            controller: rtgsBankNameController,
+            label: 'Bank Name',
+            icon: Icons.account_balance_outlined,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class BankTransferPaymentForm extends StatelessWidget {
+  final TextEditingController bankTransferTransactionController;
+  final TextEditingController bankTransferBankNameController;
+
+  const BankTransferPaymentForm({
+    super.key,
+    required this.bankTransferTransactionController,
+    required this.bankTransferBankNameController,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedFormSection(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const PaymentSectionHeader(
+            title: 'Bank Transfer Details',
+            icon: Icons.account_balance_outlined,
+            color: Color(0xFF4338CA),
+          ),
+          FormInputField(
+            controller: bankTransferTransactionController,
+            label: 'Reference Number (UTR)',
+            icon: Icons.confirmation_number_outlined,
+          ),
+          const SizedBox(height: 14),
+          FormInputField(
+            controller: bankTransferBankNameController,
+            label: 'Bank Name',
+            icon: Icons.account_balance_outlined,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class UpiPaymentForm extends StatelessWidget {
+  final TextEditingController upiTransactionController;
+  final TextEditingController upiBankNameController;
+
+  const UpiPaymentForm({
+    super.key,
+    required this.upiTransactionController,
+    required this.upiBankNameController,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedFormSection(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const PaymentSectionHeader(
+            title: 'UPI Details',
+            icon: Icons.qr_code_outlined,
+            color: Color(0xFF16A34A),
+          ),
+          FormInputField(
+            controller: upiTransactionController,
+            label: 'UPI Transaction / Reference ID',
+            icon: Icons.confirmation_number_outlined,
+          ),
+          const SizedBox(height: 14),
+          FormInputField(
+            controller: upiBankNameController,
+            label: 'Bank Name',
+            icon: Icons.account_balance_outlined,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class PdcPaymentForm extends StatelessWidget {
   final TextEditingController pdcChequeNoController;
   final TextEditingController pdcChequeDateController;
@@ -307,9 +376,6 @@ class PdcPaymentForm extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ANIMATED FORM SECTION WRAPPER
-// ─────────────────────────────────────────────────────────────────────────────
 class AnimatedFormSection extends StatefulWidget {
   final Widget child;
   const AnimatedFormSection({super.key, required this.child});
@@ -417,18 +483,10 @@ class FormInputField extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// FORM DATE FIELD
-// allowFuture = false  → lastDate = today   (cash received, cheque date, etc.)
-// allowFuture = true   → lastDate = 2099    (PDC post-dated cheques)
-// ─────────────────────────────────────────────────────────────────────────────
 class FormDateField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
   final IconData icon;
-
-  /// false = past-only picker (max = today)
-  /// true  = future-allowed picker (PDC)
   final bool allowFuture;
 
   const FormDateField({
@@ -461,7 +519,7 @@ class FormDateField extends StatelessWidget {
     );
     if (picked != null) {
       controller.text =
-          "${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}";
+      "${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}";
     }
   }
 

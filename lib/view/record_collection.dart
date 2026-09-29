@@ -22,7 +22,7 @@ import '../viewModel/invoice_dd_viewmodel.dart';
 import '../viewModel/login_view_model.dart';
 import 'dashboard.dart';
 
-enum PaymentMode { none, cash, cheque, neft, pdc }
+enum PaymentMode { none, cash, cheque, neft, rtgs, bankTransfer, upi, pdc }
 
 extension PaymentModeExt on PaymentMode {
   String get label {
@@ -33,6 +33,12 @@ extension PaymentModeExt on PaymentMode {
         return 'Cheque';
       case PaymentMode.neft:
         return 'NEFT';
+      case PaymentMode.rtgs:
+        return 'RTGS';
+      case PaymentMode.bankTransfer:
+        return 'Bank Transfer';
+      case PaymentMode.upi:
+        return 'UPI';
       case PaymentMode.pdc:
         return 'PDC';
       default:
@@ -50,10 +56,20 @@ extension PaymentModeExt on PaymentMode {
         return '3';
       case PaymentMode.pdc:
         return '4';
+      case PaymentMode.rtgs:
+        return '5';
+      case PaymentMode.bankTransfer:
+        return '6';
+      case PaymentMode.upi:
+        return '7';
       default:
         return '0';
     }
   }
+}
+
+String _normalizeModeLabel(String raw) {
+  return raw.trim().toLowerCase().replaceAll(RegExp(r'[\s_-]'), '');
 }
 
 class RecordCollection extends ConsumerStatefulWidget {
@@ -78,12 +94,9 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
   String? _pendingAmount;
 
   PaymentMode selectedPaymentMode = PaymentMode.none;
-  // Actual value returned by the payment-mode API for the selected mode —
-  // this is what gets sent to the server, instead of the old hardcoded apiValue.
   String? selectedPaymentModeApiValue;
 
   // ── Cash controllers ──────────────────────────────────────────────────────
-  final _cashReceivedOnCtrl = TextEditingController();
   final _cashDepositedOnCtrl = TextEditingController();
   final _cashDepositedBranchCtrl = TextEditingController();
   String? _selectedCashBank;
@@ -93,11 +106,22 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
   final _chequeDateCtrl = TextEditingController();
   final _chequeBankCtrl = TextEditingController();
   final _chequeDepositedDateCtrl = TextEditingController();
-  final _chequeBranchCtrl = TextEditingController();
   String? _selectedChequeDepositBank;
 
   // ── NEFT controllers ──────────────────────────────────────────────────────
   final _neftTransactionCtrl = TextEditingController();
+
+  // ── RTGS controllers (new) ─────────────────────────────────────────────────
+  final _rtgsTransactionCtrl = TextEditingController();
+  final _rtgsBankNameCtrl = TextEditingController();
+
+  // ── Bank Transfer controllers (new) ─────────────────────────────────────────
+  final _bankTransferTransactionCtrl = TextEditingController();
+  final _bankTransferBankNameCtrl = TextEditingController();
+
+  // ── UPI controllers (new) ───────────────────────────────────────────────────
+  final _upiTransactionCtrl = TextEditingController();
+  final _upiBankNameCtrl = TextEditingController();
 
   // ── PDC controllers ───────────────────────────────────────────────────────
   final _pdcChequeNoCtrl = TextEditingController();
@@ -115,18 +139,6 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
   @override
   void initState() {
     super.initState();
-
-    // ------------------------------------------------------------
-    // Every time this page opens, force a fresh API call for the
-    // school dropdown instead of showing whatever schoolnameProvider
-    // had cached from a previous visit (e.g. a leftover filtered
-    // search result). schoolnameProvider is not autoDispose, so it
-    // stays alive across navigations unless explicitly refreshed here.
-    //
-    // Deferred to the next frame because this triggers a state change
-    // (AsyncLoading -> AsyncData) on the provider, which must not run
-    // synchronously during this widget's very first build.
-    // ------------------------------------------------------------
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       ref.read(schoolnameProvider.notifier).refresh();
@@ -136,15 +148,19 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
   @override
   void dispose() {
     _amountController.dispose();
-    _cashReceivedOnCtrl.dispose();
     _cashDepositedOnCtrl.dispose();
     _cashDepositedBranchCtrl.dispose();
     _chequeNumberCtrl.dispose();
     _chequeDateCtrl.dispose();
     _chequeBankCtrl.dispose();
     _chequeDepositedDateCtrl.dispose();
-    _chequeBranchCtrl.dispose();
     _neftTransactionCtrl.dispose();
+    _rtgsTransactionCtrl.dispose();
+    _rtgsBankNameCtrl.dispose();
+    _bankTransferTransactionCtrl.dispose();
+    _bankTransferBankNameCtrl.dispose();
+    _upiTransactionCtrl.dispose();
+    _upiBankNameCtrl.dispose();
     _pdcChequeNoCtrl.dispose();
     _pdcChequeDateCtrl.dispose();
     _pdcChequeBankCtrl.dispose();
@@ -155,11 +171,6 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
   // ============================================================
   // SCHOOL SELECTED
   // ============================================================
-  //
-  // Fires the Invoice API the moment a school is picked — no need to
-  // wait for the Financial Year to also be selected. This was already
-  // correct before; the bug was purely in the UI section below not
-  // showing until financialYearId was also set.
   void _onSchoolSelected(String? customerName, String? cusId) {
     setState(() {
       selectedSchool = customerName;
@@ -198,20 +209,36 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
     // Re-fetch on year change too, in case invoices differ by year.
     ref.read(invoiceProvider.notifier).fetchForCustomer(selectedSchoolCusId!);
   }
-
   void _onPaymentModeChanged(String? mode) {
+    if (mode == null) {
+      setState(() => selectedPaymentMode = PaymentMode.none);
+      return;
+    }
+
+    final normalized = _normalizeModeLabel(mode);
+
     setState(() {
-      switch (mode) {
-        case 'Cash':
+      switch (normalized) {
+        case 'cash':
           selectedPaymentMode = PaymentMode.cash;
           break;
-        case 'Cheque':
+        case 'cheque':
+        case 'check':
           selectedPaymentMode = PaymentMode.cheque;
           break;
-        case 'NEFT':
+        case 'neft':
           selectedPaymentMode = PaymentMode.neft;
           break;
-        case 'PDC':
+        case 'rtgs':
+          selectedPaymentMode = PaymentMode.rtgs;
+          break;
+        case 'banktransfer':
+          selectedPaymentMode = PaymentMode.bankTransfer;
+          break;
+        case 'upi':
+          selectedPaymentMode = PaymentMode.upi;
+          break;
+        case 'pdc':
           selectedPaymentMode = PaymentMode.pdc;
           break;
         default:
@@ -313,7 +340,6 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
       return null;
     }
   }
-
   Map<String, String> _buildPayload() {
     String chequenumber = '';
     String chequedate = '';
@@ -325,7 +351,6 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
 
     switch (selectedPaymentMode) {
       case PaymentMode.cash:
-        cashreceiveddate = _cashReceivedOnCtrl.text;
         depositeddate = _cashDepositedOnCtrl.text;
         branchname = _cashDepositedBranchCtrl.text;
         depositedbankname = _selectedCashBank ?? '';
@@ -335,12 +360,26 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
         chequenumber = _chequeNumberCtrl.text;
         chequedate = _chequeDateCtrl.text;
         depositeddate = _chequeDepositedDateCtrl.text;
-        branchname = _chequeBranchCtrl.text;
         depositedbankname = _selectedChequeDepositBank ?? '';
         break;
 
       case PaymentMode.neft:
         transactionId = _neftTransactionCtrl.text;
+        break;
+
+      case PaymentMode.rtgs:
+        transactionId = _rtgsTransactionCtrl.text;
+        depositedbankname = _rtgsBankNameCtrl.text;
+        break;
+
+      case PaymentMode.bankTransfer:
+        transactionId = _bankTransferTransactionCtrl.text;
+        depositedbankname = _bankTransferBankNameCtrl.text;
+        break;
+
+      case PaymentMode.upi:
+        transactionId = _upiTransactionCtrl.text;
+        depositedbankname = _upiBankNameCtrl.text;
         break;
 
       case PaymentMode.pdc:
@@ -361,8 +400,6 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
       'InvoiceNumber': _invoiceNumber ?? 'No Invoices Found',
       'Received': _amountController.text,
       'ReceivedDate': _todayFormatted,
-      // Now uses the value returned by the payment-mode API instead of the
-      // old hardcoded PaymentMode.apiValue.
       'PaymentMode': selectedPaymentModeApiValue ?? selectedPaymentMode.apiValue,
       'CreatedBy': '',
       'CashRecdDate': cashreceiveddate,
@@ -405,14 +442,8 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
 
     switch (selectedPaymentMode) {
       case PaymentMode.cash:
-        final receivedDate = _cashReceivedOnCtrl.text.trim();
         final depositedDate = _cashDepositedOnCtrl.text.trim();
         final branch = _cashDepositedBranchCtrl.text.trim();
-
-        if (receivedDate.isEmpty) {
-          _showAlert('Enter received date');
-          return;
-        }
 
         if (depositedDate.isEmpty) {
           _showAlert('Enter deposited date');
@@ -428,19 +459,6 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
           _showAlert('Enter deposited branch');
           return;
         }
-
-        final dReceived = _parseDate(receivedDate);
-        final dDeposited = _parseDate(depositedDate);
-
-        if (dReceived == null || dDeposited == null) {
-          _showAlert('Invalid date format');
-          return;
-        }
-
-        if (dDeposited.isBefore(dReceived)) {
-          _showAlert('Deposited date should be after received date');
-          return;
-        }
         break;
 
       case PaymentMode.cheque:
@@ -448,7 +466,6 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
         final chequeDate = _chequeDateCtrl.text.trim();
         final chequeBank = _chequeBankCtrl.text.trim();
         final depositedDate = _chequeDepositedDateCtrl.text.trim();
-        final branch = _chequeBranchCtrl.text.trim();
 
         if (chequeNo.isEmpty) {
           _showAlert('Enter cheque number');
@@ -470,11 +487,6 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
           return;
         }
 
-        if (branch.isEmpty) {
-          _showAlert('Enter deposited branch');
-          return;
-        }
-
         final dCheque = _parseDate(chequeDate);
         final dDeposited = _parseDate(
           depositedDate.isEmpty ? chequeDate : depositedDate,
@@ -492,6 +504,39 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
         break;
 
       case PaymentMode.neft:
+        if (_neftTransactionCtrl.text.trim().isEmpty) {
+          _showAlert('Enter NEFT transaction number');
+          return;
+        }
+        break;
+
+      case PaymentMode.rtgs:
+        if (_rtgsTransactionCtrl.text.trim().isEmpty) {
+          _showAlert('Enter RTGS reference number');
+          return;
+        }
+        if (_rtgsBankNameCtrl.text.trim().isEmpty) {
+          _showAlert('Enter bank name');
+          return;
+        }
+        break;
+
+      case PaymentMode.bankTransfer:
+        if (_bankTransferTransactionCtrl.text.trim().isEmpty) {
+          _showAlert('Enter reference number');
+          return;
+        }
+        if (_bankTransferBankNameCtrl.text.trim().isEmpty) {
+          _showAlert('Enter bank name');
+          return;
+        }
+        break;
+
+      case PaymentMode.upi:
+        if (_upiTransactionCtrl.text.trim().isEmpty) {
+          _showAlert('Enter UPI transaction / reference ID');
+          return;
+        }
         break;
 
       case PaymentMode.pdc:
@@ -579,12 +624,6 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
 
     final bool hasValidInvoice =
         _invoiceId != null && _invoiceId != '0' && _invoiceId!.isNotEmpty;
-
-    // Only depends on a school being selected — Financial Year no
-    // longer blocks the Invoice Details / pending-amount section from
-    // showing. The moment a school is picked, _onSchoolSelected()
-    // already fires the invoice API call, so the UI should reflect
-    // that immediately instead of waiting on the year too.
     final bool schoolIsSelected =
         selectedSchoolCusId != null && selectedSchoolCusId!.isNotEmpty;
 
@@ -636,11 +675,6 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
                           itemValue: (e) =>e.CustomerID ?? "",
                           showSearchButtonOnEmpty: true,
                           isLoading: schoolnameAsync.isLoading,
-                          // Fires the moment the user taps to OPEN this
-                          // dropdown — before picking anything. Forces a
-                          // fresh school-list API call right then, so the
-                          // list shown is never stale from a previous
-                          // visit or an earlier search.
                           onOpen: () {
                             ref.read(schoolnameProvider.notifier).refresh();
                           },
@@ -713,14 +747,6 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
                       ),
 
                       const SizedBox(height: 24),
-
-                      // ──────────────────────────────────────────────
-                      // INVOICE DETAILS / PENDING AMOUNT
-                      // ──────────────────────────────────────────────
-                      // Shows as soon as a school is picked. Financial
-                      // Year is no longer required to reveal this
-                      // section — the API call already fires from
-                      // _onSchoolSelected() regardless of year.
                       if (schoolIsSelected) ...[
                         const _SectionLabel(label: "Invoice Details"),
                         const SizedBox(height: 12),
@@ -773,9 +799,6 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
                               );
                             }
 
-                            // Shows exactly how much is pending for this
-                            // invoice, formatted with a currency symbol
-                            // so it reads clearly at a glance.
                             final displayText =
                                 "${invoices.first.InvoiceNumber} - Pending ₹${invoices.first.PendingAmount}";
 
@@ -846,8 +869,6 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
                                 selectedPaymentModeApiValue =
                                     match.value.toString();
                               });
-                              // Keeps the existing Cash/Cheque/NEFT/PDC UI-switch
-                              // logic working unchanged, driven off the API's label.
                               _onPaymentModeChanged(match.label);
                             },
                           );
@@ -932,7 +953,6 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
     switch (selectedPaymentMode) {
       case PaymentMode.cash:
         return CashPaymentForm(
-          cashReceivedOnController: _cashReceivedOnCtrl,
           cashDepositedOnController: _cashDepositedOnCtrl,
           cashDepositedBranchController: _cashDepositedBranchCtrl,
           selectedBank: _selectedCashBank,
@@ -944,13 +964,27 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
           chequeDateController: _chequeDateCtrl,
           chequeBankController: _chequeBankCtrl,
           chequeDepositedDateController: _chequeDepositedDateCtrl,
-          chequeBranchController: _chequeBranchCtrl,
           selectedDepositBank: _selectedChequeDepositBank,
           onDepositBankChanged: (v) =>
               setState(() => _selectedChequeDepositBank = v),
         );
       case PaymentMode.neft:
         return NeftPaymentForm(neftTransactionController: _neftTransactionCtrl);
+      case PaymentMode.rtgs:
+        return RtgsPaymentForm(
+          rtgsTransactionController: _rtgsTransactionCtrl,
+          rtgsBankNameController: _rtgsBankNameCtrl,
+        );
+      case PaymentMode.bankTransfer:
+        return BankTransferPaymentForm(
+          bankTransferTransactionController: _bankTransferTransactionCtrl,
+          bankTransferBankNameController: _bankTransferBankNameCtrl,
+        );
+      case PaymentMode.upi:
+        return UpiPaymentForm(
+          upiTransactionController: _upiTransactionCtrl,
+          upiBankNameController: _upiBankNameCtrl,
+        );
       case PaymentMode.pdc:
         return PdcPaymentForm(
           pdcChequeNoController: _pdcChequeNoCtrl,
