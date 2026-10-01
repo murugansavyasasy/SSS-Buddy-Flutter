@@ -18,11 +18,9 @@ class ZeroactivityViewmodal
     if (loginData == null) {
       throw Exception("User not logged in");
     }
-
     final repo = ref.read(repositoryProvider);
-
     final response = await repo.getInstuetList(
-      loginData.userId.toString(),
+      loginData.schoolUserId.toString(),
     );
     _all = response;
 
@@ -81,7 +79,6 @@ class ZeroactivityViewmodal
                 .contains(lowerQuery);
       }).toList();
     }
-
     state = AsyncData(filtered);
   }
 }

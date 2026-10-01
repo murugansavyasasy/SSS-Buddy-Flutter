@@ -28,7 +28,6 @@ class SchoolStatsViewModel extends AsyncNotifier<SchoolStats> {
       );
     }
 
-
     final schoolLoginId = loginData.schoolUserId;
     final repo = ref.read(repositoryProvider);;
     final jsonResponse = await repo.postschoollist(schoolLoginId ?? '');
