@@ -8,6 +8,7 @@ import '../viewModel/overall_trip_viewmodel.dart';
 import '../viewModel/reporting_members_dd_viewmodel.dart';
 import 'EmptyState.dart';
 import 'MemberDropdown.dart';
+import 'MonthlySummaryCard.dart';
 import 'TripCard.dart';
 
 class ReportsBody extends ConsumerStatefulWidget {
@@ -18,22 +19,19 @@ class ReportsBody extends ConsumerStatefulWidget {
 }
 
 class _ReportsBodyState extends ConsumerState<ReportsBody> {
-
-  // Currently expanded trip
   int? expandedTripId;
-
-  // Ensures auto-select of the first member happens only once
   bool _autoSelected = false;
 
   @override
   Widget build(BuildContext context) {
     final membersAsync = ref.watch(reportingmembersProvider);
     final selectedMember = ref.watch(selectedMemberProvider);
+    final selectedMonth = ref.watch(selectedMonthProvider);
+
+    // state = selected month trips (viewmodel filter panni tharum)
     final tripsAsync = ref.watch(overallTripProvider);
 
-    // ─────────────────────────────────
-    // AUTO-SELECT 0th MEMBER ON FIRST LOAD
-    // ─────────────────────────────────
+    // Auto-select 0th member on first load
     if (!_autoSelected && membersAsync.hasValue) {
       final members = membersAsync.value!;
 
@@ -41,10 +39,7 @@ class _ReportsBodyState extends ConsumerState<ReportsBody> {
         _autoSelected = true;
 
         WidgetsBinding.instance.addPostFrameCallback((_) {
-
-          ref
-              .read(selectedMemberProvider.notifier)
-              .state = members[0];
+          ref.read(selectedMemberProvider.notifier).state = members[0];
           ref
               .read(overallTripProvider.notifier)
               .loadForMember(members[0].idmember);
@@ -57,46 +52,28 @@ class _ReportsBodyState extends ConsumerState<ReportsBody> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
-          // ─────────────────────────────────
-          // MEMBER DROPDOWN
-          // ─────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
             child: membersAsync.when(
-
               loading: () => const CustomDropdown(),
-
               error: (e, _) => Text(
                 'Error loading members: $e',
-                style: const TextStyle(
-                  color: Colors.red,
-                ),
+                style: const TextStyle(color: Colors.red),
               ),
-
               data: (members) => MemberDropdown(
                 members: members,
                 selected: selectedMember,
-
                 onChanged: (member) {
-                  setState(() {
-                    expandedTripId = null;
-                  });
+                  setState(() => expandedTripId = null);
 
-                  ref
-                      .read(selectedMemberProvider.notifier)
-                      .state = member;
+                  ref.read(selectedMemberProvider.notifier).state = member;
 
                   if (member != null) {
                     ref
                         .read(overallTripProvider.notifier)
                         .loadForMember(member.idmember);
-
                   } else {
-
-                    print(
-                      '⚠️ No member selected (null)',
-                    );
+                    print('⚠️ No member selected (null)');
                   }
                 },
               ),
@@ -105,13 +82,9 @@ class _ReportsBodyState extends ConsumerState<ReportsBody> {
 
           const SizedBox(height: 16),
 
-          // ─────────────────────────────────
-          // TRIP LIST
-          // ─────────────────────────────────
           Expanded(
             child: selectedMember == null
                 ? const EmptyState()
-
                 : tripsAsync.when(
               loading: () => const Center(
                 child: CircularProgressIndicator(),
@@ -122,56 +95,51 @@ class _ReportsBodyState extends ConsumerState<ReportsBody> {
                   child: Text(
                     'Failed to load trips: $e',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.red,
-                    ),
+                    style: const TextStyle(color: Colors.red),
                   ),
                 ),
               ),
 
-              // Data
-              data: (trips) {
-
-                if (trips.isEmpty) {
-                  return const EmptyState(
-                    message:
-                    'No trips found for this member.',
-                  );
-                }
-
+              // monthTrips = already filtered array
+              data: (monthTrips) {
                 return ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(
-                    16,
-                    0,
-                    16,
-                    24,
-                  ),
-                  itemCount: trips.length,
-
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                  itemCount:
+                  1 + (monthTrips.isEmpty ? 1 : monthTrips.length),
                   itemBuilder: (_, index) {
+                    // First item = monthly summary
+                    if (index == 0) {
+                      return MonthlySummaryCard(
+                        monthTrips: monthTrips,
+                        month: selectedMonth,
+                        onMonthChanged: (m) {
+                          setState(() => expandedTripId = null);
+                          ref
+                              .read(overallTripProvider.notifier)
+                              .setMonth(m);
+                        },
+                      );
+                    }
 
-                    final trip = trips[index];
+                    if (monthTrips.isEmpty) {
+                      return const Padding(
+                        padding: EdgeInsets.only(top: 24),
+                        child: EmptyState(
+                          message: 'No trips found for this month.',
+                        ),
+                      );
+                    }
+
+                    final trip = monthTrips[index - 1];
 
                     return TripCard(
                       trip: trip,
-
-                      // Current card expanded?
-                      isExpanded:
-                      expandedTripId == trip.trip_id,
-
-                      // Expand / collapse
+                      isExpanded: expandedTripId == trip.trip_id,
                       onExpand: () {
-
                         setState(() {
-                          if (expandedTripId ==
-                              trip.trip_id) {
-
-                            expandedTripId = null;
-
-                          } else {
-                            expandedTripId =
-                                trip.trip_id;
-                          }
+                          expandedTripId = expandedTripId == trip.trip_id
+                              ? null
+                              : trip.trip_id;
                         });
                       },
                     );
