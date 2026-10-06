@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Overalltripdetailsmodel {
@@ -86,6 +87,88 @@ class Overalltripdetailsmodel {
         ),
       ),
     );
+  }
+
+  // ============================================================
+  // START TIME → DateTime (for month-wise filtering)
+  // ============================================================
+
+  /// Parsed [start_time] as a [DateTime], or null if it can't be parsed.
+  /// The API returns start_time as a plain string whose exact format is not
+  /// guaranteed, so we try ISO-8601 first, then a few common patterns.
+  DateTime? get startDateTime => _parseApiDate(start_time);
+
+  static DateTime? _parseApiDate(String? raw) {
+    if (raw == null) return null;
+    final value = raw.trim();
+    if (value.isEmpty) return null;
+
+    // 1. ISO-8601 / "yyyy-MM-dd HH:mm:ss" are handled natively.
+    final iso = DateTime.tryParse(value);
+    if (iso != null) return iso;
+
+    // 2. Common human-readable formats. dd/MM is preferred over MM/dd
+    //    because the rest of the app uses dd/MM/yyyy.
+    const patterns = [
+      'dd/MM/yyyy hh:mm:ss a',
+      'dd/MM/yyyy HH:mm:ss',
+      'dd/MM/yyyy hh:mm a',
+      'dd/MM/yyyy HH:mm',
+      'dd/MM/yyyy',
+      'dd-MM-yyyy hh:mm:ss a',
+      'dd-MM-yyyy HH:mm:ss',
+      'dd-MM-yyyy hh:mm a',
+      'dd-MM-yyyy HH:mm',
+      'dd-MM-yyyy',
+      'MM/dd/yyyy hh:mm:ss a',
+      'MM/dd/yyyy HH:mm:ss',
+      'MM/dd/yyyy hh:mm a',
+      'MM/dd/yyyy',
+      'dd MMM yyyy hh:mm a',
+      'dd MMM yyyy HH:mm',
+      'dd MMM yyyy',
+      'MMM dd, yyyy hh:mm a',
+      'MMM dd yyyy',
+    ];
+
+    for (final pattern in patterns) {
+      try {
+        return DateFormat(pattern).parseLoose(value);
+      } catch (_) {
+        // Try the next pattern.
+      }
+    }
+
+    // 3. Last resort: pull the first three numbers out of the string and
+    //    infer the order. This handles unexpected separators/layouts so the
+    //    month filter is never left empty when a date is clearly present.
+    final nums = RegExp(r'\d+')
+        .allMatches(value)
+        .map((m) => int.parse(m.group(0)!))
+        .toList();
+    if (nums.length >= 3) {
+      int year, month, day;
+      if (nums[0] > 31) {
+        // yyyy MM dd
+        year = nums[0];
+        month = nums[1];
+        day = nums[2];
+      } else {
+        // dd MM yyyy (app convention)
+        day = nums[0];
+        month = nums[1];
+        year = nums[2];
+      }
+      if (year < 100) year += 2000;
+      if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+        try {
+          return DateTime(year, month, day);
+        } catch (_) {
+          // Fall through to null.
+        }
+      }
+    }
+    return null;
   }
 
   // ============================================================
