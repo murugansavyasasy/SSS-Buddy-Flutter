@@ -122,8 +122,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
-// MARK: - Forgot Password Confirmation
-
   void _showForgotPasswordConfirmation() {
     final empId = emailController.text.trim();
     if (empId.isEmpty) {

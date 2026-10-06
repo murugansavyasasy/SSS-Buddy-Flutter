@@ -127,10 +127,6 @@ class _AddLocalConveyenceState extends ConsumerState<AddLocalConveyence> {
     }
 
     setState(() => _isSubmitting = true);
-
-    // NOTE: this now expects addLocalExpense() in the viewmodel to return
-    // int? (the new idLocalExpense) instead of bool, so the id can be
-    // reused below for the file upload call. See viewmodel changes.
     final idLocalExpense = await ref
         .read(localConvienceProvider.notifier)
         .addLocalExpense(
@@ -206,7 +202,7 @@ class _AddLocalConveyenceState extends ConsumerState<AddLocalConveyence> {
         .read(localConvienceProvider.notifier)
         .uploadExpenseFile(
       idLocalExpense: idLocalExpense,
-      nameValue: "Local", // Local | Tour | Director
+      nameValue: "Local",
       pdfFile: pickedFile,
     );
 

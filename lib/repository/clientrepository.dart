@@ -645,9 +645,7 @@ class ClientRepository {
         },
       ),
     );
-
     final List data = response.data is List ? response.data : [response.data];
-
     return Recordcollectionpaymentresponse.fromJson(data.first);
   }
 
@@ -760,7 +758,7 @@ class ClientRepository {
   }
 
   Future<bool> uploadExpenseFile({
-    required FormData body,   // ← changed from Map<String, dynamic>
+    required FormData body,
   }) async {
     try {
       final response = await client.post(
@@ -768,13 +766,16 @@ class ClientRepository {
         body: body,
       );
 
+      print("Status Code: ${response.statusCode}");
+      print("Response: ${response.data}");
+
       final data = response.data;
 
       if (data is List && data.isNotEmpty) {
         final result = data[0];
 
         if (result["result"] == 1) {
-          print("Local Conveyance Added Successfully");
+          print("✅ Local Conveyance Added Successfully");
           print("Local Expense ID: ${result["idLocalExpense"]}");
           return true;
         }
@@ -782,7 +783,7 @@ class ClientRepository {
 
       return false;
     } catch (e) {
-      print("addLocalExpense ERROR: $e");
+      print("❌ uploadExpenseFile ERROR: $e");
       return false;
     }
   }

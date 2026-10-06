@@ -92,7 +92,7 @@ class LocalConveyenceViewmodel
   // UPLOAD EXPENSE FILE (BILL / PROOF)
   Future<bool> uploadExpenseFile({
     required int idLocalExpense,
-    required String nameValue, // Local | Tour | Director
+    required String nameValue,
     required File pdfFile,
   }) async {
     try {
@@ -100,28 +100,54 @@ class LocalConveyenceViewmodel
       final loginData = loginState.value;
 
       if (loginData == null) {
-        return false; // ← was `return null;`, fixed
+        print("❌ Login data is null");
+        return false;
       }
 
+      print("========== FILE CHECK ==========");
+      print("Expense ID: $idLocalExpense");
+      print("Name Value: $nameValue");
+      print("File Path: ${pdfFile.path}");
+      print("File Name: ${pdfFile.path.split('/').last}");
+      print("File Exists: ${await pdfFile.exists()}");
+      print("File Size: ${await pdfFile.length()} bytes");
+
       final repo = ref.read(repositoryProvider);
+
+      final fileName = pdfFile.path.split('/').last;
 
       final formData = FormData.fromMap({
         "idValue": idLocalExpense.toString(),
         "nameValue": nameValue,
-        "processby": loginData.userId.toString(), // ignored server-side, user taken from token
+        "processby": loginData.userId.toString(),
         "pdf": await MultipartFile.fromFile(
           pdfFile.path,
-          filename: pdfFile.path.split('/').last,
+          filename: fileName,
         ),
       });
+
+      print("========== FORMDATA ==========");
+
+      for (final field in formData.fields) {
+        print("${field.key}: ${field.value}");
+      }
+
+      for (final file in formData.files) {
+        print("${file.key}: ${file.value.filename}");
+      }
+
+      print("🚀 Uploading file...");
 
       final success = await repo.uploadExpenseFile(
         body: formData,
       );
 
+      print("📥 Upload result: $success");
+
       return success;
-    } catch (e) {
-      print("uploadExpenseFile ERROR: $e");
+    } catch (e, stackTrace) {
+      print("❌ uploadExpenseFile ERROR: $e");
+      print(stackTrace);
       return false;
     }
   }
