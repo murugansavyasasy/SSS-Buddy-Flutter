@@ -49,7 +49,7 @@ class ClientRepository {
   Future<Versioncheck> getVersionCheckDetails() async {
     final response = await client.get(
       AppEndpoint.versioncheckendpoint,
-      query: {"VersionID": "64"},
+      query: {"VersionID": "65"},
     );
     return Versioncheck.fromJson(response.data);
   }
