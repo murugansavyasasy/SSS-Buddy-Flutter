@@ -6,6 +6,7 @@ import 'package:sssbuddy/components/CustomDropdown.dart';
 import '../Values/Colors/app_colors.dart';
 import '../auth/model/OverallTripDetailsModel.dart';
 import '../provider/app_providers.dart';
+import '../view/TripExcelExporter.dart';
 import '../viewModel/overall_trip_viewmodel.dart';
 import '../viewModel/reporting_members_dd_viewmodel.dart';
 import 'EmptyState.dart';
@@ -38,6 +39,9 @@ class _ReportsBodyState extends ConsumerState<ReportsBody> {
   // the selected month.
   DateTime? _selectedDate;
 
+  // True while the Excel report is being generated / shared.
+  bool _exporting = false;
+
   /// The 12 months of the current calendar year (Jan → Dec), most recent
   /// first. e.g. for 2026 → Dec 2026 … Jan 2026.
   List<DateTime> _currentYearMonths(DateTime now) {
@@ -46,6 +50,35 @@ class _ReportsBodyState extends ConsumerState<ReportsBody> {
     ];
     months.sort((a, b) => b.compareTo(a)); // most recent first
     return months;
+  }
+
+  /// Builds the Excel report for what is currently listed on screen
+  /// (selected month, or the single selected date) and opens the share sheet.
+  Future<void> _exportReport({
+    required DateTime month,
+    DateTime? date,
+    required List<int> days,
+    required Map<int, List<Overalltripdetailsmodel>> tripsByDay,
+    required String username,
+  }) async {
+    if (_exporting) return;
+    setState(() => _exporting = true);
+    try {
+      await TripExcelExporter.exportAndShare(
+        month: month,
+        date: date,
+        days: days,
+        tripsByDay: tripsByDay,
+        username: username,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Export failed: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _exporting = false);
+    }
   }
 
   @override
@@ -183,8 +216,8 @@ class _ReportsBodyState extends ConsumerState<ReportsBody> {
 
                 // Snap to the exact list instance so DropdownButton matches.
                 selected = months.firstWhere(
-                  (m) =>
-                      m.year == selected.year &&
+                      (m) =>
+                  m.year == selected.year &&
                       m.month == selected.month,
                   orElse: () => months.first,
                 );
@@ -225,9 +258,9 @@ class _ReportsBodyState extends ConsumerState<ReportsBody> {
                 // Only honour the date filter when it falls inside the
                 // selected month and is not in the future.
                 final DateTime? activeDate = (_selectedDate != null &&
-                        _selectedDate!.year == selected.year &&
-                        _selectedDate!.month == selected.month &&
-                        _selectedDate!.day <= lastDay)
+                    _selectedDate!.year == selected.year &&
+                    _selectedDate!.month == selected.month &&
+                    _selectedDate!.day <= lastDay)
                     ? _selectedDate
                     : null;
 
@@ -244,11 +277,11 @@ class _ReportsBodyState extends ConsumerState<ReportsBody> {
                 // a date filter is active, otherwise the whole month.
                 final displayTrips = activeDate != null
                     ? (tripsByDay[activeDate.day] ??
-                        const <Overalltripdetailsmodel>[])
+                    const <Overalltripdetailsmodel>[])
                     : filtered;
                 final displayKm = displayTrips.fold<double>(
                   0,
-                  (sum, t) => sum + t.totalDistanceKm,
+                      (sum, t) => sum + t.totalDistanceKm,
                 );
 
                 return Column(
@@ -256,7 +289,7 @@ class _ReportsBodyState extends ConsumerState<ReportsBody> {
                   CrossAxisAlignment.start,
                   children: [
 
-                    // Month dropdown + specific-date filter
+                    // Month dropdown + specific-date filter + export
                     Padding(
                       padding: const EdgeInsets.fromLTRB(
                         16, 0, 16, 0,
@@ -312,6 +345,20 @@ class _ReportsBodyState extends ConsumerState<ReportsBody> {
                               });
                             },
                           ),
+                          const SizedBox(width: 10),
+                          _ExportButton(
+                            loading: _exporting,
+                            // Nothing to export for a future month.
+                            onTap: isFutureMonth
+                                ? null
+                                : () => _exportReport(
+                              month: selected,
+                              date: activeDate,
+                              days: days,
+                              tripsByDay: tripsByDay,
+                              username: allTrips.first.username,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -336,93 +383,93 @@ class _ReportsBodyState extends ConsumerState<ReportsBody> {
                     Expanded(
                       child: isFutureMonth
                           ? const EmptyState(
-                              message:
-                              'No entry found for the selected month.',
-                            )
+                        message:
+                        'No entry found for the selected month.',
+                      )
                           : ListView.builder(
-                              padding:
-                              const EdgeInsets.fromLTRB(
-                                16, 0, 16, 24,
-                              ),
-                              itemCount: days.length,
-                              itemBuilder: (_, index) {
-                                final day = days[index];
-                                final date = DateTime(
-                                  selected.year,
-                                  selected.month,
-                                  day,
-                                );
-                                final dayTrips =
-                                    tripsByDay[day] ??
-                                        const [];
+                        padding:
+                        const EdgeInsets.fromLTRB(
+                          16, 0, 16, 24,
+                        ),
+                        itemCount: days.length,
+                        itemBuilder: (_, index) {
+                          final day = days[index];
+                          final date = DateTime(
+                            selected.year,
+                            selected.month,
+                            day,
+                          );
+                          final dayTrips =
+                              tripsByDay[day] ??
+                                  const [];
 
-                                return Column(
-                                  crossAxisAlignment:
-                                  CrossAxisAlignment.start,
+                          return Column(
+                            crossAxisAlignment:
+                            CrossAxisAlignment.start,
+                            children: [
+
+                              // Day header
+                              Padding(
+                                padding:
+                                const EdgeInsets.fromLTRB(
+                                  2, 6, 2, 8,
+                                ),
+                                child: Row(
                                   children: [
-
-                                    // Day header
-                                    Padding(
-                                      padding:
-                                      const EdgeInsets.fromLTRB(
-                                        2, 6, 2, 8,
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            Icons
-                                                .calendar_today_rounded,
-                                            size: 13,
-                                            color: Colors
-                                                .grey.shade500,
-                                          ),
-                                          const SizedBox(
-                                            width: 6,
-                                          ),
-                                          Text(
-                                            DateFormat(
-                                              'EEE, dd MMM yyyy',
-                                            ).format(date),
-                                            style: TextStyle(
-                                              fontSize: 13,
-                                              fontWeight:
-                                              FontWeight.w600,
-                                              color: Colors
-                                                  .grey.shade700,
-                                            ),
-                                          ),
-                                        ],
+                                    Icon(
+                                      Icons
+                                          .calendar_today_rounded,
+                                      size: 13,
+                                      color: Colors
+                                          .grey.shade500,
+                                    ),
+                                    const SizedBox(
+                                      width: 6,
+                                    ),
+                                    Text(
+                                      DateFormat(
+                                        'EEE, dd MMM yyyy',
+                                      ).format(date),
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight:
+                                        FontWeight.w600,
+                                        color: Colors
+                                            .grey.shade700,
                                       ),
                                     ),
-
-                                    // Trips for the day OR no-entry note
-                                    if (dayTrips.isEmpty)
-                                      const _NoEntryTile()
-                                    else
-                                      ...dayTrips.map(
-                                        (trip) => TripCard(
-                                          trip: trip,
-                                          isExpanded:
-                                          expandedTripId ==
-                                              trip.trip_id,
-                                          onExpand: () {
-                                            setState(() {
-                                              if (expandedTripId ==
-                                                  trip.trip_id) {
-                                                expandedTripId =
-                                                    null;
-                                              } else {
-                                                expandedTripId =
-                                                    trip.trip_id;
-                                              }
-                                            });
-                                          },
-                                        ),
-                                      ),
                                   ],
-                                );
-                              },
-                            ),
+                                ),
+                              ),
+
+                              // Trips for the day OR no-entry note
+                              if (dayTrips.isEmpty)
+                                const _NoEntryTile()
+                              else
+                                ...dayTrips.map(
+                                      (trip) => TripCard(
+                                    trip: trip,
+                                    isExpanded:
+                                    expandedTripId ==
+                                        trip.trip_id,
+                                    onExpand: () {
+                                      setState(() {
+                                        if (expandedTripId ==
+                                            trip.trip_id) {
+                                          expandedTripId =
+                                          null;
+                                        } else {
+                                          expandedTripId =
+                                              trip.trip_id;
+                                        }
+                                      });
+                                    },
+                                  ),
+                                ),
+                            ],
+                          );
+                        },
+                      ),
                     ),
                   ],
                 );
@@ -455,8 +502,8 @@ class _TotalDistanceCard extends StatelessWidget {
     final label = date != null
         ? DateFormat('dd MMM yyyy').format(date!)
         : month != null
-            ? DateFormat('MMMM yyyy').format(month!)
-            : 'All months';
+        ? DateFormat('MMMM yyyy').format(month!)
+        : 'All months';
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -629,6 +676,55 @@ class _DateFilterButton extends StatelessWidget {
               ),
             ],
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Download / export button shown beside the date filter. Generates an Excel
+/// report of the trips currently listed on screen. Shows a spinner while the
+/// file is being built and is disabled when [onTap] is null.
+class _ExportButton extends StatelessWidget {
+  final bool loading;
+  final VoidCallback? onTap;
+
+  const _ExportButton({
+    required this.loading,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onTap != null && !loading;
+
+    return Tooltip(
+      message: 'Export to Excel',
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          height: 40,
+          width: 40,
+          decoration: BoxDecoration(
+            color: onTap == null
+                ? Colors.grey.shade300
+                : AppColors.primary,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: loading
+              ? const Padding(
+            padding: EdgeInsets.all(10),
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: Colors.white,
+            ),
+          )
+              : const Icon(
+            Icons.download_rounded,
+            color: Colors.white,
+            size: 20,
+          ),
         ),
       ),
     );
