@@ -345,20 +345,20 @@ class _ReportsBodyState extends ConsumerState<ReportsBody> {
                               });
                             },
                           ),
-                          const SizedBox(width: 10),
-                          _ExportButton(
-                            loading: _exporting,
-                            // Nothing to export for a future month.
-                            onTap: isFutureMonth
-                                ? null
-                                : () => _exportReport(
-                              month: selected,
-                              date: activeDate,
-                              days: days,
-                              tripsByDay: tripsByDay,
-                              username: allTrips.first.username,
-                            ),
-                          ),
+                          // const SizedBox(width: 10),
+                          // _ExportButton(
+                          //   loading: _exporting,
+                          //   // Nothing to export for a future month.
+                          //   onTap: isFutureMonth
+                          //       ? null
+                          //       : () => _exportReport(
+                          //     month: selected,
+                          //     date: activeDate,
+                          //     days: days,
+                          //     tripsByDay: tripsByDay,
+                          //     username: allTrips.first.username,
+                          //   ),
+                          // ),
                         ],
                       ),
                     ),
