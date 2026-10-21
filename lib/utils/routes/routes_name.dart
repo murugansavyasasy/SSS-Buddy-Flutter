@@ -27,5 +27,6 @@ class RoutesName {
   static const String feedback = "feedback";
   static const String resetpassword = "/resetpassword";
   static const String renewalPOs = "renewal_pos";
+  static const String serverstatus = "server_status";
 }
 

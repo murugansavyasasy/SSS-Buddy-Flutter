@@ -28,6 +28,7 @@ import '../../view/feedback.dart';
 import '../../view/important_info.dart';
 import '../../view/otp_screen.dart';
 import '../../view/reset_password_screen.dart';
+import '../../view/server_status.dart';
 import '../../view/zero_activity.dart';
 
 class Routes {
@@ -124,6 +125,8 @@ class Routes {
         );
       case RoutesName.renewalPOs:
         return MaterialPageRoute(builder: (context) => const RenewalPOsPage());
+      case RoutesName.serverstatus:
+        return MaterialPageRoute(builder: (context) => const ServerStatusScreen());
       default:
         return MaterialPageRoute(
           builder: (_) =>

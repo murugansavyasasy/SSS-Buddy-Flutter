@@ -92,6 +92,17 @@ List<MenuItem> getMenuItems({
         ),
       );
     }
+
+    if (schoolUserType == "Admin") {
+      menus.add(
+        MenuItem(
+          id: 18,
+          title: "Server Status",
+          icon: Icons.dns,
+          color: Colors.teal,
+        ),
+      );
+    }
   }
 
   if (!(vimsUserType == "19" ||
