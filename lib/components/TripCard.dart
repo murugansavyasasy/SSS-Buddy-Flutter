@@ -5,7 +5,6 @@ import '../auth/model/OverallTripDetailsModel.dart';
 import 'StatusBadge.dart';
 import 'TimeInfo.dart';
 import 'VisitTile.dart';
-
 class TripCard extends StatelessWidget {
 
   final Overalltripdetailsmodel trip;
@@ -18,6 +17,56 @@ class TripCard extends StatelessWidget {
     required this.isExpanded,
     required this.onExpand,
   });
+
+  double? _toCoord(dynamic value) {
+    final s = (value ?? '').toString().trim();
+    if (s.isEmpty) return null;
+    try {
+      return DistanceCalculator.parseCoordinate(s);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  List<double>? _point(dynamic lat, dynamic lon) {
+    final la = _toCoord(lat);
+    final lo = _toCoord(lon);
+    if (la == null || lo == null) return null;
+    return [la, lo];
+  }
+
+  bool get _hasEnd =>
+      (trip.end_latitude ?? '').toString().trim().isNotEmpty &&
+          (trip.end_longitude ?? '').toString().trim().isNotEmpty;
+
+  List<double?> _legDistances(List<dynamic> visits) {
+    final pts = <List<double>?>[
+      _point(trip.start_latitude, trip.start_longitude),
+      for (final v in visits) _point(v.school_latitude, v.school_longitude),
+      if (_hasEnd) _point(trip.end_latitude, trip.end_longitude),
+    ];
+
+    final raw = <double?>[];
+    var rawTotal = 0.0;
+
+    for (var i = 1; i < pts.length; i++) {
+      final a = pts[i - 1];
+      final b = pts[i];
+      if (a == null || b == null) {
+        raw.add(null);
+        continue;
+      }
+      final km =
+          DistanceCalculator.distanceBetween(a[0], a[1], b[0], b[1]) / 1000.0;
+      raw.add(km);
+      rawTotal += km;
+    }
+
+    final total = trip.totalDistanceKm;
+    final scale = rawTotal > 0 ? total / rawTotal : 0.0;
+
+    return raw.map((r) => r == null ? null : r * scale).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +84,10 @@ class TripCard extends StatelessWidget {
               .isNotEmpty,
     )
         .toList();
+
+    final legs = visits.isEmpty ? <double?>[] : _legDistances(visits);
+
+    String nameOf(int i) => visits[i].school_name!.trim();
 
     return Container(
       margin:
@@ -64,10 +117,6 @@ class TripCard extends StatelessWidget {
 
       child: Column(
         children: [
-
-          // ============================
-          // HEADER
-          // ============================
 
           Padding(
             padding:
@@ -137,10 +186,6 @@ class TripCard extends StatelessWidget {
             ),
           ),
 
-          // ============================
-          // START / END
-          // ============================
-
           Padding(
             padding:
             const EdgeInsets.symmetric(
@@ -179,10 +224,6 @@ class TripCard extends StatelessWidget {
               ],
             ),
           ),
-
-          // ============================
-          // TOTAL DISTANCE
-          // ============================
 
           Padding(
             padding:
@@ -232,10 +273,6 @@ class TripCard extends StatelessWidget {
               ],
             ),
           ),
-
-          // ============================
-          // VISITED DETAILS
-          // ============================
 
           if (visits.isNotEmpty) ...[
 
@@ -309,10 +346,6 @@ class TripCard extends StatelessWidget {
               ),
             ),
 
-            // ============================
-            // EXPANDED VISITS
-            // ============================
-
             AnimatedCrossFade(
               duration:
               const Duration(
@@ -339,18 +372,89 @@ class TripCard extends StatelessWidget {
                 ),
 
                 child: Column(
-                  children:
-                  visits.map((visit) {
-                    return VisitTile(
-                      visit: visit,
-                    );
-                  }).toList(),
+                  children: [
+
+                    for (var i = 0; i < visits.length; i++) ...[
+                      _LegDistanceRow(
+                        from: i == 0 ? 'Start' : nameOf(i - 1),
+                        to: nameOf(i),
+                        km: i < legs.length ? legs[i] : null,
+                      ),
+
+                      VisitTile(
+                        visit: visits[i],
+                      ),
+                    ],
+                    if (_hasEnd && legs.length > visits.length)
+                      _LegDistanceRow(
+                        from: nameOf(visits.length - 1),
+                        to: 'End',
+                        km: legs[visits.length],
+                      ),
+                  ],
                 ),
               ),
             ),
           ],
 
           const SizedBox(height: 6),
+        ],
+      ),
+    );
+  }
+}
+class _LegDistanceRow extends StatelessWidget {
+  final String from;
+  final String to;
+  final double? km;
+
+  const _LegDistanceRow({
+    required this.from,
+    required this.to,
+    required this.km,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 10,
+        vertical: 8,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.alt_route_rounded,
+            size: 15,
+            color: AppColors.primary,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '$from  →  $to',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey.shade700,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            km == null ? '-' : '${km!.toStringAsFixed(2)} km',
+            style: TextStyle(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w700,
+              color: AppColors.primary,
+            ),
+          ),
         ],
       ),
     );
