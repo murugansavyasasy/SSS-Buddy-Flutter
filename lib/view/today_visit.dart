@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sssbuddy/view/root_mapview.dart';
@@ -19,6 +21,7 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
   bool isTripStarted = false;
   bool isStartingTrip = false;
   bool isLoadingTrip = true;
+  Timer? _midnightTimer;
   final TextEditingController dateController = TextEditingController();
   final TextEditingController schoolController = TextEditingController();
   final TextEditingController areaController = TextEditingController();
@@ -64,21 +67,53 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
   }
 
   Future<void> _initTripState() async {
-    final storedStarted = await SecureStorage.getTripStarted();
-    final storedDate = await SecureStorage.getTripStartDate();
-
     final today = _formattedToday();
 
-    if (storedStarted && storedDate != null && storedDate == today) {
-      isTripStarted = true;
-    } else {
-      await SecureStorage.clearTripData();
-      isTripStarted = false;
+    try {
+      // Server is the source of truth: today's trip with end_time null
+      // means the trip is still running, so START must stay hidden.
+      final openToday =
+          await ref.read(todayVisitProvider.notifier).hasOpenTripToday();
+      if (openToday) {
+        await SecureStorage.saveTripData(true, today);
+      } else {
+        await SecureStorage.clearTripData();
+      }
+      isTripStarted = openToday;
+    } catch (e) {
+      print("hasOpenTripToday Error => $e");
+      // API failed – fall back to the locally stored trip state.
+      final storedStarted = await SecureStorage.getTripStarted();
+      final storedDate = await SecureStorage.getTripStartDate();
+
+      if (storedStarted && storedDate != null && storedDate == today) {
+        isTripStarted = true;
+      } else {
+        await SecureStorage.clearTripData();
+        isTripStarted = false;
+      }
     }
 
+    if (!mounted) return;
     setState(() {
       isLoadingTrip = false;
     });
+    _scheduleMidnightRefresh();
+  }
+
+  /// When the date changes, re-check so START shows again for the new day.
+  void _scheduleMidnightRefresh() {
+    _midnightTimer?.cancel();
+    final now = DateTime.now();
+    final nextMidnight = DateTime(now.year, now.month, now.day + 1);
+    _midnightTimer = Timer(
+      nextMidnight.difference(now) + const Duration(seconds: 1),
+      () {
+        if (!mounted) return;
+        dateController.text = _formattedToday();
+        _initTripState();
+      },
+    );
   }
   String _monthName(int month) {
     const months = [
@@ -199,6 +234,7 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
 
   @override
   void dispose() {
+    _midnightTimer?.cancel();
     dateController.dispose();
     schoolController.dispose();
     areaController.dispose();
