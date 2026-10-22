@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../Values/Colors/app_colors.dart';
-
-/// Design 4: full school name (never cut) + clearly labelled Sales Person.
 class SchoolCard extends StatelessWidget {
   final dynamic item;
 
@@ -86,9 +84,6 @@ class SchoolCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ============================
-                // SCHOOL NAME (full, wraps to as many lines as needed)
-                // ============================
                 Text(
                   name,
                   softWrap: true,
@@ -109,10 +104,6 @@ class SchoolCard extends StatelessWidget {
               ],
             ),
           ),
-
-          // ============================
-          // SALES PERSON (clearly labelled)
-          // ============================
           Container(
             width: double.infinity,
             margin: const EdgeInsets.fromLTRB(14, 8, 14, 14),

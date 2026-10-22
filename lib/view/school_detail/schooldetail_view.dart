@@ -7,17 +7,11 @@ import '../../Values/Colors/app_colors.dart';
 import '../../components/toolbar_layout.dart';
 import '../ManagementInfo/management_info.dart';
 
-// NOTE: ExamTable / TableRowModel ippo inga use aagala (sections-ah
-// maathitten). Vera edathula use pannina, andha files appadiye irukkattum.
-
 const Color _navy = Color(0xFF1A3A5C);
 
 class SchooldetailView extends ConsumerWidget {
   final Map<String, dynamic> item;
-
   const SchooldetailView({super.key, required this.item});
-
-  /// Value or "-" when null / empty.
   String _v(String key) {
     final s = (item[key] ?? '').toString().trim();
     return s.isEmpty ? '-' : s;
@@ -77,10 +71,6 @@ class SchooldetailView extends ConsumerWidget {
       ),
     );
   }
-
-  // ============================================================
-  // HERO
-  // ============================================================
   Widget _buildHero() {
     final name = (item['SchoolName'] ?? '_').toString();
     final status = _v('Status');
@@ -178,9 +168,6 @@ class SchooldetailView extends ConsumerWidget {
     );
   }
 
-  // ============================================================
-  // STATS (Students / Staff)
-  // ============================================================
   Widget _buildStats() {
     return Row(
       children: [
@@ -205,9 +192,6 @@ class SchooldetailView extends ConsumerWidget {
     );
   }
 
-  // ============================================================
-  // PERIOD
-  // ============================================================
   Widget _buildPeriod() {
     return _Section(
       title: 'Subscription Period',

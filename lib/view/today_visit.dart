@@ -33,7 +33,7 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
   final List<String> persons = [
     "Owner",
     "Chairman",
-    "Principle",
+    "Principal",
     "Admin",
     "Others",
   ];
@@ -43,13 +43,12 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
     "Met and demo given",
     "To sign/set up POC",
     "To sign PO",
-    "Training to existing POC/live school",
+    "Training for existing POC/live school",
     "General visit",
     "Payment collection",
     "Others",
   ];
 
-  // Colors
   static const Color primaryColor = Color(0xFF1A1F36);
   static const Color accentColor = Color(0xFF4F6FFF);
   static const Color successColor = Color(0xFF22C55E);
