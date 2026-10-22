@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 import '../auth/model/DialoutServerModel.dart';
 import '../provider/app_providers.dart';
@@ -8,7 +9,9 @@ class ServerStatusViewModel extends AsyncNotifier<List<DialoutServerModel>> {
   @override
   Future<List<DialoutServerModel>> build() async {
     final repo = ref.read(repositoryProvider);
-    return repo.getDialoutServers();
+    // Re-fetches whenever the product dropdown changes.
+    final product = ref.watch(selectedServerProductProvider);
+    return repo.getDialoutServers(gradit: product == graditProduct);
   }
 
   Future<void> refresh() async {
@@ -34,6 +37,7 @@ class ServerStatusViewModel extends AsyncNotifier<List<DialoutServerModel>> {
         createdBy: int.tryParse(schoolUserId) ?? schoolUserId,
         flagKey: flagKey,
         value: value,
+        gradit: ref.read(selectedServerProductProvider) == graditProduct,
       );
 
       final current = state.value ?? [];
@@ -51,3 +55,10 @@ final serverStatusViewModelProvider =
 AsyncNotifierProvider<ServerStatusViewModel, List<DialoutServerModel>>(
   ServerStatusViewModel.new,
 );
+
+const schoolChimesProduct = "School Chimes";
+const graditProduct = "GRADit";
+const serverProducts = [schoolChimesProduct, graditProduct];
+
+final selectedServerProductProvider =
+StateProvider<String>((ref) => serverProducts.first);

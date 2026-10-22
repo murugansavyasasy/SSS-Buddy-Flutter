@@ -704,10 +704,11 @@ class ClientRepository {
 
     return data.map((e) => FeedbackModel.fromJson(e)).toList();
   }
-  Future<List<DialoutServerModel>> getDialoutServers() async {
+  /// [gradit] true calls the GRADit endpoints, otherwise School Chimes.
+  Future<List<DialoutServerModel>> getDialoutServers({bool gradit = false}) async {
     final token = await client.getToken();
     final response = await client.get(
-      AppEndpoint.dialoutServerList,
+      gradit ? AppEndpoint.graditServerList : AppEndpoint.dialoutServerList,
       headers: {
         if (token != null && token.isNotEmpty)
           'Authorization': 'Bearer $token',
@@ -732,9 +733,12 @@ class ClientRepository {
     required Object createdBy,
     required String flagKey,
     required bool value,
+    bool gradit = false,
   }) async {
     final response = await client.post(
-      AppEndpoint.dialoutServerUpdateFlag,
+      gradit
+          ? AppEndpoint.graditServerUpdateFlag
+          : AppEndpoint.dialoutServerUpdateFlag,
       body: {
         "server_id": serverId,
         "created_by": createdBy,

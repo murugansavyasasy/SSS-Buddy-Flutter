@@ -50,4 +50,6 @@ class AppEndpoint {
   static const resetPassword = "api/mobile/reset-password";
   static const dialoutServerList = "api/insights/dialout-server/list-server";
   static const dialoutServerUpdateFlag = "api/insights/dialout-server/update-server-flag";
+  static const graditServerList = "api/insights/gradit/list-server";
+  static const graditServerUpdateFlag = "api/insights/gradit/update-server-flag";
 }

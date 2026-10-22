@@ -39,23 +39,67 @@ class ServerStatusScreen extends ConsumerWidget {
                     topRight: Radius.circular(25),
                   ),
                 ),
-                child: RefreshIndicator(
-                  onRefresh: () => ref
-                      .read(serverStatusViewModelProvider.notifier)
-                      .refresh(),
-                  child: serverState.when(
-                    loading: () => const Center(
-                      child: CircularProgressIndicator(),
+                child: Column(
+                  children: [
+                    _buildProductDropdown(ref),
+                    Expanded(
+                      child: RefreshIndicator(
+                        onRefresh: () => ref
+                            .read(serverStatusViewModelProvider.notifier)
+                            .refresh(),
+                        child: serverState.when(
+                          loading: () => const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                          error: (e, _) => _buildError(ref, e),
+                          data: (servers) => servers.isEmpty
+                              ? _buildEmptyState(context)
+                              : _buildList(servers),
+                        ),
+                      ),
                     ),
-                    error: (e, _) => _buildError(ref, e),
-                    data: (servers) => servers.isEmpty
-                        ? _buildEmptyState(context)
-                        : _buildList(servers),
-                  ),
+                  ],
                 ),
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  // 🔽 Product dropdown
+  Widget _buildProductDropdown(WidgetRef ref) {
+    final selected = ref.watch(selectedServerProductProvider);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF5F7FB),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: selected,
+            isExpanded: true,
+            borderRadius: BorderRadius.circular(12),
+            icon: Icon(Icons.keyboard_arrow_down, color: AppColors.primary),
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF1C2340),
+            ),
+            items: serverProducts
+                .map((p) => DropdownMenuItem(value: p, child: Text(p)))
+                .toList(),
+            onChanged: (value) {
+              if (value == null) return;
+              ref.read(selectedServerProductProvider.notifier).state = value;
+            },
+          ),
         ),
       ),
     );
