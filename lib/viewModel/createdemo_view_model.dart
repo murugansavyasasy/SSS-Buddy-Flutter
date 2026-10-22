@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sssbuddy/auth/model/CreatedemoResponse.dart';
 
 import '../provider/app_providers.dart';
+import 'demolist_view_model.dart';
 
 class CreatedemoViewModel extends AsyncNotifier<Createdemoresponse?> {
   @override
@@ -30,6 +31,8 @@ class CreatedemoViewModel extends AsyncNotifier<Createdemoresponse?> {
         "1",
       );
       state = AsyncData(response);
+      // Reload GetDemosByLoginId so the new demo shows in the demo list.
+      if (response.status == 1) ref.invalidate(demoviewProvider);
       return true;
     } catch (e, stack) {
       state = AsyncError(e, stack);

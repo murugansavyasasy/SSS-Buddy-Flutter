@@ -13,6 +13,7 @@ import '../auth/model/CircularModel.dart';
 import '../auth/model/CustomerDetailsInfoModelClass.dart';
 import '../auth/model/CustomerdetailsModel.dart';
 import '../auth/model/Demolist.dart';
+import '../auth/model/DialoutServerModel.dart';
 import '../auth/model/DemolistEditModel.dart';
 import '../auth/model/FeedbackModel.dart';
 import '../auth/model/FinancialYearModel.dart';
@@ -49,7 +50,7 @@ class ClientRepository {
   Future<Versioncheck> getVersionCheckDetails() async {
     final response = await client.get(
       AppEndpoint.versioncheckendpoint,
-      query: {"VersionID": "66"},
+      query: {"VersionID": "67"},
     );
     return Versioncheck.fromJson(response.data);
   }
@@ -702,6 +703,58 @@ class ClientRepository {
     final List data = response.data;
 
     return data.map((e) => FeedbackModel.fromJson(e)).toList();
+  }
+  /// [gradit] true calls the GRADit endpoints, otherwise School Chimes.
+  Future<List<DialoutServerModel>> getDialoutServers({bool gradit = false}) async {
+    final token = await client.getToken();
+    final response = await client.get(
+      gradit ? AppEndpoint.graditServerList : AppEndpoint.dialoutServerList,
+      headers: {
+        if (token != null && token.isNotEmpty)
+          'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
+    );
+
+    final body = response.data;
+    if (body is! Map || body["status"] != true) {
+      throw Exception(body is Map
+          ? body["message"] ?? "Failed to load servers"
+          : "Failed to load servers");
+    }
+
+    final List data = body["data"] ?? [];
+    return data.map((e) => DialoutServerModel.fromJson(e)).toList();
+  }
+
+  /// Returns the updated flags from the response "data".
+  Future<Map<String, dynamic>> updateDialoutServerFlag({
+    required int serverId,
+    required Object createdBy,
+    required String flagKey,
+    required bool value,
+    bool gradit = false,
+  }) async {
+    final response = await client.post(
+      gradit
+          ? AppEndpoint.graditServerUpdateFlag
+          : AppEndpoint.dialoutServerUpdateFlag,
+      body: {
+        "server_id": serverId,
+        "created_by": createdBy,
+        flagKey: value,
+      },
+    );
+
+    final body = response.data;
+    if (body is! Map || body["status"] != true) {
+      throw Exception(body is Map
+          ? body["message"] ?? "Failed to update server"
+          : "Failed to update server");
+    }
+
+    final data = body["data"];
+    return data is Map ? Map<String, dynamic>.from(data) : {flagKey: value};
   }
   Future<List<ZeroActivityModel>> getInstuetList(String vimIdUser) async {
     final response = await client.schoolPost(

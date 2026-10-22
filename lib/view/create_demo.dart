@@ -9,7 +9,6 @@ import 'package:sssbuddy/viewModel/createdemo_view_model.dart';
 import '../Values/Colors/app_colors.dart';
 import '../components/common_dialog.dart';
 import '../components/toolbar_layout.dart';
-import '../viewModel/demolist_view_model.dart';
 import '../viewModel/login_view_model.dart';
 import 'dashboard.dart';
 
@@ -235,7 +234,7 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
 
                               final loginData = ref.read(loginProvider);
                               final loginvalue = loginData.value;
-                              final loginId = (loginvalue?.roleId ?? 0).toString();
+                              final loginId = (loginvalue?.schoolUserId ?? 0).toString();
 
                               final schoolName = titleController.text;
                               final mobileNo = subjectController.text;
@@ -285,7 +284,6 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
                                   message: "Demo created successfully",
                                   showRecordButton: true,
                                   response: demoItem,
-                                  onClose: () => ref.invalidate(demoviewProvider),
                                 );
                               } else {
                                 ScaffoldMessenger.of(context).showSnackBar(
