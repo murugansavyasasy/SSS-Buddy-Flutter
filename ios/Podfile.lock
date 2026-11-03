@@ -102,12 +102,12 @@ SPEC CHECKSUMS:
   package_info_plus: af8e2ca6888548050f16fa2f1938db7b5a5df499
   permission_handler_apple: 92d754bbaa7361d436db2d6c3c1c2a0fdcec462e
   record_ios: 390a30c7caaf8b5d0fb1cb1d2fd5064b48b4520c
-  share_plus: 50da8cb520a8f0f65671c6c6a99b3617ed10a58a
+  share_plus: eccd7beb7cea61271aeed1800e8ccb2b952c0c7f
   shared_preferences_foundation: 7036424c3d8ec98dfe75ff1667cb0cd531ec82bb
   sqflite_darwin: 20b2a3a3b70e43edae938624ce550a3cbf66a3d0
   url_launcher_ios: 7a95fa5b60cc718a708b8f2966718e93db0cef1b
   webview_flutter_wkwebview: 8ebf4fded22593026f7dbff1fbff31ea98573c8d
 
-PODFILE CHECKSUM: 3ee4ed32429e949a9ab84fe9c9b827e741200828
+PODFILE CHECKSUM: 0f86bef5c6368689d3b9cdddb8bb790356ec870a
 
 COCOAPODS: 1.16.2

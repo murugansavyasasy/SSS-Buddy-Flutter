@@ -39,7 +39,9 @@ class DemolistEditViewmodel
   }
 }
 
-final demolistEditProvider = StateNotifierProvider<DemolistEditViewmodel,
+// autoDispose so each Edit screen starts fresh instead of showing the
+// previously opened demo's details.
+final demolistEditProvider = StateNotifierProvider.autoDispose<DemolistEditViewmodel,
     AsyncValue<List<Demolisteditmodel>>>(
       (ref) {
     final repo = ref.read(repositoryProvider);

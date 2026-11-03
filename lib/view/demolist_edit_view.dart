@@ -25,6 +25,7 @@ class _DemolistEditViewState extends ConsumerState<DemolistEditView> {
   final emailController = TextEditingController();
 
   List<TextEditingController> parentControllers = [];
+  bool _isBound = false;
 
   @override
   void initState() {
@@ -69,18 +70,23 @@ class _DemolistEditViewState extends ConsumerState<DemolistEditView> {
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (e, _) => Center(child: Text("Error: $e")),
                 data: (data) {
-                  if (data.isEmpty) {
-                    return const Center(child: Text("No Data Found"));
-                  }
+                  if (!_isBound) {
+                    _isBound = true;
+                    // Fall back to the selected list item when the details
+                    // API has no record for this demo.
+                    final item = data.isNotEmpty ? data.first : null;
+                    schoolController.text =
+                        item?.SchoolName ?? widget.item.schoolName;
+                    mobileController.text = item?.PrincipalNumber ??
+                        widget.item.principalNumber.toString();
+                    emailController.text = item?.PrincipalEmail ?? '';
 
-                  final item = data.first;
-
-                  if (schoolController.text.isEmpty) {
-                    schoolController.text = item.SchoolName;
-                    mobileController.text = item.PrincipalNumber;
-                    emailController.text = item.PrincipalEmail;
-
-                    parentControllers = item.ParentNos
+                    for (var c in parentControllers) {
+                      c.dispose();
+                    }
+                    parentControllers = (item?.ParentNos ?? const <String>[])
+                        .map((e) => e.trim())
+                        .where((e) => e.isNotEmpty)
                         .map((e) => TextEditingController(text: e))
                         .toList();
                   }
@@ -115,13 +121,13 @@ class _DemolistEditViewState extends ConsumerState<DemolistEditView> {
           ),
           const SizedBox(height: 12),
 
-          CustomTextField(
-            label: "Email",
-            hint: "Principal email address",
-            controller: emailController,
-            enabled: false,
-          ),
-          const SizedBox(height: 16),
+          // CustomTextField(
+          //   label: "Email",
+          //   hint: "Principal email address",
+          //   controller: emailController,
+          //   enabled: false,
+          // ),
+          // const SizedBox(height: 16),
 
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -197,7 +203,7 @@ class _DemolistEditViewState extends ConsumerState<DemolistEditView> {
 
   void _onUpdate() async {
     final userAsync = ref.read(userSessionProvider);
-    final loginId = userAsync.value?.userId.toString() ?? '';
+    final loginId = userAsync.value?.schoolUserId.toString() ?? '';
 
     if (loginId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(

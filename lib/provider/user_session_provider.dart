@@ -6,6 +6,7 @@ class UserSession {
   final String employeeName;
   final String employeeId;
   final String employeerole;
+  final String schoolUserId;
   final String userId;
   final String token;
 
@@ -13,6 +14,7 @@ class UserSession {
     required this.employeeName,
     required this.employeeId,
     required this.employeerole,
+    required this.schoolUserId,
     required this.userId,
     required this.token,
   });
@@ -23,6 +25,7 @@ class UserSession {
     return UserSession(
       employeeName: data["name"] ?? "",
       employeeId: data["employeeId"] ?? "",
+      schoolUserId: data["schoolUserId"] ?? "",
       employeerole: data["roleName"] ?? "",
       userId: data["userId"].toString(),
       token: data["token"] ?? "",

@@ -156,7 +156,14 @@ class ClientRepository {
       body: {"schoolID": schoolID, "FromDate": fromDate, "ToDate": toDate},
     );
 
-    return Usagecount.fromJson(response.data[0]);
+    final data = response.data;
+    if (data is List && data.isNotEmpty) {
+      return Usagecount.fromJson(Map<String, dynamic>.from(data.first));
+    }
+    if (data is Map) {
+      return Usagecount.fromJson(Map<String, dynamic>.from(data));
+    }
+    throw Exception("No usage data found");
   }
 
   Future<List<Managementinfo>> managementinfo(int schoolID) async {
@@ -674,15 +681,22 @@ class ClientRepository {
     );
 
     final responseData = response.data;
+    final List items;
     if (responseData is List) {
-      return responseData
-          .map((e) => Demolisteditmodel.fromJson(e))
-          .toList();
+      items = responseData;
     } else if (responseData is Map<String, dynamic>) {
-      return [Demolisteditmodel.fromJson(responseData)];
+      items = [responseData];
     } else {
       throw Exception("Invalid API response");
     }
+
+    // API returns [{"status":0,"message":"no records found"}] (or "Status")
+    // when a demo has no details; skip those instead of parsing empty fields.
+    return items
+        .whereType<Map<String, dynamic>>()
+        .where((e) => (e['Status'] ?? e['status']) != 0)
+        .map((e) => Demolisteditmodel.fromJson(e))
+        .toList();
   }
 
   Future<List<dynamic>> updateDemo(Map<String, dynamic> body) async {
