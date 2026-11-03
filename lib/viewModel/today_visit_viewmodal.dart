@@ -171,6 +171,30 @@ class TodayVisitViewmodel extends AsyncNotifier<TripState?> {
     return total;
   }
 
+  /// True if the logged-in user has a trip started today whose end_time is
+  /// still null (trip not ended). Throws if the API call fails.
+  Future<bool> hasOpenTripToday() async {
+    final loginData = ref.read(loginProvider).value;
+    if (loginData == null) throw Exception("User not logged in");
+
+    final trips = await ref
+        .read(repositoryProvider)
+        .getoveralldetails(loginData.token, loginData.userId.toString());
+
+    final now = DateTime.now();
+    return trips.any((trip) {
+      final start = trip.startDateTime;
+      final isToday = start != null &&
+          start.year == now.year &&
+          start.month == now.month &&
+          start.day == now.day;
+      final endTime = trip.end_time?.trim();
+      final isOpen =
+          endTime == null || endTime.isEmpty || endTime.toLowerCase() == "null";
+      return isToday && isOpen;
+    });
+  }
+
   /// Manage trip: start or end
   Future<bool> manageTrip(String type) async {
     try {
