@@ -58,6 +58,8 @@ class _UsageCountScreenState extends ConsumerState<UsageCountScreen> {
 
     if (picked != null) {
       setState(() {
+        // Dates changed — old result no longer matches the range.
+        _usage = null;
         if (isFrom) {
           _fromDate = picked;
           if (_toDate != null && _toDate!.isBefore(picked)) {
@@ -85,21 +87,39 @@ class _UsageCountScreenState extends ConsumerState<UsageCountScreen> {
       return;
     }
 
-    setState(() => _isLoading = true);
+    if (_toDate!.isBefore(_fromDate!)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('To Date cannot be before From Date.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _usage = null;
+    });
 
     final vm = ref.read(usagecountViewModelProvider.notifier);
 
-    final success = await vm.usagecount(
+    final result = await vm.usagecount(
       widget.item['SchoolID'].toString(),
       _formatApiDate(_fromDate!),
       _formatApiDate(_toDate!),
     );
-    if (success) {
-      final data = ref.read(usagecountViewModelProvider).value;
+    if (!mounted) return;
 
-      setState(() {
-        _usage = data;
-      });
+    if (result != null) {
+      _usage = result;
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Unable to fetch usage count. Please try again.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
     }
     setState(() => _isLoading = false);
   }
@@ -233,8 +253,8 @@ class _UsageCountScreenState extends ConsumerState<UsageCountScreen> {
           UsageSection(
             sectionTitle: 'Voice Usage',
             values: [
-              {'title': 'Used', 'value': _usage!.VoiceUsage.toString()},
-              {'title': 'Allocated', 'value': _usage!.VoiceAllocated.toString()},
+              {'title': 'Used', 'value': Usagecount.display(_usage!.VoiceUsage)},
+              {'title': 'Allocated', 'value': Usagecount.display(_usage!.VoiceAllocated)},
             ],
             borderColor: teal,
           ),
@@ -242,8 +262,8 @@ class _UsageCountScreenState extends ConsumerState<UsageCountScreen> {
           UsageSection(
             sectionTitle: 'SMS Usage',
             values: [
-              {'title': 'Used', 'value': _usage!.SMSUsage.toString()},
-              {'title': 'Allocated', 'value': _usage!.SMSAllocated.toString()},
+              {'title': 'Used', 'value': Usagecount.display(_usage!.SMSUsage)},
+              {'title': 'Allocated', 'value': Usagecount.display(_usage!.SMSAllocated)},
             ],
             borderColor: teal,
           ),
@@ -251,7 +271,7 @@ class _UsageCountScreenState extends ConsumerState<UsageCountScreen> {
           UsageSection(
             sectionTitle: 'Total App Usage',
             values: [
-              {'title': 'Count', 'value': _usage!.AppUsageCount.toString()},
+              {'title': 'Count', 'value': Usagecount.display(_usage!.AppUsageCount)},
             ],
             borderColor: teal,
             isLast: true,

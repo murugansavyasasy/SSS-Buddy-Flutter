@@ -1,9 +1,10 @@
+
 class Usagecount {
-  int VoiceUsage;
+  String VoiceUsage;
   String VoiceAllocated;
-  int SMSUsage;
-  int SMSAllocated;
-  int AppUsageCount;
+  String SMSUsage;
+  String SMSAllocated;
+  String AppUsageCount;
 
   Usagecount({
     required this.VoiceUsage,
@@ -13,16 +14,30 @@ class Usagecount {
     required this.AppUsageCount,
   });
 
-  factory Usagecount.fromJson(Map<String, dynamic> json) {
-    return Usagecount(
-      VoiceUsage: json["VoiceUsage"] ?? 0,
-      VoiceAllocated: json["VoiceAllocated"] ?? "0",
-      SMSUsage: json["SMSUsage"] ?? 0,
-      SMSAllocated: json["SMSAllocated"] ?? 0,
-      AppUsageCount: json["AppUsageCount"] ?? 0,
-    );
+  static String _parse(dynamic v) {
+    if (v == null) return "0";
+    if (v is num) {
+      return v == v.truncate() ? v.toInt().toString() : v.toString();
+    }
+    final s = v.toString().trim();
+    if (s.isEmpty || s.toLowerCase() == "null") return "0";
+    final n = num.tryParse(s);
+    if (n != null) return _parse(n);
+    return s;
   }
 
+  static String display(String v) =>
+      v.toUpperCase() == "UL" ? "Unlimited" : v;
+
+  factory Usagecount.fromJson(Map<String, dynamic> json) {
+    return Usagecount(
+      VoiceUsage: _parse(json["VoiceUsage"]),
+      VoiceAllocated: _parse(json["VoiceAllocated"]),
+      SMSUsage: _parse(json["SMSUsage"]),
+      SMSAllocated: _parse(json["SMSAllocated"]),
+      AppUsageCount: _parse(json["AppUsageCount"]),
+    );
+  }
 
   Map<String, dynamic> toJson() => {
     "VoiceUsage": VoiceUsage,

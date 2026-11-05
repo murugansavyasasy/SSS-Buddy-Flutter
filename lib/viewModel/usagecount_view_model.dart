@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sssbuddy/auth/model/UsageCount.dart';
 
@@ -12,7 +13,8 @@ class UsagecountViewModel extends AsyncNotifier<Usagecount?> {
   @override
   Future<Usagecount?> build() async => null;
 
-  Future<bool> usagecount(
+  /// Returns the usage data, or null on failure.
+  Future<Usagecount?> usagecount(
     String schoolID,
     String fromDate,
     String toDate,
@@ -25,10 +27,11 @@ class UsagecountViewModel extends AsyncNotifier<Usagecount?> {
       final res = await repo.usagecount(schoolID, fromDate, toDate);
 
       state = AsyncData(res);
-      return true;
+      return res;
     } catch (e, s) {
+      debugPrint('Usage count error: $e');
       state = AsyncError(e, s);
-      return false;
+      return null;
     }
   }
 }
