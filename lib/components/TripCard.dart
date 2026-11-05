@@ -186,6 +186,10 @@ class TripCard extends StatelessWidget {
             ),
           ),
 
+          // ============================
+          // START / END
+          // ============================
+
           Padding(
             padding:
             const EdgeInsets.symmetric(
@@ -224,6 +228,10 @@ class TripCard extends StatelessWidget {
               ],
             ),
           ),
+
+          // ============================
+          // TOTAL DISTANCE
+          // ============================
 
           Padding(
             padding:

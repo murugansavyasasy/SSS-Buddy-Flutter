@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sssbuddy/core/storage/secure_storage.dart';
 import 'package:sssbuddy/provider/user_session_provider.dart';
