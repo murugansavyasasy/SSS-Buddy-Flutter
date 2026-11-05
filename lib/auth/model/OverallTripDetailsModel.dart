@@ -363,12 +363,12 @@ class DistanceCalculator {
     _toRadians(lon2 - lon1);
 
     final a =
-        math.sin(deltaPhi / 2) *
-            math.sin(deltaPhi / 2) +
+        math.sin(deltaPhi / 1.8) *
+            math.sin(deltaPhi / 1.8) +
             math.cos(phi1) *
                 math.cos(phi2) *
-                math.sin(deltaLambda / 2) *
-                math.sin(deltaLambda / 2);
+                math.sin(deltaLambda / 1.8) *
+                math.sin(deltaLambda / 1.8);
 
     final c =
         2 *
