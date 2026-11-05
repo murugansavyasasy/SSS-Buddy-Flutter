@@ -33,6 +33,7 @@ import '../auth/model/ReportingMembersModel.dart';
 import '../auth/model/SalesPersonModel.dart';
 import '../auth/model/SchoolDocuments.dart';
 import '../auth/model/SchoolNameModel.dart';
+import '../auth/model/TrackPointModel.dart';
 import '../auth/model/Validatelogin.dart';
 import '../auth/model/Versioncheck.dart';
 import '../auth/model/ZeroActivityModel.dart';
@@ -524,6 +525,56 @@ class ClientRepository {
     );
 
     return response.data;
+  }
+
+  /// Uploads a batch of GPS points of the user's trip on [tripDate]
+  /// (yyyy-MM-dd). Returns true when the server accepted them.
+  Future<bool> saveTripLocations({
+    required String userId,
+    required String tripDate,
+    required List<TrackPoint> points,
+  }) async {
+    final response = await client.post(
+      AppEndpoint.saveTripLocations,
+      body: {
+        "user_id": userId,
+        "trip_date": tripDate,
+        "points": points.map((p) => p.toApiJson()).toList(),
+      },
+    );
+    final data = response.data;
+    if (data is Map) {
+      return data["status"]?.toString() == "1" ||
+          data["result"]?.toString() == "1";
+    }
+    return response.statusCode == 200;
+  }
+
+  /// GPS points recorded for [userId] on [date] (yyyy-MM-dd), oldest first.
+  /// Accepts either a plain list or {"data": [...]}.
+  Future<List<TrackPoint>> getTripLocations(
+    String token,
+    String userId,
+    String date,
+  ) async {
+    final response = await client.get(
+      AppEndpoint.getTripLocations(userId, date),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
+    );
+    final raw = response.data;
+    final List list = raw is List
+        ? raw
+        : (raw is Map && raw["data"] is List ? raw["data"] : const []);
+    final points = list
+        .whereType<Map>()
+        .map((e) => TrackPoint.fromApiJson(Map<String, dynamic>.from(e)))
+        .whereType<TrackPoint>()
+        .toList()
+      ..sort((a, b) => a.time.compareTo(b.time));
+    return points;
   }
 
   Future<List<Map<String, dynamic>>> visitRecord(

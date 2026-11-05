@@ -28,6 +28,7 @@ import '../../view/feedback.dart';
 import '../../view/important_info.dart';
 import '../../view/otp_screen.dart';
 import '../../view/reset_password_screen.dart';
+import '../../view/root_tracker.dart';
 import '../../view/server_status.dart';
 import '../../view/zero_activity.dart';
 
@@ -127,6 +128,8 @@ class Routes {
         return MaterialPageRoute(builder: (context) => const RenewalPOsPage());
       case RoutesName.serverstatus:
         return MaterialPageRoute(builder: (context) => const ServerStatusScreen());
+      case RoutesName.roottracker:
+        return MaterialPageRoute(builder: (context) => const RootTrackerScreen());
       default:
         return MaterialPageRoute(
           builder: (_) =>

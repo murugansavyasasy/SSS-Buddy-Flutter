@@ -41,6 +41,10 @@
 	<string>We need gallery access select photos</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>We use your location to provide trip and location-based features in the app.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>This app requires location access to enable trip features</string>
 	<key>NSMicrophoneUsageDescription</key>

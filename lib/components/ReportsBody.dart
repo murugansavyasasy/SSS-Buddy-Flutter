@@ -14,6 +14,9 @@ import 'MemberDropdown.dart';
 import 'MonthDropdown.dart';
 import 'TodayEntryBar.dart';
 import 'TripCard.dart';
+import 'TripRouteMap.dart';
+import '../auth/model/ReportingMembersModel.dart';
+import '../view/root_tracker.dart';
 
 class ReportsBody extends ConsumerStatefulWidget {
   const ReportsBody({super.key});
@@ -442,6 +445,15 @@ class _ReportsBodyState extends ConsumerState<ReportsBody> {
                                 ),
                               ),
 
+                              // Date picked → that day's route on a map
+                              if (activeDate != null &&
+                                  dayTrips.isNotEmpty)
+                                _DayRouteMapCard(
+                                  trips: dayTrips,
+                                  date: date,
+                                  member: selectedMember,
+                                ),
+
                               // Trips for the day OR no-entry note
                               if (dayTrips.isEmpty)
                                 const _NoEntryTile()
@@ -726,6 +738,85 @@ class _ExportButton extends StatelessWidget {
             size: 20,
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Status Report → specific date: a pin on every lat/long of the day's
+/// trips (start, visits, end) with the road path between them.
+/// Tap opens the full-screen Root Tracker for the same member and day.
+class _DayRouteMapCard extends StatelessWidget {
+  final List<Overalltripdetailsmodel> trips;
+  final DateTime date;
+  final Reportingmembersmodel? member;
+
+  const _DayRouteMapCard({
+    required this.trips,
+    required this.date,
+    required this.member,
+  });
+
+  void _openFull(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => RootTrackerScreen(
+          initialMember: member,
+          initialDate: date,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final stops = buildRouteStops(trips);
+    final visits = stops.where((s) => s.kind == StopKind.visit).length;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(2, 0, 2, 8),
+            child: Row(
+              children: [
+                Icon(Icons.route_rounded,
+                    size: 15, color: AppColors.primary),
+                const SizedBox(width: 6),
+                Text(
+                  'Route map',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.grey.shade800,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  '${stops.length} points · $visits visits',
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            height: 240,
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: TripRouteMap(
+              trips: trips,
+              compact: true,
+              onTap: () => _openFull(context),
+              fitPadding: const EdgeInsets.fromLTRB(36, 56, 36, 28),
+            ),
+          ),
+        ],
       ),
     );
   }

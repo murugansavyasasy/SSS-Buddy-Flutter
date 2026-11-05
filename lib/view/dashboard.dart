@@ -406,6 +406,9 @@ class Dashboard extends ConsumerWidget {
                                 case 18:
                                   Navigator.pushNamed(context, RoutesName.serverstatus);
                                   break;
+                                case 19:
+                                  Navigator.pushNamed(context, RoutesName.roottracker);
+                                  break;
 
                               }
                             },

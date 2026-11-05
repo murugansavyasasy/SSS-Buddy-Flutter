@@ -38,6 +38,10 @@ class AppEndpoint {
   static const postInitiateCall = "InitiateDemoCallByDemoID";
   static const manageTrip = "/api/mobile/ManageTripDetails";
   static const updateDailyVisit = "/api/mobile/UpdateDailyVisitWithLocation";
+  // Root Tracker — GPS breadcrumbs of a running trip (backend to implement)
+  static const saveTripLocations = "/api/mobile/SaveTripLocations";
+  static String getTripLocations(String userId, String date) =>
+      "api/mobile/GetTripLocations?UserId=$userId&Date=$date";
   static const addTourexpence = "/api/mobile/ManageTourExpense";
   // static const uploadfiles = "api/AppDetails/UploadExpenseFiles";
   static const uploadfiles = "api/mobile/UploadExpenseFiles";

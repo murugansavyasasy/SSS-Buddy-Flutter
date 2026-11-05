@@ -98,6 +98,11 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
     setState(() {
       isLoadingTrip = false;
     });
+    // App was restarted mid-trip: pick GPS tracking back up for Root Tracker.
+    if (isTripStarted) {
+      unawaited(
+          ref.read(todayVisitProvider.notifier).resumeTrackingIfNeeded());
+    }
     _scheduleMidnightRefresh();
   }
 

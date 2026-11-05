@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
@@ -7,6 +8,8 @@ import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../auth/model/TodayVisitModal.dart';
+import '../auth/model/TrackPointModel.dart';
+import '../core/location/trip_track_store.dart';
 import '../provider/app_providers.dart';
 import '../repository/clientrepository.dart';
 import 'login_view_model.dart';
@@ -53,6 +56,27 @@ class TodayVisitViewmodel extends AsyncNotifier<TripState?> {
   LatLng? tripStartLocation;
   LatLng? tripEndLocation;
 
+  // ── Root Tracker: persisted + uploaded breadcrumb log ──
+  /// Every point recorded today (all segments), for the Root Tracker map.
+  List<TrackPoint> trackLog = [];
+  int? _trackUserId;
+  String? _trackDay;
+  int _segment = 0;
+  int _uploadedCount = 0;
+  bool _uploading = false;
+  bool _dirty = false;
+  DateTime _lastUpload = DateTime.fromMillisecondsSinceEpoch(0);
+  Timer? _syncTimer;
+
+  /// GPS fixes worse than this are ignored (metres).
+  static const double _maxAccuracyM = 50;
+  /// Jumps faster than this between two fixes are treated as GPS glitches.
+  static const double _maxSpeedKmh = 180;
+  static const int _uploadBatch = 20;
+  static const Duration _uploadEvery = Duration(minutes: 2);
+
+  bool get isTracking => _positionStream != null;
+
   @override
   Future<TripState?> build() async {
     repo = ref.read(repositoryProvider);
@@ -61,9 +85,144 @@ class TodayVisitViewmodel extends AsyncNotifier<TripState?> {
     ref.onDispose(() {
       _positionStream?.cancel();
       _durationTimer?.cancel();
+      _syncTimer?.cancel();
     });
 
     return null;
+  }
+
+  LocationSettings _locationSettings() {
+    if (Platform.isAndroid) {
+      return AndroidSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 10,
+        intervalDuration: const Duration(seconds: 10),
+        // Foreground service keeps GPS alive with the screen off.
+        foregroundNotificationConfig: const ForegroundNotificationConfig(
+          notificationTitle: "Trip in progress",
+          notificationText: "SSS Buddy is recording your route",
+          enableWakeLock: true,
+          setOngoing: true,
+        ),
+      );
+    }
+    if (Platform.isIOS) {
+      return AppleSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 10,
+        activityType: ActivityType.automotiveNavigation,
+        pauseLocationUpdatesAutomatically: false,
+        allowBackgroundLocationUpdates: true,
+        showBackgroundLocationIndicator: true,
+      );
+    }
+    return const LocationSettings(
+      accuracy: LocationAccuracy.high,
+      distanceFilter: 10,
+    );
+  }
+
+  /// Adds a fix to [trackLog] unless it is GPS noise. Returns true if kept.
+  bool _recordPoint(LatLng p, {double? accuracy, bool force = false}) {
+    final point = TrackPoint(
+      lat: p.latitude,
+      lng: p.longitude,
+      time: DateTime.now(),
+      segment: _segment,
+    );
+
+    if (!force) {
+      if (accuracy != null && accuracy > _maxAccuracyM) return false;
+      final last = trackLog.isNotEmpty ? trackLog.last : null;
+      if (last != null && last.segment == _segment) {
+        final meters = TrackPoint.metersBetween(last, point);
+        if (meters < 8) return false;
+        final secs = point.time.difference(last.time).inMilliseconds / 1000;
+        if (secs > 0 && (meters / 1000) / (secs / 3600) > _maxSpeedKmh) {
+          return false;
+        }
+      }
+    }
+
+    trackLog.add(point);
+    _dirty = true;
+    return true;
+  }
+
+  /// Saves to the phone and uploads pending points when a batch is ready.
+  Future<void> _sync({bool force = false}) async {
+    final userId = _trackUserId;
+    final day = _trackDay;
+    if (userId == null || day == null) return;
+
+    if (_dirty) {
+      _dirty = false;
+      try {
+        await TripTrackStore.save(userId, day, trackLog);
+      } catch (e) {
+        _dirty = true;
+        print("TripTrackStore save Error => $e");
+      }
+    }
+
+    if (_uploading || _uploadedCount >= trackLog.length) return;
+    final pending = trackLog.sublist(_uploadedCount);
+    final due = force ||
+        pending.length >= _uploadBatch ||
+        DateTime.now().difference(_lastUpload) >= _uploadEvery;
+    if (!due) return;
+
+    _uploading = true;
+    _lastUpload = DateTime.now();
+    try {
+      final ok = await repo.saveTripLocations(
+        userId: userId.toString(),
+        tripDate: day,
+        points: pending,
+      );
+      if (ok) {
+        _uploadedCount += pending.length;
+        await TripTrackStore.setUploadedCount(userId, day, _uploadedCount);
+      }
+    } catch (e) {
+      // Offline or API not live yet – points stay queued on the phone.
+      print("SaveTripLocations Error => $e");
+    } finally {
+      _uploading = false;
+    }
+  }
+
+  /// Loads today's stored log so a new segment can be appended to it.
+  Future<void> _openTodayLog() async {
+    final loginData = ref.read(loginProvider).value;
+    if (loginData == null) return;
+    final day = TripTrackStore.dayKey(DateTime.now());
+    if (_trackUserId == loginData.userId && _trackDay == day) return;
+
+    _trackUserId = loginData.userId;
+    _trackDay = day;
+    trackLog = await TripTrackStore.load(loginData.userId, day);
+    _uploadedCount = await TripTrackStore.uploadedCount(loginData.userId, day);
+    if (_uploadedCount > trackLog.length) _uploadedCount = trackLog.length;
+    _segment = trackLog.isEmpty ? 0 : trackLog.last.segment;
+    unawaited(TripTrackStore.pruneOld());
+  }
+
+  /// Called when Today Visit opens and the server says today's trip is
+  /// still running: restarts GPS tracking after an app restart.
+  Future<void> resumeTrackingIfNeeded() async {
+    if (isTracking) return;
+    await _openTodayLog();
+
+    final current = trackLog.where((p) => p.segment == _segment).toList();
+    LatLng? start = current.isNotEmpty ? current.first.latLng : null;
+    if (start == null) {
+      final pos = await getLocationSafely();
+      if (pos == null) return;
+      start = LatLng(pos.latitude, pos.longitude);
+    }
+    tripStartLocation = start;
+    await startTracking(start, resume: true);
   }
 
   /// Get current location with permission checks
@@ -98,23 +257,43 @@ class TodayVisitViewmodel extends AsyncNotifier<TripState?> {
     );
   }
 
-  /// Start trip tracking from a given point
-  Future<void> startTracking(LatLng startPoint) async {
-    trackedPoints = [startPoint];
-    _tripStartTime = DateTime.now();
+  /// Start trip tracking from a given point.
+  /// [resume] continues the current segment instead of starting a new one.
+  Future<void> startTracking(LatLng startPoint, {bool resume = false}) async {
+    await _openTodayLog();
+
+    if (resume) {
+      final current = trackLog.where((p) => p.segment == _segment).toList();
+      trackedPoints = current.map((p) => p.latLng).toList();
+      if (trackedPoints.isEmpty) {
+        trackedPoints = [startPoint];
+        _recordPoint(startPoint, force: true);
+      }
+      _tripStartTime = current.isNotEmpty ? current.first.time : DateTime.now();
+    } else {
+      if (trackLog.isNotEmpty) _segment = trackLog.last.segment + 1;
+      trackedPoints = [startPoint];
+      _recordPoint(startPoint, force: true);
+      _tripStartTime = DateTime.now();
+    }
+    await _sync(force: true);
+
+    _syncTimer?.cancel();
+    _syncTimer = Timer.periodic(const Duration(seconds: 15), (_) => _sync());
 
     // Initialize state
     state = AsyncData(
       TripState(
         isTripStarted: true,
-        distance: 0,
-        duration: 0,
+        distance: _calculateTotalDistance(trackedPoints),
+        duration: DateTime.now().difference(_tripStartTime!).inSeconds,
         points: List.from(trackedPoints),
       ),
     );
 
     // Cancel any previous tracking
     await _positionStream?.cancel();
+    _positionStream = null;
     _durationTimer?.cancel();
 
     // Start duration timer
@@ -125,14 +304,12 @@ class TodayVisitViewmodel extends AsyncNotifier<TripState?> {
       }
     });
 
-    // Listen to position updates (every 5 meters)
+    // Listen to position updates (every ~10 metres, also in background)
     _positionStream = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 5,
-      ),
+      locationSettings: _locationSettings(),
     ).listen((Position pos) {
       final point = LatLng(pos.latitude, pos.longitude);
+      if (!_recordPoint(point, accuracy: pos.accuracy)) return;
       trackedPoints.add(point);
 
       final totalDistance = _calculateTotalDistance(trackedPoints);
@@ -157,7 +334,10 @@ class TodayVisitViewmodel extends AsyncNotifier<TripState?> {
     _positionStream = null;
     _durationTimer?.cancel();
     _durationTimer = null;
+    _syncTimer?.cancel();
+    _syncTimer = null;
     _tripStartTime = null;
+    unawaited(_sync(force: true));
   }
 
   /// Calculate cumulative distance in km
@@ -249,6 +429,10 @@ class TodayVisitViewmodel extends AsyncNotifier<TripState?> {
 
       if (type == "stop") {
         tripEndLocation = latLng;
+        await _openTodayLog();
+        if (_recordPoint(latLng, accuracy: position.accuracy)) {
+          trackedPoints.add(latLng);
+        }
 
         stopTracking();
 

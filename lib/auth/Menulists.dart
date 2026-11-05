@@ -79,6 +79,12 @@ List<MenuItem> getMenuItems({
         icon: Icons.do_not_disturb,
         color: Colors.blueGrey,
       ),
+      MenuItem(
+        id: 19,
+        title: "Root Tracker",
+        icon: Icons.route,
+        color: Colors.lightBlue,
+      ),
     ]);
 
     if (schoolUserType == "Admin" ||
