@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart' show LatLng;
+import 'package:latlong2/latlong.dart' show Distance, LatLng, LengthUnit;
 import 'package:vector_map_tiles/vector_map_tiles.dart'
     show Style, VectorTileLayer, VectorTileLayerMode;
 
@@ -21,6 +21,7 @@ class RouteStop {
   final String label; // text inside the pin
   final String title;
   final String? time;
+  final DateTime? at; // parsed [time], when the API format allows
   final List<String> details;
 
   const RouteStop({
@@ -29,8 +30,17 @@ class RouteStop {
     required this.label,
     required this.title,
     this.time,
+    this.at,
     this.details = const [],
   });
+}
+
+/// One colour per stop state, shared by the map pins and the timeline.
+class TripColors {
+  static const Color start = Color(0xFF2C4463);
+  static const Color visited = Color(0xFF188038);
+  static const Color current = Color(0xFF4F6693);
+  static const Color end = Color(0xFF3C4043);
 }
 
 LatLng? _coord(String? lat, String? lng) {
@@ -47,7 +57,7 @@ LatLng? _coord(String? lat, String? lng) {
 }
 
 /// START → visits → END for each trip (oldest trip first).
-/// Visits are numbered 1, 2, 3… across the whole day.
+/// Start is a flag pin, visits are numbered 1, 2, 3… across the whole day.
 List<RouteStop> buildRouteStops(List<Overalltripdetailsmodel> trips) {
   final sorted = List.of(trips)
     ..sort((a, b) {
@@ -68,6 +78,7 @@ List<RouteStop> buildRouteStops(List<Overalltripdetailsmodel> trips) {
         label: 'S',
         title: multi ? 'Trip #${t.trip_id} started' : 'Trip started',
         time: t.start_time.trim(),
+        at: t.startDateTime,
       ));
     }
     for (final v in t.visit_details) {
@@ -97,10 +108,93 @@ List<RouteStop> buildRouteStops(List<Overalltripdetailsmodel> trips) {
         label: 'E',
         title: multi ? 'Trip #${t.trip_id} ended' : 'Trip ended',
         time: t.end_time?.trim(),
+        at: t.endDateTime,
       ));
     }
   }
   return stops;
+}
+
+/// For each stop (in order), the index of the nearest point on [line],
+/// searched forward from the previous stop's match so stops never snap
+/// backwards onto an earlier pass of the same road.
+List<int> snapStopsToLine(List<LatLng> stops, List<LatLng> line) {
+  const d = Distance();
+  final out = <int>[];
+  var from = 0;
+  for (final p in stops) {
+    var best = from;
+    var bestD = double.infinity;
+    for (var j = from; j < line.length; j++) {
+      final dd = d.as(LengthUnit.Meter, line[j], p);
+      if (dd < bestD) {
+        bestD = dd;
+        best = j;
+      }
+    }
+    from = best;
+    out.add(best);
+  }
+  return out;
+}
+
+/// Km from the first stop to each stop, measured along [line] (GPS track
+/// or road path); straight lines between stops when there is no line.
+///
+/// Pass the track's [segments] when [line] is the GPS track: distance is
+/// then counted exactly like [TrackPoint.totalKm] (from the first GPS fix,
+/// no jump across a GPS gap), so the last stop's km plus [kmAfterLastStop]
+/// equals the "km travelled" total shown on screen.
+List<double> stopDistancesKm(List<RouteStop> stops, List<LatLng> line,
+    {List<int>? segments}) {
+  if (stops.isEmpty) return const [];
+  if (line.length < 2) {
+    // No GPS track: the same estimate Status Report uses (straight line
+    // between stops × road factor), so pins, legs and the total agree.
+    final out = <double>[0];
+    double acc = 0;
+    for (var i = 1; i < stops.length; i++) {
+      acc += approxLegKm(stops[i - 1].point, stops[i].point);
+      out.add(acc);
+    }
+    return out;
+  }
+  final cum = _cumulativeMeters(line, segments);
+  final idx = snapStopsToLine(stops.map((s) => s.point).toList(), line);
+  if (segments != null) {
+    // GPS: count from the first fix; the start pin itself reads 0.
+    return [0, for (var i = 1; i < idx.length; i++) cum[idx[i]] / 1000];
+  }
+  final base = cum[idx.first];
+  return idx.map((i) => (cum[i] - base) / 1000).toList();
+}
+
+/// Status Report's approximate road km between two points.
+double approxLegKm(LatLng a, LatLng b) =>
+    DistanceCalculator.totalApproximateRoadDistance([
+      [a.latitude, a.longitude],
+      [b.latitude, b.longitude],
+    ]);
+
+/// GPS km travelled after the last stop (e.g. still driving after the last
+/// school). 0 when [line] is not a GPS track.
+double kmAfterLastStop(
+    List<RouteStop> stops, List<LatLng> line, List<int>? segments) {
+  if (stops.isEmpty || segments == null || line.length < 2) return 0;
+  final cum = _cumulativeMeters(line, segments);
+  final last = snapStopsToLine(stops.map((s) => s.point).toList(), line).last;
+  return (cum.last - cum[last]) / 1000;
+}
+
+List<double> _cumulativeMeters(List<LatLng> line, List<int>? segments) {
+  const d = Distance();
+  final cum = List<double>.filled(line.length, 0);
+  for (var i = 1; i < line.length; i++) {
+    final gap = segments != null && segments[i] != segments[i - 1];
+    cum[i] = cum[i - 1] +
+        (gap ? 0 : d.as(LengthUnit.Meter, line[i - 1], line[i]));
+  }
+  return cum;
 }
 
 // ─────────────────────────────────────────────
@@ -134,9 +228,6 @@ class TripRouteMap extends StatefulWidget {
 
 class TripRouteMapState extends State<TripRouteMap> {
   static const Color _blue = Color(0xFF1A73E8);
-  static const Color _green = Color(0xFF188038);
-  static const Color _red = Color(0xFFEA4335);
-  static const Color _dark = Color(0xFF3C4043);
   static const LatLng _fallbackCenter = LatLng(13.0827, 80.2707);
 
   final MapController _map = MapController();
@@ -146,6 +237,7 @@ class TripRouteMapState extends State<TripRouteMap> {
   List<LatLng>? _road;
   bool _routing = false;
   String? _fittedKey;
+  final Map<String, Future<String>> _addressCache = {};
 
   /// OpenFreeMap "bright" vector style; null while loading.
   Style? _style;
@@ -386,11 +478,7 @@ class TripRouteMapState extends State<TripRouteMap> {
       ];
 
   Marker _pinMarker(RouteStop s) {
-    final color = switch (s.kind) {
-      StopKind.start => _green,
-      StopKind.visit => _red,
-      StopKind.end => _dark,
-    };
+    final color = _stopColor(s);
     return Marker(
       point: s.point,
       width: 34,
@@ -398,24 +486,79 @@ class TripRouteMapState extends State<TripRouteMap> {
       alignment: Alignment.topCenter, // pin tip sits on the lat/long
       child: GestureDetector(
         onTap: widget.compact ? widget.onTap : () => _showStop(s, color),
-        child: _Pin(color: color, label: s.label),
+        child: _Pin(color: color, label: s.label, icon: _stopIcon(s)),
       ),
     );
   }
 
+  Future<String> _addressFor(LatLng p) {
+    final key =
+        '${p.latitude.toStringAsFixed(5)},${p.longitude.toStringAsFixed(5)}';
+    return _addressCache.putIfAbsent(
+      key,
+      () => AddressService.getAddress(
+          latitude: p.latitude, longitude: p.longitude),
+    );
+  }
+
+  /// Km from the day's first pin to each stop along the drawn line.
+  bool get _usesTrack => widget.track.length >= 2;
+
+  /// Km are measured on the GPS track only; without one, stops use the
+  /// Status Report estimate (the road path is just drawn).
+  List<LatLng> get _distanceLine => _usesTrack
+      ? widget.track.map((p) => p.latLng).toList()
+      : const <LatLng>[];
+
+  List<int>? get _trackSegments =>
+      _usesTrack ? widget.track.map((p) => p.segment).toList() : null;
+
+  List<double> _stopDistancesKm() =>
+      stopDistancesKm(_stops, _distanceLine, segments: _trackSegments);
+
+  /// The last visit of a live trip is where the member is right now.
+  bool _isCurrent(RouteStop s) =>
+      widget.live &&
+      s.kind == StopKind.visit &&
+      _stops.isNotEmpty &&
+      identical(s, _stops.last);
+
+  Color _stopColor(RouteStop s) => switch (s.kind) {
+        StopKind.start => TripColors.start,
+        StopKind.visit =>
+          _isCurrent(s) ? TripColors.current : TripColors.visited,
+        StopKind.end => TripColors.end,
+      };
+
+  IconData? _stopIcon(RouteStop s) =>
+      s.kind == StopKind.start ? Icons.flag_rounded : null;
+
   void _showStop(RouteStop s, Color color) {
+    final idx = _stops.indexOf(s);
+    final dists = _stopDistancesKm();
+    final km = idx >= 0 && idx < dists.length ? dists[idx] : 0.0;
+    final after = idx == _stops.length - 1
+        ? kmAfterLastStop(_stops, _distanceLine, _trackSegments)
+        : 0.0;
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.75),
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) => SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
+         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(
-                  width: 34, height: 46, child: _Pin(color: color, label: s.label)),
+                  width: 34,
+                  height: 46,
+                  child: _Pin(
+                      color: color, label: s.label, icon: _stopIcon(s))),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
@@ -435,6 +578,45 @@ class TripRouteMapState extends State<TripRouteMap> {
                       const SizedBox(height: 4),
                       Text(d, style: const TextStyle(fontSize: 13)),
                     ],
+                    const SizedBox(height: 12),
+                    _legList(idx, dists, km),
+                    if (after >= 0.05) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        '+${after.toStringAsFixed(2)} km travelled after this '
+                        'stop · total ${(km + after).toStringAsFixed(2)} km',
+                        style: TextStyle(
+                            fontSize: 12.5, color: Colors.grey.shade700),
+                      ),
+                    ],
+                    const SizedBox(height: 10),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.location_on_outlined,
+                            size: 16, color: Colors.grey.shade600),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: FutureBuilder<String>(
+                            future: _addressFor(s.point),
+                            builder: (context, snap) {
+                              if (snap.connectionState !=
+                                  ConnectionState.done) {
+                                return Text('Fetching address…',
+                                    style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.grey.shade600));
+                              }
+                              return Text(
+                                snap.data ?? 'Address unavailable',
+                                style: const TextStyle(
+                                    fontSize: 13, height: 1.35),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 6),
                     Text(
                       '${s.point.latitude.toStringAsFixed(5)}, '
@@ -447,10 +629,119 @@ class TripRouteMapState extends State<TripRouteMap> {
               ),
             ],
           ),
+         ),
         ),
       ),
     );
   }
+
+  /// Delivery-app style leg list: S → 1, 1 → 2, … up to the tapped pin.
+  Widget _legList(int idx, List<double> dists, double km) {
+    if (idx <= 0 || idx >= dists.length) {
+      return _distanceBadge('Start point · 0.00 km');
+    }
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF6F8FC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE3E8F0)),
+      ),
+      child: Column(
+        children: [
+          for (var i = 1; i <= idx; i++)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              child: Row(
+                children: [
+                  _miniPin(_stops[i - 1]),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Icon(Icons.arrow_forward_rounded,
+                        size: 14, color: Colors.grey.shade500),
+                  ),
+                  _miniPin(_stops[i]),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _stops[i].title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                          fontSize: 12, color: Colors.grey.shade700),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${(dists[i] - dists[i - 1]).toStringAsFixed(2)} km',
+                    style: const TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w700),
+                  ),
+                ],
+              ),
+            ),
+          const Divider(height: 1, color: Color(0xFFE3E8F0)),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+            child: Row(
+              children: [
+                const Icon(Icons.straighten_rounded, size: 15, color: _blue),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    _usesTrack ? 'Total from start' : 'Total from start (approx.)',
+                    style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: _blue),
+                  ),
+                ),
+                Text(
+                  '${km.toStringAsFixed(2)} km',
+                  style: const TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w800, color: _blue),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _miniPin(RouteStop s) => Container(
+        width: 22,
+        height: 22,
+        alignment: Alignment.center,
+        decoration:
+            BoxDecoration(color: _stopColor(s), shape: BoxShape.circle),
+        child: _stopIcon(s) != null
+            ? Icon(_stopIcon(s), size: 12, color: Colors.white)
+            : Text(
+                s.label,
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: s.label.length > 2 ? 8 : 11,
+                    fontWeight: FontWeight.w800),
+              ),
+      );
+
+  Widget _distanceBadge(String text) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: _blue.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.straighten_rounded, size: 14, color: _blue),
+            const SizedBox(width: 6),
+            Text(text,
+                style: const TextStyle(
+                    fontSize: 13, fontWeight: FontWeight.w700, color: _blue)),
+          ],
+        ),
+      );
 }
 
 // ─────────────────────────────────────────────
@@ -460,7 +751,8 @@ class TripRouteMapState extends State<TripRouteMap> {
 class _Pin extends StatelessWidget {
   final Color color;
   final String label;
-  const _Pin({required this.color, required this.label});
+  final IconData? icon;
+  const _Pin({required this.color, required this.label, this.icon});
 
   @override
   Widget build(BuildContext context) {
@@ -476,14 +768,16 @@ class _Pin extends StatelessWidget {
             right: 0,
             height: 34,
             child: Center(
-              child: Text(
-                label,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                  fontSize: label.length > 2 ? 10 : 13,
-                ),
-              ),
+              child: icon != null
+                  ? Icon(icon, size: 16, color: Colors.white)
+                  : Text(
+                      label,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: label.length > 2 ? 10 : 13,
+                      ),
+                    ),
             ),
           ),
         ],

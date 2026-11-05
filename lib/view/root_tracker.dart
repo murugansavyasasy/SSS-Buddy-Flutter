@@ -10,6 +10,7 @@ import '../auth/model/ReportingMembersModel.dart';
 import '../auth/model/TrackPointModel.dart';
 import '../components/MemberDropdown.dart';
 import '../components/TripRouteMap.dart';
+import '../components/TripTimelineView.dart';
 import '../components/toolbar_layout.dart';
 import '../viewModel/login_view_model.dart';
 import '../viewModel/reporting_members_dd_viewmodel.dart';
@@ -41,6 +42,7 @@ class _RootTrackerScreenState extends ConsumerState<RootTrackerScreen> {
   Reportingmembersmodel? _member;
   late DateTime _date = widget.initialDate ?? DateTime.now();
   Timer? _refreshTimer;
+  bool _showMap = false;
 
   @override
   void initState() {
@@ -166,6 +168,7 @@ class _RootTrackerScreenState extends ConsumerState<RootTrackerScreen> {
                 child: Column(
                   children: [
                     _buildFilters(members),
+                    _buildViewToggle(),
                     Expanded(
                       child: async.when(
                         loading: () =>
@@ -173,7 +176,16 @@ class _RootTrackerScreenState extends ConsumerState<RootTrackerScreen> {
                         error: (e, _) => _buildError(e),
                         data: (data) => data == null
                             ? const Center(child: CircularProgressIndicator())
-                            : _buildMapArea(data),
+                            : _showMap
+                                ? _buildMapArea(data)
+                                : TripTimelineView(
+                                    data: data,
+                                    points: _pointsFor(data),
+                                    live: data.isToday && data.tripRunning,
+                                    onViewMap: () =>
+                                        setState(() => _showMap = true),
+                                    onRefresh: _load,
+                                  ),
                       ),
                     ),
                   ],
@@ -213,6 +225,60 @@ class _RootTrackerScreenState extends ConsumerState<RootTrackerScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildViewToggle() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+      child: Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: const Color(0xFFE3E8F0),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            _toggleTab("Timeline", Icons.timeline_rounded, !_showMap,
+                () => setState(() => _showMap = false)),
+            const SizedBox(width: 4),
+            _toggleTab("Map", Icons.map_outlined, _showMap,
+                () => setState(() => _showMap = true)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _toggleTab(
+      String label, IconData icon, bool selected, VoidCallback onTap) {
+    final color = selected ? const Color(0xFF2C4463) : const Color(0xFF4A5468);
+    return Expanded(
+      child: Material(
+        color: selected ? Colors.white : Colors.transparent,
+        elevation: selected ? 1 : 0,
+        borderRadius: BorderRadius.circular(9),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(9),
+          onTap: onTap,
+          child: SizedBox(
+            height: 40,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 16, color: color),
+                const SizedBox(width: 6),
+                Text(label,
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight:
+                            selected ? FontWeight.w700 : FontWeight.w600,
+                        color: color)),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -337,23 +403,13 @@ class _RootTrackerScreenState extends ConsumerState<RootTrackerScreen> {
 
   Widget _buildStats(
       RootTrackerData data, List<TrackPoint> points, bool live) {
-    // Real GPS line when we have one; otherwise the Status Report estimate.
-    final usingGps = points.length >= 2;
-    final km = usingGps ? TrackPoint.totalKm(points) : data.reportKm;
-
-    final startTime = points.isNotEmpty ? points.first.time : data.firstStart;
-    final lastTime = points.isNotEmpty ? points.last.time : null;
+    final st = TripStats.of(data, points, live);
+    final usingGps = st.usingGps;
+    final km = st.km;
+    final startTime = st.start;
+    final lastTime = st.last;
+    final duration = st.duration;
     final fmt = DateFormat('hh:mm a');
-
-    String duration = "--";
-    if (startTime != null && (live || lastTime != null)) {
-      final until = live ? DateTime.now() : lastTime!;
-      final d = until.difference(startTime);
-      if (!d.isNegative) {
-        duration =
-            "${d.inHours}h ${(d.inMinutes % 60).toString().padLeft(2, '0')}m";
-      }
-    }
 
     return Container(
       margin: const EdgeInsets.all(14),
@@ -375,7 +431,7 @@ class _RootTrackerScreenState extends ConsumerState<RootTrackerScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(km.toStringAsFixed(1),
+              Text(km.toStringAsFixed(2),
                   style: const TextStyle(
                       fontSize: 34,
                       fontWeight: FontWeight.w800,
@@ -403,13 +459,15 @@ class _RootTrackerScreenState extends ConsumerState<RootTrackerScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          const Row(
+          Wrap(
+            spacing: 14,
+            runSpacing: 6,
             children: [
-              _Legend(color: _green, label: "S  Start"),
-              SizedBox(width: 14),
-              _Legend(color: _red, label: "1 2 3  Visits"),
-              SizedBox(width: 14),
-              _Legend(color: Color(0xFF3C4043), label: "E  End"),
+              const _Legend(color: TripColors.start, label: "Start"),
+              const _Legend(color: TripColors.visited, label: "Visited"),
+              if (live)
+                const _Legend(color: TripColors.current, label: "Current"),
+              const _Legend(color: TripColors.end, label: "End"),
             ],
           ),
         ],

@@ -98,6 +98,13 @@ class Overalltripdetailsmodel {
   /// guaranteed, so we try ISO-8601 first, then a few common patterns.
   DateTime? get startDateTime => _parseApiDate(start_time);
 
+  /// Parsed [end_time]; null while the trip is still running.
+  DateTime? get endDateTime {
+    final raw = end_time?.trim();
+    if (raw == null || raw.isEmpty || raw.toLowerCase() == 'null') return null;
+    return _parseApiDate(raw);
+  }
+
   static DateTime? _parseApiDate(String? raw) {
     if (raw == null) return null;
     final value = raw.trim();
