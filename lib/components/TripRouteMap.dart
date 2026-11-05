@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' show LatLng;
+import 'package:vector_map_tiles/vector_map_tiles.dart'
+    show Style, VectorTileLayer, VectorTileLayerMode;
 
 import '../auth/model/OverallTripDetailsModel.dart';
 import '../auth/model/TrackPointModel.dart';
+import '../core/location/map_style_service.dart';
 import '../core/location/road_route_service.dart';
 
 // ─────────────────────────────────────────────
@@ -144,10 +147,20 @@ class TripRouteMapState extends State<TripRouteMap> {
   bool _routing = false;
   String? _fittedKey;
 
+  /// OpenFreeMap "bright" vector style; null while loading.
+  Style? _style;
+  bool _styleFailed = false;
+
   @override
   void initState() {
     super.initState();
     _refreshStops();
+    MapStyleService.bright().then((style) {
+      if (mounted) setState(() => _style = style);
+    }).catchError((e) {
+      print("OpenFreeMap style Error => $e");
+      if (mounted) setState(() => _styleFailed = true);
+    });
   }
 
   @override
@@ -232,6 +245,7 @@ class TripRouteMapState extends State<TripRouteMap> {
     final map = FlutterMap(
       mapController: _map,
       options: MapOptions(
+        backgroundColor: const Color(0xFFF2EFE9), // "bright" land colour
         initialCenter: first ?? _fallbackCenter,
         initialZoom: first == null ? 11 : 14,
         maxZoom: 19,
@@ -250,15 +264,25 @@ class TripRouteMapState extends State<TripRouteMap> {
         },
       ),
       children: [
-        // CARTO "Voyager" – OpenStreetMap data in a Google-Maps-like style.
-        TileLayer(
-          urlTemplate:
-              'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-          subdomains: const ['a', 'b', 'c', 'd'],
-          retinaMode: RetinaMode.isHighDensity(context),
-          userAgentPackageName: 'com.sss.buddy',
-          maxZoom: 19,
-        ),
+        // OpenFreeMap "bright" vector style. Falls back to CARTO raster
+        // tiles only if the style can't be loaded.
+        if (_style != null)
+          VectorTileLayer(
+            theme: _style!.theme,
+            sprites: _style!.sprites,
+            tileProviders: _style!.providers,
+            layerMode: VectorTileLayerMode.raster,
+            maximumZoom: 19,
+          )
+        else if (_styleFailed)
+          TileLayer(
+            urlTemplate:
+                'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+            subdomains: const ['a', 'b', 'c', 'd'],
+            retinaMode: RetinaMode.isHighDensity(context),
+            userAgentPackageName: 'com.sss.buddy',
+            maxZoom: 19,
+          ),
         PolylineLayer(polylines: [
           if (useTrack)
             for (final seg in segments) ..._styledLine(seg)
@@ -287,9 +311,11 @@ class TripRouteMapState extends State<TripRouteMap> {
               child: const _LiveDot(color: _blue),
             ),
         ]),
-        const SimpleAttributionWidget(
-          source: Text('OpenStreetMap contributors, © CARTO'),
-          backgroundColor: Color(0xCCFFFFFF),
+        SimpleAttributionWidget(
+          source: Text(_styleFailed
+              ? 'OpenStreetMap contributors, © CARTO'
+              : 'OpenFreeMap © OpenMapTiles, OpenStreetMap contributors'),
+          backgroundColor: const Color(0xCCFFFFFF),
         ),
       ],
     );
