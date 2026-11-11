@@ -22,6 +22,11 @@ class RoutesName {
   static const String localconveyence = "local_conveyence";
   static const String zero_activity = "zero_activity";
   static const String chat = "chat";
+  static const String chatroom = "chat_room";
+  static const String newchat = "new_chat";
+  static const String followups = "followups";
+  static const String followupform = "followup_form";
+  static const String leaderboard = "leaderboard";
   static const String alert = "alert";
   static const String otp = "otp";
   static const String feedback = "feedback";

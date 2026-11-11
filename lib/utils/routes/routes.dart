@@ -21,7 +21,13 @@ import 'package:sssbuddy/view/tour_settlement.dart';
 
 import '../../view/Alert/alert.dart';
 import '../../view/Renewal_POs.dart';
-import '../../view/chat.dart';
+import '../../view/chat/chat_list_view.dart';
+import '../../view/chat/chat_room_view.dart';
+import '../../view/chat/new_chat_view.dart';
+import '../../auth/model/FollowUpModel.dart';
+import '../../view/followup/followup_form_view.dart';
+import '../../view/followup/followup_list_view.dart';
+import '../../view/leaderboard/leaderboard_view.dart';
 import '../../view/customer_list_view.dart';
 import '../../view/demo_list.dart';
 import '../../view/feedback.dart';
@@ -101,7 +107,28 @@ class Routes {
         return MaterialPageRoute(builder: (context) => ZeroActivityScreen());
 
       case RoutesName.chat:
-        return MaterialPageRoute(builder: (context) => ChatScreen());
+        return MaterialPageRoute(builder: (context) => const ChatListView());
+
+      case RoutesName.leaderboard:
+        return MaterialPageRoute(builder: (context) => const LeaderboardView());
+
+      case RoutesName.followups:
+        return MaterialPageRoute(builder: (context) => const FollowUpListView());
+
+      case RoutesName.followupform:
+        return MaterialPageRoute(
+          builder: (context) => FollowUpFormView(
+            args: settings.arguments as FollowUpFormArgs? ?? const FollowUpFormArgs(),
+          ),
+        );
+
+      case RoutesName.newchat:
+        return MaterialPageRoute(builder: (context) => const NewChatView());
+
+      case RoutesName.chatroom:
+        return MaterialPageRoute(
+          builder: (context) => ChatRoomView(chatId: settings.arguments as String),
+        );
 
       case RoutesName.feedback:
         return MaterialPageRoute(builder: (context) => FeedbackScreen());

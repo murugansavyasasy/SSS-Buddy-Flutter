@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sssbuddy/Values/Colors/app_colors.dart';
 import 'package:sssbuddy/main.dart';
 import '../View/login.dart';
+import '../core/chat/chat_notification_service.dart';
+import '../core/followup/followup_reminders.dart';
 import '../core/storage/secure_storage.dart';
 import '../provider/user_session_provider.dart';
 import '../utils/routes/routes_name.dart';
@@ -71,6 +73,8 @@ class HeaderToolbar extends ConsumerWidget {
             ),
             ElevatedButton(
               onPressed: () => {
+                ChatNotificationService.instance.unregister(),
+                FollowUpReminders.instance.cancelAll(),
                 SecureStorage.clearLoginData(),
                 AppRoot.restartApp(context),
                 Navigator.of(context).pushAndRemoveUntil(

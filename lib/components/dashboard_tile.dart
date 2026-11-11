@@ -5,6 +5,7 @@ class DashboardTile extends StatefulWidget {
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
+  final int badgeCount;
 
   const DashboardTile({
     super.key,
@@ -12,6 +13,7 @@ class DashboardTile extends StatefulWidget {
     required this.icon,
     required this.color,
     required this.onTap,
+    this.badgeCount = 0,
   });
 
   @override
@@ -73,15 +75,40 @@ class _DashboardTileState extends State<DashboardTile>
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Icon
-              Container(
-                height: 40,
-                width: 40,
-                decoration: BoxDecoration(
-                  color: _iconBg,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(widget.icon, color: widget.color, size: 19),
+              // Icon + optional unread badge
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    height: 40,
+                    width: 40,
+                    decoration: BoxDecoration(
+                      color: _iconBg,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(widget.icon, color: widget.color, size: 19),
+                  ),
+                  const Spacer(),
+                  if (widget.badgeCount > 0)
+                    Container(
+                      constraints: const BoxConstraints(minWidth: 22),
+                      height: 22,
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(11),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        widget.badgeCount > 99 ? '99+' : '${widget.badgeCount}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                ],
               ),
 
               // Title + arrow row

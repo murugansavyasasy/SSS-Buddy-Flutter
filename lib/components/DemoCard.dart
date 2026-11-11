@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../auth/model/Demolist.dart';
+import '../auth/model/FollowUpModel.dart';
 import '../utils/routes/routes_name.dart';
 
 class DemoCard extends StatelessWidget {
@@ -141,6 +142,42 @@ class DemoCard extends StatelessWidget {
                 const SizedBox(height: 3),
                 const Text(
                   'Record',
+                  style: TextStyle(fontSize: 9, color: Color(0xFF94A3B8)),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(width: 12),
+
+          // Follow-up Button
+          GestureDetector(
+            onTap: () => Navigator.pushNamed(
+              context,
+              RoutesName.followupform,
+              arguments: FollowUpFormArgs(
+                schoolName: item.schoolName,
+                contactPhone:
+                    item.principalNumber == 0 ? '' : item.principalNumber.toString(),
+                demoId: item.demoId.toString(),
+                type: FollowUpType.call,
+              ),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: Colors.deepOrangeAccent,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.event_note_rounded,
+                      color: Colors.white, size: 16),
+                ),
+                const SizedBox(height: 3),
+                const Text(
+                  'Follow-up',
                   style: TextStyle(fontSize: 9, color: Color(0xFF94A3B8)),
                 ),
               ],

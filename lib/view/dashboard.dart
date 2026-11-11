@@ -9,7 +9,11 @@ import '../auth/model/Menuitem.dart';
 import '../components/dashboard_card.dart';
 import '../components/dashboard_tile.dart';
 import '../components/upcoming_demo_card.dart';
+import 'leaderboard/widget/dashboard_leaderboard.dart';
 import '../utils/routes/routes_name.dart';
+import '../core/notifications/local_notifications.dart';
+import '../viewModel/chat_viewmodel.dart';
+import '../viewModel/followup_viewmodel.dart';
 import '../viewModel/demolist_view_model.dart';
 import '../viewModel/login_view_model.dart';
 import '../viewModel/schoollist_view_model.dart';
@@ -22,6 +26,13 @@ class Dashboard extends ConsumerWidget {
     final demoState = ref.watch(demoviewProvider);
     final schoolStats = ref.watch(schoolStatsProvider);
     final loginData = ref.watch(loginProvider);
+    final chatUnread = ref.watch(chatUnreadTotalProvider);
+    final followUpsDue = ref.watch(followUpDueCountProvider);
+
+    // Open the screen of a notification tapped while the app was closed.
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => LocalNotifications.instance.flushPending(),
+    );
 
     final menus = loginData.when(
       data: (data) => getMenuItems(
@@ -323,6 +334,11 @@ class Dashboard extends ConsumerWidget {
 
                     const SizedBox(height: 16),
 
+                    /// LEADERBOARD (this month: top 3 + my rank)
+                    const DashboardLeaderboard(),
+
+                    const SizedBox(height: 16),
+
                     /// 🔥 MENU HEADER
                     Row(
                       children: [
@@ -350,6 +366,11 @@ class Dashboard extends ConsumerWidget {
                             title: item.title,
                             icon: item.icon,
                             color: item.color,
+                            badgeCount: item.id == 20
+                                ? chatUnread
+                                : item.id == 21
+                                    ? followUpsDue
+                                    : 0,
                             onTap: () {
                               switch (item.id) {
                                 case 1:
@@ -408,6 +429,15 @@ class Dashboard extends ConsumerWidget {
                                   break;
                                 case 19:
                                   Navigator.pushNamed(context, RoutesName.roottracker);
+                                  break;
+                                case 20:
+                                  Navigator.pushNamed(context, RoutesName.chat);
+                                  break;
+                                case 21:
+                                  Navigator.pushNamed(context, RoutesName.followups);
+                                  break;
+                                case 22:
+                                  Navigator.pushNamed(context, RoutesName.leaderboard);
                                   break;
 
                               }

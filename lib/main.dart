@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sssbuddy/core/notifications/local_notifications.dart';
 import 'package:sssbuddy/utils/network_utils.dart';
 import 'package:sssbuddy/utils/routes/routes.dart';
 import 'package:sssbuddy/utils/routes/routes_name.dart';
@@ -11,6 +12,8 @@ void main() async {
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
   ]);
+
+  await LocalNotifications.instance.init();
 
   runApp(const AppRoot());
 }
@@ -48,6 +51,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      navigatorKey: appNavigatorKey,
       onGenerateRoute: Routes.generateRoutes,
       initialRoute: RoutesName.splashscreen,
       builder: (context, child) => ConnectivityWrapper(child: child?? const SizedBox.shrink()),

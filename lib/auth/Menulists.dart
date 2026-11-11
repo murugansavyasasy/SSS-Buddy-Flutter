@@ -44,6 +44,18 @@ List<MenuItem> getMenuItems({
         color: Colors.blue,
       ),
       MenuItem(
+        id: 21,
+        title: "Follow-ups",
+        icon: Icons.event_note_rounded,
+        color: Colors.deepOrangeAccent,
+      ),
+      MenuItem(
+        id: 22,
+        title: "Leaderboard",
+        icon: Icons.emoji_events_rounded,
+        color: Colors.amber,
+      ),
+      MenuItem(
         id: 3,
         title: "School List",
         icon: Icons.school,
@@ -158,6 +170,16 @@ List<MenuItem> getMenuItems({
       ),
     ]);
   }
+
+  // Chat: available to every user type
+  menus.add(
+    MenuItem(
+      id: 20,
+      title: "Chat",
+      icon: Icons.chat_bubble_outline_rounded,
+      color: Colors.green,
+    ),
+  );
 
   return menus;
 }
