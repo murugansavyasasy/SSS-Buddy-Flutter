@@ -63,3 +63,15 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+  # DM Sans: Exhibitions module typography (design spec).
+  fonts:
+    - family: DMSans
+      fonts:
+        - asset: assets/Fonts/DMSans/DMSans-Regular.ttf
+          weight: 400
+        - asset: assets/Fonts/DMSans/DMSans-Medium.ttf
+          weight: 500
+        - asset: assets/Fonts/DMSans/DMSans-SemiBold.ttf
+          weight: 600
+        - asset: assets/Fonts/DMSans/DMSans-Bold.ttf
+          weight: 700

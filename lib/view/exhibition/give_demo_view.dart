@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 
-import '../../Values/Colors/app_colors.dart';
 import '../../auth/model/ExhibitionModel.dart';
 import '../../core/exhibition/demo_templates.dart';
 import '../../viewModel/exhibition_viewmodel.dart';
@@ -34,14 +33,18 @@ enum _Voice { template, record }
 class GiveDemoView extends ConsumerStatefulWidget {
   final Exhibition exhibition;
 
-  const GiveDemoView({super.key, required this.exhibition});
+  /// Opens on a later step (screenshot tests only).
+  @visibleForTesting
+  final int initialStep;
+
+  const GiveDemoView({super.key, required this.exhibition, this.initialStep = 0});
 
   @override
   ConsumerState<GiveDemoView> createState() => _GiveDemoViewState();
 }
 
 class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
-  int _step = 0;
+  late int _step = widget.initialStep;
 
   // Step 1
   _Voice _voice = _Voice.template;
@@ -61,6 +64,7 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
   String? _numberError;
   String? _dupNote;
   bool _step2Error = false;
+  bool _nameError = false;
 
   // Step 3
   bool _sending = false;
@@ -147,8 +151,8 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
       _numberError = bad.isEmpty
           ? null
           : bad.length == 1
-              ? '“${bad.first}” is not a valid 10-digit number'
-              : '${bad.length} entries are not valid 10-digit numbers: ${bad.join(', ')}';
+          ? '“${bad.first}” is not a valid 10-digit number'
+          : '${bad.length} entries are not valid 10-digit numbers: ${bad.join(', ')}';
       _dupNote = dup == 0 ? null : '$dup ${dup == 1 ? 'duplicate' : 'duplicates'} removed';
       if (fromPaste) {
         _pasteInput.text = bad.join('\n');
@@ -166,7 +170,9 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Discard this demo?'),
-        content: const Text('The voice and numbers you entered will be lost. No calls have been made.'),
+        content: const Text(
+          'The voice and numbers you entered will be lost. No calls have been made.',
+        ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Keep editing')),
           TextButton(
@@ -204,6 +210,9 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
         _step = 1;
       });
     } else if (_step == 1) {
+      // Visitor name is required.
+      final noName = _visitorName.text.trim().isEmpty;
+      if (noName) setState(() => _nameError = true);
       if (_numberInput.text.trim().isNotEmpty) {
         _addNumbers([_numberInput.text], fromPaste: false);
         if (_numberError != null) return;
@@ -212,6 +221,7 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
         setState(() => _step2Error = true);
         return;
       }
+      if (noName) return;
       setState(() {
         _step2Error = false;
         _step = 2;
@@ -259,8 +269,11 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
           visitorName: _visitorName.text.trim(),
           onProgress: (p) {
             if (!mounted) return;
-            setState(() => _sendPhase =
-                p >= 0.99 ? 'Dialling $total numbers…' : 'Uploading recording… ${(p * 100).round()}%');
+            setState(
+              () => _sendPhase = p >= 0.99
+                  ? 'Dialling $total numbers…'
+                  : 'Uploading recording… ${(p * 100).round()}%',
+            );
           },
         );
       }
@@ -288,154 +301,44 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
 
   @override
   Widget build(BuildContext context) {
+    final wide = MediaQuery.sizeOf(context).width >= 900;
     return PopScope(
       canPop: !_dirty && !_sending,
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) _close();
       },
-      child: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle.light,
-        child: Scaffold(
-          backgroundColor: AppColors.primary,
-          body: Column(
-            children: [
-              _header(),
-              Expanded(
-                child: Container(
-                  width: double.infinity,
-                  decoration: const BoxDecoration(
-                    color: exPageBg,
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: SafeArea(
-                    top: false,
-                    child: Column(
-                      children: [
-                        Expanded(
-                          child: SingleChildScrollView(
-                            padding: EdgeInsets.fromLTRB(
-                                exIsWide(context) ? 28 : 18, 24, exIsWide(context) ? 28 : 18, 24),
-                            child: ExMaxWidth(
-                              child: AnimatedSwitcher(
-                                duration: const Duration(milliseconds: 260),
-                                switchInCurve: Curves.easeOutCubic,
-                                switchOutCurve: Curves.easeIn,
-                                transitionBuilder: (child, anim) => FadeTransition(
-                                  opacity: anim,
-                                  child: SlideTransition(
-                                    position: Tween(
-                                      begin: const Offset(0.04, 0),
-                                      end: Offset.zero,
-                                    ).animate(anim),
-                                    child: child,
-                                  ),
-                                ),
-                                layoutBuilder: (current, previous) => Stack(
-                                  alignment: Alignment.topCenter,
-                                  children: [...previous, if (current != null) current],
-                                ),
-                                child: KeyedSubtree(
-                                  key: ValueKey(_step),
-                                  child: switch (_step) {
-                                    0 => _voiceStep(),
-                                    1 => _visitorStep(),
-                                    _ => _reviewStep(),
-                                  },
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        _footer(),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
+      child: ExTheme(
+        child: AnnotatedRegion<SystemUiOverlayStyle>(
+          value: const SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: Brightness.dark,
+            statusBarBrightness: Brightness.light,
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _header() {
-    final base = AppColors.primary;
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color.lerp(base, Colors.black, 0.15)!, base],
-        ),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 18),
-          child: ExMaxWidth(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          child: Scaffold(
+            backgroundColor: exPageBg,
+            body: Column(
               children: [
-                Row(
-                  children: [
-                    Material(
-                      color: Colors.white.withValues(alpha: 0.16),
-                      shape: const CircleBorder(),
-                      child: IconButton(
-                        tooltip: 'Close',
-                        icon: const Icon(Icons.close_rounded, color: Colors.white),
-                        onPressed: _close,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Give Demo',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                              )),
-                          Row(
-                            children: [
-                              const Icon(Icons.storefront_rounded, size: 14, color: Colors.white70),
-                              const SizedBox(width: 5),
-                              Flexible(
-                                child: Text(widget.exhibition.name,
-                                    style: const TextStyle(fontSize: 13, color: Colors.white70),
-                                    overflow: TextOverflow.ellipsis),
-                              ),
-                            ],
+                _header(wide),
+                Expanded(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: EdgeInsets.fromLTRB(
+                            wide ? 40 : 16,
+                            wide ? 40 : 16,
+                            wide ? 40 : 16,
+                            24,
                           ),
-                        ],
+                          child: wide ? _stepBody(wide) : ExMaxWidth(child: _stepBody(wide)),
+                        ),
                       ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.16),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text('Step ${_step + 1} of 3',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          )),
-                    ),
-                  ],
+                      if (wide) _summaryPanel(),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 18),
-                _Stepper(
-                  step: _step,
-                  onTap: (i) {
-                    if (i < _step && !_sending) setState(() => _step = i);
-                  },
-                ),
+                _footer(wide),
               ],
             ),
           ),
@@ -444,71 +347,186 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
     );
   }
 
-  Widget _footer() => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
-          boxShadow: [BoxShadow(color: Color(0x14000000), blurRadius: 20, offset: Offset(0, -6))],
+  Widget _stepBody(bool wide) => switch (_step) {
+    0 => _voiceStep(wide),
+    1 => _visitorStep(wide),
+    _ => _reviewStep(wide),
+  };
+
+  Widget _header(bool wide) {
+    final titleBlock = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: 48,
+          height: 48,
+          child: IconButton(
+            tooltip: 'Close',
+            icon: const Icon(Icons.close_rounded, color: exInk, size: 26),
+            onPressed: _close,
+          ),
         ),
-        padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
-        child: ExMaxWidth(
-          child: Row(
+        const SizedBox(width: 12),
+        Flexible(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              if (_step > 0) ...[
-                SizedBox(
-                  width: 56,
-                  height: 56,
-                  child: IconButton(
-                    tooltip: 'Back',
-                    onPressed: _sending ? null : _back,
-                    style: IconButton.styleFrom(
-                      backgroundColor: exPageBg,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    ),
-                    icon: const Icon(Icons.arrow_back_rounded, color: exInk),
-                  ),
-                ),
-                const SizedBox(width: 10),
-              ],
-              Expanded(
-                child: _step < 2
-                    ? ExPrimaryButton(
-                        label: 'Continue',
-                        icon: Icons.arrow_forward_rounded,
-                        height: 56,
-                        onPressed: _next,
-                      )
-                    : ExPrimaryButton(
-                        label: 'Send Demo Call',
-                        icon: Icons.phone_forwarded_rounded,
-                        height: 56,
-                        loading: _sending,
-                        loadingLabel: _sendPhase,
-                        onPressed: _send,
-                      ),
+              const Text('Give Demo', style: exHeadingMd),
+              Text(
+                widget.exhibition.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: exBodyMd,
               ),
             ],
           ),
         ),
-      );
+      ],
+    );
+    final stepper = _Stepper(
+      step: _step,
+      wide: wide,
+      onTap: (i) {
+        if (i < _step && !_sending) setState(() => _step = i);
+      },
+    );
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: exBorder)),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(wide ? 24 : 8, 8, wide ? 24 : 16, wide ? 8 : 12),
+          child: wide
+              ? SizedBox(
+                  height: 72,
+                  child: Row(
+                    children: [
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 260),
+                        child: titleBlock,
+                      ),
+                      const SizedBox(width: 24),
+                      Expanded(
+                        child: Center(
+                          child: FittedBox(fit: BoxFit.scaleDown, child: stepper),
+                        ),
+                      ),
+                      const SizedBox(width: 120),
+                    ],
+                  ),
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    titleBlock,
+                    const SizedBox(height: 10),
+                    Padding(padding: const EdgeInsets.only(left: 8), child: stepper),
+                  ],
+                ),
+        ),
+      ),
+    );
+  }
+
+  Widget _footer(bool wide) {
+    final primary = _step < 2
+        ? ExPrimaryButton(
+            label: 'Continue',
+            trailingIcon: wide ? Icons.chevron_right_rounded : null,
+            height: 56,
+            onPressed: _next,
+          )
+        : ExPrimaryButton(
+            label: 'Send Demo Call',
+            height: 56,
+            loading: _sending,
+            loadingLabel: _sendPhase,
+            onPressed: _send,
+          );
+    final back = SizedBox(
+      width: wide ? null : 56,
+      height: 56,
+      child: wide
+          ? ExSecondaryButton(
+              label: 'Back',
+              icon: Icons.chevron_left_rounded,
+              height: 56,
+              onPressed: _sending ? null : _back,
+            )
+          : OutlinedButton(
+              onPressed: _sending ? null : _back,
+              style: OutlinedButton.styleFrom(
+                padding: EdgeInsets.zero,
+                side: const BorderSide(color: exStrongBorder),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: const Icon(Icons.chevron_left_rounded, color: exInk, size: 28),
+            ),
+    );
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: exBorder)),
+      ),
+      padding: EdgeInsets.fromLTRB(wide ? 40 : 16, 12, wide ? 40 : 16, 12),
+      child: SafeArea(
+        top: false,
+        child: wide
+            ? Row(
+                children: [
+                  Text(
+                    'Step ${_step + 1} of 3',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: exSubtle,
+                    ),
+                  ),
+                  const Spacer(),
+                  if (_step > 0) ...[back, const SizedBox(width: 12)],
+                  SizedBox(width: 320, child: primary),
+                ],
+              )
+            : Row(
+                children: [
+                  if (_step > 0) ...[back, const SizedBox(width: 10)],
+                  Expanded(child: primary),
+                ],
+              ),
+      ),
+    );
+  }
 
   Widget _title(String t, String sub) => Padding(
-        padding: const EdgeInsets.only(bottom: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(t,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.3,
-                  color: exInk,
-                )),
-            const SizedBox(height: 4),
-            Text(sub, style: const TextStyle(fontSize: 14.5, color: exSubtle)),
-          ],
+    padding: const EdgeInsets.only(bottom: 24),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(t, style: exHeadingLg.copyWith(fontSize: 28, height: 36 / 28)),
+        const SizedBox(height: 6),
+        Text(
+          sub,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: exSubtle),
         ),
-      );
+      ],
+    ),
+  );
+
+  Widget _phoneTitle(String t, String sub) => Padding(
+    padding: const EdgeInsets.only(bottom: 16),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(t, style: exHeadingLg),
+        const SizedBox(height: 4),
+        Text(sub, style: exBodyMd.copyWith(fontSize: 15)),
+      ],
+    ),
+  );
 
   // Step 1
 
@@ -523,403 +541,419 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
     });
   }
 
-  Widget _voiceStep() => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _title('Choose a voice', 'Play a ready-made template or record a message.'),
-          Row(
-            children: [
-              Expanded(
-                child: _ModeCard(
-                  icon: Icons.library_music_rounded,
-                  title: 'Use Template',
-                  subtitle: 'Ready-made voice',
-                  selected: _voice == _Voice.template,
-                  onTap: () => _setVoice(_Voice.template),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _ModeCard(
-                  icon: Icons.mic_rounded,
-                  title: 'Record Voice',
-                  subtitle: 'Your own message',
-                  selected: _voice == _Voice.record,
-                  onTap: () => _setVoice(_Voice.record),
-                ),
-              ),
-            ],
+  Widget _voiceStep(bool wide) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      if (wide)
+        _title(
+          'Choose a voice',
+          'Play a ready-made template or record a message for this visitor.',
+        ),
+      Align(
+        alignment: Alignment.centerLeft,
+        child: SizedBox(
+          width: wide ? 460 : double.infinity,
+          child: _Segmented(
+            wide: wide,
+            selected: _voice == _Voice.template ? 0 : 1,
+            onChanged: (i) => _setVoice(i == 0 ? _Voice.template : _Voice.record),
           ),
-          const SizedBox(height: 16),
-          if (_voice == _Voice.template)
-            ..._templateCards()
-          else
-            VoiceRecorderPanel(
-              initialPath: _recordingPath,
-              initialDuration: _recordingLength,
-              onChanged: (path, len) => setState(() {
-                _recordingPath = path;
-                _recordingLength = len;
-                if (path != null) _step1Error = false;
-              }),
-            ),
-          if (_step1Error) ...[
-            const SizedBox(height: 14),
-            _ErrorBanner(
-              message: _voice == _Voice.template
-                  ? (_template != null && _template!.audioUrl.isEmpty
-                      ? 'Audio for this template is not set up yet. Pick another or record a voice.'
-                      : 'Choose a template to continue.')
-                  : 'Record a voice message to continue.',
-            ),
-          ],
+        ),
+      ),
+      // Validation sits right under the switch so it is always in view.
+      if (_step1Error) ...[
+        SizedBox(height: wide ? 20 : 12),
+        ExInlineNote(
+          message: _voice == _Voice.template
+              ? (_template != null && _template!.audioUrl.isEmpty
+                    ? 'Audio for this template is not set up yet. Pick another or record a voice.'
+                    : 'Choose a template to continue.')
+              : 'Record a voice message to continue.',
+        ),
+      ],
+      SizedBox(height: wide ? 24 : 16),
+      if (_voice == _Voice.template)
+        _templateCards(wide)
+      else
+        VoiceRecorderPanel(
+          initialPath: _recordingPath,
+          initialDuration: _recordingLength,
+          onChanged: (path, len) => setState(() {
+            _recordingPath = path;
+            _recordingLength = len;
+            if (path != null) _step1Error = false;
+          }),
+        ),
+    ],
+  );
+
+  Widget _templateCards(bool wide) {
+    if (exhibitionDemoTemplates.isEmpty) {
+      return const ExStateView(
+        icon: Icons.library_music_outlined,
+        title: 'No templates yet',
+        message: 'Record a custom voice instead.',
+      );
+    }
+    Widget card(DemoTemplate t) => _TemplateCard(
+      template: t,
+      selected: _template?.id == t.id,
+      playing: _previewId == t.id,
+      player: _preview,
+      onSelect: () => setState(() {
+        _template = t;
+        _step1Error = false;
+      }),
+      onTogglePlay: () => _togglePreview(t),
+    );
+    final list = exhibitionDemoTemplates;
+    if (!wide) {
+      return Column(
+        children: [
+          for (final t in list) ...[card(t), const SizedBox(height: 12)],
         ],
       );
-
-  List<Widget> _templateCards() {
-    if (exhibitionDemoTemplates.isEmpty) {
-      return const [
-        ExStateView(
-          icon: Icons.library_music_outlined,
-          title: 'No templates yet',
-          message: 'Record a custom voice instead.',
-        ),
-      ];
     }
-    return [
-      for (final t in exhibitionDemoTemplates) ...[
-        _TemplateCard(
-          template: t,
-          selected: _template?.id == t.id,
-          playing: _previewId == t.id,
-          player: _preview,
-          onSelect: () => setState(() {
-            _template = t;
-            _step1Error = false;
-          }),
-          onTogglePlay: () => _togglePreview(t),
-        ),
-        const SizedBox(height: 12),
+    return Column(
+      children: [
+        for (var r = 0; r < (list.length + 1) ~/ 2; r++) ...[
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(child: card(list[r * 2])),
+                const SizedBox(width: 16),
+                Expanded(child: r * 2 + 1 < list.length ? card(list[r * 2 + 1]) : const SizedBox()),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
       ],
-    ];
+    );
   }
 
   // Step 2
 
-  Widget _visitorStep() => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _title('Who is the demo for?', 'Add one or more visitor numbers. Each one gets a call.'),
-          ExField(
-            label: 'Visitor name (optional)',
-            controller: _visitorName,
-            hint: 'e.g. Mrs. Lakshmi, Principal',
-            textCapitalization: TextCapitalization.words,
-            onChanged: (_) => setState(() {}),
-          ),
-          const SizedBox(height: 18),
-          Row(
-            children: [
-              const Expanded(
-                child: Text('Visitor mobile numbers',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: exInk)),
-              ),
-              ExPill(
-                label: '${_numbers.length} ${_numbers.length == 1 ? 'number' : 'numbers'}',
-                background: _numbers.isEmpty ? const Color(0xFFEFF1F5) : exTint,
-                foreground: exInk,
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _numberInput,
-                  keyboardType: TextInputType.phone,
-                  textInputAction: TextInputAction.done,
-                  onSubmitted: (v) => _addNumbers([v], fromPaste: false),
-                  onChanged: (_) {
-                    if (_numberError != null) setState(() => _numberError = null);
-                  },
-                  style: const TextStyle(fontSize: 16, color: exInk),
-                  decoration: exInputDecoration(
-                    hint: '10-digit mobile number',
-                    prefixText: '+91  ',
-                    errorText: _numberError,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              SizedBox(
-                height: 54,
-                child: ExSecondaryButton(
-                  label: 'Add',
-                  icon: Icons.add_rounded,
-                  height: 54,
-                  onPressed: () {
-                    if (_numberInput.text.trim().isEmpty) {
-                      setState(() => _numberError = 'Type a 10-digit number first');
-                      return;
-                    }
-                    _addNumbers([_numberInput.text], fromPaste: false);
-                  },
-                ),
-              ),
-            ],
-          ),
-          if (_dupNote != null) ...[
-            const SizedBox(height: 6),
-            Text(_dupNote!, style: const TextStyle(fontSize: 12.5, color: Color(0xFFA3561F))),
-          ],
-          const SizedBox(height: 10),
-          if (_numbers.isEmpty)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: exStrongBorder, style: BorderStyle.solid),
-                color: Colors.white,
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.contact_phone_outlined, color: exSubtle),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: Text('No numbers added yet. Type one above and tap Add.',
-                        style: TextStyle(color: exSubtle)),
-                  ),
-                ],
-              ),
-            )
-          else
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final n in _numbers)
-                  InputChip(
-                    avatar: CircleAvatar(
-                      backgroundColor: AppColors.primary,
-                      child: const Icon(Icons.phone_rounded, size: 13, color: Colors.white),
-                    ),
-                    label: Text(formatIndianMobile(n),
-                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: exInk)),
-                    backgroundColor: Colors.white,
-                    side: const BorderSide(color: exBorder),
-                    shape: const StadiumBorder(),
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                    deleteIcon: const Icon(Icons.close_rounded, size: 18),
-                    deleteButtonTooltipMessage: 'Remove ${formatIndianMobile(n)}',
-                    onDeleted: () => setState(() => _numbers.remove(n)),
-                  ),
-              ],
-            ),
-          const SizedBox(height: 6),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              onPressed: () => setState(() => _pasteOpen = !_pasteOpen),
-              icon: const Icon(Icons.content_paste_rounded, size: 18),
-              label: Text(_pasteOpen ? 'Hide paste box' : 'Paste multiple numbers'),
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.primary,
-                minimumSize: const Size(0, 48),
-                textStyle: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-            ),
-          ),
-          if (_pasteOpen)
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE8ECF5),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextField(
-                    controller: _pasteInput,
-                    maxLines: 4,
-                    keyboardType: TextInputType.multiline,
-                    style: const TextStyle(fontSize: 16, color: exInk),
-                    decoration: exInputDecoration(hint: 'Separate with commas or new lines'),
-                  ),
-                  const SizedBox(height: 8),
-                  ExSecondaryButton(
-                    label: 'Add numbers',
-                    icon: Icons.playlist_add_rounded,
-                    onPressed: () =>
-                        _addNumbers(_pasteInput.text.split(RegExp(r'[\n,;]+')), fromPaste: true),
-                  ),
-                ],
-              ),
-            ),
-          if (_step2Error) ...[
-            const SizedBox(height: 12),
-            const _ErrorBanner(message: 'Add at least one visitor number to send the demo.'),
-          ],
-          const SizedBox(height: 18),
-          _TeamCard(team: _team),
-        ],
-      );
-
-  // Step 3
-
-  Widget _reviewStep() {
-    final total = _numbers.length + _team.length;
-    final voice = _voice == _Voice.template
-        ? '${_template?.title ?? ''} · ${exDuration(_template?.duration ?? Duration.zero)}'
-        : 'Custom recording · ${exDuration(_recordingLength)}';
+  Widget _visitorStep(bool wide) {
+    final title = wide
+        ? _title('Who is the demo for?', 'Add one or more visitor numbers. Each one gets a call.')
+        : _phoneTitle('Who is the demo for?', 'Each number gets a call.');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _title('Review & send', 'Check everything before the calls go out.'),
-        _callSummary(total),
-        const SizedBox(height: 16),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: exBorder),
-            boxShadow: exCardShadow,
-          ),
+        title,
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 720),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _reviewRow('Voice', Text(voice, style: _strong), onEdit: () => setState(() => _step = 0)),
-              _reviewRow(
-                'Visitor',
-                Text(_visitorName.text.trim().isEmpty ? 'Not provided' : _visitorName.text.trim(),
-                    style: _strong),
-                onEdit: () => setState(() => _step = 1),
+              ExField(
+                label: 'Visitor name',
+                required: true,
+                controller: _visitorName,
+                hint: 'e.g. Mrs. Lakshmi, Principal',
+                errorText: _nameError ? 'Visitor name is required' : null,
+                textCapitalization: TextCapitalization.words,
+                textInputAction: TextInputAction.next,
+                onChanged: (v) => setState(() {
+                  if (v.trim().isNotEmpty) _nameError = false;
+                }),
               ),
-              _reviewRow(
-                'Visitor numbers (${_numbers.length})',
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: [for (final n in _numbers) _smallChip(formatIndianMobile(n), exPageBg)],
-                ),
-                onEdit: () => setState(() => _step = 1),
-              ),
-              _reviewRow(
-                'Attenders (${_team.length})',
-                _team.isEmpty
-                    ? const Text('No attenders', style: TextStyle(color: exSubtle))
-                    : Wrap(
-                        spacing: 6,
-                        runSpacing: 6,
-                        children: [
-                          for (final m in _team)
-                            _smallChip('${m.name} · ${formatIndianMobile(m.mobile)}',
-                                const Color(0xFFE8ECF5)),
-                        ],
+              const SizedBox(height: 20),
+              Text('Visitor mobile numbers', style: exHeadingSm.copyWith(fontSize: 15)),
+              const SizedBox(height: 8),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _numberInput,
+                      keyboardType: TextInputType.phone,
+                      textInputAction: TextInputAction.done,
+                      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9 +]'))],
+                      onSubmitted: (v) => _addNumbers([v], fromPaste: false),
+                      onChanged: (_) {
+                        if (_numberError != null) setState(() => _numberError = null);
+                      },
+                      style: exBodyTouch,
+                      decoration: exInputDecoration(
+                        hint: '98400 12345',
+                        prefixText: '+91',
+                        errorText: _numberError,
                       ),
-                last: true,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  ExSecondaryButton(
+                    label: 'Add number',
+                    onPressed: () {
+                      if (_numberInput.text.trim().isEmpty) {
+                        setState(() => _numberError = 'Enter a 10-digit mobile number');
+                        return;
+                      }
+                      _addNumbers([_numberInput.text], fromPaste: false);
+                    },
+                  ),
+                ],
               ),
+              if (_dupNote != null) ...[
+                const SizedBox(height: 12),
+                ExInlineNote(message: _dupNote!, error: false),
+              ],
+              if (_numbers.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final n in _numbers)
+                      _NumberChip(number: n, onRemove: () => setState(() => _numbers.remove(n))),
+                  ],
+                ),
+              ],
+              const SizedBox(height: 4),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  onPressed: () => setState(() => _pasteOpen = !_pasteOpen),
+                  style: TextButton.styleFrom(
+                    foregroundColor: exBrandBold,
+                    minimumSize: const Size(0, 48),
+                    padding: EdgeInsets.zero,
+                    textStyle: const TextStyle(
+                      fontFamily: exFont,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  child: Text(_pasteOpen ? 'Hide paste box' : 'Paste multiple numbers'),
+                ),
+              ),
+              if (_pasteOpen) ...[
+                TextField(
+                  controller: _pasteInput,
+                  maxLines: 4,
+                  keyboardType: TextInputType.multiline,
+                  style: exBodyTouch,
+                  decoration: exInputDecoration(hint: 'Separate with commas or new lines'),
+                ),
+                const SizedBox(height: 10),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: ExSecondaryButton(
+                    label: 'Add numbers',
+                    onPressed: () =>
+                        _addNumbers(_pasteInput.text.split(RegExp(r'[\n,;]+')), fromPaste: true),
+                  ),
+                ),
+              ],
+              if (_step2Error) ...[
+                const SizedBox(height: 16),
+                const ExInlineNote(message: 'Add at least one visitor number to send the demo.'),
+              ],
+              const SizedBox(height: 24),
+              _TeamCard(team: _team),
             ],
           ),
         ),
-        if (_sendError != null) ...[
-          const SizedBox(height: 14),
-          _ErrorBanner(message: _sendError!, onRetry: _send),
-        ],
       ],
     );
   }
 
-  Widget _callSummary(int total) {
-    final base = AppColors.primary;
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color.lerp(base, Colors.black, 0.18)!, Color.lerp(base, Colors.white, 0.1)!],
-        ),
-        boxShadow: [
-          BoxShadow(color: base.withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 8)),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.16),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Icon(Icons.phone_in_talk_rounded, color: Colors.white, size: 28),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('$total ${total == 1 ? 'call' : 'calls'} will go out',
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                    )),
-                const SizedBox(height: 6),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 6,
+  // Step 3
+
+  Widget _reviewStep(bool wide) {
+    final title = wide
+        ? _title('Review & send', 'Check everything before the calls go out.')
+        : _phoneTitle('Review & send', 'Check everything before the calls go out.');
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        title,
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 720),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (!wide) ...[
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: exBorder),
+                  ),
+                  child: _summaryContent(),
+                ),
+                const SizedBox(height: 16),
+              ],
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: exBorder),
+                ),
+                child: Column(
                   children: [
-                    _summaryPill(Icons.person_rounded,
-                        '${_numbers.length} ${_numbers.length == 1 ? 'visitor' : 'visitors'}'),
-                    _summaryPill(Icons.groups_rounded,
-                        '${_team.length} ${_team.length == 1 ? 'attender' : 'attenders'}'),
+                    _reviewRow(
+                      'Voice',
+                      Text(_voiceLabel, style: _strong),
+                      onEdit: () => setState(() => _step = 0),
+                    ),
+                    _reviewRow(
+                      'Visitor',
+                      Text(_visitorName.text.trim(), style: _strong),
+                      onEdit: () => setState(() => _step = 1),
+                    ),
+                    _reviewRow(
+                      'Visitor numbers (${_numbers.length})',
+                      _numbers.isEmpty
+                          ? const Text('None added', style: exBodyMd)
+                          : Wrap(
+                              spacing: 6,
+                              runSpacing: 6,
+                              children: [
+                                for (final n in _numbers) _smallChip(formatIndianMobile(n), exTint),
+                              ],
+                            ),
+                      onEdit: () => setState(() => _step = 1),
+                    ),
+                    _reviewRow(
+                      'Attendees (${_team.length})',
+                      _team.isEmpty
+                          ? const Text('No attendees', style: exBodyMd)
+                          : Wrap(
+                              spacing: 6,
+                              runSpacing: 6,
+                              children: [
+                                for (final m in _team)
+                                  _smallChip(
+                                    '${m.name} · ${formatIndianMobile(m.mobile)}',
+                                    exPageBg,
+                                  ),
+                              ],
+                            ),
+                      last: true,
+                    ),
                   ],
                 ),
+              ),
+              if (_sendError != null) ...[
+                const SizedBox(height: 16),
+                ExInlineNote(
+                  message: _sendError!,
+                  action: TextButton(
+                    onPressed: _send,
+                    style: TextButton.styleFrom(foregroundColor: exDanger),
+                    child: const Text(
+                      'Retry',
+                      style: TextStyle(fontFamily: exFont, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ),
               ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  String get _voiceLabel {
+    if (_voice == _Voice.template) {
+      return _template == null
+          ? 'Not chosen'
+          : '${_template!.title} · ${exDuration(_template!.duration)}';
+    }
+    return _recordingPath == null
+        ? 'Not chosen'
+        : 'Custom recording · ${exDuration(_recordingLength)}';
+  }
+
+  /// iPad: Call summary panel on the right.
+  Widget _summaryPanel() => Container(
+    width: 360,
+    decoration: const BoxDecoration(
+      color: Colors.white,
+      border: Border(left: BorderSide(color: exBorder)),
+    ),
+    padding: const EdgeInsets.fromLTRB(32, 40, 32, 24),
+    child: SingleChildScrollView(child: _summaryContent()),
+  );
+
+  Widget _summaryContent() {
+    final total = _numbers.length + _team.length;
+    String voice;
+    if (_voice == _Voice.template) {
+      voice = _template?.title ?? 'Not chosen';
+    } else {
+      voice = _recordingPath == null ? 'Not chosen' : 'Recording · ${exDuration(_recordingLength)}';
+    }
+    Widget row(String k, String v) => Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            k,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: exSubtle),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              v,
+              textAlign: TextAlign.right,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: exInk),
             ),
           ),
         ],
       ),
     );
-  }
-
-  Widget _summaryPill(IconData icon, String text) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.16),
-          borderRadius: BorderRadius.circular(20),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Text('Call summary', style: exHeadingMd),
+        const SizedBox(height: 14),
+        row('Voice', voice),
+        row('Visitors', '${_numbers.length}'),
+        row('Attendees', '${_team.length}'),
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 10),
+          child: Divider(height: 1, color: exBorder),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
+        Row(
           children: [
-            Icon(icon, size: 14, color: Colors.white),
-            const SizedBox(width: 5),
-            Text(text,
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                )),
+            const Expanded(
+              child: Text(
+                'Total calls',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: exSubtle),
+              ),
+            ),
+            Text('$total', style: exHeadingXl),
           ],
         ),
-      );
+      ],
+    );
+  }
 
-  static const _strong = TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, color: exInk);
+  static const _strong = TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: exInk);
 
   Widget _smallChip(String text, Color bg) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
-        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
-        child: Text(text, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: exInk)),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+    decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
+    child: Text(
+      text,
+      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: exInk),
+    ),
+  );
 
-  Widget _reviewRow(String label, Widget value, {VoidCallback? onEdit, bool last = false}) => Container(
+  Widget _reviewRow(String label, Widget value, {VoidCallback? onEdit, bool last = false}) =>
+      Container(
         padding: const EdgeInsets.fromLTRB(16, 14, 8, 14),
         decoration: BoxDecoration(
-          border: last ? null : const Border(bottom: BorderSide(color: exPageBg)),
+          border: last ? null : const Border(bottom: BorderSide(color: exBorder)),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -928,8 +962,8 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(label, style: const TextStyle(fontSize: 12.5, color: exSubtle)),
-                  const SizedBox(height: 4),
+                  Text(label, style: exBodyMd),
+                  const SizedBox(height: 6),
                   value,
                 ],
               ),
@@ -937,7 +971,15 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
             if (onEdit != null)
               TextButton(
                 onPressed: _sending ? null : onEdit,
-                style: TextButton.styleFrom(minimumSize: const Size(48, 44)),
+                style: TextButton.styleFrom(
+                  foregroundColor: exBrandBold,
+                  minimumSize: const Size(48, 48),
+                  textStyle: const TextStyle(
+                    fontFamily: exFont,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 child: const Text('Edit'),
               ),
           ],
@@ -945,69 +987,81 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
       );
 }
 
-/// Three progress segments on the blue header. Done steps can be tapped.
+/// 1 Voice — 2 Visitors — 3 Review & Send.
+/// Current: ink circle. Done: brand circle with a tick. Next: outlined.
 class _Stepper extends StatelessWidget {
   final int step;
+  final bool wide;
   final ValueChanged<int> onTap;
 
-  const _Stepper({required this.step, required this.onTap});
-
-  static const _labels = ['Voice', 'Visitors', 'Review & Send'];
-  static const _icons = [Icons.graphic_eq_rounded, Icons.people_alt_rounded, Icons.send_rounded];
+  const _Stepper({required this.step, required this.wide, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final narrow = MediaQuery.sizeOf(context).width < 380;
+    final labels = ['Voice', 'Visitors', wide ? 'Review & Send' : 'Review'];
+    final d = wide ? 36.0 : 28.0;
+    final fs = wide ? 17.0 : 15.0;
+    Widget line(int i) {
+      final l = Container(height: 2, color: i <= step ? exIndicator : exBorder);
+      return wide
+          ? Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: SizedBox(width: 56, child: l),
+            )
+          : Expanded(
+              child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: l),
+            );
+    }
+
     return Row(
+      mainAxisSize: wide ? MainAxisSize.min : MainAxisSize.max,
       children: [
-        for (var i = 0; i < _labels.length; i++) ...[
-          if (i > 0) const SizedBox(width: 8),
-          Expanded(
-            child: Semantics(
-              button: i < step,
-              selected: i == step,
-              label: 'Step ${i + 1}, ${_labels[i]}',
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () => onTap(i),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+        for (var i = 0; i < labels.length; i++) ...[
+          if (i > 0) line(i),
+          Semantics(
+            button: i < step,
+            selected: i == step,
+            label: 'Step ${i + 1}, ${labels[i]}',
+            child: InkWell(
+              onTap: () => onTap(i),
+              borderRadius: BorderRadius.circular(24),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 48),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
-                      child: Stack(
-                        children: [
-                          Container(height: 5, color: Colors.white.withValues(alpha: 0.22)),
-                          AnimatedFractionallySizedBox(
-                            duration: const Duration(milliseconds: 350),
-                            curve: Curves.easeOutCubic,
-                            widthFactor: i <= step ? 1 : 0,
-                            child: Container(height: 5, color: Colors.white),
-                          ),
-                        ],
+                    Container(
+                      width: d,
+                      height: d,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: i < step
+                            ? exBrand
+                            : i == step
+                            ? exInk
+                            : Colors.white,
+                        border: i > step ? Border.all(color: exStrongBorder, width: 1.5) : null,
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Icon(
-                          i < step ? Icons.check_circle_rounded : _icons[i],
-                          size: 15,
-                          color: i <= step ? Colors.white : Colors.white54,
-                        ),
-                        const SizedBox(width: 5),
-                        Flexible(
-                          child: Text(
-                            narrow && i == 2 ? 'Review' : _labels[i],
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: i == step ? FontWeight.w800 : FontWeight.w600,
-                              color: i <= step ? Colors.white : Colors.white54,
+                      child: i < step
+                          ? Icon(Icons.check_rounded, size: d * 0.5, color: Colors.white)
+                          : Text(
+                              '${i + 1}',
+                              style: TextStyle(
+                                fontSize: fs - 1,
+                                fontWeight: FontWeight.w600,
+                                color: i == step ? Colors.white : exSubtle,
+                              ),
                             ),
-                          ),
-                        ),
-                      ],
+                    ),
+                    SizedBox(width: wide ? 12 : 8),
+                    Text(
+                      labels[i],
+                      style: TextStyle(
+                        fontSize: fs,
+                        fontWeight: FontWeight.w600,
+                        color: i <= step ? exInk : exSubtle,
+                      ),
                     ),
                   ],
                 ),
@@ -1020,91 +1074,75 @@ class _Stepper extends StatelessWidget {
   }
 }
 
-/// Big tappable choice between a template and a custom recording.
-class _ModeCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final bool selected;
-  final VoidCallback onTap;
+/// "Use Template | Record Custom Voice" segmented control.
+class _Segmented extends StatelessWidget {
+  final bool wide;
+  final int selected;
+  final ValueChanged<int> onChanged;
 
-  const _ModeCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.selected,
-    required this.onTap,
-  });
+  const _Segmented({required this.wide, required this.selected, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
-    final base = AppColors.primary;
-    return Semantics(
-      button: true,
-      selected: selected,
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeOutCubic,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            color: selected ? null : Colors.white,
-            gradient: selected
-                ? LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Color.lerp(base, Colors.black, 0.12)!, Color.lerp(base, Colors.white, 0.12)!],
-                  )
-                : null,
-            border: Border.all(color: selected ? Colors.transparent : exBorder),
-            boxShadow: selected
-                ? [BoxShadow(color: base.withValues(alpha: 0.28), blurRadius: 16, offset: const Offset(0, 6))]
-                : exCardShadow,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: selected ? Colors.white.withValues(alpha: 0.18) : exTint,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(icon, color: selected ? Colors.white : base),
-                  ),
-                  const Spacer(),
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 200),
-                    child: Icon(
-                      selected ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
-                      key: ValueKey(selected),
-                      color: selected ? Colors.white : exStrongBorder,
-                      size: 24,
-                    ),
-                  ),
-                ],
+    Widget seg(int i, String label, IconData icon) {
+      final on = selected == i;
+      return Expanded(
+        child: Semantics(
+          button: true,
+          selected: on,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => onChanged(i),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: on ? Colors.white : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: on
+                    ? const [
+                        BoxShadow(color: Color(0x1A1E2B45), blurRadius: 6, offset: Offset(0, 2)),
+                      ]
+                    : null,
               ),
-              const SizedBox(height: 14),
-              Text(title,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: selected ? Colors.white : exInk,
-                  )),
-              const SizedBox(height: 2),
-              Text(subtitle,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: selected ? Colors.white70 : exSubtle,
-                  )),
-            ],
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (wide) ...[
+                      Icon(icon, size: 20, color: on ? exInk : exSubtle),
+                      const SizedBox(width: 8),
+                    ],
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: wide ? 17 : 15,
+                        fontWeight: FontWeight.w600,
+                        color: on ? exInk : exSubtle,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
+      );
+    }
+
+    return Container(
+      height: wide ? 60 : 52,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE3E7EF),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          seg(0, 'Use Template', Icons.description_outlined),
+          seg(1, 'Record Custom Voice', Icons.mic_none_rounded),
+        ],
       ),
     );
   }
@@ -1130,176 +1168,204 @@ class _TemplateCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = template;
-    return ExCard(
-      highlighted: selected,
-      padding: EdgeInsets.zero,
-      onTap: onSelect,
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(14),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 52,
-                  height: 52,
-                  child: IconButton(
-                    tooltip: playing ? 'Pause preview of ${t.title}' : 'Play preview of ${t.title}',
-                    onPressed: onTogglePlay,
-                    style: IconButton.styleFrom(
-                      backgroundColor: playing ? AppColors.primary : exTint,
-                      shape: const CircleBorder(),
+    return Material(
+      color: selected ? exTint : Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onSelect,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: selected ? exBrand : exBorder, width: selected ? 1.5 : 1),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 14, 16),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: SizedBox(
+                        width: 56,
+                        height: 56,
+                        child: IconButton(
+                          tooltip: playing
+                              ? 'Pause preview of ${t.title}'
+                              : 'Play preview of ${t.title}',
+                          onPressed: onTogglePlay,
+                          style: IconButton.styleFrom(
+                            backgroundColor: playing ? exInk : Colors.white,
+                            side: playing ? null : const BorderSide(color: exStrongBorder),
+                            shape: const CircleBorder(),
+                          ),
+                          icon: Icon(
+                            playing ? Icons.pause_rounded : Icons.play_arrow_outlined,
+                            color: playing ? Colors.white : exInk,
+                            size: 26,
+                          ),
+                        ),
+                      ),
                     ),
-                    icon: Icon(
-                      playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                      color: playing ? Colors.white : AppColors.primary,
-                      size: 28,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(t.title,
-                          style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w700, color: exInk)),
-                      const SizedBox(height: 2),
-                      Text(t.description, style: const TextStyle(fontSize: 13, color: exSubtle)),
-                      const SizedBox(height: 4),
-                      Row(
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.schedule_rounded, size: 14, color: exSubtle),
-                          const SizedBox(width: 4),
+                          Text(t.title, style: exHeadingSm.copyWith(fontSize: 17)),
+                          const SizedBox(height: 4),
                           Text(
-                            t.audioUrl.isEmpty
-                                ? '${exDuration(t.duration)} · Audio not set up yet'
-                                : exDuration(t.duration),
-                            style: const TextStyle(fontSize: 12, color: exSubtle),
+                            t.description,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: exSubtle,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              const Icon(Icons.schedule_rounded, size: 15, color: exSubtle),
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  t.audioUrl.isEmpty
+                                      ? '${exDuration(t.duration)} · Audio not set up yet'
+                                      : exDuration(t.duration),
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: exSubtle,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      width: 26,
+                      height: 26,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: selected ? exBrand : Colors.white,
+                        border: selected ? null : Border.all(color: exStrongBorder, width: 2),
+                      ),
+                      child: selected
+                          ? const Icon(Icons.check_rounded, size: 18, color: Colors.white)
+                          : null,
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                Icon(
-                  selected ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
-                  color: selected ? AppColors.primary : exStrongBorder,
-                  size: 26,
+              ),
+              if (playing)
+                StreamBuilder<Duration>(
+                  stream: player.positionStream,
+                  builder: (_, snap) {
+                    final total = player.duration ?? t.duration;
+                    final p = snap.data ?? Duration.zero;
+                    final f = total.inMilliseconds == 0
+                        ? 0.0
+                        : (p.inMilliseconds / total.inMilliseconds).clamp(0.0, 1.0);
+                    return LinearProgressIndicator(
+                      value: f,
+                      minHeight: 3,
+                      backgroundColor: Colors.transparent,
+                      color: exBrand,
+                    );
+                  },
                 ),
-              ],
-            ),
+            ],
           ),
-          if (playing)
-            StreamBuilder<Duration>(
-              stream: player.positionStream,
-              builder: (_, snap) {
-                final total = player.duration ?? t.duration;
-                final p = snap.data ?? Duration.zero;
-                final f = total.inMilliseconds == 0
-                    ? 0.0
-                    : (p.inMilliseconds / total.inMilliseconds).clamp(0.0, 1.0);
-                return ClipRRect(
-                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
-                  child: LinearProgressIndicator(
-                    value: f,
-                    minHeight: 4,
-                    backgroundColor: Colors.transparent,
-                    color: AppColors.primary,
-                  ),
-                );
-              },
-            ),
-        ],
+        ),
       ),
     );
   }
 }
 
+/// "+91 98765 43210 ×" chip.
+class _NumberChip extends StatelessWidget {
+  final String number;
+  final VoidCallback onRemove;
+  const _NumberChip({required this.number, required this.onRemove});
+
+  @override
+  Widget build(BuildContext context) => Container(
+    height: 48,
+    padding: const EdgeInsets.only(left: 14),
+    decoration: BoxDecoration(
+      color: exTint,
+      borderRadius: BorderRadius.circular(8),
+      border: Border.all(color: const Color(0xFFD5DCEC)),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          formatIndianMobile(number),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: exInk),
+        ),
+        SizedBox(
+          width: 44,
+          height: 44,
+          child: IconButton(
+            tooltip: 'Remove ${formatIndianMobile(number)}',
+            onPressed: onRemove,
+            icon: const Icon(Icons.close_rounded, size: 20, color: exInk),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+/// Attendees who are called on every demo.
 class _TeamCard extends StatelessWidget {
   final List<Attendee> team;
   const _TeamCard({required this.team});
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: exBorder),
-          boxShadow: exCardShadow,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Row(
-              children: [
-                Icon(Icons.groups_outlined, size: 20, color: exInk),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text('Attenders will also be called',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: exInk)),
-                ),
-                Text('Set on the exhibition', style: TextStyle(fontSize: 12, color: exSubtle)),
-              ],
-            ),
-            const SizedBox(height: 10),
-            if (team.isEmpty)
-              const Text('No attenders on this exhibition.', style: TextStyle(color: exSubtle))
-            else
-              for (final m in team)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 5),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 16,
-                        backgroundColor: exTint,
-                        child: Text(exInitials(m.name),
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: exInk)),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(m.name,
-                            style: const TextStyle(fontWeight: FontWeight.w600, color: exInk)),
-                      ),
-                      Text(formatIndianMobile(m.mobile), style: const TextStyle(color: exSubtle)),
-                    ],
-                  ),
-                ),
-          ],
-        ),
-      );
-}
-
-class _ErrorBanner extends StatelessWidget {
-  final String message;
-  final VoidCallback? onRetry;
-
-  const _ErrorBanner({required this.message, this.onRetry});
-
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFDECEC),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: exDanger.withValues(alpha: 0.2)),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.error_outline_rounded, color: exDanger),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(message,
-                  style: const TextStyle(color: exDanger, fontWeight: FontWeight.w600)),
-            ),
-            if (onRetry != null) ...[
-              const SizedBox(width: 8),
-              ExSecondaryButton(label: 'Retry', icon: Icons.refresh_rounded, onPressed: onRetry),
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: exBorder),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text.rich(
+          TextSpan(
+            text: 'Attendees',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: exInk),
+            children: [
+              TextSpan(
+                text: ' · Also called on every demo',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: exSubtle),
+              ),
             ],
-          ],
+          ),
         ),
-      );
+        const SizedBox(height: 10),
+        if (team.isEmpty)
+          const Text('No attendees on this exhibition.', style: exBodyMd)
+        else
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final m in team)
+                ExPersonChip(name: m.name, number: formatIndianMobile(m.mobile)),
+            ],
+          ),
+      ],
+    ),
+  );
 }

@@ -9,7 +9,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
 
-import '../../../Values/Colors/app_colors.dart';
 import 'exhibition_common.dart';
 
 enum _RecState { idle, recording, recorded, denied }
@@ -231,29 +230,31 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+      padding: const EdgeInsets.fromLTRB(20, 32, 20, 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: exBorder),
       ),
       child: Column(
         children: [
           if (_state == _RecState.denied) _denied() else ..._recorderBody(),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: const Color(0xFFF1F3F9),
+              color: exPageBg,
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.info_outline_rounded, size: 16, color: exInk),
+                Icon(Icons.info_outline_rounded, size: 17, color: exInk),
                 SizedBox(width: 8),
-                Text('Audio is saved as WAV, 8 kHz, mono',
-                    style: TextStyle(fontSize: 12.5, color: exInk)),
+                Flexible(
+                  child: Text('Audio is saved as WAV, 8 kHz, mono',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: exInk)),
+                ),
               ],
             ),
           ),
@@ -265,95 +266,50 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
   List<Widget> _recorderBody() {
     final recording = _state == _RecState.recording;
     final recorded = _state == _RecState.recorded;
-    final heights = _barHeights();
-    final progress = recorded && _elapsed.inMilliseconds > 0
-        ? _position.inMilliseconds / _elapsed.inMilliseconds
-        : 0.0;
 
-    return [
-      Text(
-        exDuration(recorded ? _elapsed : _elapsed),
-        style: TextStyle(
-          fontSize: 40,
-          fontWeight: FontWeight.w700,
-          fontFeatures: const [FontFeature.tabularFigures()],
-          color: recording ? exDanger : exInk,
-        ),
-      ),
-      const SizedBox(height: 12),
-      SizedBox(
-        height: 64,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            for (var i = 0; i < heights.length; i++)
-              Container(
-                width: 4,
-                height: 6 + 54 * heights[i],
-                margin: const EdgeInsets.symmetric(horizontal: 1.5),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(2),
-                  color: recording
-                      ? const Color(0xFFE7000B)
-                      : recorded && i / heights.length < progress
-                          ? AppColors.primary
-                          : exStrongBorder,
-                ),
-              ),
-          ],
-        ),
-      ),
-      const SizedBox(height: 18),
-      if (!recorded) ...[
-        _RecordButton(recording: recording, onTap: recording ? _stop : _start),
-        const SizedBox(height: 12),
-        Text(
-          recording ? 'Recording… tap to stop' : 'Tap to record',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: recording ? exDanger : exInk,
-          ),
-        ),
-        if (recording) ...[
-          const SizedBox(height: 12),
-          ExSecondaryButton(label: 'Stop', icon: Icons.stop_rounded, onPressed: _stop),
-        ],
-      ] else ...[
+    if (recorded) {
+      return [
         Row(
           children: [
             SizedBox(
-              width: 56,
-              height: 56,
-              child: IconButton.filled(
-                style: IconButton.styleFrom(backgroundColor: exInk),
+              width: 64,
+              height: 64,
+              child: IconButton(
+                style: IconButton.styleFrom(backgroundColor: exInk, shape: const CircleBorder()),
                 tooltip: _playing ? 'Pause recording' : 'Play recording',
                 onPressed: _togglePlay,
-                icon: Icon(_playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                    color: Colors.white, size: 30),
+                icon: Icon(_playing ? Icons.pause_rounded : Icons.play_arrow_outlined,
+                    color: Colors.white, size: 32),
               ),
             ),
             const SizedBox(width: 8),
             Expanded(
               child: Column(
                 children: [
-                  Slider(
-                    value: _position.inMilliseconds
-                        .clamp(0, math.max(1, _elapsed.inMilliseconds))
-                        .toDouble(),
-                    max: math.max(1, _elapsed.inMilliseconds).toDouble(),
-                    activeColor: AppColors.primary,
-                    onChanged: (v) => _player.seek(Duration(milliseconds: v.round())),
+                  SliderTheme(
+                    data: SliderTheme.of(context).copyWith(
+                      trackHeight: 4,
+                      activeTrackColor: exBrand,
+                      inactiveTrackColor: exBorder,
+                      thumbColor: exBrand,
+                      overlayColor: exIndicator.withValues(alpha: 0.3),
+                      thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 9),
+                    ),
+                    child: Slider(
+                      value: _position.inMilliseconds
+                          .clamp(0, math.max(1, _elapsed.inMilliseconds))
+                          .toDouble(),
+                      max: math.max(1, _elapsed.inMilliseconds).toDouble(),
+                      onChanged: (v) => _player.seek(Duration(milliseconds: v.round())),
+                    ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 22),
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(exDuration(_position),
-                            style: const TextStyle(fontSize: 12, color: exSubtle)),
-                        Text(exDuration(_elapsed),
-                            style: const TextStyle(fontSize: 12, color: exSubtle)),
+                        Text(exDuration(_position), style: exBodyMd),
+                        Text(exDuration(_elapsed), style: exBodyMd),
                       ],
                     ),
                   ),
@@ -362,60 +318,122 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 32),
         Row(
           children: [
+            Expanded(child: ExSecondaryButton(label: 'Re-record', onPressed: _start)),
+            const SizedBox(width: 12),
             Expanded(
-              child: ExSecondaryButton(
-                  label: 'Re-record', icon: Icons.refresh_rounded, onPressed: _start),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: ExSecondaryButton(
-                label: 'Discard',
-                icon: Icons.delete_outline_rounded,
-                color: exDanger,
-                onPressed: _discard,
-              ),
+              child: ExSecondaryButton(label: 'Discard', color: exDanger, onPressed: _discard),
             ),
           ],
         ),
-      ],
+      ];
+    }
+
+    final heights = _barHeights();
+    return [
+      Text(
+        exDuration(_elapsed),
+        style: TextStyle(
+          fontSize: 44,
+          fontWeight: FontWeight.w600,
+          fontFeatures: const [FontFeature.tabularFigures()],
+          color: recording ? exDanger : exInk,
+        ),
+      ),
+      const SizedBox(height: 16),
+      SizedBox(
+        height: 64,
+        child: recording
+            ? Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  for (var i = 0; i < heights.length; i++)
+                    Container(
+                      width: 4,
+                      height: 6 + 54 * heights[i],
+                      margin: const EdgeInsets.symmetric(horizontal: 2),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(2),
+                        color: exRecord,
+                      ),
+                    ),
+                ],
+              )
+            : Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (var i = 0; i < 24; i++)
+                      Container(
+                        width: 4,
+                        height: 4,
+                        margin: const EdgeInsets.symmetric(horizontal: 3),
+                        decoration: const BoxDecoration(
+                          color: exIndicator,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+      ),
+      const SizedBox(height: 12),
+      _RecordButton(recording: recording, onTap: recording ? _stop : _start),
+      const SizedBox(height: 16),
+      if (recording) ...[
+        const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.circle, size: 10, color: exRecord),
+            SizedBox(width: 8),
+            Text('Recording…',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: exDanger)),
+          ],
+        ),
+        const SizedBox(height: 16),
+        SizedBox(width: 140, child: ExSecondaryButton(label: 'Stop', onPressed: _stop)),
+      ] else
+        const Text('Tap to record', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
     ];
   }
 
   Widget _denied() => Column(
         children: [
           Container(
-            width: 80,
-            height: 80,
-            decoration: const BoxDecoration(color: Color(0xFFFDECEC), shape: BoxShape.circle),
-            child: const Icon(Icons.mic_off_rounded, size: 36, color: exDanger),
+            width: 72,
+            height: 72,
+            decoration: const BoxDecoration(color: exDangerBg, shape: BoxShape.circle),
+            child: const Icon(Icons.mic_off_outlined, size: 32, color: exDanger),
           ),
-          const SizedBox(height: 12),
-          const Text('Microphone access is off',
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: exInk)),
+          const SizedBox(height: 16),
+          const Text('Microphone access is off', style: exHeadingSm),
           const SizedBox(height: 6),
           const Text(
-            'Allow microphone access in Settings to record a custom voice.',
+            'Allow access in Settings to record.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: exSubtle),
+            style: exBodyMd,
           ),
           const SizedBox(height: 16),
           ExPrimaryButton(
             label: 'Open Settings',
-            icon: Icons.settings_outlined,
+            expand: false,
+            height: 48,
             onPressed: () => openAppSettings(),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           TextButton(
             onPressed: () => setState(() => _state = _RecState.idle),
-            child: const Text('Try again'),
+            style: TextButton.styleFrom(foregroundColor: exBrandBold, minimumSize: const Size(0, 48)),
+            child: const Text('Try again',
+                style: TextStyle(fontFamily: exFont, fontWeight: FontWeight.w600)),
           ),
         ],
       );
 }
 
+/// Idle: brand gradient mic. Recording: red stop with a pale halo.
 class _RecordButton extends StatefulWidget {
   final bool recording;
   final VoidCallback onTap;
@@ -428,13 +446,19 @@ class _RecordButton extends StatefulWidget {
 
 class _RecordButtonState extends State<_RecordButton> with SingleTickerProviderStateMixin {
   late final AnimationController _pulse =
-      AnimationController(vsync: this, duration: const Duration(milliseconds: 1300));
+      AnimationController(vsync: this, duration: const Duration(milliseconds: 1400));
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.recording) _pulse.repeat(reverse: true);
+  }
 
   @override
   void didUpdateWidget(covariant _RecordButton old) {
     super.didUpdateWidget(old);
     if (widget.recording && !_pulse.isAnimating) {
-      _pulse.repeat();
+      _pulse.repeat(reverse: true);
     } else if (!widget.recording && _pulse.isAnimating) {
       _pulse.stop();
       _pulse.value = 0;
@@ -449,44 +473,59 @@ class _RecordButtonState extends State<_RecordButton> with SingleTickerProviderS
 
   @override
   Widget build(BuildContext context) {
-    final color = widget.recording ? const Color(0xFFE7000B) : AppColors.primary;
+    final rec = widget.recording;
     return Semantics(
       button: true,
-      label: widget.recording ? 'Stop recording' : 'Start recording',
-      child: AnimatedBuilder(
-        animation: _pulse,
-        builder: (_, child) => Container(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            boxShadow: widget.recording
-                ? [
-                    BoxShadow(
-                      color: const Color(0xFFE7000B).withOpacity(0.35 * (1 - _pulse.value)),
-                      spreadRadius: 26 * _pulse.value,
-                    ),
-                  ]
-                : const [
-                    BoxShadow(color: Color(0x33000000), blurRadius: 16, offset: Offset(0, 6)),
-                  ],
-          ),
-          child: child,
-        ),
-        child: Material(
-          color: color,
-          shape: const CircleBorder(),
-          child: InkWell(
-            customBorder: const CircleBorder(),
-            onTap: widget.onTap,
-            child: SizedBox(
-              width: 112,
-              height: 112,
-              child: Icon(
-                widget.recording ? Icons.stop_rounded : Icons.mic_rounded,
-                color: Colors.white,
-                size: 48,
+      label: rec ? 'Stop recording' : 'Start recording',
+      child: SizedBox(
+        width: 168,
+        height: 168,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            if (rec)
+              AnimatedBuilder(
+                animation: _pulse,
+                builder: (_, __) => Container(
+                  width: 150 + 18 * _pulse.value,
+                  height: 150 + 18 * _pulse.value,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFDEEEE),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            GestureDetector(
+              onTap: widget.onTap,
+              child: Container(
+                width: rec ? 120 : 112,
+                height: rec ? 120 : 112,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: rec ? exRecord : null,
+                  gradient: rec
+                      ? null
+                      : const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [exBrandBold, exBrand],
+                        ),
+                ),
+                child: rec
+                    ? Center(
+                        child: Container(
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                        ),
+                      )
+                    : const Icon(Icons.mic_none_rounded, color: Colors.white, size: 46),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );

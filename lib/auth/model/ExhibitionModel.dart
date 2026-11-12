@@ -304,6 +304,26 @@ class ExhibitionDemo {
   }
 }
 
+/// How keen the school is, chosen when the lead is captured.
+enum InterestLevel { hot, warm, cold }
+
+InterestLevel? parseInterestLevel(String s) {
+  final v = s.trim().toLowerCase();
+  if (v.startsWith('hot') || v == 'high') return InterestLevel.hot;
+  if (v.startsWith('warm') || v == 'medium') return InterestLevel.warm;
+  if (v.startsWith('cold') || v == 'low') return InterestLevel.cold;
+  return null;
+}
+
+extension InterestLevelX on InterestLevel {
+  String get label => switch (this) {
+        InterestLevel.hot => 'Hot',
+        InterestLevel.warm => 'Warm',
+        InterestLevel.cold => 'Cold',
+      };
+  String get apiValue => name;
+}
+
 class ExhibitionLead {
   final String id;
   final String schoolName;
@@ -316,6 +336,7 @@ class ExhibitionLead {
   final DateTime? createdAt;
   final String demoId;
   final String demoVisitorName;
+  final InterestLevel? interestLevel;
 
   const ExhibitionLead({
     required this.id,
@@ -329,6 +350,7 @@ class ExhibitionLead {
     this.createdAt,
     this.demoId = '',
     this.demoVisitorName = '',
+    this.interestLevel,
   });
 
   factory ExhibitionLead.fromJson(Map<String, dynamic> j) => ExhibitionLead(
@@ -344,6 +366,8 @@ class ExhibitionLead {
         createdAt: _date(j, ['createdAt', 'CreatedAt', 'createdOn']),
         demoId: _str(j, ['demoId', 'DemoId']),
         demoVisitorName: _str(j, ['visitorName', 'demoVisitorName', 'VisitorName']),
+        interestLevel: parseInterestLevel(
+            _str(j, ['interestLevel', 'InterestLevel', 'level', 'leadLevel'])),
       );
 }
 
@@ -355,6 +379,7 @@ class CaptureLeadRequest {
   final String contactNumber;
   final String contactEmail;
   final String notes;
+  final InterestLevel interestLevel;
 
   const CaptureLeadRequest({
     required this.schoolName,
@@ -363,6 +388,7 @@ class CaptureLeadRequest {
     this.contactNumber = '',
     this.contactEmail = '',
     this.notes = '',
+    this.interestLevel = InterestLevel.warm,
   });
 
   Map<String, dynamic> toJson() => {
@@ -372,6 +398,7 @@ class CaptureLeadRequest {
         'contactNumber': contactNumber,
         'contactEmail': contactEmail,
         'notes': notes,
+        'interestLevel': interestLevel.apiValue,
       };
 }
 

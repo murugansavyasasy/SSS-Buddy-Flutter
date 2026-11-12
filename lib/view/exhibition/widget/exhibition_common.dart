@@ -2,17 +2,81 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
-import '../../../Values/Colors/app_colors.dart';
 import '../../../auth/model/ExhibitionModel.dart';
-import '../../../components/toolbar_layout.dart';
 
-const exPageBg = Color(0xFFF5F7FB);
-const exInk = Color(0xFF1A2235);
-const exSubtle = Color(0xFF6B7280);
-const exBorder = Color(0xFFE3E7EF);
-const exStrongBorder = Color(0xFFC8CFDC);
+// ─────────────────────────────────────────────────────────────────────────────
+// Design system (Exhibition Demos App spec)
+// One brand colour (slate blue) on ink. Touch scale for a busy stall: every
+// target ≥ 48 px, inputs and buttons 52 px, body copy 16 px.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// text.default
+const exInk = Color(0xFF1E2B45);
+
+/// background.brand
+const exBrand = Color(0xFF5770A6);
+
+/// background.brand.bold
+const exBrandBold = Color(0xFF3F5485);
+
+/// selected.bold — tab underline, stepper line, toast tick
+const exIndicator = Color(0xFFAFC0E8);
+
+/// background.selected — blue tint
 const exTint = Color(0xFFECEFF8);
+
+/// text.subtle
+const exSubtle = Color(0xFF71717A);
+
+/// background.neutral — page
+const exPageBg = Color(0xFFF4F6FA);
+
+/// border.default
+const exBorder = Color(0xFFE3E7EF);
+
+/// Inputs and outlined buttons.
+const exStrongBorder = Color(0xFFCDD3DF);
+
+/// accent.orange.subtle — calling / ringing / warm
+const exCalling = Color(0xFFFFEBDC);
+const exCallingInk = Color(0xFFA3561F);
+
+/// text.danger.bold — failed / error
 const exDanger = Color(0xFFC2000A);
+const exDangerBg = Color(0xFFFDECEC);
+
+/// surface.cream — notes
+const exNotes = Color(0xFFF9F7E8);
+
+/// Success (active exhibition, success states).
+const exSuccess = Color(0xFF1A7F3C);
+const exSuccessBg = Color(0xFFE5F5EA);
+
+/// Grey badge (queued).
+const exNeutralBg = Color(0xFFEFF1F5);
+
+/// Completed (exhibition, demo) and answered call: blue tint, brand bold text.
+const exCompletedBg = Color(0xFFE4E9F5);
+const exCompletedInk = exBrandBold;
+
+/// Recipient "Visitor" badge.
+const exVisitorBg = Color(0xFFF1ECD6);
+
+/// Recording red.
+const exRecord = Color(0xFFE7000B);
+
+/// Primary gradient: brand bold → brand.
+const exBrandGradient = LinearGradient(colors: [exBrandBold, exBrand]);
+
+const exFont = 'DMSans';
+
+/// Kept for older call sites; the spec uses border, no shadow, on cards.
+const exCardShadow = <BoxShadow>[];
+
+/// Toast / FAB overlay elevation.
+const exOverlayShadow = [
+  BoxShadow(color: Color(0x2E3F5485), blurRadius: 14, offset: Offset(0, 4)),
+];
 
 /// Content never stretches wider than this on an iPad / tablet.
 const double exMaxContentWidth = 820;
@@ -27,60 +91,154 @@ bool exIsSplit(BuildContext context) {
   return size.shortestSide >= 600 && size.width >= 760;
 }
 
-/// Round translucent button for the blue toolbar (matches its refresh button).
-class ExToolbarButton extends StatelessWidget {
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onTap;
-
-  const ExToolbarButton({
-    super.key,
-    required this.icon,
-    required this.tooltip,
-    required this.onTap,
-  });
+/// Applies DM Sans to everything below (each route and sheet wraps itself,
+/// since routes are built above any widget in this module).
+class ExTheme extends StatelessWidget {
+  final Widget child;
+  const ExTheme({super.key, required this.child});
 
   @override
-  Widget build(BuildContext context) => Tooltip(
-        message: tooltip,
-        child: Semantics(
-          button: true,
-          label: tooltip,
-          child: GestureDetector(
-            onTap: onTap,
-            child: Container(
-              height: 42,
-              width: 42,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(21),
-                border: Border.all(color: Colors.white30),
-              ),
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                transitionBuilder: (c, a) => ScaleTransition(scale: a, child: c),
-                child: Icon(icon, key: ValueKey(icon), color: Colors.white, size: 21),
-              ),
-            ),
-          ),
+  Widget build(BuildContext context) {
+    final base = Theme.of(context);
+    return Theme(
+      data: base.copyWith(
+        textTheme: base.textTheme.apply(fontFamily: exFont),
+        primaryTextTheme: base.primaryTextTheme.apply(fontFamily: exFont),
+        colorScheme: base.colorScheme.copyWith(primary: exBrandBold),
+        textSelectionTheme: const TextSelectionThemeData(
+          cursorColor: exBrandBold,
+          selectionColor: exIndicator,
+          selectionHandleColor: exBrandBold,
         ),
-      );
+      ),
+      child: DefaultTextStyle.merge(
+        style: const TextStyle(fontFamily: exFont, color: exInk),
+        child: _ExTextScale(child: child),
+      ),
+    );
+  }
 }
 
-const exCardShadow = [
-  BoxShadow(color: Color(0x0D1A2235), blurRadius: 14, offset: Offset(0, 4)),
-];
+/// Phone text is set a step smaller than iPad (the spec sizes are tuned for
+/// the tablet). The user's own accessibility text size still applies on top.
+const double exPhoneTextScale = 0.85;
+
+bool exIsPhone(BuildContext context) => MediaQuery.sizeOf(context).shortestSide < 600;
+
+class _ExTextScale extends StatelessWidget {
+  final Widget child;
+  const _ExTextScale({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    if (!exIsPhone(context)) return child;
+    final mq = MediaQuery.of(context);
+    if (mq.textScaler is _ScaledTextScaler) return child; // already applied above
+    return MediaQuery(
+      data: mq.copyWith(textScaler: _ScaledTextScaler(mq.textScaler, exPhoneTextScale)),
+      child: child,
+    );
+  }
+}
+
+/// The system text scaler multiplied by a fixed factor.
+class _ScaledTextScaler extends TextScaler {
+  final TextScaler base;
+  final double factor;
+  const _ScaledTextScaler(this.base, this.factor);
+
+  @override
+  double scale(double fontSize) => base.scale(fontSize) * factor;
+
+  @override
+  // ignore: deprecated_member_use
+  double get textScaleFactor => base.textScaleFactor * factor;
+
+  @override
+  bool operator ==(Object other) =>
+      other is _ScaledTextScaler && other.base == base && other.factor == factor;
+
+  @override
+  int get hashCode => Object.hash(base, factor);
+}
+
+// Typography (DM Sans 500 / 600)
+const exHeadingXl = TextStyle(fontSize: 28, height: 36 / 28, fontWeight: FontWeight.w600, color: exInk);
+const exHeadingLg = TextStyle(fontSize: 24, height: 32 / 24, fontWeight: FontWeight.w600, color: exInk);
+const exHeadingMd = TextStyle(fontSize: 18, height: 24 / 18, fontWeight: FontWeight.w600, color: exInk);
+const exHeadingSm = TextStyle(fontSize: 16, height: 22 / 16, fontWeight: FontWeight.w600, color: exInk);
+const exBodyTouch = TextStyle(fontSize: 16, height: 22 / 16, fontWeight: FontWeight.w500, color: exInk);
+const exBodyMd = TextStyle(fontSize: 14, height: 20 / 14, fontWeight: FontWeight.w500, color: exSubtle);
+const exBodySm = TextStyle(fontSize: 12, height: 16 / 12, fontWeight: FontWeight.w500, color: exSubtle);
+const exLabelSm = TextStyle(
+    fontSize: 12, height: 16 / 12, fontWeight: FontWeight.w600, letterSpacing: 0.4, color: exSubtle);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Status colours
+// ─────────────────────────────────────────────────────────────────────────────
 
 (Color, Color) exhibitionStatusColors(ExhibitionStatus s) => s == ExhibitionStatus.active
-    ? (const Color(0xFFE7F7EC), const Color(0xFF1A7F3C))
-    : (const Color(0xFFEFF1F5), exInk);
+    ? (exSuccessBg, exSuccess)
+    : (exCompletedBg, exCompletedInk);
+
+(Color, Color) interestLevelColors(InterestLevel l) => switch (l) {
+      InterestLevel.hot => (exDangerBg, exDanger),
+      InterestLevel.warm => (exCalling, exCallingInk),
+      InterestLevel.cold => (exCompletedBg, exCompletedInk),
+    };
 
 (Color, Color) callStatusColors(CallStatus s) => switch (s) {
-      CallStatus.queued => (const Color(0xFFEFF1F5), exInk),
-      CallStatus.ringing || CallStatus.calling => (const Color(0xFFFFEBDC), const Color(0xFFA3561F)),
-      CallStatus.answered || CallStatus.completed => (const Color(0xFFE7F7EC), const Color(0xFF1A7F3C)),
-      CallStatus.failed => (const Color(0xFFFDECEC), exDanger),
+      CallStatus.queued => (exNeutralBg, exInk),
+      CallStatus.ringing || CallStatus.calling => (exCalling, exCallingInk),
+      CallStatus.answered || CallStatus.completed => (exCompletedBg, exCompletedInk),
+      CallStatus.failed => (exDangerBg, exDanger),
     };
+
+/// Hot / Warm / Cold tag with a coloured dot.
+class ExInterestTag extends StatelessWidget {
+  final InterestLevel level;
+  const ExInterestTag({super.key, required this.level});
+
+  @override
+  Widget build(BuildContext context) {
+    final (bg, fg) = interestLevelColors(level);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(color: fg, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 6),
+          Text(level.label,
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: fg)),
+        ],
+      ),
+    );
+  }
+}
+
+/// Exhibition status badge (Active / Completed).
+class ExStatusBadge extends StatelessWidget {
+  final ExhibitionStatus status;
+  final bool large;
+
+  const ExStatusBadge({super.key, required this.status, this.large = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final (bg, fg) = exhibitionStatusColors(status);
+    return ExPill(label: status.label, background: bg, foreground: fg, large: large);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Formatting
+// ─────────────────────────────────────────────────────────────────────────────
 
 String exInitials(String name) {
   final parts = name.replaceAll(RegExp(r'[^A-Za-z ]'), ' ').trim().split(RegExp(r'\s+'));
@@ -104,10 +262,23 @@ String exDateRange(DateTime? start, DateTime? end) {
   return '${full.format(start)} – ${full.format(end)}';
 }
 
+/// "11 – 13 Nov" (no year) for the detail header line.
+String exShortDateRange(DateTime? start, DateTime? end) {
+  if (start == null && end == null) return '';
+  final dm = DateFormat('d MMM');
+  if (start != null && end == null) return dm.format(start);
+  if (start == null) return 'Until ${dm.format(end!)}';
+  if (start.month == end!.month && start.year == end.year) {
+    if (start.day == end.day) return dm.format(start);
+    return '${start.day} – ${dm.format(end)}';
+  }
+  return '${dm.format(start)} – ${dm.format(end)}';
+}
+
 String exWhen(DateTime? t) {
   if (t == null) return '';
   final now = DateTime.now();
-  final time = DateFormat('h:mm a').format(t);
+  final time = DateFormat('h:mm a').format(t).toLowerCase();
   bool same(DateTime a, DateTime b) => a.year == b.year && a.month == b.month && a.day == b.day;
   if (now.difference(t).inMinutes.abs() < 1) return 'Just now';
   if (same(t, now)) return time;
@@ -122,70 +293,151 @@ String exDuration(Duration d) {
   return '$m:$s';
 }
 
-/// Blue header + rounded light body, the same frame as Follow-ups / Leaderboard.
+// ─────────────────────────────────────────────────────────────────────────────
+// Page frame
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// White header with a back chevron and either a large title
+/// ("‹ Exhibitions") or a small back label ("‹ Exhibitions" breadcrumb),
+/// optional [headerBottom] (search, chips), and the page-grey body.
 class ExPage extends StatelessWidget {
   final String title;
   final Widget body;
-  final VoidCallback? onRefresh;
-  final ValueChanged<String>? onSearch;
-  final String searchHint;
+
+  /// Large heading.xl title next to the chevron. When false, [title] is
+  /// shown as a small grey back label instead.
+  final bool largeTitle;
+  final Widget? headerBottom;
+  final List<Widget> actions;
   final Widget? floatingActionButton;
   final VoidCallback? onBackPressed;
-  final Widget? trailing;
+  final bool headerDivider;
 
   const ExPage({
     super.key,
     required this.title,
     required this.body,
-    this.onRefresh,
-    this.onSearch,
-    this.searchHint = 'Search...',
+    this.largeTitle = true,
+    this.headerBottom,
+    this.actions = const [],
     this.floatingActionButton,
     this.onBackPressed,
-    this.trailing,
+    this.headerDivider = true,
   });
 
   @override
   Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
-        systemNavigationBarColor: Colors.white,
-        systemNavigationBarIconBrightness: Brightness.dark,
-      ),
-      child: Scaffold(
-        backgroundColor: AppColors.primary,
-        floatingActionButton: floatingActionButton,
-        body: Column(
-          children: [
-            ToolbarLayout(
-              title: title,
-              onRefresh: onRefresh,
-              onSearch: onSearch,
-              searchHint: searchHint,
-              onBackPressed: onBackPressed,
-              trailing: trailing,
-            ),
-            Expanded(
-              child: Container(
-                width: double.infinity,
-                decoration: const BoxDecoration(
-                  color: exPageBg,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(25),
-                    topRight: Radius.circular(25),
+    final pad = exIsWide(context) ? 24.0 : 16.0;
+    return ExTheme(
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
+          systemNavigationBarColor: Colors.white,
+          systemNavigationBarIconBrightness: Brightness.dark,
+        ),
+        child: Scaffold(
+          backgroundColor: exPageBg,
+          floatingActionButton: floatingActionButton,
+          body: Column(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: headerDivider
+                      ? const Border(bottom: BorderSide(color: exBorder))
+                      : null,
+                ),
+                child: SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(pad - 8, 8, pad, headerBottom == null ? 8 : 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          children: [
+                            ExBackButton(
+                              onPressed: onBackPressed ?? () => Navigator.maybePop(context),
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: largeTitle
+                                    ? exHeadingXl
+                                    : const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                        color: exSubtle,
+                                      ),
+                              ),
+                            ),
+                            ...actions,
+                          ],
+                        ),
+                        if (headerBottom != null)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 8, top: 12),
+                            child: headerBottom!,
+                          ),
+                      ],
+                    ),
                   ),
                 ),
-                clipBehavior: Clip.antiAlias,
-                child: body,
               ),
-            ),
-          ],
+              Expanded(child: body),
+            ],
+          ),
         ),
       ),
     );
   }
+}
+
+/// 48 px back chevron.
+class ExBackButton extends StatelessWidget {
+  final VoidCallback onPressed;
+  const ExBackButton({super.key, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+        width: 48,
+        height: 48,
+        child: IconButton(
+          tooltip: 'Back',
+          onPressed: onPressed,
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: exInk),
+        ),
+      );
+}
+
+/// 48 px plain icon button for the white header (e.g. split / full screen).
+class ExHeaderIconButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  const ExHeaderIconButton({
+    super.key,
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+        width: 48,
+        height: 48,
+        child: IconButton(
+          tooltip: tooltip,
+          onPressed: onTap,
+          icon: Icon(icon, size: 22, color: exInk),
+        ),
+      );
 }
 
 /// Centres content and caps its width on tablets.
@@ -203,11 +455,17 @@ class ExMaxWidth extends StatelessWidget {
       );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Badges, chips, cards
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Status badge: 6 px corners, 600 weight.
 class ExPill extends StatelessWidget {
   final String label;
   final Color background;
   final Color foreground;
   final IconData? icon;
+  final bool large;
 
   const ExPill({
     super.key,
@@ -215,11 +473,12 @@ class ExPill extends StatelessWidget {
     required this.background,
     required this.foreground,
     this.icon,
+    this.large = false,
   });
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+        padding: EdgeInsets.symmetric(horizontal: large ? 10 : 8, vertical: large ? 5 : 4),
         decoration: BoxDecoration(
           color: background,
           borderRadius: BorderRadius.circular(6),
@@ -228,18 +487,93 @@ class ExPill extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (icon != null) ...[
-              Icon(icon, size: 13, color: foreground),
+              Icon(icon, size: 14, color: foreground),
               const SizedBox(width: 4),
             ],
             Text(
               label,
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: foreground),
+              style: TextStyle(
+                fontSize: large ? 14 : 13,
+                fontWeight: FontWeight.w600,
+                color: foreground,
+              ),
             ),
           ],
         ),
       );
 }
 
+/// Grey count chip on cards: "3 attendees", "4 demos".
+class ExStatChip extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  const ExStatChip({super.key, required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: exPageBg,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 15, color: exInk),
+            const SizedBox(width: 6),
+            Text(text,
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: exInk)),
+          ],
+        ),
+      );
+}
+
+/// Filter chip: ink when selected, outlined otherwise. 48 px tall.
+class ExFilterChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const ExFilterChip({
+    super.key,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+        button: true,
+        selected: selected,
+        child: Material(
+          color: selected ? exInk : Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              height: 48,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: selected ? exInk : exStrongBorder),
+              ),
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: selected ? Colors.white : exInk,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+}
+
+/// Card: white, 12 px corners, border, no shadow. Selected = tint + brand border.
 class ExCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
@@ -255,115 +589,200 @@ class ExCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeOut,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: highlighted
-              ? [
-                  BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.18),
-                    blurRadius: 18,
-                    offset: const Offset(0, 6),
-                  ),
-                ]
-              : exCardShadow,
-        ),
-        child: Material(
-          color: highlighted ? exTint : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(16),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: padding,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: highlighted ? AppColors.primary : exBorder,
-                  width: highlighted ? 1.5 : 1,
-                ),
+  Widget build(BuildContext context) => Material(
+        color: highlighted ? exTint : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: padding,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: highlighted ? exBrand : exBorder,
+                width: highlighted ? 1.5 : 1,
               ),
-              child: child,
             ),
+            child: child,
           ),
         ),
       );
 }
 
-/// Full-width 52 px primary button with a loading state.
-class ExPrimaryButton extends StatelessWidget {
+/// Cream notes box.
+class ExNoteBox extends StatelessWidget {
+  final String text;
+  final bool icon;
+  const ExNoteBox({super.key, required this.text, this.icon = false});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: exNotes,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (icon) ...[
+              const Padding(
+                padding: EdgeInsets.only(top: 2),
+                child: Icon(Icons.description_outlined, size: 16, color: exSubtle),
+              ),
+              const SizedBox(width: 8),
+            ],
+            Expanded(child: Text(text, style: exBodyMd.copyWith(color: exInk, fontSize: 15))),
+          ],
+        ),
+      );
+}
+
+/// Attendee chip: initials avatar, name and number, bordered.
+class ExPersonChip extends StatelessWidget {
+  final String name;
+  final String number;
+  const ExPersonChip({super.key, required this.name, required this.number});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        height: 56,
+        padding: const EdgeInsets.fromLTRB(8, 0, 14, 0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: exBorder),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              alignment: Alignment.center,
+              decoration: const BoxDecoration(color: exTint, shape: BoxShape.circle),
+              child: Text(exInitials(name),
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: exInk)),
+            ),
+            const SizedBox(width: 10),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(name, style: exHeadingSm.copyWith(fontSize: 15)),
+                Text(number, style: exBodyMd.copyWith(fontSize: 13)),
+              ],
+            ),
+          ],
+        ),
+      );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Buttons
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Primary: 52 px (56 for the hero action), 8 px corners, brand gradient.
+/// Pressed = darker, loading = lighter with spinner, disabled = grey.
+class ExPrimaryButton extends StatefulWidget {
   final String label;
   final IconData? icon;
+  final IconData? trailingIcon;
   final VoidCallback? onPressed;
   final bool loading;
   final String? loadingLabel;
   final double height;
+  final bool expand;
 
   const ExPrimaryButton({
     super.key,
     required this.label,
     this.icon,
+    this.trailingIcon,
     this.onPressed,
     this.loading = false,
     this.loadingLabel,
     this.height = 52,
+    this.expand = true,
   });
 
   @override
+  State<ExPrimaryButton> createState() => _ExPrimaryButtonState();
+}
+
+class _ExPrimaryButtonState extends State<ExPrimaryButton> {
+  bool _down = false;
+
+  @override
   Widget build(BuildContext context) {
-    final enabled = onPressed != null && !loading;
-    final base = AppColors.primary;
-    return AnimatedOpacity(
-      duration: const Duration(milliseconds: 150),
-      opacity: enabled || loading ? 1 : 0.55,
-      child: Container(
-        height: height,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          gradient: LinearGradient(
-            colors: [Color.lerp(base, Colors.black, 0.12)!, Color.lerp(base, Colors.white, 0.12)!],
+    final enabled = widget.onPressed != null && !widget.loading;
+    final disabled = widget.onPressed == null && !widget.loading;
+    final Gradient? gradient = disabled
+        ? null
+        : widget.loading
+            ? LinearGradient(colors: [
+                exBrandBold.withValues(alpha: 0.7),
+                exBrand.withValues(alpha: 0.7),
+              ])
+            : _down
+                ? const LinearGradient(colors: [Color(0xFF34466F), exBrandBold])
+                : exBrandGradient;
+    final fg = disabled ? exSubtle : Colors.white;
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      child: GestureDetector(
+        onTapDown: enabled ? (_) => setState(() => _down = true) : null,
+        onTapCancel: () => setState(() => _down = false),
+        onTapUp: enabled ? (_) => setState(() => _down = false) : null,
+        onTap: enabled
+            ? () {
+                HapticFeedback.lightImpact();
+                widget.onPressed!();
+              }
+            : null,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          height: widget.height,
+          width: widget.expand ? double.infinity : null,
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          decoration: BoxDecoration(
+            color: disabled ? exBorder : null,
+            gradient: gradient,
+            borderRadius: BorderRadius.circular(8),
           ),
-          boxShadow: enabled
-              ? [BoxShadow(color: base.withValues(alpha: 0.28), blurRadius: 16, offset: const Offset(0, 6))]
-              : null,
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: enabled ? onPressed : null,
-            borderRadius: BorderRadius.circular(12),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (loading)
-                    const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2.2, color: Colors.white),
-                    )
-                  else if (icon != null)
-                    Icon(icon, size: 20, color: Colors.white),
-                  if (loading || icon != null) const SizedBox(width: 10),
-                  Flexible(
-                    child: Text(
-                      loading ? (loadingLabel ?? label) : label,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
+          child: Row(
+            mainAxisSize: widget.expand ? MainAxisSize.max : MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (widget.loading) ...[
+                const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2.2, color: Colors.white),
+                ),
+                const SizedBox(width: 10),
+              ] else if (widget.icon != null) ...[
+                Icon(widget.icon, size: 21, color: fg),
+                const SizedBox(width: 10),
+              ],
+              Flexible(
+                child: Text(
+                  widget.loading ? (widget.loadingLabel ?? widget.label) : widget.label,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                      fontSize: widget.height >= 56 ? 18 : 17,
+                      fontWeight: FontWeight.w600,
+                      color: fg),
+                ),
               ),
-            ),
+              if (widget.trailingIcon != null && !widget.loading) ...[
+                const SizedBox(width: 8),
+                Icon(widget.trailingIcon, size: 22, color: fg),
+              ],
+            ],
           ),
         ),
       ),
@@ -371,12 +790,14 @@ class ExPrimaryButton extends StatelessWidget {
   }
 }
 
+/// Secondary: white, outlined, 8 px corners. [color] tints text (danger).
 class ExSecondaryButton extends StatelessWidget {
   final String label;
   final IconData? icon;
   final VoidCallback? onPressed;
   final Color? color;
   final double height;
+  final bool loading;
 
   const ExSecondaryButton({
     super.key,
@@ -384,29 +805,88 @@ class ExSecondaryButton extends StatelessWidget {
     this.icon,
     this.onPressed,
     this.color,
-    this.height = 48,
+    this.height = 52,
+    this.loading = false,
   });
 
   @override
   Widget build(BuildContext context) => SizedBox(
         height: height,
-        child: OutlinedButton.icon(
-          onPressed: onPressed,
-          icon: icon == null ? const SizedBox.shrink() : Icon(icon, size: 19),
-          label: Text(label),
+        child: OutlinedButton(
+          onPressed: loading ? null : onPressed,
           style: OutlinedButton.styleFrom(
             foregroundColor: color ?? exInk,
+            disabledForegroundColor: loading ? (color ?? exInk) : exStrongBorder,
             side: const BorderSide(color: exStrongBorder),
             backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            textStyle: const TextStyle(fontFamily: exFont, fontSize: 16, fontWeight: FontWeight.w600),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+          ).copyWith(
+            overlayColor: const WidgetStatePropertyAll(exPageBg),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (loading) ...[
+                SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: color ?? exSubtle),
+                ),
+                const SizedBox(width: 10),
+              ] else if (icon != null) ...[
+                Icon(icon, size: 20),
+                const SizedBox(width: 8),
+              ],
+              Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
+            ],
           ),
         ),
       );
 }
 
-/// Empty / error message with an optional action.
+/// Round 64 px brand FAB with a plus.
+class ExFab extends StatelessWidget {
+  final VoidCallback onPressed;
+  final String tooltip;
+  const ExFab({super.key, required this.onPressed, this.tooltip = 'New exhibition'});
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+        button: true,
+        label: tooltip,
+        child: Tooltip(
+          message: tooltip,
+          child: GestureDetector(
+            onTap: onPressed,
+            child: Container(
+              width: 60,
+              height: 60,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [exBrandBold, exBrand],
+                ),
+                boxShadow: exOverlayShadow,
+              ),
+              child: const Icon(Icons.add_rounded, color: Colors.white, size: 32),
+            ),
+          ),
+        ),
+      );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// States
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum ExTone { neutral, success, error }
+
+/// Empty / error / success message: tinted icon circle, title, message and
+/// one way forward.
 class ExStateView extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -414,6 +894,10 @@ class ExStateView extends StatelessWidget {
   final String? actionLabel;
   final VoidCallback? onAction;
   final bool isError;
+  final ExTone? tone;
+
+  /// Use a primary (filled) action instead of an outlined one.
+  final bool primaryAction;
 
   const ExStateView({
     super.key,
@@ -423,92 +907,115 @@ class ExStateView extends StatelessWidget {
     this.actionLabel,
     this.onAction,
     this.isError = false,
+    this.tone,
+    this.primaryAction = false,
   });
 
-  factory ExStateView.error(Object error, {VoidCallback? onRetry}) => ExStateView(
+  /// Couldn't load … — offline wording for a stall with patchy Wi-Fi.
+  factory ExStateView.error(
+    Object error, {
+    VoidCallback? onRetry,
+    String title = "Couldn't load",
+    String message = 'Check the stall Wi-Fi or mobile data.',
+  }) =>
+      ExStateView(
         icon: Icons.wifi_off_rounded,
-        title: "Couldn't load",
-        message: error.toString(),
+        title: title,
+        message: message,
         actionLabel: onRetry == null ? null : 'Retry',
         onAction: onRetry,
         isError: true,
       );
 
   @override
-  Widget build(BuildContext context) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
+  Widget build(BuildContext context) {
+    final t = tone ?? (isError ? ExTone.error : ExTone.neutral);
+    final (bg, fg) = switch (t) {
+      ExTone.neutral => (exNeutralBg, exInk),
+      ExTone.success => (exSuccessBg, exSuccess),
+      ExTone.error => (exDangerBg, exDanger),
+    };
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  color: isError ? const Color(0xFFFDECEC) : exTint,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, size: 34, color: isError ? exDanger : AppColors.primary),
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
+                child: Icon(icon, size: 26, color: fg),
               ),
               const SizedBox(height: 14),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: exInk),
-              ),
+              Text(title, textAlign: TextAlign.center, style: exHeadingSm),
               if (message.isNotEmpty) ...[
-                const SizedBox(height: 6),
-                Text(
-                  message,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 14, color: exSubtle),
-                ),
+                const SizedBox(height: 8),
+                Text(message,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w500, color: exSubtle)),
               ],
               if (actionLabel != null && onAction != null) ...[
                 const SizedBox(height: 16),
-                ExSecondaryButton(
-                  label: actionLabel!,
-                  icon: isError ? Icons.refresh_rounded : Icons.add_rounded,
-                  onPressed: onAction,
-                ),
+                primaryAction
+                    ? ExPrimaryButton(
+                        label: actionLabel!,
+                        expand: false,
+                        height: 48,
+                        onPressed: onAction,
+                      )
+                    : ExSecondaryButton(label: actionLabel!, height: 48, onPressed: onAction),
               ],
             ],
           ),
         ),
-      );
+      ),
+    );
+  }
 }
 
-/// Grey placeholder rows while a list loads.
+/// Grey placeholder rows while a list loads, with a caption.
 class ExSkeletonList extends StatelessWidget {
   final int count;
-  const ExSkeletonList({super.key, this.count = 4});
+  final String? caption;
+  const ExSkeletonList({super.key, this.count = 3, this.caption});
 
   @override
-  Widget build(BuildContext context) => ListView.separated(
+  Widget build(BuildContext context) => ListView(
         padding: const EdgeInsets.all(16),
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        itemCount: count,
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
-        itemBuilder: (_, __) => Container(
-          height: 112,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: exBorder),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _bar(0.6, 16),
-              const SizedBox(height: 10),
-              _bar(0.85, 11),
-              const SizedBox(height: 8),
-              _bar(0.45, 11),
-            ],
-          ),
-        ),
+        children: [
+          for (var i = 0; i < count; i++) ...[
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: exBorder),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _bar(0.55, 18),
+                  const SizedBox(height: 12),
+                  _bar(0.85, 12),
+                  const SizedBox(height: 10),
+                  _bar(0.4, 12),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+          if (caption != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(caption!, textAlign: TextAlign.center, style: exBodyMd),
+            ),
+        ],
       );
 
   Widget _bar(double f, double h) => FractionallySizedBox(
@@ -523,7 +1030,46 @@ class ExSkeletonList extends StatelessWidget {
       );
 }
 
-/// Labelled text field used by the exhibition forms (52 px tall).
+/// Inline note: error (red, warning triangle) or info (orange, i).
+class ExInlineNote extends StatelessWidget {
+  final String message;
+  final bool error;
+  final Widget? action;
+
+  const ExInlineNote({super.key, required this.message, this.error = true, this.action});
+
+  @override
+  Widget build(BuildContext context) {
+    final fg = error ? exDanger : exCallingInk;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: error ? exDangerBg : const Color(0xFFFFF5EE),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: fg.withValues(alpha: 0.18)),
+      ),
+      child: Row(
+        children: [
+          Icon(error ? Icons.warning_amber_rounded : Icons.info_outline_rounded,
+              color: fg, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(message,
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: fg)),
+          ),
+          if (action != null) ...[const SizedBox(width: 8), action!],
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Inputs
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Labelled 52 px text field used by the exhibition forms.
+/// [prefixText] "+91" renders as a separate grey segment (phone input).
 class ExField extends StatelessWidget {
   final String label;
   final TextEditingController controller;
@@ -539,6 +1085,7 @@ class ExField extends StatelessWidget {
   final ValueChanged<String>? onSubmitted;
   final TextCapitalization textCapitalization;
   final IconData? prefixIcon;
+  final bool enabled;
 
   const ExField({
     super.key,
@@ -556,6 +1103,7 @@ class ExField extends StatelessWidget {
     this.onSubmitted,
     this.textCapitalization = TextCapitalization.sentences,
     this.prefixIcon,
+    this.enabled = true,
   });
 
   @override
@@ -566,15 +1114,15 @@ class ExField extends StatelessWidget {
             TextSpan(
               text: label,
               children: [
-                if (required)
-                  const TextSpan(text: ' *', style: TextStyle(color: exDanger)),
+                if (required) const TextSpan(text: ' *', style: TextStyle(color: exDanger)),
               ],
             ),
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: exInk),
+            style: exHeadingSm.copyWith(fontSize: 15),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           TextField(
             controller: controller,
+            enabled: enabled,
             keyboardType: keyboardType,
             maxLines: maxLines,
             inputFormatters: inputFormatters,
@@ -582,12 +1130,13 @@ class ExField extends StatelessWidget {
             textInputAction: textInputAction,
             onSubmitted: onSubmitted,
             textCapitalization: textCapitalization,
-            style: const TextStyle(fontSize: 16, color: exInk),
+            style: exBodyTouch,
             decoration: exInputDecoration(
               hint: hint,
               errorText: errorText,
               prefixText: prefixText,
               prefixIcon: prefixIcon,
+              enabled: enabled,
             ),
           ),
         ],
@@ -599,40 +1148,61 @@ InputDecoration exInputDecoration({
   String? errorText,
   String? prefixText,
   IconData? prefixIcon,
-}) =>
-    InputDecoration(
-      hintText: hint,
-      prefixIcon: prefixIcon == null ? null : Icon(prefixIcon, size: 20, color: exSubtle),
-      errorText: errorText,
-      prefixText: prefixText,
-      prefixStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: exInk),
-      hintStyle: TextStyle(fontSize: 15, color: Colors.grey.shade400),
-      filled: true,
-      fillColor: Colors.white,
-      isDense: false,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: exStrongBorder),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: exStrongBorder),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: AppColors.primary, width: 1.6),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: exDanger),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: exDanger, width: 1.6),
-      ),
-    );
+  bool enabled = true,
+}) {
+  OutlineInputBorder b(Color c, [double w = 1]) => OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: c, width: w),
+      );
+  final phone = prefixText != null && prefixText.trim().startsWith('+');
+  return InputDecoration(
+    hintText: hint,
+    errorText: errorText,
+    errorMaxLines: 3,
+    errorStyle: const TextStyle(
+        fontFamily: exFont, fontSize: 13, fontWeight: FontWeight.w500, color: exDanger),
+    prefixIcon: phone
+        ? Container(
+            width: 56,
+            // Inset so the field's own border (incl. the red error border)
+            // stays visible around the grey "+91" segment.
+            margin: const EdgeInsets.fromLTRB(1.5, 1.5, 12, 1.5),
+            alignment: Alignment.center,
+            decoration: const BoxDecoration(
+              color: exPageBg,
+              borderRadius: BorderRadius.horizontal(left: Radius.circular(6.5)),
+              border: Border(right: BorderSide(color: exStrongBorder)),
+            ),
+            child: Text(prefixText.trim(),
+                style: const TextStyle(
+                    fontFamily: exFont, fontSize: 16, fontWeight: FontWeight.w600, color: exInk)),
+          )
+        : prefixIcon == null
+            ? null
+            : Icon(prefixIcon, size: 20, color: exSubtle),
+    prefixIconConstraints: phone ? const BoxConstraints(minHeight: 52) : null,
+    prefixText: phone ? null : prefixText,
+    prefixStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: exInk),
+    hintStyle: const TextStyle(
+        fontFamily: exFont, fontSize: 16, fontWeight: FontWeight.w500, color: Color(0xFF9A9AA3)),
+    filled: true,
+    fillColor: enabled ? Colors.white : exPageBg,
+    isDense: false,
+    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+    border: b(exStrongBorder),
+    enabledBorder: b(exStrongBorder),
+    disabledBorder: b(exBorder),
+    focusedBorder: b(exBrandBold, 1.5),
+    errorBorder: b(exDanger, 1.5),
+    focusedErrorBorder: b(exDanger, 1.5),
+  );
+}
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Toast
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Ink toast with a tinted tick ("Interest captured", "Exhibition created").
 void exToast(BuildContext context, String message, {bool error = false}) {
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
@@ -640,113 +1210,32 @@ void exToast(BuildContext context, String message, {bool error = false}) {
       SnackBar(
         behavior: SnackBarBehavior.floating,
         backgroundColor: error ? exDanger : exInk,
+        elevation: 8,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         content: Row(
           children: [
-            Icon(error ? Icons.error_outline_rounded : Icons.check_circle_rounded,
-                color: error ? Colors.white : const Color(0xFFAFC0E8), size: 20),
-            const SizedBox(width: 10),
+            Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: error ? Colors.white24 : exIndicator,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(error ? Icons.priority_high_rounded : Icons.check_rounded,
+                  color: error ? Colors.white : exInk, size: 18),
+            ),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(message,
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                  style: const TextStyle(
+                      fontFamily: exFont,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white)),
             ),
           ],
         ),
       ),
     );
-}
-
-/// Exhibition status badge: Active gets a live, pulsing green dot;
-/// Completed gets a calm slate badge with a tick.
-class ExStatusBadge extends StatelessWidget {
-  final ExhibitionStatus status;
-  final bool large;
-
-  const ExStatusBadge({super.key, required this.status, this.large = false});
-
-  @override
-  Widget build(BuildContext context) {
-    final active = status == ExhibitionStatus.active;
-    const green = Color(0xFF16A34A);
-    const greenInk = Color(0xFF15803D);
-    const slate = Color(0xFF64748B);
-    final fs = large ? 13.0 : 12.0;
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: large ? 12 : 10, vertical: large ? 6 : 5),
-      decoration: BoxDecoration(
-        gradient: active
-            ? const LinearGradient(colors: [Color(0xFFE8F8EE), Color(0xFFD5F2E0)])
-            : const LinearGradient(colors: [Color(0xFFF1F4F8), Color(0xFFE7EBF1)]),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: active ? green.withValues(alpha: 0.35) : slate.withValues(alpha: 0.25),
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (active)
-            const _PulseDot(color: green)
-          else
-            Icon(Icons.check_circle_rounded, size: fs + 2, color: slate),
-          const SizedBox(width: 6),
-          Text(
-            status.label,
-            style: TextStyle(
-              fontSize: fs,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.2,
-              color: active ? greenInk : const Color(0xFF475569),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PulseDot extends StatefulWidget {
-  final Color color;
-  const _PulseDot({required this.color});
-
-  @override
-  State<_PulseDot> createState() => _PulseDotState();
-}
-
-class _PulseDotState extends State<_PulseDot> with SingleTickerProviderStateMixin {
-  late final AnimationController _c =
-      AnimationController(vsync: this, duration: const Duration(milliseconds: 1400))..repeat();
-
-  @override
-  void dispose() {
-    _c.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => SizedBox(
-        width: 12,
-        height: 12,
-        child: AnimatedBuilder(
-          animation: _c,
-          builder: (_, __) => Stack(
-            alignment: Alignment.center,
-            children: [
-              Container(
-                width: 6 + 6 * _c.value,
-                height: 6 + 6 * _c.value,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: widget.color.withValues(alpha: 0.35 * (1 - _c.value)),
-                ),
-              ),
-              Container(
-                width: 7,
-                height: 7,
-                decoration: BoxDecoration(shape: BoxShape.circle, color: widget.color),
-              ),
-            ],
-          ),
-        ),
-      );
 }

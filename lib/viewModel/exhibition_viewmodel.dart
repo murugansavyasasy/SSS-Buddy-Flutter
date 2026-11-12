@@ -10,9 +10,16 @@ final exhibitionRepositoryProvider = Provider<ExhibitionRepository>(
 
 /// All exhibitions, newest first. Search and the status chips filter this
 /// list on the device so they respond instantly at a busy stall.
-final exhibitionListProvider = FutureProvider.autoDispose<List<Exhibition>>((ref) async {
+/// No automatic retry: at a stall with patchy Wi-Fi the user should see
+/// "Couldn't load … Retry" instead of an endless skeleton.
+Duration? _noRetry(int retryCount, Object error) => null;
+
+final exhibitionListProvider = FutureProvider.autoDispose<List<Exhibition>>(retry: _noRetry, (
+  ref,
+) async {
   final items = await ref.read(exhibitionRepositoryProvider).fetchExhibitions();
-  final sorted = [...items]..sort((a, b) {
+  final sorted = [...items]
+    ..sort((a, b) {
       final da = a.createdAt ?? a.startDate ?? DateTime(1970);
       final db = b.createdAt ?? b.startDate ?? DateTime(1970);
       return db.compareTo(da);
@@ -20,24 +27,30 @@ final exhibitionListProvider = FutureProvider.autoDispose<List<Exhibition>>((ref
   return sorted;
 });
 
-final exhibitionDetailProvider =
-    FutureProvider.autoDispose.family<Exhibition, String>((ref, id) {
-  return ref.read(exhibitionRepositoryProvider).fetchExhibition(id);
-});
+final exhibitionDetailProvider = FutureProvider.autoDispose.family<Exhibition, String>(
+  retry: _noRetry,
+  (ref, id) {
+    return ref.read(exhibitionRepositoryProvider).fetchExhibition(id);
+  },
+);
 
-final exhibitionDemosProvider =
-    FutureProvider.autoDispose.family<List<ExhibitionDemo>, String>((ref, id) async {
-  final items = await ref.read(exhibitionRepositoryProvider).fetchDemos(id);
-  return [...items]..sort((a, b) =>
-      (b.createdAt ?? DateTime(1970)).compareTo(a.createdAt ?? DateTime(1970)));
-});
+final exhibitionDemosProvider = FutureProvider.autoDispose.family<List<ExhibitionDemo>, String>(
+  retry: _noRetry,
+  (ref, id) async {
+    final items = await ref.read(exhibitionRepositoryProvider).fetchDemos(id);
+    return [...items]
+      ..sort((a, b) => (b.createdAt ?? DateTime(1970)).compareTo(a.createdAt ?? DateTime(1970)));
+  },
+);
 
-final exhibitionLeadsProvider =
-    FutureProvider.autoDispose.family<List<ExhibitionLead>, String>((ref, id) async {
-  final items = await ref.read(exhibitionRepositoryProvider).fetchLeads(id);
-  return [...items]..sort((a, b) =>
-      (b.createdAt ?? DateTime(1970)).compareTo(a.createdAt ?? DateTime(1970)));
-});
+final exhibitionLeadsProvider = FutureProvider.autoDispose.family<List<ExhibitionLead>, String>(
+  retry: _noRetry,
+  (ref, id) async {
+    final items = await ref.read(exhibitionRepositoryProvider).fetchLeads(id);
+    return [...items]
+      ..sort((a, b) => (b.createdAt ?? DateTime(1970)).compareTo(a.createdAt ?? DateTime(1970)));
+  },
+);
 
 /// Refreshes everything shown on an exhibition's screen and the list counts.
 void refreshExhibition(WidgetRef ref, String id) {
