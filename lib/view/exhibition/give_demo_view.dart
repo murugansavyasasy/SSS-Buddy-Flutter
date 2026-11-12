@@ -70,9 +70,7 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
   // Step 2
   final _visitorName = TextEditingController();
   final _numberInput = TextEditingController();
-  final _pasteInput = TextEditingController();
   final List<String> _numbers = [];
-  bool _pasteOpen = false;
   String? _numberError;
   String? _dupNote;
   bool _step2Error = false;
@@ -141,7 +139,6 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
     _preview.dispose();
     _visitorName.dispose();
     _numberInput.dispose();
-    _pasteInput.dispose();
     final p = _recordingPath;
     if (p != null) {
       File(p).delete().catchError((_) => File(p));
@@ -203,7 +200,7 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
 
   // MARK: Numbers
 
-  void _addNumbers(List<String> raw, {required bool fromPaste}) {
+  void _addNumbers(List<String> raw) {
     final bad = <String>[];
     var dup = 0;
     for (final r in raw) {
@@ -226,10 +223,7 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
           ? '“${bad.first}” is not a valid 10-digit number'
           : '${bad.length} entries are not valid 10-digit numbers: ${bad.join(', ')}';
       _dupNote = dup == 0 ? null : '$dup ${dup == 1 ? 'duplicate' : 'duplicates'} removed';
-      if (fromPaste) {
-        _pasteInput.text = bad.join('\n');
-        if (bad.isEmpty) _pasteOpen = false;
-      } else if (bad.isEmpty) {
+      if (bad.isEmpty) {
         _numberInput.clear();
       }
     });
@@ -274,7 +268,7 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
       final noName = _visitorName.text.trim().isEmpty;
       if (noName) setState(() => _nameError = true);
       if (_numberInput.text.trim().isNotEmpty) {
-        _addNumbers([_numberInput.text], fromPaste: false);
+        _addNumbers([_numberInput.text]);
         if (_numberError != null) return;
       }
       if (_numbers.isEmpty) {
@@ -743,7 +737,7 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
                         FilteringTextInputFormatter.digitsOnly,
                         LengthLimitingTextInputFormatter(10),
                       ],
-                      onSubmitted: (v) => _addNumbers([v], fromPaste: false),
+                      onSubmitted: (v) => _addNumbers([v]),
                       onChanged: (_) {
                         if (_numberError != null) setState(() => _numberError = null);
                       },
@@ -763,7 +757,7 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
                         setState(() => _numberError = 'Enter a 10-digit mobile number');
                         return;
                       }
-                      _addNumbers([_numberInput.text], fromPaste: false);
+                      _addNumbers([_numberInput.text]);
                     },
                   ),
                 ],
@@ -785,42 +779,6 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
                     for (final n in _numbers)
                       _NumberChip(number: n, onRemove: () => setState(() => _numbers.remove(n))),
                   ],
-                ),
-              ],
-              const SizedBox(height: 12),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton(
-                  onPressed: () => setState(() => _pasteOpen = !_pasteOpen),
-                  style: TextButton.styleFrom(
-                    foregroundColor: exBrandBold,
-                    minimumSize: const Size(0, 48),
-                    padding: EdgeInsets.zero,
-                    textStyle: const TextStyle(
-                      fontFamily: exFont,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  child: Text(_pasteOpen ? 'Hide paste box' : 'Paste multiple numbers'),
-                ),
-              ),
-              if (_pasteOpen) ...[
-                TextField(
-                  controller: _pasteInput,
-                  maxLines: 4,
-                  keyboardType: TextInputType.multiline,
-                  style: exBodyTouch,
-                  decoration: exInputDecoration(hint: 'Separate with commas or new lines'),
-                ),
-                const SizedBox(height: 10),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: ExSecondaryButton(
-                    label: 'Add numbers',
-                    onPressed: () =>
-                        _addNumbers(_pasteInput.text.split(RegExp(r'[\n,;]+')), fromPaste: true),
-                  ),
                 ),
               ],
               if (_step2Error) ...[
