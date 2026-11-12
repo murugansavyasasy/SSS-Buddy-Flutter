@@ -18,6 +18,9 @@ import '../viewModel/demolist_view_model.dart';
 import '../viewModel/login_view_model.dart';
 import '../viewModel/schoollist_view_model.dart';
 
+/// Home leaderboard card is hidden for now; set to true to show it again.
+const bool _showLeaderboardCard = false;
+
 class Dashboard extends ConsumerWidget {
   const Dashboard({super.key});
 
@@ -334,10 +337,11 @@ class Dashboard extends ConsumerWidget {
 
                     const SizedBox(height: 16),
 
-                    /// LEADERBOARD (this month: top 3 + my rank)
-                    const DashboardLeaderboard(),
-
-                    const SizedBox(height: 16),
+                    /// LEADERBOARD (this month: top 3 + my rank) — hidden for now.
+                    if (_showLeaderboardCard) ...[
+                      const DashboardLeaderboard(),
+                      const SizedBox(height: 16),
+                    ],
 
                     /// 🔥 MENU HEADER
                     Row(
