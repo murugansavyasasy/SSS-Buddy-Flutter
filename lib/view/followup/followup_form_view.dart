@@ -210,7 +210,7 @@ class _FollowUpFormViewState extends ConsumerState<FollowUpFormView> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 _label('Phone'),
-                                _field(_phone, 'Mobile number',
+                                _field(_phone, 'Enter 10-digit mobile number',
                                     icon: Icons.phone_outlined,
                                     keyboard: TextInputType.phone),
                               ],

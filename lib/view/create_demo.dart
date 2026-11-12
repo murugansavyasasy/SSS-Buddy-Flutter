@@ -105,7 +105,7 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
 
                         CustomTextField(
                           label: "Demo Principal Number *",
-                          hint: "Enter Principal Mobile Number",
+                          hint: "Enter 10-digit mobile number",
                           controller: subjectController,
                           keyboardType: TextInputType.phone,
                           validator: (value) =>
@@ -139,9 +139,7 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
                                       label: index == 0
                                           ? "Demo Parent Number *"
                                           : "",
-                                      hint: index == 0
-                                          ? "Enter Parent Mobile Number"
-                                          : "",
+                                      hint: "Enter 10-digit mobile number",
                                       controller: parentControllers[index],
                                       keyboardType: TextInputType.phone,
                                       validator: index == 0

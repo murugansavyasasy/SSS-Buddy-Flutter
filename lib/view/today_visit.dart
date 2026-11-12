@@ -396,7 +396,7 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
                                 label: "Contact Number",
                                 icon: Icons.phone_outlined,
                                 keyboardType: TextInputType.phone,
-                                hint: "Enter mobile number",
+                                hint: "Enter 10-digit mobile number",
                               ),
                             ],
                           ),
