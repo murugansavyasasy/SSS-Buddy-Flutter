@@ -343,6 +343,7 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
       controller: r.mobile,
       keyboardType: TextInputType.phone,
       inputFormatters: [
+        const ExAsciiDigitsFormatter(),
         FilteringTextInputFormatter.digitsOnly,
         LengthLimitingTextInputFormatter(10),
       ],
@@ -350,7 +351,7 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
         if (_tried) setState(() {});
       },
       style: exBodyTouch,
-      decoration: exInputDecoration(hint: '98400 12345', prefixText: '+91', errorText: err),
+      decoration: exInputDecoration(hint: 'Enter 10-digit mobile number', prefixText: '+91', errorText: err),
     );
     final remove = SizedBox(
       width: 48,

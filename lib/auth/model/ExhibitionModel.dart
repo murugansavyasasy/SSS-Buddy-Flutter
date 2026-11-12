@@ -64,8 +64,33 @@ Map<String, dynamic> extractObject(dynamic body, [List<String> keys = const []])
 }
 
 /// Strips everything but digits and a leading 91 / 0, leaving a 10-digit number.
+/// Zero code point of each Unicode decimal-digit block a phone keyboard in
+/// India may send (e.g. Hindi / Tamil keyboards type १२३ / ௧௨௩ instead of 123).
+const _digitZeros = [
+  0x0660, 0x06F0, // Arabic-Indic, Extended Arabic-Indic
+  0x0966, 0x09E6, 0x0A66, 0x0AE6, 0x0B66, // Devanagari, Bengali, Gurmukhi, Gujarati, Oriya
+  0x0BE6, 0x0C66, 0x0CE6, 0x0D66, // Tamil, Telugu, Kannada, Malayalam
+  0xFF10, // Fullwidth
+];
+
+/// Converts any of the digits above to ASCII 0-9; other characters unchanged.
+String asciiDigits(String s) {
+  final out = StringBuffer();
+  for (final c in s.runes) {
+    var mapped = c;
+    for (final z in _digitZeros) {
+      if (c >= z && c <= z + 9) {
+        mapped = 0x30 + (c - z);
+        break;
+      }
+    }
+    out.writeCharCode(mapped);
+  }
+  return out.toString();
+}
+
 String normalizeIndianMobile(String raw) {
-  var d = raw.replaceAll(RegExp(r'\D'), '');
+  var d = asciiDigits(raw).replaceAll(RegExp(r'\D'), '');
   if (d.length == 12 && d.startsWith('91')) d = d.substring(2);
   if (d.length == 11 && d.startsWith('0')) d = d.substring(1);
   return d;

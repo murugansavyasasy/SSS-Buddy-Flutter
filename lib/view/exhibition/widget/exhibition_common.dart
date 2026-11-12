@@ -1143,6 +1143,21 @@ class ExField extends StatelessWidget {
       );
 }
 
+/// Turns digits typed on Hindi / Tamil / other Indian keyboards (१२३, ௧௨௩…)
+/// into 0-9. Put it first, before any digits-only filter, on number fields;
+/// otherwise those digits are silently dropped and nothing can be typed.
+class ExAsciiDigitsFormatter extends TextInputFormatter {
+  const ExAsciiDigitsFormatter();
+
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    final text = asciiDigits(newValue.text);
+    if (text == newValue.text) return newValue;
+    // Every mapped digit is one UTF-16 unit before and after, so offsets hold.
+    return newValue.copyWith(text: text);
+  }
+}
+
 InputDecoration exInputDecoration({
   String? hint,
   String? errorText,
