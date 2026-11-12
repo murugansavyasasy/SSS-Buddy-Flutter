@@ -129,6 +129,34 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
     }
   }
 
+  /// Review step: play the chosen voice (template or recording).
+  static const _reviewPreviewId = '__review__';
+
+  Future<void> _toggleReviewVoice() async {
+    if (_previewId == _reviewPreviewId) {
+      await _preview.stop();
+      setState(() => _previewId = null);
+      return;
+    }
+    final url = _voice == _Voice.template ? _template?.audioUrl ?? '' : '';
+    final path = _voice == _Voice.record ? _recordingPath : null;
+    if (url.isEmpty && path == null) return;
+    setState(() => _previewId = _reviewPreviewId);
+    try {
+      await _preview.stop();
+      if (path != null) {
+        await _preview.setFilePath(path);
+      } else {
+        await _preview.setUrl(url);
+      }
+      _preview.play();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _previewId = null);
+      exToast(context, 'Could not play the voice', error: true);
+    }
+  }
+
   // MARK: Numbers
 
   void _addNumbers(List<String> raw, {required bool fromPaste}) {
@@ -231,7 +259,9 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
 
   void _back() {
     if (_sending || _step == 0) return;
+    _preview.stop();
     setState(() {
+      _previewId = null;
       _sendError = null;
       _step--;
     });
@@ -470,7 +500,7 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(top: BorderSide(color: exBorder)),
+        boxShadow: [BoxShadow(color: Color(0x141E2B45), blurRadius: 28, offset: Offset(0, -10))],
       ),
       padding: EdgeInsets.fromLTRB(wide ? 40 : 16, 12, wide ? 40 : 16, 12),
       child: SafeArea(
@@ -516,16 +546,9 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
     ),
   );
 
-  Widget _phoneTitle(String t, String sub) => Padding(
+  Widget _phoneTitle(String t) => Padding(
     padding: const EdgeInsets.only(bottom: 16),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(t, style: exHeadingLg),
-        const SizedBox(height: 4),
-        Text(sub, style: exBodyMd.copyWith(fontSize: 15)),
-      ],
-    ),
+    child: Text(t, style: exHeadingLg),
   );
 
   // Step 1
@@ -545,10 +568,9 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       if (wide)
-        _title(
-          'Choose a voice',
-          'Play a ready-made template or record a message for this visitor.',
-        ),
+        _title('Choose a voice', 'Play a ready-made template or record a message for this visitor.')
+      else
+        _phoneTitle('Choose a voice'),
       Align(
         alignment: Alignment.centerLeft,
         child: SizedBox(
@@ -638,7 +660,7 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
   Widget _visitorStep(bool wide) {
     final title = wide
         ? _title('Who is the demo for?', 'Add one or more visitor numbers. Each one gets a call.')
-        : _phoneTitle('Who is the demo for?', 'Each number gets a call.');
+        : _phoneTitle('Who is the demo for?');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -661,7 +683,20 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
                 }),
               ),
               const SizedBox(height: 20),
-              Text('Visitor mobile numbers', style: exHeadingSm.copyWith(fontSize: 15)),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Visitor mobile numbers',
+                      style: exHeadingSm.copyWith(fontSize: 15),
+                    ),
+                  ),
+                  Text(
+                    '${_numbers.length} ${_numbers.length == 1 ? 'number' : 'numbers'}',
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: exInk),
+                  ),
+                ],
+              ),
               const SizedBox(height: 8),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -671,14 +706,17 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
                       controller: _numberInput,
                       keyboardType: TextInputType.phone,
                       textInputAction: TextInputAction.done,
-                      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9 +]'))],
+                      inputFormatters: [
+                        const ExAsciiDigitsFormatter(),
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9 +]')),
+                      ],
                       onSubmitted: (v) => _addNumbers([v], fromPaste: false),
                       onChanged: (_) {
                         if (_numberError != null) setState(() => _numberError = null);
                       },
                       style: exBodyTouch,
                       decoration: exInputDecoration(
-                        hint: '98400 12345',
+                        hint: '10-digit number',
                         prefixText: '+91',
                         errorText: _numberError,
                       ),
@@ -686,7 +724,7 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
                   ),
                   const SizedBox(width: 10),
                   ExSecondaryButton(
-                    label: 'Add number',
+                    label: 'Add',
                     onPressed: () {
                       if (_numberInput.text.trim().isEmpty) {
                         setState(() => _numberError = 'Enter a 10-digit mobile number');
@@ -701,6 +739,10 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
                 const SizedBox(height: 12),
                 ExInlineNote(message: _dupNote!, error: false),
               ],
+              if (_numbers.isEmpty) ...[
+                const SizedBox(height: 12),
+                const _DashedNote(text: 'No numbers added yet.'),
+              ],
               if (_numbers.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 Wrap(
@@ -712,7 +754,7 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
                   ],
                 ),
               ],
-              const SizedBox(height: 4),
+              const SizedBox(height: 12),
               Align(
                 alignment: Alignment.centerLeft,
                 child: TextButton(
@@ -766,7 +808,8 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
   Widget _reviewStep(bool wide) {
     final title = wide
         ? _title('Review & send', 'Check everything before the calls go out.')
-        : _phoneTitle('Review & send', 'Check everything before the calls go out.');
+        : _phoneTitle('Review & send');
+    final total = _numbers.length + _team.length;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -776,18 +819,6 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (!wide) ...[
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: exBorder),
-                  ),
-                  child: _summaryContent(),
-                ),
-                const SizedBox(height: 16),
-              ],
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -796,49 +827,73 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
                 ),
                 child: Column(
                   children: [
-                    _reviewRow(
-                      'Voice',
-                      Text(_voiceLabel, style: _strong),
-                      onEdit: () => setState(() => _step = 0),
-                    ),
-                    _reviewRow(
-                      'Visitor',
-                      Text(_visitorName.text.trim(), style: _strong),
-                      onEdit: () => setState(() => _step = 1),
-                    ),
+                    _reviewVoiceRow(),
+                    _reviewRow('Visitor', Text(_visitorName.text.trim(), style: _strong)),
                     _reviewRow(
                       'Visitor numbers (${_numbers.length})',
                       _numbers.isEmpty
                           ? const Text('None added', style: exBodyMd)
                           : Wrap(
-                              spacing: 6,
-                              runSpacing: 6,
+                              spacing: 8,
+                              runSpacing: 8,
                               children: [
-                                for (final n in _numbers) _smallChip(formatIndianMobile(n), exTint),
+                                for (final n in _numbers)
+                                  _smallChip(formatIndianMobile(n), exPageBg),
                               ],
                             ),
-                      onEdit: () => setState(() => _step = 1),
                     ),
                     _reviewRow(
                       'Attendees (${_team.length})',
                       _team.isEmpty
                           ? const Text('No attendees', style: exBodyMd)
                           : Wrap(
-                              spacing: 6,
-                              runSpacing: 6,
-                              children: [
-                                for (final m in _team)
-                                  _smallChip(
-                                    '${m.name} · ${formatIndianMobile(m.mobile)}',
-                                    exPageBg,
-                                  ),
-                              ],
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [for (final m in _team) _smallChip(m.name, exTint)],
                             ),
                       last: true,
                     ),
                   ],
                 ),
               ),
+              if (!wide) ...[
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFD5DCEC)),
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFFF4F6FA), Color(0xFFD9E0F0)],
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.phone_outlined, color: exInk, size: 26),
+                      const SizedBox(width: 18),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('$total ${total == 1 ? 'call' : 'calls'}', style: exHeadingXl),
+                            Text(
+                              '${_numbers.length} ${_numbers.length == 1 ? 'visitor' : 'visitors'}'
+                              ' + ${_team.length} ${_team.length == 1 ? 'attendee' : 'attendees'}',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: exInk,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               if (_sendError != null) ...[
                 const SizedBox(height: 16),
                 ExInlineNote(
@@ -857,6 +912,74 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
           ),
         ),
       ],
+    );
+  }
+
+  /// Voice row with a play button and progress, so the voice can be checked
+  /// once more before the calls go out.
+  Widget _reviewVoiceRow() {
+    final playing = _previewId == _reviewPreviewId;
+    final fallback = _voice == _Voice.template
+        ? (_template?.duration ?? Duration.zero)
+        : _recordingLength;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: exBorder)),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 48,
+            height: 48,
+            child: IconButton(
+              tooltip: playing ? 'Stop voice' : 'Play voice',
+              onPressed: _toggleReviewVoice,
+              style: IconButton.styleFrom(
+                backgroundColor: playing ? exInk : Colors.white,
+                side: playing ? null : const BorderSide(color: exStrongBorder),
+                shape: const CircleBorder(),
+              ),
+              icon: Icon(
+                playing ? Icons.stop_rounded : Icons.play_arrow_outlined,
+                color: playing ? Colors.white : exInk,
+                size: 24,
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Voice', style: exBodyMd),
+                const SizedBox(height: 4),
+                Text(_voiceLabel, style: _strong),
+                const SizedBox(height: 8),
+                StreamBuilder<Duration>(
+                  stream: _preview.positionStream,
+                  builder: (_, snap) {
+                    final total = _preview.duration ?? fallback;
+                    final p = playing ? (snap.data ?? Duration.zero) : Duration.zero;
+                    final f = total.inMilliseconds == 0
+                        ? 0.0
+                        : (p.inMilliseconds / total.inMilliseconds).clamp(0.0, 1.0);
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(2),
+                      child: LinearProgressIndicator(
+                        value: f,
+                        minHeight: 4,
+                        backgroundColor: exBorder,
+                        color: exBrand,
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -941,50 +1064,29 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
   static const _strong = TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: exInk);
 
   Widget _smallChip(String text, Color bg) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
     decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
     child: Text(
       text,
-      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: exInk),
+      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: exInk),
     ),
   );
 
-  Widget _reviewRow(String label, Widget value, {VoidCallback? onEdit, bool last = false}) =>
-      Container(
-        padding: const EdgeInsets.fromLTRB(16, 14, 8, 14),
-        decoration: BoxDecoration(
-          border: last ? null : const Border(bottom: BorderSide(color: exBorder)),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(label, style: exBodyMd),
-                  const SizedBox(height: 6),
-                  value,
-                ],
-              ),
-            ),
-            if (onEdit != null)
-              TextButton(
-                onPressed: _sending ? null : onEdit,
-                style: TextButton.styleFrom(
-                  foregroundColor: exBrandBold,
-                  minimumSize: const Size(48, 48),
-                  textStyle: const TextStyle(
-                    fontFamily: exFont,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                child: const Text('Edit'),
-              ),
-          ],
-        ),
-      );
+  Widget _reviewRow(String label, Widget value, {bool last = false}) => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      border: last ? null : const Border(bottom: BorderSide(color: exBorder)),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: exBodyMd),
+        const SizedBox(height: 8),
+        value,
+      ],
+    ),
+  );
 }
 
 /// 1 Voice — 2 Visitors — 3 Review & Send.
@@ -1110,14 +1212,12 @@ class _Segmented extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (wide) ...[
-                      Icon(icon, size: 20, color: on ? exInk : exSubtle),
-                      const SizedBox(width: 8),
-                    ],
+                    Icon(icon, size: 20, color: on ? exInk : exSubtle),
+                    const SizedBox(width: 8),
                     Text(
                       label,
                       style: TextStyle(
-                        fontSize: wide ? 17 : 15,
+                        fontSize: wide ? 17 : 16,
                         fontWeight: FontWeight.w600,
                         color: on ? exInk : exSubtle,
                       ),
@@ -1132,7 +1232,7 @@ class _Segmented extends StatelessWidget {
     }
 
     return Container(
-      height: wide ? 60 : 52,
+      height: wide ? 60 : 56,
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: const Color(0xFFE3E7EF),
@@ -1140,8 +1240,8 @@ class _Segmented extends StatelessWidget {
       ),
       child: Row(
         children: [
-          seg(0, 'Use Template', Icons.description_outlined),
-          seg(1, 'Record Custom Voice', Icons.mic_none_rounded),
+          seg(0, wide ? 'Use Template' : 'Template', Icons.description_outlined),
+          seg(1, wide ? 'Record Custom Voice' : 'Record voice', Icons.mic_none_rounded),
         ],
       ),
     );
@@ -1168,31 +1268,30 @@ class _TemplateCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = template;
-    return Material(
-      color: selected ? exTint : Colors.white,
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        onTap: onSelect,
+    return Semantics(
+      selected: selected,
+      child: Material(
+        color: selected ? exTint : Colors.white,
         borderRadius: BorderRadius.circular(12),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: selected ? exBrand : exBorder, width: selected ? 1.5 : 1),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 14, 16),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: SizedBox(
-                        width: 56,
-                        height: 56,
+        child: InkWell(
+          onTap: onSelect,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: selected ? exBrand : exBorder, width: selected ? 2 : 1),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 16, 16, 16),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 52,
+                        height: 52,
                         child: IconButton(
                           tooltip: playing
                               ? 'Pause preview of ${t.title}'
@@ -1210,83 +1309,117 @@ class _TemplateCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(t.title, style: exHeadingSm.copyWith(fontSize: 17)),
-                          const SizedBox(height: 4),
-                          Text(
-                            t.description,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
-                              color: exSubtle,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Row(
-                            children: [
-                              const Icon(Icons.schedule_rounded, size: 15, color: exSubtle),
-                              const SizedBox(width: 6),
-                              Flexible(
-                                child: Text(
-                                  t.audioUrl.isEmpty
-                                      ? '${exDuration(t.duration)} · Audio not set up yet'
-                                      : exDuration(t.duration),
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                    color: exSubtle,
-                                  ),
-                                ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(t.title, style: exHeadingMd),
+                            const SizedBox(height: 2),
+                            Text(
+                              t.description,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                                color: exSubtle,
                               ),
-                            ],
-                          ),
-                        ],
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              t.audioUrl.isEmpty
+                                  ? '${exDuration(t.duration)} · Audio not set up yet'
+                                  : exDuration(t.duration),
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                                color: exSubtle,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      width: 26,
-                      height: 26,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: selected ? exBrand : Colors.white,
-                        border: selected ? null : Border.all(color: exStrongBorder, width: 2),
+                      const SizedBox(width: 10),
+                      Container(
+                        width: 26,
+                        height: 26,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: selected ? exBrand : Colors.white,
+                          border: selected ? null : Border.all(color: exStrongBorder, width: 2),
+                        ),
+                        child: selected
+                            ? const Icon(Icons.check_rounded, size: 16, color: Colors.white)
+                            : null,
                       ),
-                      child: selected
-                          ? const Icon(Icons.check_rounded, size: 18, color: Colors.white)
-                          : null,
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              if (playing)
-                StreamBuilder<Duration>(
-                  stream: player.positionStream,
-                  builder: (_, snap) {
-                    final total = player.duration ?? t.duration;
-                    final p = snap.data ?? Duration.zero;
-                    final f = total.inMilliseconds == 0
-                        ? 0.0
-                        : (p.inMilliseconds / total.inMilliseconds).clamp(0.0, 1.0);
-                    return LinearProgressIndicator(
-                      value: f,
-                      minHeight: 3,
-                      backgroundColor: Colors.transparent,
-                      color: exBrand,
-                    );
-                  },
-                ),
-            ],
+                if (playing)
+                  StreamBuilder<Duration>(
+                    stream: player.positionStream,
+                    builder: (_, snap) {
+                      final total = player.duration ?? t.duration;
+                      final p = snap.data ?? Duration.zero;
+                      final f = total.inMilliseconds == 0
+                          ? 0.0
+                          : (p.inMilliseconds / total.inMilliseconds).clamp(0.0, 1.0);
+                      return LinearProgressIndicator(
+                        value: f,
+                        minHeight: 3,
+                        backgroundColor: Colors.transparent,
+                        color: exBrand,
+                      );
+                    },
+                  ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
+}
+
+/// Dashed placeholder box ("No numbers added yet.").
+class _DashedNote extends StatelessWidget {
+  final String text;
+  const _DashedNote({required this.text});
+
+  @override
+  Widget build(BuildContext context) => CustomPaint(
+    painter: _DashedRRectPainter(),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Text(
+        text,
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: exSubtle),
+      ),
+    ),
+  );
+}
+
+class _DashedRRectPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = exStrongBorder
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
+    final path = Path()
+      ..addRRect(
+        RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(8)).deflate(0.6),
+      );
+    for (final m in path.computeMetrics()) {
+      var d = 0.0;
+      while (d < m.length) {
+        canvas.drawPath(m.extractPath(d, d + 5), paint);
+        d += 9;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 /// "+91 98765 43210 ×" chip.
@@ -1332,39 +1465,63 @@ class _TeamCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(16),
+    padding: const EdgeInsets.fromLTRB(16, 18, 16, 12),
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: const Color(0xFFF0F2F7),
       borderRadius: BorderRadius.circular(12),
       border: Border.all(color: exBorder),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text.rich(
-          TextSpan(
-            text: 'Attendees',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: exInk),
-            children: [
-              TextSpan(
-                text: ' · Also called on every demo',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: exSubtle),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 10),
+        const Text('Attendees will also be called', style: exHeadingSm),
+        const SizedBox(height: 8),
         if (team.isEmpty)
-          const Text('No attendees on this exhibition.', style: exBodyMd)
+          const Padding(
+            padding: EdgeInsets.only(bottom: 6),
+            child: Text('No attendees on this exhibition.', style: exBodyMd),
+          )
         else
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final m in team)
-                ExPersonChip(name: m.name, number: formatIndianMobile(m.mobile)),
-            ],
-          ),
+          for (final m in team)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    alignment: Alignment.center,
+                    decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                    child: Text(
+                      exInitials(m.name),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: exInk,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      m.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: exHeadingSm,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    formatIndianMobile(m.mobile),
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: exSubtle,
+                    ),
+                  ),
+                ],
+              ),
+            ),
       ],
     ),
   );

@@ -226,13 +226,15 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
 
   String? get _numberError {
     final n = _number.text.trim();
-    if (!_tried || n.isEmpty) return null;
+    if (!_tried) return null;
+    if (n.isEmpty) return 'Contact number is required';
     return isValidIndianMobile(normalizeIndianMobile(n)) ? null : 'Enter a 10-digit mobile number';
   }
 
   String? get _emailError {
     final e = _email.text.trim();
-    if (!_tried || e.isEmpty) return null;
+    if (!_tried) return null;
+    if (e.isEmpty) return 'Contact email is required';
     return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(e) ? null : 'Enter a valid email';
   }
 
@@ -242,7 +244,12 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
       _tried = true;
       _error = null;
     });
-    if (_school.text.trim().isEmpty || _numberError != null || _emailError != null) return;
+    if (_school.text.trim().isEmpty ||
+        _city.text.trim().isEmpty ||
+        _numberError != null ||
+        _emailError != null) {
+      return;
+    }
     setState(() => _saving = true);
     try {
       await ref.read(exhibitionRepositoryProvider).captureLead(
@@ -318,6 +325,7 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
   Widget build(BuildContext context) {
     final demo = widget.demo;
     final schoolError = _tried && _school.text.trim().isEmpty ? 'School name is required' : null;
+    final cityError = _tried && _city.text.trim().isEmpty ? 'City is required' : null;
     final wide = MediaQuery.sizeOf(context).width >= 600;
 
     Widget pair(Widget a, Widget b) => wide
@@ -392,9 +400,14 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
                   ),
                   ExField(
                     label: 'City',
+                    required: true,
                     controller: _city,
                     hint: 'e.g. Chennai',
+                    errorText: cityError,
                     textCapitalization: TextCapitalization.words,
+                    onChanged: (_) {
+                      if (_tried) setState(() {});
+                    },
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -419,22 +432,31 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
                 pair(
                   ExField(
                     label: 'Contact number',
+                    required: true,
                     controller: _number,
-                    hint: '98400 12345',
+                    hint: 'Enter 10-digit mobile number',
                     prefixText: '+91',
                     keyboardType: TextInputType.phone,
                     errorText: _numberError,
+                    onChanged: (_) {
+                      if (_tried) setState(() {});
+                    },
                     inputFormatters: [
+                      const ExAsciiDigitsFormatter(),
                       FilteringTextInputFormatter.digitsOnly,
                       LengthLimitingTextInputFormatter(10),
                     ],
                   ),
                   ExField(
                     label: 'Contact email',
+                    required: true,
                     controller: _email,
                     hint: 'name@school.edu.in',
                     keyboardType: TextInputType.emailAddress,
                     errorText: _emailError,
+                    onChanged: (_) {
+                      if (_tried) setState(() {});
+                    },
                     textCapitalization: TextCapitalization.none,
                   ),
                 ),
