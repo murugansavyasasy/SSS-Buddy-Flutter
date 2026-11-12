@@ -115,7 +115,7 @@ class _DemolistEditViewState extends ConsumerState<DemolistEditView> {
 
           CustomTextField(
             label: "Principal Number",
-            hint: "Principal contact number",
+            hint: "Enter 10-digit mobile number",
             controller: mobileController,
             enabled: false,
           ),
@@ -157,7 +157,7 @@ class _DemolistEditViewState extends ConsumerState<DemolistEditView> {
                     Expanded(
                       child: CustomTextField(
                         label: "Parent ${index + 1}",
-                        hint: "Enter parent number",
+                        hint: "Enter 10-digit mobile number",
                         controller: parentControllers[index],
                         keyboardType: TextInputType.phone,
                       ),
