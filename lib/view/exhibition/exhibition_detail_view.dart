@@ -134,7 +134,8 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
                     child: _Header(
                       ex: ex,
                       onGiveDemo: () => _giveDemo(ex),
-                      loadingTeam: detail.isLoading && widget.initial != null && ex.attendees.isEmpty,
+                      loadingTeam:
+                          detail.isLoading && widget.initial != null && ex.attendees.isEmpty,
                     ),
                   ),
                 ),
@@ -152,10 +153,7 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
                   ),
                 ),
               ),
-              if (_tab == 0)
-                ..._demoSlivers(demos, ex, pad)
-              else
-                ..._leadSlivers(leads, pad, wide),
+              if (_tab == 0) ..._demoSlivers(demos, ex, pad) else ..._leadSlivers(leads, pad, wide),
               const SliverToBoxAdapter(child: SizedBox(height: 32)),
             ],
           ),
@@ -232,10 +230,15 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
     return [
       addButton,
       ...leads.when<List<Widget>>(
-        loading: () => [const SliverToBoxAdapter(child: ExMaxWidth(child: ExSkeletonList(count: 3)))],
+        loading: () => [
+          const SliverToBoxAdapter(child: ExMaxWidth(child: ExSkeletonList(count: 3))),
+        ],
         error: (e, _) => [
           SliverToBoxAdapter(
-            child: ExStateView.error(e, onRetry: () => ref.invalidate(exhibitionLeadsProvider(_id))),
+            child: ExStateView.error(
+              e,
+              onRetry: () => ref.invalidate(exhibitionLeadsProvider(_id)),
+            ),
           ),
         ],
         data: (items) {
@@ -257,10 +260,8 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
               itemCount: rows,
               separatorBuilder: (_, __) => const SizedBox(height: 10),
               itemBuilder: (_, r) {
-                Widget card(int i) => _LeadCard(
-                      lead: items[i],
-                      isNew: _highlightNewestLead && i == 0,
-                    );
+                Widget card(int i) =>
+                    _LeadCard(lead: items[i], isNew: _highlightNewestLead && i == 0);
                 return ExMaxWidth(
                   child: Padding(
                     padding: EdgeInsets.symmetric(horizontal: pad),
@@ -316,12 +317,15 @@ class _Header extends StatelessWidget {
             runSpacing: 6,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Text(ex.name,
-                  style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.3,
-                      color: exInk)),
+              Text(
+                ex.name,
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.3,
+                  color: exInk,
+                ),
+              ),
               ExStatusBadge(status: ex.status, large: true),
             ],
           ),
@@ -348,7 +352,9 @@ class _Header extends StatelessWidget {
                 children: [
                   const Icon(Icons.sticky_note_2_outlined, size: 18, color: Color(0xFF7A7148)),
                   const SizedBox(width: 8),
-                  Expanded(child: Text(ex.notes, style: const TextStyle(fontSize: 14, color: exInk))),
+                  Expanded(
+                    child: Text(ex.notes, style: const TextStyle(fontSize: 14, color: exInk)),
+                  ),
                 ],
               ),
             ),
@@ -370,8 +376,10 @@ class _Header extends StatelessWidget {
           if (loadingTeam)
             const LinearProgressIndicator(minHeight: 2)
           else if (ex.attendees.isEmpty)
-            const Text('No attenders added. Only visitors will be called.',
-                style: TextStyle(fontSize: 13.5, color: exSubtle))
+            const Text(
+              'No attenders added. Only visitors will be called.',
+              style: TextStyle(fontSize: 13.5, color: exSubtle),
+            )
           else
             SizedBox(
               height: 54,
@@ -392,20 +400,32 @@ class _Header extends StatelessWidget {
                         CircleAvatar(
                           radius: 18,
                           backgroundColor: const Color(0xFFE8ECF5),
-                          child: Text(exInitials(m.name),
-                              style: const TextStyle(
-                                  fontSize: 12, fontWeight: FontWeight.w700, color: exInk)),
+                          child: Text(
+                            exInitials(m.name),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: exInk,
+                            ),
+                          ),
                         ),
                         const SizedBox(width: 8),
                         Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(m.name,
-                                style: const TextStyle(
-                                    fontSize: 13.5, fontWeight: FontWeight.w600, color: exInk)),
-                            Text(formatIndianMobile(m.mobile),
-                                style: const TextStyle(fontSize: 12, color: exSubtle)),
+                            Text(
+                              m.name,
+                              style: const TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w600,
+                                color: exInk,
+                              ),
+                            ),
+                            Text(
+                              formatIndianMobile(m.mobile),
+                              style: const TextStyle(fontSize: 12, color: exSubtle),
+                            ),
                           ],
                         ),
                       ],
@@ -427,15 +447,19 @@ class _Header extends StatelessWidget {
   }
 
   Widget _iconText(IconData icon, String text) => Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: exSubtle),
-          const SizedBox(width: 5),
-          Flexible(child: Text(text, style: const TextStyle(fontSize: 14, color: exSubtle))),
-        ],
-      );
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Icon(icon, size: 16, color: exSubtle),
+      const SizedBox(width: 5),
+      Flexible(
+        child: Text(text, style: const TextStyle(fontSize: 14, color: exSubtle)),
+      ),
+    ],
+  );
 }
 
+/// Demos / Leads switcher: a soft track with a white card that slides
+/// under the selected tab. Each tab has its own accent colour.
 class _Tabs extends StatelessWidget {
   final int selected;
   final int demoCount;
@@ -449,64 +473,134 @@ class _Tabs extends StatelessWidget {
     required this.onChanged,
   });
 
+  static const _leadAccent = Color(0xFFD97706);
+
   @override
-  Widget build(BuildContext context) => Container(
-        height: 52,
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: exBorder),
+  Widget build(BuildContext context) =>
+      LayoutBuilder(builder: (context, box) => _track(showHint: box.maxWidth >= 460));
+
+  Widget _track({required bool showHint}) => Container(
+    height: 64,
+    padding: const EdgeInsets.all(5),
+    decoration: BoxDecoration(
+      color: const Color(0xFFE9EDF4),
+      borderRadius: BorderRadius.circular(18),
+    ),
+    child: Stack(
+      children: [
+        // Sliding indicator.
+        AnimatedAlign(
+          duration: const Duration(milliseconds: 260),
+          curve: Curves.easeOutCubic,
+          alignment: selected == 0 ? Alignment.centerLeft : Alignment.centerRight,
+          child: FractionallySizedBox(
+            widthFactor: 0.5,
+            heightFactor: 1,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: const [
+                  BoxShadow(color: Color(0x1F1A2235), blurRadius: 12, offset: Offset(0, 3)),
+                ],
+              ),
+            ),
+          ),
         ),
-        child: Row(
+        Row(
           children: [
-            _tab(0, 'Demos', Icons.graphic_eq_rounded, demoCount),
-            _tab(1, 'Leads', Icons.school_outlined, leadCount),
+            _tab(
+              0,
+              'Demos',
+              showHint ? 'Voice demos played' : null,
+              Icons.graphic_eq_rounded,
+              AppColors.primary,
+              demoCount,
+            ),
+            _tab(
+              1,
+              'Leads',
+              showHint ? 'Interested schools' : null,
+              Icons.school_rounded,
+              _leadAccent,
+              leadCount,
+            ),
           ],
         ),
-      );
+      ],
+    ),
+  );
 
-  Widget _tab(int i, String label, IconData icon, int count) {
+  Widget _tab(int i, String label, String? hint, IconData icon, Color accent, int count) {
     final on = selected == i;
     return Expanded(
       child: Semantics(
         selected: on,
         button: true,
+        label: '$label, $count',
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: () => onChanged(i),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOut,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: on ? AppColors.primary : Colors.transparent,
-              borderRadius: BorderRadius.circular(10),
-            ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, size: 18, color: on ? Colors.white : exSubtle),
-                const SizedBox(width: 6),
-                Text(label,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: on ? Colors.white : exSubtle,
-                    )),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 220),
+                  width: 36,
+                  height: 36,
                   decoration: BoxDecoration(
-                    color: on ? Colors.white.withValues(alpha: 0.22) : const Color(0xFFEFF1F5),
+                    color: on ? accent : Colors.white.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, size: 19, color: on ? Colors.white : exSubtle),
+                ),
+                const SizedBox(width: 10),
+                Flexible(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AnimatedDefaultTextStyle(
+                        duration: const Duration(milliseconds: 200),
+                        style: TextStyle(
+                          fontSize: 15.5,
+                          fontWeight: FontWeight.w800,
+                          color: on ? exInk : exSubtle,
+                        ),
+                        child: Text(label, maxLines: 1),
+                      ),
+                      if (hint != null)
+                        Text(
+                          hint,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 11.5, color: exSubtle),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 220),
+                  constraints: const BoxConstraints(minWidth: 28),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: on
+                        ? accent.withValues(alpha: 0.12)
+                        : Colors.white.withValues(alpha: 0.6),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Text('$count',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: on ? Colors.white : exInk,
-                      )),
+                  child: Text(
+                    '$count',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: on ? accent : exSubtle,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -550,8 +644,10 @@ class _DemoRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(d.displayName,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: exInk)),
+                Text(
+                  d.displayName,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: exInk),
+                ),
                 const SizedBox(height: 2),
                 Text(meta, style: const TextStyle(fontSize: 13, color: exSubtle)),
               ],
@@ -584,8 +680,10 @@ class _LeadCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l.schoolName,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: exInk)),
+          Text(
+            l.schoolName,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: exInk),
+          ),
           if (l.city.isNotEmpty)
             Text(l.city, style: const TextStyle(fontSize: 13.5, color: exSubtle)),
           const SizedBox(height: 8),
@@ -620,7 +718,9 @@ class _LeadCard extends StatelessWidget {
           const SizedBox(height: 8),
           Row(
             children: [
-              Expanded(child: Text(by, style: const TextStyle(fontSize: 12, color: exSubtle))),
+              Expanded(
+                child: Text(by, style: const TextStyle(fontSize: 12, color: exSubtle)),
+              ),
               if (l.demoVisitorName.isNotEmpty)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -628,8 +728,10 @@ class _LeadCard extends StatelessWidget {
                     color: exPageBg,
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: Text('from demo: ${l.demoVisitorName}',
-                      style: const TextStyle(fontSize: 11.5, color: exSubtle)),
+                  child: Text(
+                    'from demo: ${l.demoVisitorName}',
+                    style: const TextStyle(fontSize: 11.5, color: exSubtle),
+                  ),
                 ),
             ],
           ),
@@ -648,27 +750,23 @@ class _LinkRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => InkWell(
-        onTap: () => launchUrl(uri),
-        borderRadius: BorderRadius.circular(6),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 44),
-          child: Row(
-            children: [
-              Icon(icon, size: 17, color: AppColors.primary),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  text,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
+    onTap: () => launchUrl(uri),
+    borderRadius: BorderRadius.circular(6),
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 44),
+      child: Row(
+        children: [
+          Icon(icon, size: 17, color: AppColors.primary),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.primary),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-        ),
-      );
+        ],
+      ),
+    ),
+  );
 }
