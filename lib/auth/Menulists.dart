@@ -56,6 +56,12 @@ List<MenuItem> getMenuItems({
         color: Colors.amber,
       ),
       MenuItem(
+        id: 23,
+        title: "Exhibitions",
+        icon: Icons.storefront_rounded,
+        color: Color(0xFF4F6693),
+      ),
+      MenuItem(
         id: 3,
         title: "School List",
         icon: Icons.school,

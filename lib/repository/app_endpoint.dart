@@ -56,4 +56,12 @@ class AppEndpoint {
   static const dialoutServerUpdateFlag = "api/insights/dialout-server/update-server-flag";
   static const graditServerList = "api/insights/gradit/list-server";
   static const graditServerUpdateFlag = "api/insights/gradit/update-server-flag";
+
+  // Exhibitions (trade-show voice demos + leads)
+  static const exhibitions = "api/mobile/exhibitions";
+  static String exhibitionById(String id) => "api/mobile/exhibitions/$id";
+  static String exhibitionDemos(String id) => "api/mobile/exhibitions/$id/demos";
+  static String exhibitionLeads(String id) => "api/mobile/exhibitions/$id/leads";
+  static String exhibitionDemoInterest(String demoId) =>
+      "api/mobile/exhibitions/demos/$demoId/interest";
 }

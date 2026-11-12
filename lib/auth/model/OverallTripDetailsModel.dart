@@ -533,11 +533,6 @@ class AddressService {
   }
 }
 
-
-// ============================================================
-// TRIP ADDRESS LOADER (single-coordinate, cached)
-// ============================================================
-
 class TripAddressLoader {
 
   static String cacheKey(double lat, double lon) {

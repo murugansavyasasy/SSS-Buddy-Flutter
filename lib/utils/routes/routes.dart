@@ -28,6 +28,7 @@ import '../../auth/model/FollowUpModel.dart';
 import '../../view/followup/followup_form_view.dart';
 import '../../view/followup/followup_list_view.dart';
 import '../../view/leaderboard/leaderboard_view.dart';
+import '../../view/exhibition/exhibition_list_view.dart';
 import '../../view/customer_list_view.dart';
 import '../../view/demo_list.dart';
 import '../../view/feedback.dart';
@@ -111,6 +112,9 @@ class Routes {
 
       case RoutesName.leaderboard:
         return MaterialPageRoute(builder: (context) => const LeaderboardView());
+
+      case RoutesName.exhibitions:
+        return MaterialPageRoute(builder: (context) => const ExhibitionListView());
 
       case RoutesName.followups:
         return MaterialPageRoute(builder: (context) => const FollowUpListView());
