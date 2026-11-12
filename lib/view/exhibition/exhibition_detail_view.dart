@@ -54,10 +54,13 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
 
   void _refresh() => refreshExhibition(ref, _id);
 
-  Future<void> _giveDemo(Exhibition ex) async {
+  Future<void> _giveDemo(Exhibition ex, {ExhibitionDemo? resendFrom}) async {
     final res = await Navigator.push<GiveDemoResult>(
       context,
-      MaterialPageRoute(fullscreenDialog: true, builder: (_) => GiveDemoView(exhibition: ex)),
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => GiveDemoView(exhibition: ex, resendFrom: resendFrom),
+      ),
     );
     if (res == null || !mounted) return;
     setState(() {
@@ -279,6 +282,7 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
                 expanded: _expandedDemoId == items[i].id,
                 onTap: () => _toggleDemo(items[i]),
                 onCaptureLead: () => _captureLead(demo: items[i]),
+                onSendAgain: () => _giveDemo(ex, resendFrom: items[i]),
               ),
             ),
           ),
@@ -576,6 +580,7 @@ class _DemoRow extends StatelessWidget {
   final bool expanded;
   final VoidCallback onTap;
   final VoidCallback onCaptureLead;
+  final VoidCallback onSendAgain;
 
   const _DemoRow({
     required this.demo,
@@ -583,6 +588,7 @@ class _DemoRow extends StatelessWidget {
     required this.expanded,
     required this.onTap,
     required this.onCaptureLead,
+    required this.onSendAgain,
   });
 
   String? get _voiceTitle {
@@ -677,7 +683,7 @@ class _DemoRow extends StatelessWidget {
                   border: Border(top: BorderSide(color: exBorder)),
                 ),
                 padding: const EdgeInsets.all(16),
-                child: DemoDetailPanel(demo: d, onCaptureLead: onCaptureLead),
+                child: DemoDetailPanel(demo: d, onCaptureLead: onCaptureLead, onSendAgain: onSendAgain),
               ),
           ],
         ),

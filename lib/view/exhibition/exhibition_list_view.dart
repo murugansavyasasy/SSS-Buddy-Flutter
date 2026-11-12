@@ -455,6 +455,8 @@ class ExhibitionCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               ExStatusBadge(status: e.status),
+              const SizedBox(width: 4),
+              const Icon(Icons.chevron_right_rounded, color: exSubtle, size: 24),
             ],
           ),
           const SizedBox(height: 8),

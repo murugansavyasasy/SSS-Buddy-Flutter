@@ -37,7 +37,16 @@ class GiveDemoView extends ConsumerStatefulWidget {
   @visibleForTesting
   final int initialStep;
 
-  const GiveDemoView({super.key, required this.exhibition, this.initialStep = 0});
+  /// Send an earlier demo again: its voice, visitor name and numbers are
+  /// prefilled and the flow opens on the review step (Back to edit).
+  final ExhibitionDemo? resendFrom;
+
+  const GiveDemoView({
+    super.key,
+    required this.exhibition,
+    this.initialStep = 0,
+    this.resendFrom,
+  });
 
   @override
   ConsumerState<GiveDemoView> createState() => _GiveDemoViewState();
@@ -49,6 +58,9 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
   // Step 1
   _Voice _voice = _Voice.template;
   DemoTemplate? _template;
+
+  /// The earlier demo's voice when it is not one of the stock templates.
+  DemoTemplate? _previousVoice;
   String? _recordingPath;
   Duration _recordingLength = Duration.zero;
   final AudioPlayer _preview = AudioPlayer();
@@ -83,6 +95,8 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
   @override
   void initState() {
     super.initState();
+    final r = widget.resendFrom;
+    if (r != null) _prefillFrom(r);
     _preview.playerStateStream.listen((s) {
       if (!mounted) return;
       if (s.processingState == ProcessingState.completed) {
@@ -90,6 +104,36 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
         setState(() => _previewId = null);
       }
     });
+  }
+
+  void _prefillFrom(ExhibitionDemo d) {
+    _visitorName.text = d.visitorName.trim();
+    for (final rc in d.recipients) {
+      if (rc.isTeam) continue;
+      final n = normalizeIndianMobile(rc.number);
+      if (isValidIndianMobile(n) && !_numbers.contains(n)) _numbers.add(n);
+    }
+    if (d.audioUrl.isNotEmpty) {
+      _voice = _Voice.template;
+      _template = exhibitionDemoTemplates.where((t) => t.audioUrl == d.audioUrl).firstOrNull;
+      if (_template == null) {
+        _previousVoice = DemoTemplate(
+          id: '__previous__',
+          title: 'Previous demo voice',
+          description: 'The voice used in the earlier demo',
+          duration: Duration.zero,
+          audioUrl: d.audioUrl,
+        );
+        _template = _previousVoice;
+      }
+    }
+    // Land on review when everything is in place; otherwise on the first
+    // step that still needs input.
+    _step = _template == null
+        ? 0
+        : (_numbers.isEmpty || _visitorName.text.isEmpty)
+        ? 1
+        : 2;
   }
 
   @override
@@ -193,26 +237,14 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
 
   // MARK: Navigation
 
-  Future<bool> _confirmDiscard() async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Discard this demo?'),
-        content: const Text(
-          'The voice and numbers you entered will be lost. No calls have been made.',
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Keep editing')),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: exDanger),
-            child: const Text('Discard'),
-          ),
-        ],
-      ),
-    );
-    return ok == true;
-  }
+  Future<bool> _confirmDiscard() => showExConfirmDialog(
+        context,
+        title: 'Discard this demo?',
+        message: 'The voice and numbers you entered will be lost.',
+        cancelLabel: 'Keep editing',
+        confirmLabel: 'Discard',
+        destructive: true,
+      );
 
   Future<void> _close() async {
     if (_sending) return;
@@ -610,7 +642,8 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
   );
 
   Widget _templateCards(bool wide) {
-    if (exhibitionDemoTemplates.isEmpty) {
+    final list = [?_previousVoice, ...exhibitionDemoTemplates];
+    if (list.isEmpty) {
       return const ExStateView(
         icon: Icons.library_music_outlined,
         title: 'No templates yet',
@@ -628,7 +661,6 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
       }),
       onTogglePlay: () => _togglePreview(t),
     );
-    final list = exhibitionDemoTemplates;
     if (!wide) {
       return Column(
         children: [
@@ -708,7 +740,8 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
                       textInputAction: TextInputAction.done,
                       inputFormatters: [
                         const ExAsciiDigitsFormatter(),
-                        FilteringTextInputFormatter.allow(RegExp(r'[0-9 +]')),
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(10),
                       ],
                       onSubmitted: (v) => _addNumbers([v], fromPaste: false),
                       onChanged: (_) {
@@ -987,6 +1020,8 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
     if (_voice == _Voice.template) {
       return _template == null
           ? 'Not chosen'
+          : _template!.duration == Duration.zero
+          ? _template!.title
           : '${_template!.title} · ${exDuration(_template!.duration)}';
     }
     return _recordingPath == null
@@ -1324,17 +1359,19 @@ class _TemplateCard extends StatelessWidget {
                                 color: exSubtle,
                               ),
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              t.audioUrl.isEmpty
-                                  ? '${exDuration(t.duration)} · Audio not set up yet'
-                                  : exDuration(t.duration),
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                                color: exSubtle,
+                            if (t.duration > Duration.zero || t.audioUrl.isEmpty) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                t.audioUrl.isEmpty
+                                    ? '${exDuration(t.duration)} · Audio not set up yet'
+                                    : exDuration(t.duration),
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
+                                  color: exSubtle,
+                                ),
                               ),
-                            ),
+                            ],
                           ],
                         ),
                       ),

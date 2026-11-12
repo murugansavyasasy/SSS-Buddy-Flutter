@@ -230,7 +230,7 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 32, 20, 20),
+      padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -239,7 +239,7 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
       child: Column(
         children: [
           if (_state == _RecState.denied) _denied() else ..._recorderBody(),
-          const SizedBox(height: 20),
+          const SizedBox(height: 14),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
@@ -318,7 +318,7 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
             ),
           ],
         ),
-        const SizedBox(height: 32),
+        const SizedBox(height: 16),
         Row(
           children: [
             Expanded(child: ExSecondaryButton(label: 'Re-record', onPressed: _start)),
@@ -336,15 +336,15 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
       Text(
         exDuration(_elapsed),
         style: TextStyle(
-          fontSize: 44,
+          fontSize: 34,
           fontWeight: FontWeight.w600,
           fontFeatures: const [FontFeature.tabularFigures()],
           color: recording ? exDanger : exInk,
         ),
       ),
-      const SizedBox(height: 16),
+      const SizedBox(height: 8),
       SizedBox(
-        height: 64,
+        height: 44,
         child: recording
             ? Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -352,7 +352,7 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
                   for (var i = 0; i < heights.length; i++)
                     Container(
                       width: 4,
-                      height: 6 + 54 * heights[i],
+                      height: 6 + 36 * heights[i],
                       margin: const EdgeInsets.symmetric(horizontal: 2),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(2),
@@ -379,9 +379,9 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
                 ),
               ),
       ),
-      const SizedBox(height: 12),
+      const SizedBox(height: 8),
       _RecordButton(recording: recording, onTap: recording ? _stop : _start),
-      const SizedBox(height: 16),
+      const SizedBox(height: 8),
       if (recording) ...[
         const Row(
           mainAxisSize: MainAxisSize.min,
@@ -392,8 +392,8 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
                 style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: exDanger)),
           ],
         ),
-        const SizedBox(height: 16),
-        SizedBox(width: 140, child: ExSecondaryButton(label: 'Stop', onPressed: _stop)),
+        const SizedBox(height: 10),
+        SizedBox(width: 140, child: ExSecondaryButton(label: 'Stop', height: 44, onPressed: _stop)),
       ] else
         const Text('Tap to record', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
     ];
@@ -478,8 +478,8 @@ class _RecordButtonState extends State<_RecordButton> with SingleTickerProviderS
       button: true,
       label: rec ? 'Stop recording' : 'Start recording',
       child: SizedBox(
-        width: 168,
-        height: 168,
+        width: 120,
+        height: 120,
         child: Stack(
           alignment: Alignment.center,
           children: [
@@ -487,8 +487,8 @@ class _RecordButtonState extends State<_RecordButton> with SingleTickerProviderS
               AnimatedBuilder(
                 animation: _pulse,
                 builder: (_, __) => Container(
-                  width: 150 + 18 * _pulse.value,
-                  height: 150 + 18 * _pulse.value,
+                  width: 106 + 14 * _pulse.value,
+                  height: 106 + 14 * _pulse.value,
                   decoration: const BoxDecoration(
                     color: Color(0xFFFDEEEE),
                     shape: BoxShape.circle,
@@ -498,8 +498,8 @@ class _RecordButtonState extends State<_RecordButton> with SingleTickerProviderS
             GestureDetector(
               onTap: widget.onTap,
               child: Container(
-                width: rec ? 120 : 112,
-                height: rec ? 120 : 112,
+                width: rec ? 88 : 84,
+                height: rec ? 88 : 84,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: rec ? exRecord : null,
@@ -514,15 +514,15 @@ class _RecordButtonState extends State<_RecordButton> with SingleTickerProviderS
                 child: rec
                     ? Center(
                         child: Container(
-                          width: 28,
-                          height: 28,
+                          width: 24,
+                          height: 24,
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(5),
                           ),
                         ),
                       )
-                    : const Icon(Icons.mic_none_rounded, color: Colors.white, size: 46),
+                    : const Icon(Icons.mic_none_rounded, color: Colors.white, size: 38),
               ),
             ),
           ],
