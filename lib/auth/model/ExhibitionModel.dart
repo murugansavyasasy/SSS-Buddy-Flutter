@@ -156,7 +156,15 @@ class Exhibition {
     );
   }
 
-  String get place => [venue, city].where((s) => s.trim().isNotEmpty).join(', ');
+  /// "Venue, City" — the city is left out when it repeats the venue
+  /// (e.g. "Bengaluru, Bengaluru" or "BIEC, Bengaluru, Bengaluru").
+  String get place {
+    final v = venue.trim();
+    final c = city.trim();
+    if (v.isEmpty) return c;
+    if (c.isEmpty || v.toLowerCase().contains(c.toLowerCase())) return v;
+    return '$v, $c';
+  }
 }
 
 /// Body for POST /api/mobile/exhibitions.

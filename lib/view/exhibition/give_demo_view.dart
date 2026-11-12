@@ -293,57 +293,151 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) _close();
       },
-      child: Scaffold(
-        backgroundColor: exPageBg,
-        appBar: AppBar(
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle.light,
+        child: Scaffold(
           backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          leading: IconButton(
-            tooltip: 'Close',
-            icon: const Icon(Icons.close_rounded),
-            onPressed: _close,
-          ),
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          body: Column(
             children: [
-              const Text('Give Demo', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-              Text(widget.exhibition.name,
-                  style: const TextStyle(fontSize: 12.5, color: Colors.white70),
-                  overflow: TextOverflow.ellipsis),
-            ],
-          ),
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(56),
-            child: Container(
-              color: Colors.white,
-              child: _Stepper(
-                step: _step,
-                onTap: (i) {
-                  if (i < _step && !_sending) setState(() => _step = i);
-                },
-              ),
-            ),
-          ),
-        ),
-        body: SafeArea(
-          top: false,
-          child: Column(
-            children: [
+              _header(),
               Expanded(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.all(exIsWide(context) ? 24 : 16),
-                  child: ExMaxWidth(
-                    child: switch (_step) {
-                      0 => _voiceStep(),
-                      1 => _visitorStep(),
-                      _ => _reviewStep(),
-                    },
+                child: Container(
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    color: exPageBg,
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: SafeArea(
+                    top: false,
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: SingleChildScrollView(
+                            padding: EdgeInsets.fromLTRB(
+                                exIsWide(context) ? 28 : 18, 24, exIsWide(context) ? 28 : 18, 24),
+                            child: ExMaxWidth(
+                              child: AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 260),
+                                switchInCurve: Curves.easeOutCubic,
+                                switchOutCurve: Curves.easeIn,
+                                transitionBuilder: (child, anim) => FadeTransition(
+                                  opacity: anim,
+                                  child: SlideTransition(
+                                    position: Tween(
+                                      begin: const Offset(0.04, 0),
+                                      end: Offset.zero,
+                                    ).animate(anim),
+                                    child: child,
+                                  ),
+                                ),
+                                layoutBuilder: (current, previous) => Stack(
+                                  alignment: Alignment.topCenter,
+                                  children: [...previous, if (current != null) current],
+                                ),
+                                child: KeyedSubtree(
+                                  key: ValueKey(_step),
+                                  child: switch (_step) {
+                                    0 => _voiceStep(),
+                                    1 => _visitorStep(),
+                                    _ => _reviewStep(),
+                                  },
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        _footer(),
+                      ],
+                    ),
                   ),
                 ),
               ),
-              _footer(),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _header() {
+    final base = AppColors.primary;
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color.lerp(base, Colors.black, 0.15)!, base],
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 18),
+          child: ExMaxWidth(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Material(
+                      color: Colors.white.withValues(alpha: 0.16),
+                      shape: const CircleBorder(),
+                      child: IconButton(
+                        tooltip: 'Close',
+                        icon: const Icon(Icons.close_rounded, color: Colors.white),
+                        onPressed: _close,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Give Demo',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              )),
+                          Row(
+                            children: [
+                              const Icon(Icons.storefront_rounded, size: 14, color: Colors.white70),
+                              const SizedBox(width: 5),
+                              Flexible(
+                                child: Text(widget.exhibition.name,
+                                    style: const TextStyle(fontSize: 13, color: Colors.white70),
+                                    overflow: TextOverflow.ellipsis),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.16),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text('Step ${_step + 1} of 3',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          )),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                _Stepper(
+                  step: _step,
+                  onTap: (i) {
+                    if (i < _step && !_sending) setState(() => _step = i);
+                  },
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -353,9 +447,10 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
   Widget _footer() => Container(
         decoration: const BoxDecoration(
           color: Colors.white,
-          boxShadow: [BoxShadow(color: Color(0x22000000), blurRadius: 16, offset: Offset(0, -4))],
+          borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+          boxShadow: [BoxShadow(color: Color(0x14000000), blurRadius: 20, offset: Offset(0, -6))],
         ),
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+        padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
         child: ExMaxWidth(
           child: Row(
             children: [
@@ -363,21 +458,26 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
                 SizedBox(
                   width: 56,
                   height: 56,
-                  child: OutlinedButton(
+                  child: IconButton(
+                    tooltip: 'Back',
                     onPressed: _sending ? null : _back,
-                    style: OutlinedButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      side: const BorderSide(color: exStrongBorder),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    style: IconButton.styleFrom(
+                      backgroundColor: exPageBg,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
-                    child: const Icon(Icons.arrow_back_rounded, color: exInk),
+                    icon: const Icon(Icons.arrow_back_rounded, color: exInk),
                   ),
                 ),
                 const SizedBox(width: 10),
               ],
               Expanded(
                 child: _step < 2
-                    ? ExPrimaryButton(label: 'Continue', height: 56, onPressed: _next)
+                    ? ExPrimaryButton(
+                        label: 'Continue',
+                        icon: Icons.arrow_forward_rounded,
+                        height: 56,
+                        onPressed: _next,
+                      )
                     : ExPrimaryButton(
                         label: 'Send Demo Call',
                         icon: Icons.phone_forwarded_rounded,
@@ -397,8 +497,14 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(t, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: exInk)),
-            const SizedBox(height: 2),
+            Text(t,
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.3,
+                  color: exInk,
+                )),
+            const SizedBox(height: 4),
             Text(sub, style: const TextStyle(fontSize: 14.5, color: exSubtle)),
           ],
         ),
@@ -406,45 +512,43 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
 
   // Step 1
 
+  void _setVoice(_Voice v) {
+    if (v == _voice) return;
+    HapticFeedback.selectionClick();
+    _preview.stop();
+    setState(() {
+      _voice = v;
+      _previewId = null;
+      _step1Error = false;
+    });
+  }
+
   Widget _voiceStep() => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _title('Choose a voice', 'Play a ready-made template or record a message.'),
-          SizedBox(
-            height: 50,
-            child: SegmentedButton<_Voice>(
-              segments: const [
-                ButtonSegment(
-                    value: _Voice.template,
-                    icon: Icon(Icons.library_music_outlined),
-                    label: Text('Use Template')),
-                ButtonSegment(
-                    value: _Voice.record,
-                    icon: Icon(Icons.mic_none_rounded),
-                    label: Text('Record Voice')),
-              ],
-              selected: {_voice},
-              showSelectedIcon: false,
-              onSelectionChanged: (s) {
-                _preview.stop();
-                setState(() {
-                  _voice = s.first;
-                  _previewId = null;
-                  _step1Error = false;
-                });
-              },
-              style: ButtonStyle(
-                backgroundColor: WidgetStateProperty.resolveWith(
-                  (st) => st.contains(WidgetState.selected) ? AppColors.primary : Colors.white,
-                ),
-                foregroundColor: WidgetStateProperty.resolveWith(
-                  (st) => st.contains(WidgetState.selected) ? Colors.white : exInk,
-                ),
-                textStyle: const WidgetStatePropertyAll(
-                  TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+          Row(
+            children: [
+              Expanded(
+                child: _ModeCard(
+                  icon: Icons.library_music_rounded,
+                  title: 'Use Template',
+                  subtitle: 'Ready-made voice',
+                  selected: _voice == _Voice.template,
+                  onTap: () => _setVoice(_Voice.template),
                 ),
               ),
-            ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _ModeCard(
+                  icon: Icons.mic_rounded,
+                  title: 'Record Voice',
+                  subtitle: 'Your own message',
+                  selected: _voice == _Voice.record,
+                  onTap: () => _setVoice(_Voice.record),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           if (_voice == _Voice.template)
@@ -495,10 +599,8 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
           }),
           onTogglePlay: () => _togglePreview(t),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
       ],
-      const Text('Templates are pre-recorded WAV files sent to the server as audioUrl.',
-          style: TextStyle(fontSize: 12, color: exSubtle)),
     ];
   }
 
@@ -575,13 +677,22 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
           const SizedBox(height: 10),
           if (_numbers.isEmpty)
             Container(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: exStrongBorder),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: exStrongBorder, style: BorderStyle.solid),
                 color: Colors.white,
               ),
-              child: const Text('No numbers added yet.', style: TextStyle(color: exSubtle)),
+              child: const Row(
+                children: [
+                  Icon(Icons.contact_phone_outlined, color: exSubtle),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text('No numbers added yet. Type one above and tap Add.',
+                        style: TextStyle(color: exSubtle)),
+                  ),
+                ],
+              ),
             )
           else
             Wrap(
@@ -590,11 +701,15 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
               children: [
                 for (final n in _numbers)
                   InputChip(
+                    avatar: CircleAvatar(
+                      backgroundColor: AppColors.primary,
+                      child: const Icon(Icons.phone_rounded, size: 13, color: Colors.white),
+                    ),
                     label: Text(formatIndianMobile(n),
                         style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: exInk)),
-                    backgroundColor: exTint,
-                    side: const BorderSide(color: Color(0xFFD5DCEF)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    backgroundColor: Colors.white,
+                    side: const BorderSide(color: exBorder),
+                    shape: const StadiumBorder(),
                     padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
                     deleteIcon: const Icon(Icons.close_rounded, size: 18),
                     deleteButtonTooltipMessage: 'Remove ${formatIndianMobile(n)}',
@@ -663,11 +778,14 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _title('Review & send', 'Check everything before the calls go out.'),
+        _callSummary(total),
+        const SizedBox(height: 16),
         Container(
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(18),
             border: Border.all(color: exBorder),
+            boxShadow: exCardShadow,
           ),
           child: Column(
             children: [
@@ -705,30 +823,6 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
             ],
           ),
         ),
-        const SizedBox(height: 14),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(colors: [Color(0xFFF4F6FA), Color(0xFFD5DCEF)]),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Row(
-            children: [
-              Icon(Icons.phone_in_talk_rounded, color: AppColors.primary, size: 28),
-              const SizedBox(width: 14),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('$total ${total == 1 ? 'call' : 'calls'}',
-                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: exInk)),
-                  Text(
-                      '${_numbers.length} ${_numbers.length == 1 ? 'visitor' : 'visitors'} + ${_team.length} ${_team.length == 1 ? 'attender' : 'attenders'}',
-                      style: const TextStyle(fontSize: 13.5, color: exInk)),
-                ],
-              ),
-            ],
-          ),
-        ),
         if (_sendError != null) ...[
           const SizedBox(height: 14),
           _ErrorBanner(message: _sendError!, onRetry: _send),
@@ -737,11 +831,88 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
     );
   }
 
+  Widget _callSummary(int total) {
+    final base = AppColors.primary;
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color.lerp(base, Colors.black, 0.18)!, Color.lerp(base, Colors.white, 0.1)!],
+        ),
+        boxShadow: [
+          BoxShadow(color: base.withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 8)),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.16),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(Icons.phone_in_talk_rounded, color: Colors.white, size: 28),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('$total ${total == 1 ? 'call' : 'calls'} will go out',
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    )),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  children: [
+                    _summaryPill(Icons.person_rounded,
+                        '${_numbers.length} ${_numbers.length == 1 ? 'visitor' : 'visitors'}'),
+                    _summaryPill(Icons.groups_rounded,
+                        '${_team.length} ${_team.length == 1 ? 'attender' : 'attenders'}'),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _summaryPill(IconData icon, String text) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.16),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: Colors.white),
+            const SizedBox(width: 5),
+            Text(text,
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                )),
+          ],
+        ),
+      );
+
   static const _strong = TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, color: exInk);
 
   Widget _smallChip(String text, Color bg) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
-        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
+        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
         child: Text(text, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: exInk)),
       );
 
@@ -774,6 +945,7 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
       );
 }
 
+/// Three progress segments on the blue header. Done steps can be tapped.
 class _Stepper extends StatelessWidget {
   final int step;
   final ValueChanged<int> onTap;
@@ -781,75 +953,161 @@ class _Stepper extends StatelessWidget {
   const _Stepper({required this.step, required this.onTap});
 
   static const _labels = ['Voice', 'Visitors', 'Review & Send'];
+  static const _icons = [Icons.graphic_eq_rounded, Icons.people_alt_rounded, Icons.send_rounded];
 
   @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Row(
-          children: [
-            for (var i = 0; i < _labels.length; i++) ...[
-              if (i > 0)
-                Expanded(
-                  child: Container(
-                    height: 2,
-                    color: i <= step ? AppColors.primary : exBorder,
-                  ),
-                ),
-              InkWell(
+  Widget build(BuildContext context) {
+    final narrow = MediaQuery.sizeOf(context).width < 380;
+    return Row(
+      children: [
+        for (var i = 0; i < _labels.length; i++) ...[
+          if (i > 0) const SizedBox(width: 8),
+          Expanded(
+            child: Semantics(
+              button: i < step,
+              selected: i == step,
+              label: 'Step ${i + 1}, ${_labels[i]}',
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
                 onTap: () => onTap(i),
-                borderRadius: BorderRadius.circular(8),
-                child: SizedBox(
-                  height: 56,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 28,
-                          height: 28,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: i < step
-                                ? AppColors.primary
-                                : i == step
-                                    ? exInk
-                                    : Colors.white,
-                            border: Border.all(
-                              color: i < step
-                                  ? AppColors.primary
-                                  : i == step
-                                      ? exInk
-                                      : exStrongBorder,
-                            ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: Stack(
+                        children: [
+                          Container(height: 5, color: Colors.white.withValues(alpha: 0.22)),
+                          AnimatedFractionallySizedBox(
+                            duration: const Duration(milliseconds: 350),
+                            curve: Curves.easeOutCubic,
+                            widthFactor: i <= step ? 1 : 0,
+                            child: Container(height: 5, color: Colors.white),
                           ),
-                          alignment: Alignment.center,
-                          child: i < step
-                              ? const Icon(Icons.check_rounded, size: 16, color: Colors.white)
-                              : Text('${i + 1}',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: i == step ? Colors.white : exSubtle,
-                                  )),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(
+                          i < step ? Icons.check_circle_rounded : _icons[i],
+                          size: 15,
+                          color: i <= step ? Colors.white : Colors.white54,
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          MediaQuery.sizeOf(context).width < 380 && i == 2 ? 'Review' : _labels[i],
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: i <= step ? exInk : exSubtle,
+                        const SizedBox(width: 5),
+                        Flexible(
+                          child: Text(
+                            narrow && i == 2 ? 'Review' : _labels[i],
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: i == step ? FontWeight.w800 : FontWeight.w600,
+                              color: i <= step ? Colors.white : Colors.white54,
+                            ),
                           ),
                         ),
                       ],
                     ),
-                  ),
+                  ],
                 ),
               ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// Big tappable choice between a template and a custom recording.
+class _ModeCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _ModeCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final base = AppColors.primary;
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            color: selected ? null : Colors.white,
+            gradient: selected
+                ? LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color.lerp(base, Colors.black, 0.12)!, Color.lerp(base, Colors.white, 0.12)!],
+                  )
+                : null,
+            border: Border.all(color: selected ? Colors.transparent : exBorder),
+            boxShadow: selected
+                ? [BoxShadow(color: base.withValues(alpha: 0.28), blurRadius: 16, offset: const Offset(0, 6))]
+                : exCardShadow,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: selected ? Colors.white.withValues(alpha: 0.18) : exTint,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(icon, color: selected ? Colors.white : base),
+                  ),
+                  const Spacer(),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: Icon(
+                      selected ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+                      key: ValueKey(selected),
+                      color: selected ? Colors.white : exStrongBorder,
+                      size: 24,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Text(title,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: selected ? Colors.white : exInk,
+                  )),
+              const SizedBox(height: 2),
+              Text(subtitle,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: selected ? Colors.white70 : exSubtle,
+                  )),
             ],
-          ],
+          ),
         ),
-      );
+      ),
+    );
+  }
 }
 
 class _TemplateCard extends StatelessWidget {
@@ -879,20 +1137,24 @@ class _TemplateCard extends StatelessWidget {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(14),
             child: Row(
               children: [
                 SizedBox(
                   width: 52,
                   height: 52,
-                  child: IconButton.outlined(
+                  child: IconButton(
                     tooltip: playing ? 'Pause preview of ${t.title}' : 'Play preview of ${t.title}',
                     onPressed: onTogglePlay,
                     style: IconButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      side: const BorderSide(color: exStrongBorder),
+                      backgroundColor: playing ? AppColors.primary : exTint,
+                      shape: const CircleBorder(),
                     ),
-                    icon: Icon(playing ? Icons.pause_rounded : Icons.play_arrow_rounded, color: exInk),
+                    icon: Icon(
+                      playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                      color: playing ? Colors.white : AppColors.primary,
+                      size: 28,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -939,7 +1201,7 @@ class _TemplateCard extends StatelessWidget {
                     ? 0.0
                     : (p.inMilliseconds / total.inMilliseconds).clamp(0.0, 1.0);
                 return ClipRRect(
-                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(14)),
+                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
                   child: LinearProgressIndicator(
                     value: f,
                     minHeight: 4,
@@ -961,11 +1223,12 @@ class _TeamCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFFF1F3F9),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0x141E2B45)),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: exBorder),
+          boxShadow: exCardShadow,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -992,7 +1255,7 @@ class _TeamCard extends StatelessWidget {
                     children: [
                       CircleAvatar(
                         radius: 16,
-                        backgroundColor: Colors.white,
+                        backgroundColor: exTint,
                         child: Text(exInitials(m.name),
                             style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: exInk)),
                       ),
@@ -1021,7 +1284,8 @@ class _ErrorBanner extends StatelessWidget {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: const Color(0xFFFDECEC),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: exDanger.withValues(alpha: 0.2)),
         ),
         child: Row(
           children: [

@@ -37,17 +37,17 @@ class _ExhibitionListViewState extends ConsumerState<ExhibitionListView> {
   }
 
   List<Exhibition> _apply(List<Exhibition> all) => all.where((e) {
-        if (_filter == _Filter.active && e.status != ExhibitionStatus.active) return false;
-        if (_filter == _Filter.completed && e.status != ExhibitionStatus.completed) return false;
-        if (_query.isEmpty) return true;
-        return '${e.name} ${e.city} ${e.venue}'.toLowerCase().contains(_query);
-      }).toList();
+    if (_filter == _Filter.active && e.status != ExhibitionStatus.active) return false;
+    if (_filter == _Filter.completed && e.status != ExhibitionStatus.completed) return false;
+    if (_query.isEmpty) return true;
+    return '${e.name} ${e.city} ${e.venue}'.toLowerCase().contains(_query);
+  }).toList();
 
   void _clearFilters() => setState(() {
-        _filter = _Filter.all;
-        _query = '';
-        _searchCtrl.clear();
-      });
+    _filter = _Filter.all;
+    _query = '';
+    _searchCtrl.clear();
+  });
 
   Future<void> _openCreate() async {
     final created = await Navigator.push<Exhibition>(
@@ -67,7 +67,9 @@ class _ExhibitionListViewState extends ConsumerState<ExhibitionListView> {
     }
     Navigator.push(
       context,
-      CupertinoPageRoute(builder: (_) => ExhibitionDetailView(exhibitionId: e.id, initial: e)),
+      CupertinoPageRoute(
+        builder: (_) => ExhibitionDetailView(exhibitionId: e.id, initial: e),
+      ),
     ).then((_) {
       if (mounted) ref.invalidate(exhibitionListProvider);
     });
@@ -124,10 +126,7 @@ class _ExhibitionListViewState extends ConsumerState<ExhibitionListView> {
   Widget? _listState(AsyncValue<List<Exhibition>> async, List<Exhibition>? items) {
     return async.when(
       loading: () => const ExMaxWidth(child: ExSkeletonList()),
-      error: (e, _) => ExStateView.error(
-        e,
-        onRetry: () => ref.invalidate(exhibitionListProvider),
-      ),
+      error: (e, _) => ExStateView.error(e, onRetry: () => ref.invalidate(exhibitionListProvider)),
       data: (all) {
         if (all.isEmpty) {
           return ExStateView(
@@ -164,7 +163,8 @@ class _ExhibitionListViewState extends ConsumerState<ExhibitionListView> {
           ),
         ),
         Expanded(
-          child: state ??
+          child:
+              state ??
               RefreshIndicator(
                 onRefresh: () => ref.refresh(exhibitionListProvider.future),
                 child: _ExhibitionGrid(items: items!, onTap: _openDetail),
@@ -179,14 +179,15 @@ class _ExhibitionListViewState extends ConsumerState<ExhibitionListView> {
     final items = all == null ? null : _apply(all);
     final state = _listState(async, items);
 
-    // Keep the chosen exhibition even when the filter hides it; otherwise
-    // default to the newest one so the right side is never blank.
+    // The right side always matches a highlighted card in the visible list:
+    // if the tab / search hides the chosen exhibition, jump to the first
+    // visible one. Only when nothing matches keep showing the last choice.
     Exhibition? selected;
     if (all != null && all.isNotEmpty) {
-      selected = all.firstWhere(
-        (e) => e.id == _selectedId,
-        orElse: () => (items != null && items.isNotEmpty) ? items.first : all.first,
-      );
+      final visible = items ?? const <Exhibition>[];
+      selected = visible.isNotEmpty
+          ? visible.firstWhere((e) => e.id == _selectedId, orElse: () => visible.first)
+          : all.firstWhere((e) => e.id == _selectedId, orElse: () => all.first);
     }
 
     _shownId = selected?.id;
@@ -225,7 +226,8 @@ class _ExhibitionListViewState extends ConsumerState<ExhibitionListView> {
                     child: _filterRow(async.value),
                   ),
                   Expanded(
-                    child: state ??
+                    child:
+                        state ??
                         RefreshIndicator(
                           onRefresh: () => ref.refresh(exhibitionListProvider.future),
                           child: ListView.separated(
@@ -299,37 +301,37 @@ class _SearchBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ValueListenableBuilder<TextEditingValue>(
-        valueListenable: controller,
-        builder: (_, v, __) => TextField(
-          controller: controller,
-          onChanged: onChanged,
-          textInputAction: TextInputAction.search,
-          style: const TextStyle(fontSize: 16, color: exInk),
-          decoration: InputDecoration(
-            hintText: 'Search name, city or venue',
-            hintStyle: const TextStyle(fontSize: 15, color: exSubtle),
-            prefixIcon: const Icon(Icons.search_rounded, color: exSubtle),
-            suffixIcon: v.text.isEmpty
-                ? null
-                : IconButton(
-                    tooltip: 'Clear',
-                    icon: const Icon(Icons.close_rounded, color: exSubtle),
-                    onPressed: onClear,
-                  ),
-            filled: true,
-            fillColor: exPageBg,
-            contentPadding: const EdgeInsets.symmetric(vertical: 14),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.primary, width: 1.4),
-            ),
-          ),
+    valueListenable: controller,
+    builder: (_, v, __) => TextField(
+      controller: controller,
+      onChanged: onChanged,
+      textInputAction: TextInputAction.search,
+      style: const TextStyle(fontSize: 16, color: exInk),
+      decoration: InputDecoration(
+        hintText: 'Search name, city or venue',
+        hintStyle: const TextStyle(fontSize: 15, color: exSubtle),
+        prefixIcon: const Icon(Icons.search_rounded, color: exSubtle),
+        suffixIcon: v.text.isEmpty
+            ? null
+            : IconButton(
+                tooltip: 'Clear',
+                icon: const Icon(Icons.close_rounded, color: exSubtle),
+                onPressed: onClear,
+              ),
+        filled: true,
+        fillColor: exPageBg,
+        contentPadding: const EdgeInsets.symmetric(vertical: 14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
         ),
-      );
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.primary, width: 1.4),
+        ),
+      ),
+    ),
+  );
 }
 
 class _ExhibitionGrid extends StatelessWidget {
@@ -364,7 +366,9 @@ class _ExhibitionGrid extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(child: ExhibitionCard(exhibition: a, onTap: () => onTap(a))),
+                Expanded(
+                  child: ExhibitionCard(exhibition: a, onTap: () => onTap(a)),
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: b == null
@@ -423,13 +427,18 @@ class ExhibitionCard extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _Stat(icon: Icons.groups_outlined, text: '${e.attendeeCount} ${e.attendeeCount == 1 ? 'attender' : 'attenders'}'),
               _Stat(
-                  icon: Icons.phone_in_talk_outlined,
-                  text: '${e.demoCount} ${e.demoCount == 1 ? 'demo' : 'demos'}'),
+                icon: Icons.groups_outlined,
+                text: '${e.attendeeCount} ${e.attendeeCount == 1 ? 'attender' : 'attenders'}',
+              ),
               _Stat(
-                  icon: Icons.star_outline_rounded,
-                  text: '${e.leadCount} ${e.leadCount == 1 ? 'lead' : 'leads'}'),
+                icon: Icons.phone_in_talk_outlined,
+                text: '${e.demoCount} ${e.demoCount == 1 ? 'demo' : 'demos'}',
+              ),
+              _Stat(
+                icon: Icons.star_outline_rounded,
+                text: '${e.leadCount} ${e.leadCount == 1 ? 'lead' : 'leads'}',
+              ),
             ],
           ),
         ],
@@ -445,16 +454,18 @@ class _Meta extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(
-        children: [
-          Icon(icon, size: 16, color: exSubtle),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(text,
-                style: const TextStyle(fontSize: 13.5, color: exSubtle),
-                overflow: TextOverflow.ellipsis),
-          ),
-        ],
-      );
+    children: [
+      Icon(icon, size: 16, color: exSubtle),
+      const SizedBox(width: 6),
+      Expanded(
+        child: Text(
+          text,
+          style: const TextStyle(fontSize: 13.5, color: exSubtle),
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
+    ],
+  );
 }
 
 class _Stat extends StatelessWidget {
@@ -464,21 +475,20 @@ class _Stat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: exPageBg,
-          borderRadius: BorderRadius.circular(20),
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+    decoration: BoxDecoration(color: exPageBg, borderRadius: BorderRadius.circular(20)),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 15, color: exInk),
+        const SizedBox(width: 5),
+        Text(
+          text,
+          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: exInk),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 15, color: exInk),
-            const SizedBox(width: 5),
-            Text(text,
-                style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: exInk)),
-          ],
-        ),
-      );
+      ],
+    ),
+  );
 }
 
 /// iOS-style segmented tabs: All / Active / Completed with live counts.
@@ -490,7 +500,12 @@ class _FilterTabs extends StatelessWidget {
   const _FilterTabs({required this.selected, required this.counts, required this.onChanged});
 
   @override
-  Widget build(BuildContext context) => Container(
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, box) {
+      // Same text size on every tab; on narrow widths drop the icons
+      // instead of shrinking only the longest label.
+      final compact = box.maxWidth < 380;
+      return Container(
         height: 48,
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
@@ -498,13 +513,22 @@ class _FilterTabs extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
         ),
         child: Row(
+          // Stretch so the selected white card fills the track's full height.
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            for (final f in _Filter.values) Expanded(child: _segment(f)),
+            for (final f in _Filter.values)
+              Expanded(
+                // "Completed" is the longest label, give it more room.
+                flex: f == _Filter.completed ? 4 : 3,
+                child: _segment(f, compact),
+              ),
           ],
         ),
       );
+    },
+  );
 
-  Widget _segment(_Filter f) {
+  Widget _segment(_Filter f, bool compact) {
     final on = selected == f;
     final (label, accent) = switch (f) {
       _Filter.all => ('All', AppColors.primary),
@@ -528,50 +552,53 @@ class _FilterTabs extends StatelessWidget {
                 : null,
           ),
           padding: const EdgeInsets.symmetric(horizontal: 6),
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (f == _Filter.active)
-                  Container(
-                    width: 7,
-                    height: 7,
-                    margin: const EdgeInsets.only(right: 6),
-                    decoration: BoxDecoration(shape: BoxShape.circle, color: accent),
-                  )
-                else if (f == _Filter.completed)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 5),
-                    child: Icon(Icons.check_circle_rounded, size: 15, color: accent),
-                  ),
-                Text(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (compact)
+                const SizedBox.shrink()
+              else if (f == _Filter.active)
+                Container(
+                  width: 7,
+                  height: 7,
+                  margin: const EdgeInsets.only(right: 6),
+                  decoration: BoxDecoration(shape: BoxShape.circle, color: accent),
+                )
+              else if (f == _Filter.completed)
+                Padding(
+                  padding: const EdgeInsets.only(right: 5),
+                  child: Icon(Icons.check_circle_rounded, size: 15, color: accent),
+                ),
+              Flexible(
+                child: Text(
                   label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: compact ? 13 : 14,
                     fontWeight: on ? FontWeight.w700 : FontWeight.w600,
                     color: on ? exInk : exSubtle,
                   ),
                 ),
-                const SizedBox(width: 6),
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 220),
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
-                  decoration: BoxDecoration(
-                    color: on ? accent : Colors.white.withValues(alpha: 0.7),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    '${counts[f] ?? 0}',
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w700,
-                      color: on ? Colors.white : exSubtle,
-                    ),
+              ),
+              SizedBox(width: compact ? 4 : 6),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
+                decoration: BoxDecoration(
+                  color: on ? accent : Colors.white.withValues(alpha: 0.7),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '${counts[f] ?? 0}',
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w700,
+                    color: on ? Colors.white : exSubtle,
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
