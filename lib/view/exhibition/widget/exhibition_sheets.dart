@@ -14,6 +14,7 @@ Future<T?> _showSheet<T>(BuildContext context, WidgetBuilder builder, {bool full
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Colors.white,
+      clipBehavior: Clip.antiAlias,
       constraints: const BoxConstraints(maxWidth: 680),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -219,125 +220,327 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
     }
   }
 
+  static const _quickNotes = [
+    'Wants a demo visit',
+    'Send brochure',
+    'Call back later',
+    'Asked for pricing',
+    'Decision maker',
+  ];
+
+  void _addQuickNote(String n) {
+    HapticFeedback.selectionClick();
+    final cur = _notes.text.trim();
+    if (cur.toLowerCase().contains(n.toLowerCase())) return;
+    setState(() => _notes.text = cur.isEmpty ? n : '$cur. $n');
+  }
+
   @override
   Widget build(BuildContext context) {
     final demo = widget.demo;
     final schoolError = _tried && _school.text.trim().isEmpty ? 'School name is required' : null;
+    final wide = MediaQuery.sizeOf(context).width >= 600;
+    final base = AppColors.primary;
+
+    Widget pair(Widget a, Widget b) => wide
+        ? Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [Expanded(child: a), const SizedBox(width: 12), Expanded(child: b)],
+          )
+        : Column(children: [a, const SizedBox(height: 14), b]);
+
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-      child: Column(
-        children: [
-          const SizedBox(height: 10),
-          _handle(),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 8, 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+      child: Container(
+        color: exPageBg,
+        child: Column(
+          children: [
+            // ── Header ──
+            Container(
+              color: Colors.white,
+              padding: const EdgeInsets.fromLTRB(20, 10, 12, 16),
+              child: Column(
+                children: [
+                  _handle(),
+                  const SizedBox(height: 14),
+                  Row(
                     children: [
-                      const Text('Capture lead',
-                          style: TextStyle(fontSize: 19, fontWeight: FontWeight.w700, color: exInk)),
-                      const SizedBox(height: 6),
-                      ExPill(
-                        icon: demo == null ? Icons.storefront_outlined : Icons.link_rounded,
-                        label: demo == null
-                            ? 'Standalone lead'
-                            : 'Linked to demo · ${demo.displayName}',
-                        background: demo == null ? const Color(0xFFECE8D2) : exTint,
-                        foreground: exInk,
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(14),
+                          gradient: const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFD97706).withValues(alpha: 0.3),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(Icons.star_rounded, color: Colors.white, size: 26),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Capture lead',
+                                style: TextStyle(
+                                  fontSize: 21,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: -0.2,
+                                  color: exInk,
+                                )),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Icon(
+                                  demo == null ? Icons.storefront_rounded : Icons.link_rounded,
+                                  size: 15,
+                                  color: demo == null ? const Color(0xFFB45309) : base,
+                                ),
+                                const SizedBox(width: 5),
+                                Flexible(
+                                  child: Text(
+                                    demo == null
+                                        ? 'Standalone lead for this exhibition'
+                                        : 'Linked to demo · ${demo.displayName}',
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: demo == null ? const Color(0xFFB45309) : base,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Close',
+                        onPressed: _saving ? null : () => Navigator.pop(context, false),
+                        style: IconButton.styleFrom(backgroundColor: exPageBg),
+                        icon: const Icon(Icons.close_rounded, color: exInk),
                       ),
                     ],
                   ),
-                ),
-                IconButton(
-                  tooltip: 'Close',
-                  onPressed: _saving ? null : () => Navigator.pop(context, false),
-                  icon: const Icon(Icons.close_rounded),
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1, color: exBorder),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(20),
-              children: [
-                ExField(
-                  label: 'School name',
-                  required: true,
-                  controller: _school,
-                  hint: 'e.g. Green Valley Public School',
-                  errorText: schoolError,
-                  textCapitalization: TextCapitalization.words,
-                  onChanged: (_) {
-                    if (_tried) setState(() {});
-                  },
-                ),
-                const SizedBox(height: 14),
-                ExField(
-                  label: 'City',
-                  controller: _city,
-                  textCapitalization: TextCapitalization.words,
-                ),
-                const SizedBox(height: 14),
-                ExField(
-                  label: 'Contact name',
-                  controller: _contact,
-                  hint: 'Name and role',
-                  textCapitalization: TextCapitalization.words,
-                ),
-                const SizedBox(height: 14),
-                ExField(
-                  label: 'Contact number',
-                  controller: _number,
-                  hint: '10-digit mobile',
-                  prefixText: '+91  ',
-                  keyboardType: TextInputType.phone,
-                  errorText: _numberError,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(10),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                ExField(
-                  label: 'Contact email',
-                  controller: _email,
-                  hint: 'name@school.edu.in',
-                  keyboardType: TextInputType.emailAddress,
-                  errorText: _emailError,
-                  textCapitalization: TextCapitalization.none,
-                ),
-                const SizedBox(height: 14),
-                ExField(
-                  label: 'Notes',
-                  controller: _notes,
-                  hint: 'e.g. Wants a full product walkthrough',
-                  maxLines: 3,
-                ),
-                if (_error != null) ...[
-                  const SizedBox(height: 14),
-                  Text(_error!,
-                      style: const TextStyle(color: exDanger, fontWeight: FontWeight.w600)),
                 ],
-              ],
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-            child: ExPrimaryButton(
-              label: 'Save Lead',
-              loadingLabel: 'Saving…',
-              loading: _saving,
-              onPressed: _save,
+            const Divider(height: 1, color: exBorder),
+            // ── Form ──
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                children: [
+                  _LeadSection(
+                    icon: Icons.school_rounded,
+                    title: 'School',
+                    children: [
+                      pair(
+                        ExField(
+                          label: 'School name',
+                          required: true,
+                          controller: _school,
+                          hint: 'e.g. Green Valley Public School',
+                          prefixIcon: Icons.apartment_rounded,
+                          errorText: schoolError,
+                          textCapitalization: TextCapitalization.words,
+                          onChanged: (_) {
+                            if (_tried) setState(() {});
+                          },
+                        ),
+                        ExField(
+                          label: 'City',
+                          controller: _city,
+                          hint: 'e.g. Chennai',
+                          prefixIcon: Icons.place_outlined,
+                          textCapitalization: TextCapitalization.words,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  _LeadSection(
+                    icon: Icons.person_rounded,
+                    title: 'Contact person',
+                    children: [
+                      ExField(
+                        label: 'Contact name',
+                        controller: _contact,
+                        hint: 'Name and role',
+                        prefixIcon: Icons.badge_outlined,
+                        textCapitalization: TextCapitalization.words,
+                      ),
+                      const SizedBox(height: 14),
+                      pair(
+                        ExField(
+                          label: 'Contact number',
+                          controller: _number,
+                          hint: '10-digit mobile',
+                          prefixText: '+91  ',
+                          keyboardType: TextInputType.phone,
+                          errorText: _numberError,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(10),
+                          ],
+                        ),
+                        ExField(
+                          label: 'Contact email',
+                          controller: _email,
+                          hint: 'name@school.edu.in',
+                          prefixIcon: Icons.mail_outline_rounded,
+                          keyboardType: TextInputType.emailAddress,
+                          errorText: _emailError,
+                          textCapitalization: TextCapitalization.none,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  _LeadSection(
+                    icon: Icons.sticky_note_2_rounded,
+                    title: 'Notes',
+                    children: [
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          for (final n in _quickNotes)
+                            ActionChip(
+                              avatar: Icon(Icons.add_rounded, size: 16, color: base),
+                              label: Text(n),
+                              labelStyle: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: exInk,
+                              ),
+                              backgroundColor: exPageBg,
+                              side: const BorderSide(color: exBorder),
+                              shape: const StadiumBorder(),
+                              onPressed: () => _addQuickNote(n),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _notes,
+                        maxLines: 3,
+                        textCapitalization: TextCapitalization.sentences,
+                        style: const TextStyle(fontSize: 16, color: exInk),
+                        decoration: exInputDecoration(
+                          hint: 'e.g. Wants a full product walkthrough',
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_error != null) ...[
+                    const SizedBox(height: 14),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFDECEC),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: exDanger.withValues(alpha: 0.2)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.error_outline_rounded, color: exDanger),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(_error!,
+                                style: const TextStyle(
+                                    color: exDanger, fontWeight: FontWeight.w600)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
-          ),
-        ],
+            // ── Footer ──
+            Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(color: Color(0x14000000), blurRadius: 20, offset: Offset(0, -6)),
+                ],
+              ),
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+              child: SafeArea(
+                top: false,
+                child: ExPrimaryButton(
+                  label: 'Save Lead',
+                  icon: Icons.check_rounded,
+                  height: 56,
+                  loadingLabel: 'Saving…',
+                  loading: _saving,
+                  onPressed: _save,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
+}
+
+/// White rounded card grouping a few lead fields under an icon title.
+class _LeadSection extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final List<Widget> children;
+
+  const _LeadSection({required this.icon, required this.title, required this.children});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: exBorder),
+          boxShadow: exCardShadow,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: exTint,
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  child: Icon(icon, size: 17, color: AppColors.primary),
+                ),
+                const SizedBox(width: 10),
+                Text(title,
+                    style: const TextStyle(
+                      fontSize: 15.5,
+                      fontWeight: FontWeight.w800,
+                      color: exInk,
+                    )),
+              ],
+            ),
+            const SizedBox(height: 14),
+            ...children,
+          ],
+        ),
+      );
 }
 
 // MARK: - Demo detail

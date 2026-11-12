@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../Values/Colors/app_colors.dart';
 import '../../auth/model/ExhibitionModel.dart';
@@ -29,6 +31,42 @@ class _ExhibitionListViewState extends ConsumerState<ExhibitionListView> {
 
   /// What the right side actually shows (the tapped one, or the default).
   String? _shownId;
+
+  /// iPad only: the user's choice between split view and full screen.
+  /// Remembered across launches.
+  bool _splitPref = true;
+  static const _splitPrefKey = 'exhibition_ipad_split_view';
+
+  /// Split is used only on an iPad-sized window and when the user wants it.
+  bool get _useSplit => exIsSplit(context) && _splitPref;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSplitPref();
+  }
+
+  Future<void> _loadSplitPref() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final v = prefs.getBool(_splitPrefKey);
+      if (v != null && mounted) setState(() => _splitPref = v);
+    } catch (_) {}
+  }
+
+  Future<void> _toggleSplit() async {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _splitPref = !_splitPref;
+      // Each layout has its own search box, so start the new one clean.
+      _query = '';
+      _searchCtrl.clear();
+    });
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_splitPrefKey, _splitPref);
+    } catch (_) {}
+  }
 
   @override
   void dispose() {
@@ -61,7 +99,7 @@ class _ExhibitionListViewState extends ConsumerState<ExhibitionListView> {
   }
 
   void _openDetail(Exhibition e) {
-    if (exIsSplit(context)) {
+    if (_useSplit) {
       setState(() => _selectedId = e.id);
       return;
     }
@@ -78,13 +116,14 @@ class _ExhibitionListViewState extends ConsumerState<ExhibitionListView> {
   void _refreshAll() {
     ref.invalidate(exhibitionListProvider);
     final id = _shownId;
-    if (id != null && exIsSplit(context)) refreshExhibition(ref, id);
+    if (id != null && _useSplit) refreshExhibition(ref, id);
   }
 
   @override
   Widget build(BuildContext context) {
     final async = ref.watch(exhibitionListProvider);
-    final split = exIsSplit(context);
+    final tablet = exIsSplit(context);
+    final split = tablet && _splitPref;
 
     return ExPage(
       title: 'Exhibitions',
@@ -92,6 +131,14 @@ class _ExhibitionListViewState extends ConsumerState<ExhibitionListView> {
       // On iPad the search box lives inside the list pane instead.
       onSearch: split ? null : (q) => setState(() => _query = q.trim().toLowerCase()),
       onRefresh: _refreshAll,
+      // iPad only: switch between split view and full-screen list.
+      trailing: tablet
+          ? ExToolbarButton(
+              icon: split ? Icons.fullscreen_rounded : Icons.vertical_split_rounded,
+              tooltip: split ? 'Full screen' : 'Split view',
+              onTap: _toggleSplit,
+            )
+          : null,
       floatingActionButton: split
           ? null
           : FloatingActionButton.extended(
@@ -102,7 +149,14 @@ class _ExhibitionListViewState extends ConsumerState<ExhibitionListView> {
               icon: const Icon(Icons.add_rounded),
               label: const Text('Exhibition', style: TextStyle(fontWeight: FontWeight.w600)),
             ),
-      body: split ? _splitBody(async) : _phoneBody(async),
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 250),
+        switchInCurve: Curves.easeOut,
+        child: KeyedSubtree(
+          key: ValueKey(split),
+          child: split ? _splitBody(async) : _phoneBody(async),
+        ),
+      ),
     );
   }
 

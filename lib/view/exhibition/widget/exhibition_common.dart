@@ -27,6 +27,46 @@ bool exIsSplit(BuildContext context) {
   return size.shortestSide >= 600 && size.width >= 760;
 }
 
+/// Round translucent button for the blue toolbar (matches its refresh button).
+class ExToolbarButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  const ExToolbarButton({
+    super.key,
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) => Tooltip(
+        message: tooltip,
+        child: Semantics(
+          button: true,
+          label: tooltip,
+          child: GestureDetector(
+            onTap: onTap,
+            child: Container(
+              height: 42,
+              width: 42,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(21),
+                border: Border.all(color: Colors.white30),
+              ),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                transitionBuilder: (c, a) => ScaleTransition(scale: a, child: c),
+                child: Icon(icon, key: ValueKey(icon), color: Colors.white, size: 21),
+              ),
+            ),
+          ),
+        ),
+      );
+}
+
 const exCardShadow = [
   BoxShadow(color: Color(0x0D1A2235), blurRadius: 14, offset: Offset(0, 4)),
 ];
@@ -91,6 +131,7 @@ class ExPage extends StatelessWidget {
   final String searchHint;
   final Widget? floatingActionButton;
   final VoidCallback? onBackPressed;
+  final Widget? trailing;
 
   const ExPage({
     super.key,
@@ -101,6 +142,7 @@ class ExPage extends StatelessWidget {
     this.searchHint = 'Search...',
     this.floatingActionButton,
     this.onBackPressed,
+    this.trailing,
   });
 
   @override
@@ -123,6 +165,7 @@ class ExPage extends StatelessWidget {
               onSearch: onSearch,
               searchHint: searchHint,
               onBackPressed: onBackPressed,
+              trailing: trailing,
             ),
             Expanded(
               child: Container(
@@ -495,6 +538,7 @@ class ExField extends StatelessWidget {
   final TextInputAction? textInputAction;
   final ValueChanged<String>? onSubmitted;
   final TextCapitalization textCapitalization;
+  final IconData? prefixIcon;
 
   const ExField({
     super.key,
@@ -511,6 +555,7 @@ class ExField extends StatelessWidget {
     this.textInputAction,
     this.onSubmitted,
     this.textCapitalization = TextCapitalization.sentences,
+    this.prefixIcon,
   });
 
   @override
@@ -538,15 +583,26 @@ class ExField extends StatelessWidget {
             onSubmitted: onSubmitted,
             textCapitalization: textCapitalization,
             style: const TextStyle(fontSize: 16, color: exInk),
-            decoration: exInputDecoration(hint: hint, errorText: errorText, prefixText: prefixText),
+            decoration: exInputDecoration(
+              hint: hint,
+              errorText: errorText,
+              prefixText: prefixText,
+              prefixIcon: prefixIcon,
+            ),
           ),
         ],
       );
 }
 
-InputDecoration exInputDecoration({String? hint, String? errorText, String? prefixText}) =>
+InputDecoration exInputDecoration({
+  String? hint,
+  String? errorText,
+  String? prefixText,
+  IconData? prefixIcon,
+}) =>
     InputDecoration(
       hintText: hint,
+      prefixIcon: prefixIcon == null ? null : Icon(prefixIcon, size: 20, color: exSubtle),
       errorText: errorText,
       prefixText: prefixText,
       prefixStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: exInk),
