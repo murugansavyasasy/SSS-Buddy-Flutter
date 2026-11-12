@@ -504,8 +504,14 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
 class DemoDetailPanel extends StatefulWidget {
   final ExhibitionDemo demo;
   final VoidCallback onCaptureLead;
+  final VoidCallback? onSendAgain;
 
-  const DemoDetailPanel({super.key, required this.demo, required this.onCaptureLead});
+  const DemoDetailPanel({
+    super.key,
+    required this.demo,
+    required this.onCaptureLead,
+    this.onSendAgain,
+  });
 
   @override
   State<DemoDetailPanel> createState() => _DemoDetailPanelState();
@@ -675,6 +681,18 @@ class _DemoDetailPanelState extends State<DemoDetailPanel> {
             icon: Icons.star_outline_rounded,
             onPressed: widget.onCaptureLead,
           ),
+        if (widget.onSendAgain != null) ...[
+          const SizedBox(height: 10),
+          ExSecondaryButton(
+            label: 'Send again',
+            icon: Icons.replay_rounded,
+            color: exBrandBold,
+            onPressed: () {
+              _player.stop();
+              widget.onSendAgain!();
+            },
+          ),
+        ],
       ],
     );
   }

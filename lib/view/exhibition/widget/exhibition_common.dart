@@ -1254,3 +1254,73 @@ void exToast(BuildContext context, String message, {bool error = false}) {
       ),
     );
 }
+
+/// Centered confirm popup: bold title, body, outlined cancel + filled confirm
+/// side by side. Returns true when the confirm button is tapped.
+Future<bool> showExConfirmDialog(
+  BuildContext context, {
+  required String title,
+  required String message,
+  required String confirmLabel,
+  String cancelLabel = 'Cancel',
+  bool destructive = false,
+}) async {
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => Dialog(
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.white,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 400),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title,
+                  style: const TextStyle(
+                      fontFamily: exFont, fontSize: 20, height: 28 / 20, fontWeight: FontWeight.w700, color: exInk)),
+              const SizedBox(height: 10),
+              Text(message,
+                  style: const TextStyle(
+                      fontFamily: exFont, fontSize: 16, height: 24 / 16, fontWeight: FontWeight.w500, color: exSubtle)),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: ExSecondaryButton(
+                      label: cancelLabel,
+                      height: 48,
+                      onPressed: () => Navigator.pop(ctx, false),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: SizedBox(
+                      height: 48,
+                      child: FilledButton(
+                        onPressed: () => Navigator.pop(ctx, true),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: destructive ? exDanger : exBrandBold,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          textStyle:
+                              const TextStyle(fontFamily: exFont, fontSize: 16, fontWeight: FontWeight.w600),
+                        ),
+                        child: Text(confirmLabel, overflow: TextOverflow.ellipsis),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+  return ok == true;
+}
