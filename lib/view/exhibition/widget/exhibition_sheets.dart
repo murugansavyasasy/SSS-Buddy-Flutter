@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +8,7 @@ import 'package:just_audio/just_audio.dart';
 import '../../../auth/model/ExhibitionModel.dart';
 import '../../../viewModel/exhibition_viewmodel.dart';
 import 'exhibition_common.dart';
+import 'voice_recorder_panel.dart';
 
 Future<T?> _showSheet<T>(BuildContext context, WidgetBuilder builder, {bool full = false}) =>
     showModalBottomSheet<T>(
@@ -173,12 +176,14 @@ Future<bool> showCaptureLeadSheet(
   ExhibitionDemo? demo,
   String? prefillContact,
   String? prefillNumber,
+  ExhibitionLead? lead,
 }) async {
   final saved = await _showSheet<bool>(
     context,
     (ctx) => _CaptureLeadSheet(
       exhibitionId: exhibitionId,
       demo: demo,
+      lead: lead,
       prefillContact: prefillContact ?? demo?.visitorName,
       prefillNumber: prefillNumber ?? demo?.firstVisitorNumber,
     ),
@@ -193,9 +198,13 @@ class _CaptureLeadSheet extends ConsumerStatefulWidget {
   final String? prefillContact;
   final String? prefillNumber;
 
+  /// Set when editing an existing lead.
+  final ExhibitionLead? lead;
+
   const _CaptureLeadSheet({
     required this.exhibitionId,
     this.demo,
+    this.lead,
     this.prefillContact,
     this.prefillNumber,
   });
@@ -205,13 +214,17 @@ class _CaptureLeadSheet extends ConsumerStatefulWidget {
 }
 
 class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
-  late final _school = TextEditingController();
-  late final _city = TextEditingController();
-  late final _contact = TextEditingController(text: widget.prefillContact ?? '');
-  late final _number = TextEditingController(text: widget.prefillNumber ?? '');
-  late final _email = TextEditingController();
-  late final _notes = TextEditingController();
-  InterestLevel _level = InterestLevel.warm;
+  late final _school = TextEditingController(text: widget.lead?.schoolName ?? '');
+  late final _city = TextEditingController(text: widget.lead?.city ?? '');
+  late final _contact =
+      TextEditingController(text: widget.lead?.contactName ?? widget.prefillContact ?? '');
+  late final _number =
+      TextEditingController(text: widget.lead?.contactNumber ?? widget.prefillNumber ?? '');
+  late final _email = TextEditingController(text: widget.lead?.contactEmail ?? '');
+  late final _notes = TextEditingController(text: widget.lead?.notes ?? '');
+  late InterestLevel _level = widget.lead?.interestLevel ?? InterestLevel.warm;
+
+  bool get _editing => widget.lead != null;
   bool _tried = false;
   bool _saving = false;
   String? _error;
@@ -252,19 +265,25 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
     }
     setState(() => _saving = true);
     try {
-      await ref.read(exhibitionRepositoryProvider).captureLead(
-            exhibitionId: widget.exhibitionId,
-            demoId: widget.demo?.id,
-            req: CaptureLeadRequest(
-              schoolName: _school.text.trim(),
-              city: _city.text.trim(),
-              contactName: _contact.text.trim(),
-              contactNumber: normalizeIndianMobile(_number.text.trim()),
-              contactEmail: _email.text.trim(),
-              notes: _notes.text.trim(),
-              interestLevel: _level,
-            ),
-          );
+      final req = CaptureLeadRequest(
+        schoolName: _school.text.trim(),
+        city: _city.text.trim(),
+        contactName: _contact.text.trim(),
+        contactNumber: normalizeIndianMobile(_number.text.trim()),
+        contactEmail: _email.text.trim(),
+        notes: _notes.text.trim(),
+        interestLevel: _level,
+      );
+      final repo = ref.read(exhibitionRepositoryProvider);
+      if (_editing) {
+        await repo.updateLead(widget.lead!.id, req);
+      } else {
+        await repo.captureLead(
+          exhibitionId: widget.exhibitionId,
+          demoId: widget.demo?.id,
+          req: req,
+        );
+      }
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
@@ -353,7 +372,8 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Capture lead', style: exHeadingLg),
+                          Text(_editing ? 'Edit lead' : 'Capture lead', style: exHeadingLg),
+                          if (!_editing) ...[
                           const SizedBox(height: 8),
                           ExPill(
                             icon: demo == null ? Icons.storefront_outlined : Icons.link_rounded,
@@ -363,6 +383,7 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
                             background: demo == null ? exNotes : exTint,
                             foreground: demo == null ? exInk : exBrandBold,
                           ),
+                          ],
                         ],
                       ),
                     ),
@@ -484,7 +505,7 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
             child: SafeArea(
               top: false,
               child: ExPrimaryButton(
-                label: 'Save Lead',
+                label: _editing ? 'Save Changes' : 'Save Lead',
                 loadingLabel: 'Saving…',
                 loading: _saving,
                 onPressed: _save,
@@ -558,17 +579,9 @@ class _DemoDetailPanelState extends State<DemoDetailPanel> {
   @override
   Widget build(BuildContext context) {
     final d = widget.demo;
-    final meta = [
-      if (d.createdBy.isNotEmpty) 'Created by ${d.createdBy}',
-      if (d.createdAt != null) exWhen(d.createdAt),
-    ].join(' · ');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (meta.isNotEmpty) ...[
-          Text(meta, style: exBodyMd),
-          const SizedBox(height: 12),
-        ],
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
@@ -668,31 +681,40 @@ class _DemoDetailPanelState extends State<DemoDetailPanel> {
                 Icon(Icons.check_circle_outline_rounded, color: exSuccess),
                 SizedBox(width: 10),
                 Expanded(
-                  child: Text('Lead captured for this demo',
+                  child: Text('Lead captured',
                       style: TextStyle(
                           fontSize: 15, color: exSuccess, fontWeight: FontWeight.w600)),
                 ),
               ],
             ),
-          )
-        else
-          ExPrimaryButton(
-            label: 'Capture Lead for this demo',
-            icon: Icons.star_outline_rounded,
-            onPressed: widget.onCaptureLead,
           ),
-        if (widget.onSendAgain != null) ...[
-          const SizedBox(height: 10),
-          ExSecondaryButton(
-            label: 'Send again',
-            icon: Icons.replay_rounded,
-            color: exBrandBold,
-            onPressed: () {
-              _player.stop();
-              widget.onSendAgain!();
-            },
-          ),
-        ],
+        if (d.hasLead && widget.onSendAgain != null) const SizedBox(height: 10),
+        // Actions side by side so the expanded card stays short.
+        Row(
+          children: [
+            if (!d.hasLead)
+              Expanded(
+                child: ExPrimaryButton(
+                  label: 'Capture Lead',
+                  height: 48,
+                  onPressed: widget.onCaptureLead,
+                ),
+              ),
+            if (!d.hasLead && widget.onSendAgain != null) const SizedBox(width: 10),
+            if (widget.onSendAgain != null)
+              Expanded(
+                child: ExSecondaryButton(
+                  label: 'Send again',
+                  color: exBrandBold,
+                  height: 48,
+                  onPressed: () {
+                    _player.stop();
+                    widget.onSendAgain!();
+                  },
+                ),
+              ),
+          ],
+        ),
       ],
     );
   }
@@ -727,6 +749,161 @@ class _RecipientRow extends StatelessWidget {
           SizedBox(
             width: 92,
             child: Center(child: ExPill(label: r.status.label, background: bg, foreground: fg)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// MARK: - Add voice template
+
+/// Record a new voice template and upload it. Returns true when saved.
+Future<bool> showAddTemplateSheet(BuildContext context) async {
+  final saved = await _showSheet<bool>(context, (_) => const _AddTemplateSheet(), full: true);
+  return saved == true;
+}
+
+class _AddTemplateSheet extends ConsumerStatefulWidget {
+  const _AddTemplateSheet();
+
+  @override
+  ConsumerState<_AddTemplateSheet> createState() => _AddTemplateSheetState();
+}
+
+class _AddTemplateSheetState extends ConsumerState<_AddTemplateSheet> {
+  final _title = TextEditingController();
+  final _description = TextEditingController();
+  String? _path;
+  Duration _length = Duration.zero;
+  bool _tried = false;
+  bool _saving = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _title.dispose();
+    _description.dispose();
+    final p = _path;
+    if (p != null) File(p).delete().catchError((_) => File(p));
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _tried = true;
+      _error = null;
+    });
+    if (_title.text.trim().isEmpty || _path == null) return;
+    setState(() => _saving = true);
+    try {
+      await ref.read(exhibitionRepositoryProvider).createTemplate(
+            title: _title.text.trim(),
+            description: _description.text.trim(),
+            wavPath: _path!,
+            duration: _length,
+          );
+      if (mounted) Navigator.pop(context, true);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _saving = false;
+          _error = e.toString();
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 10, 12, 12),
+            child: Column(
+              children: [
+                _handle(),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    const Expanded(child: Text('Add voice template', style: exHeadingLg)),
+                    SizedBox(
+                      width: 48,
+                      height: 48,
+                      child: IconButton(
+                        tooltip: 'Close',
+                        onPressed: _saving ? null : () => Navigator.pop(context, false),
+                        icon: const Icon(Icons.close_rounded, color: exInk),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1, color: exBorder),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+              children: [
+                ExField(
+                  label: 'Template name',
+                  required: true,
+                  controller: _title,
+                  hint: 'e.g. Product Intro (Tamil)',
+                  errorText: _tried && _title.text.trim().isEmpty ? 'Template name is required' : null,
+                  textCapitalization: TextCapitalization.sentences,
+                  onChanged: (_) {
+                    if (_tried) setState(() {});
+                  },
+                ),
+                const SizedBox(height: 16),
+                ExField(
+                  label: 'Description',
+                  controller: _description,
+                  hint: 'e.g. Short overview for principals',
+                  textCapitalization: TextCapitalization.sentences,
+                ),
+                const SizedBox(height: 20),
+                Text('Voice', style: exHeadingSm.copyWith(fontSize: 15)),
+                const SizedBox(height: 8),
+                VoiceRecorderPanel(
+                  initialPath: _path,
+                  initialDuration: _length,
+                  onChanged: (path, len) => setState(() {
+                    _path = path;
+                    _length = len;
+                  }),
+                ),
+                if (_tried && _path == null) ...[
+                  const SizedBox(height: 12),
+                  const ExInlineNote(message: 'Record the voice to save the template.'),
+                ],
+                if (_error != null) ...[
+                  const SizedBox(height: 16),
+                  ExInlineNote(message: _error!),
+                ],
+              ],
+            ),
+          ),
+          Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              border: Border(top: BorderSide(color: exBorder)),
+            ),
+            padding: const EdgeInsets.fromLTRB(24, 12, 24, 12),
+            child: SafeArea(
+              top: false,
+              child: ExPrimaryButton(
+                label: 'Save Template',
+                loadingLabel: 'Uploading…',
+                loading: _saving,
+                onPressed: _save,
+              ),
+            ),
           ),
         ],
       ),

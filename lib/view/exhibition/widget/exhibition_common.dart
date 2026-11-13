@@ -182,7 +182,7 @@ const exLabelSm = TextStyle(
     : (exCompletedBg, exCompletedInk);
 
 (Color, Color) interestLevelColors(InterestLevel l) => switch (l) {
-      InterestLevel.hot => (exDangerBg, exDanger),
+      InterestLevel.hot => (exSuccessBg, exSuccess),
       InterestLevel.warm => (exCalling, exCallingInk),
       InterestLevel.cold => (exCompletedBg, exCompletedInk),
     };
