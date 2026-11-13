@@ -7,6 +7,7 @@ import '../../provider/user_session_provider.dart';
 import '../../viewModel/exhibition_viewmodel.dart';
 import 'exhibition_create_view.dart';
 import 'give_demo_view.dart';
+import 'widget/demo_audio.dart';
 import 'widget/exhibition_common.dart';
 import 'widget/exhibition_sheets.dart';
 
@@ -288,6 +289,10 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
         ),
       ],
       data: (items) {
+        // Download every demo voice now, so expanding a demo plays at once.
+        for (final d in items) {
+          if (d.audioUrl.isNotEmpty) ref.read(localAudioProvider(d.audioUrl));
+        }
         if (items.isEmpty) {
           return [
             SliverToBoxAdapter(
@@ -744,7 +749,10 @@ class _DemoRow extends StatelessWidget {
                               ),
                               const SizedBox(height: 4),
                               Text(meta, style: exBodyMd),
-                              if (voice != null) Text(voice, style: exBodySm),
+                              if (d.audioUrl.isNotEmpty) ...[
+                                const SizedBox(height: 2),
+                                _VoiceLine(url: d.audioUrl, title: voice),
+                              ],
                             ],
                           ),
                         ),
@@ -973,4 +981,31 @@ class _EditButton extends StatelessWidget {
           icon: Icon(icon, size: 20, color: color),
         ),
       );
+}
+
+/// "🎧 Voice title · 0:34" under a demo; the length is read from the audio URL.
+class _VoiceLine extends ConsumerWidget {
+  final String url;
+  final String? title;
+  const _VoiceLine({required this.url, this.title});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final dur = ref.watch(audioDurationProvider(url));
+    final length = dur.when(
+      data: (d) => d == null ? null : exDuration(d),
+      loading: () => '…',
+      error: (_, __) => null,
+    );
+    final text = [title ?? 'Demo voice', if (length != null) length].join(' · ');
+    return Row(
+      children: [
+        const Icon(Icons.headphones_rounded, size: 14, color: exSubtle),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis, style: exBodySm),
+        ),
+      ],
+    );
+  }
 }

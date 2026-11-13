@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../auth/model/ExhibitionModel.dart';
+import '../core/exhibition/demo_templates.dart';
 import '../provider/app_providers.dart';
 import '../repository/exhibition_repository.dart';
 
@@ -64,5 +65,17 @@ void refreshExhibition(WidgetRef ref, String id) {
 /// app). Kept alive so demo rows can name the voice without refetching.
 final exhibitionTemplatesProvider = FutureProvider<List<DemoTemplate>>(
   retry: _noRetry,
-  (ref) => ref.read(exhibitionRepositoryProvider).fetchTemplates(),
+  (ref) async {
+    // Hardcoded templates for now; API templates are appended when the
+    // endpoint is available (its failure is ignored).
+    List<DemoTemplate> fromApi = const [];
+    try {
+      fromApi = await ref.read(exhibitionRepositoryProvider).fetchTemplates();
+    } catch (_) {}
+    final ids = exhibitionDemoTemplates.map((t) => t.id).toSet();
+    return [
+      ...exhibitionDemoTemplates,
+      ...fromApi.where((t) => !ids.contains(t.id)),
+    ];
+  },
 );

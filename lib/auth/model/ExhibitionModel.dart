@@ -347,17 +347,17 @@ enum InterestLevel { hot, warm, cold }
 
 InterestLevel? parseInterestLevel(String s) {
   final v = s.trim().toLowerCase();
-  if (v.startsWith('hot') || v == 'high' || v == 'good') return InterestLevel.hot;
-  if (v.startsWith('warm') || v == 'medium' || v == 'average') return InterestLevel.warm;
-  if (v.startsWith('cold') || v == 'low') return InterestLevel.cold;
+  if (v.startsWith('hot') || v == 'high' || v == 'excellent') return InterestLevel.hot;
+  if (v.startsWith('warm') || v == 'medium' || v == 'good') return InterestLevel.warm;
+  if (v.startsWith('cold') || v == 'low' || v == 'average') return InterestLevel.cold;
   return null;
 }
 
 extension InterestLevelX on InterestLevel {
   String get label => switch (this) {
-        InterestLevel.hot => 'Good',
-        InterestLevel.warm => 'Average',
-        InterestLevel.cold => 'Low',
+        InterestLevel.hot => 'Excellent',
+        InterestLevel.warm => 'Good',
+        InterestLevel.cold => 'Average',
       };
   String get apiValue => name;
 }
@@ -477,6 +477,16 @@ class DemoTemplate {
     this.createdBy = '',
     this.createdById = '',
   });
+
+  DemoTemplate withDuration(Duration d) => DemoTemplate(
+        id: id,
+        title: title,
+        description: description,
+        duration: d,
+        audioUrl: audioUrl,
+        createdBy: createdBy,
+        createdById: createdById,
+      );
 
   /// From GET /exhibitions/templates.
   factory DemoTemplate.fromJson(Map<String, dynamic> j) => DemoTemplate(

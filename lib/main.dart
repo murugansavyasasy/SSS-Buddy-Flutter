@@ -54,7 +54,12 @@ class MyApp extends StatelessWidget {
       navigatorKey: appNavigatorKey,
       onGenerateRoute: Routes.generateRoutes,
       initialRoute: RoutesName.splashscreen,
-      builder: (context, child) => ConnectivityWrapper(child: child?? const SizedBox.shrink()),
+      // Tapping anywhere outside a text field closes the keyboard.
+      builder: (context, child) => GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+        child: ConnectivityWrapper(child: child ?? const SizedBox.shrink()),
+      ),
     );
   }
 }

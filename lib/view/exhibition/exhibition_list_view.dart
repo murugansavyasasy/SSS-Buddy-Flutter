@@ -27,6 +27,10 @@ class _ExhibitionListViewState extends ConsumerState<ExhibitionListView> {
   String _query = '';
   _Filter _filter = _Filter.all;
   final _searchCtrl = TextEditingController();
+  final _searchFocus = FocusNode();
+
+  /// Search bar is hidden until the search button is tapped.
+  bool _searchOpen = false;
 
   /// iPad split only: the exhibition shown on the right.
   String? _selectedId;
@@ -63,6 +67,7 @@ class _ExhibitionListViewState extends ConsumerState<ExhibitionListView> {
   @override
   void dispose() {
     _searchCtrl.dispose();
+    _searchFocus.dispose();
     super.dispose();
   }
 
@@ -78,6 +83,63 @@ class _ExhibitionListViewState extends ConsumerState<ExhibitionListView> {
         _query = '';
         _searchCtrl.clear();
       });
+
+  void _openSearch() {
+    HapticFeedback.selectionClick();
+    setState(() => _searchOpen = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _searchFocus.requestFocus();
+    });
+  }
+
+  void _closeSearch() {
+    _searchFocus.unfocus();
+    setState(() {
+      _searchOpen = false;
+      _query = '';
+      _searchCtrl.clear();
+    });
+  }
+
+  /// Larger, filled circle so the search action is easy to spot and tap.
+  Widget _searchButton() => Padding(
+        padding: const EdgeInsets.only(left: 4),
+        child: Tooltip(
+          message: 'Search',
+          child: Material(
+            color: const Color(0xFFEEF1F6),
+            shape: const CircleBorder(),
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: _openSearch,
+              child: const SizedBox(
+                width: 48,
+                height: 48,
+                child: Icon(Icons.search_rounded, size: 28, color: exInk),
+              ),
+            ),
+          ),
+        ),
+      );
+
+  /// Search bar (when open) above the category tabs.
+  Widget _headerControls() => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AnimatedSize(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+            alignment: Alignment.topCenter,
+            child: _searchOpen
+                ? Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _searchBox(),
+                  )
+                : const SizedBox(width: double.infinity),
+          ),
+          _filterRow(),
+        ],
+      );
 
   Future<void> _openCreate() async {
     final created = await Navigator.push<Exhibition>(
@@ -122,15 +184,11 @@ class _ExhibitionListViewState extends ConsumerState<ExhibitionListView> {
 
     return ExPage(
       title: 'Exhibitions',
-      actions: [if (toggle != null) toggle],
-      headerBottom: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _searchBox(),
-          const SizedBox(height: 12),
-          _filterRow(),
-        ],
-      ),
+      actions: [
+        if (!_searchOpen) _searchButton(),
+        if (toggle != null) toggle,
+      ],
+      headerBottom: _headerControls(),
       floatingActionButton: ExFab(onPressed: _openCreate),
       body: _listArea(async, grid: exIsWide(context)),
     );
@@ -140,31 +198,25 @@ class _ExhibitionListViewState extends ConsumerState<ExhibitionListView> {
 
   Widget _searchBox() => _SearchBox(
         controller: _searchCtrl,
+        focusNode: _searchFocus,
         onChanged: (q) => setState(() => _query = q.trim().toLowerCase()),
-        onClear: () => setState(() {
-          _searchCtrl.clear();
-          _query = '';
-        }),
+        onCancel: _closeSearch,
       );
 
-  Widget _filterRow() => SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            for (final f in _Filter.values) ...[
-              ExFilterChip(
-                label: switch (f) {
-                  _Filter.all => 'All',
-                  _Filter.active => 'Active',
-                  _Filter.completed => 'Completed',
-                },
-                selected: _filter == f,
-                onTap: () => setState(() => _filter = f),
-              ),
-              const SizedBox(width: 8),
-            ],
-          ],
-        ),
+  Widget _filterRow() => _CategoryTabs(
+        tabs: [
+          for (final f in _Filter.values)
+            switch (f) {
+              _Filter.all => 'All',
+              _Filter.active => 'Active',
+              _Filter.completed => 'Completed',
+            },
+        ],
+        selected: _filter.index,
+        onSelect: (i) {
+          HapticFeedback.selectionClick();
+          setState(() => _filter = _Filter.values[i]);
+        },
       );
 
   /// Loading / error / empty / no-match, or null when there is a list.
@@ -306,18 +358,14 @@ class _ExhibitionListViewState extends ConsumerState<ExhibitionListView> {
                               ExBackButton(onPressed: () => Navigator.maybePop(context)),
                               const SizedBox(width: 4),
                               const Expanded(child: Text('Exhibitions', style: exHeadingXl)),
+                              if (!_searchOpen) _searchButton(),
                               toggle,
                             ],
                           ),
                           const SizedBox(height: 16),
                           Padding(
                             padding: const EdgeInsets.only(left: 8),
-                            child: _searchBox(),
-                          ),
-                          const SizedBox(height: 16),
-                          Padding(
-                            padding: const EdgeInsets.only(left: 8),
-                            child: _filterRow(),
+                            child: _headerControls(),
                           ),
                           const SizedBox(height: 8),
                         ],
@@ -388,37 +436,128 @@ class _SplitScaffold extends StatelessWidget {
       );
 }
 
+/// Filled, rounded search field with a Cancel action that hides it.
 class _SearchBox extends StatelessWidget {
   final TextEditingController controller;
+  final FocusNode focusNode;
   final ValueChanged<String> onChanged;
-  final VoidCallback onClear;
+  final VoidCallback onCancel;
 
-  const _SearchBox({required this.controller, required this.onChanged, required this.onClear});
+  const _SearchBox({
+    required this.controller,
+    required this.focusNode,
+    required this.onChanged,
+    required this.onCancel,
+  });
 
   @override
-  Widget build(BuildContext context) => ValueListenableBuilder<TextEditingValue>(
-        valueListenable: controller,
-        builder: (_, v, __) => TextField(
-          controller: controller,
-          onChanged: onChanged,
-          textInputAction: TextInputAction.search,
-          style: exBodyTouch,
-          decoration: exInputDecoration(hint: 'Search name, city or venue').copyWith(
-            prefixIcon: const Padding(
-              padding: EdgeInsets.only(left: 14, right: 8),
-              child: Icon(Icons.search_rounded, size: 22, color: exSubtle),
-            ),
-            prefixIconConstraints: const BoxConstraints(minWidth: 44, minHeight: 52),
-            suffixIcon: v.text.isEmpty
-                ? null
-                : IconButton(
-                    tooltip: 'Clear search',
-                    icon: const Icon(Icons.close_rounded, color: exSubtle),
-                    onPressed: onClear,
+  Widget build(BuildContext context) => Row(
+        children: [
+          Expanded(
+            child: ValueListenableBuilder<TextEditingValue>(
+              valueListenable: controller,
+              builder: (_, v, __) => TextField(
+                controller: controller,
+                focusNode: focusNode,
+                onChanged: onChanged,
+                textInputAction: TextInputAction.search,
+                onSubmitted: (_) => focusNode.unfocus(),
+                style: const TextStyle(fontSize: 16, color: exInk),
+                cursorColor: exBrandBold,
+                decoration: InputDecoration(
+                  isDense: true,
+                  filled: true,
+                  fillColor: const Color(0xFFEEF1F6),
+                  hintText: 'Search name, city or venue',
+                  hintStyle: const TextStyle(fontSize: 16, color: exSubtle),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 13),
+                  prefixIcon: const Icon(Icons.search_rounded, size: 22, color: exSubtle),
+                  prefixIconConstraints: const BoxConstraints(minWidth: 44, minHeight: 46),
+                  suffixIcon: v.text.isEmpty
+                      ? null
+                      : IconButton(
+                          tooltip: 'Clear search',
+                          icon: const Icon(Icons.cancel_rounded, size: 20, color: exSubtle),
+                          onPressed: () {
+                            controller.clear();
+                            onChanged('');
+                          },
+                        ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
                   ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: exBrand, width: 1.5),
+                  ),
+                ),
+              ),
+            ),
           ),
+          TextButton(
+            onPressed: onCancel,
+            style: TextButton.styleFrom(
+              foregroundColor: exBrandBold,
+              minimumSize: const Size(48, 46),
+              padding: const EdgeInsets.only(left: 12, right: 4),
+            ),
+            child: const Text('Cancel', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+          ),
+        ],
+      );
+}
+
+/// Horizontally scrolling capsule chips (more categories can be added).
+/// Same look as the original chips, only capsule-shaped.
+class _CategoryTabs extends StatelessWidget {
+  final List<String> tabs;
+  final int selected;
+  final ValueChanged<int> onSelect;
+
+  const _CategoryTabs({required this.tabs, required this.selected, required this.onSelect});
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+        height: 44,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          clipBehavior: Clip.none,
+          itemCount: tabs.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 8),
+          itemBuilder: (_, i) => _chip(i),
         ),
       );
+
+  Widget _chip(int i) {
+    final on = i == selected;
+    return Semantics(
+      button: true,
+      selected: on,
+      child: Material(
+        color: on ? exInk : Colors.white,
+        shape: StadiumBorder(side: BorderSide(color: on ? exInk : exStrongBorder)),
+        child: InkWell(
+          customBorder: const StadiumBorder(),
+          onTap: () => onSelect(i),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Center(
+              widthFactor: 1,
+              child: Text(
+                tabs[i],
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: on ? Colors.white : exInk,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class ExhibitionCard extends StatelessWidget {
