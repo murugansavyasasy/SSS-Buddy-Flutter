@@ -169,31 +169,85 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
     return null;
   }
 
-  Future<void> _handleEndDay() async {
-    final error = _validateFields();
-
-    if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
+  Future<bool> _confirmEndDay() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.warning_amber_rounded,
-                  color: Colors.white, size: 18),
-              const SizedBox(width: 8),
-              Expanded(child: Text(error)),
+              const Text(
+                "End today's trip?",
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: primaryColor),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Location tracking will stop for today.',
+                style: TextStyle(fontSize: 16, color: mutedText),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 48,
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: primaryColor,
+                          side: const BorderSide(color: Color(0xFFCDD3DF)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        child: const Text('Cancel',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: SizedBox(
+                      height: 48,
+                      child: FilledButton(
+                        onPressed: () => Navigator.pop(ctx, true),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: dangerColor,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        child: const Text('End Trip',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
-          backgroundColor: dangerColor,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
         ),
-      );
-      return;
-    }
+      ),
+    );
+    return ok == true;
+  }
 
-    final success = await ref.read(todayVisitProvider.notifier).manageTrip("stop");
+  bool _endingTrip = false;
+
+  /// END DAY: no form validation, just confirm and stop the trip.
+  Future<void> _handleEndDay() async {
+    if (_endingTrip) return;
+    if (!await _confirmEndDay() || !mounted) return;
+    _endingTrip = true;
+    final bool success;
+    try {
+      success = await ref.read(todayVisitProvider.notifier).manageTrip("stop");
+    } finally {
+      _endingTrip = false;
+    }
     if (!mounted) return;
     if (success) {
       await SecureStorage.clearTripData();
