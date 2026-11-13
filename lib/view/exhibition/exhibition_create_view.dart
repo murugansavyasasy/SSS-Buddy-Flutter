@@ -38,7 +38,6 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
   late final _notes = TextEditingController(text: widget.initial?.notes ?? '');
   late DateTime? _start = widget.initial?.startDate;
   late DateTime? _end = widget.initial?.endDate;
-  late ExhibitionStatus _status = widget.initial?.status ?? ExhibitionStatus.active;
   late final List<_TeamRow> _team = [
     for (final a in widget.initial?.attendees ?? const <Attendee>[]) _TeamRow(a),
     if ((widget.initial?.attendees ?? const []).isEmpty) _TeamRow(),
@@ -126,7 +125,8 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
         startDate: _start,
         endDate: _end,
         // New exhibitions always start as Active.
-        status: _editing ? _status : ExhibitionStatus.active,
+        // No status picker: create and edit always send Active.
+        status: ExhibitionStatus.active,
         notes: _notes.text.trim(),
         attendees: attendees,
       );
@@ -250,26 +250,6 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
                                       : null,
                                 ),
                               ),
-                              if (_editing)
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text('Status', style: exHeadingSm.copyWith(fontSize: 15)),
-                                    const SizedBox(height: 8),
-                                    Row(
-                                      children: [
-                                        for (final s in ExhibitionStatus.values) ...[
-                                          ExFilterChip(
-                                            label: s.label,
-                                            selected: _status == s,
-                                            onTap: () => setState(() => _status = s),
-                                          ),
-                                          const SizedBox(width: 8),
-                                        ],
-                                      ],
-                                    ),
-                                  ],
-                                ),
                               ExField(
                                 label: 'Notes',
                                 controller: _notes,
