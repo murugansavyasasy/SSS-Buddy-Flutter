@@ -59,3 +59,10 @@ void refreshExhibition(WidgetRef ref, String id) {
   ref.invalidate(exhibitionLeadsProvider(id));
   ref.invalidate(exhibitionListProvider);
 }
+
+/// Voice templates for Give Demo, loaded from the API (not bundled in the
+/// app). Kept alive so demo rows can name the voice without refetching.
+final exhibitionTemplatesProvider = FutureProvider<List<DemoTemplate>>(
+  retry: _noRetry,
+  (ref) => ref.read(exhibitionRepositoryProvider).fetchTemplates(),
+);

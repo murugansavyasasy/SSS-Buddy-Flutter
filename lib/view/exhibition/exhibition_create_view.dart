@@ -7,8 +7,12 @@ import '../../viewModel/exhibition_viewmodel.dart';
 import 'widget/exhibition_common.dart';
 
 class _TeamRow {
-  final TextEditingController name = TextEditingController();
-  final TextEditingController mobile = TextEditingController();
+  final TextEditingController name;
+  final TextEditingController mobile;
+
+  _TeamRow([Attendee? a])
+      : name = TextEditingController(text: a?.name ?? ''),
+        mobile = TextEditingController(text: a?.mobile ?? '');
 
   void dispose() {
     name.dispose();
@@ -17,21 +21,30 @@ class _TeamRow {
 }
 
 /// POST /api/mobile/exhibitions. Pops with the created [Exhibition].
+/// With [initial] it edits that exhibition instead (PUT) and pops with true.
 class ExhibitionCreateView extends ConsumerStatefulWidget {
-  const ExhibitionCreateView({super.key});
+  final Exhibition? initial;
+
+  const ExhibitionCreateView({super.key, this.initial});
 
   @override
   ConsumerState<ExhibitionCreateView> createState() => _ExhibitionCreateViewState();
 }
 
 class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
-  final _name = TextEditingController();
-  final _venue = TextEditingController();
-  final _city = TextEditingController();
-  final _notes = TextEditingController();
-  DateTime? _start;
-  DateTime? _end;
-  final List<_TeamRow> _team = [_TeamRow()];
+  late final _name = TextEditingController(text: widget.initial?.name ?? '');
+  late final _venue = TextEditingController(text: widget.initial?.venue ?? '');
+  late final _city = TextEditingController(text: widget.initial?.city ?? '');
+  late final _notes = TextEditingController(text: widget.initial?.notes ?? '');
+  late DateTime? _start = widget.initial?.startDate;
+  late DateTime? _end = widget.initial?.endDate;
+  late ExhibitionStatus _status = widget.initial?.status ?? ExhibitionStatus.active;
+  late final List<_TeamRow> _team = [
+    for (final a in widget.initial?.attendees ?? const <Attendee>[]) _TeamRow(a),
+    if ((widget.initial?.attendees ?? const []).isEmpty) _TeamRow(),
+  ];
+
+  bool get _editing => widget.initial != null;
 
   bool _tried = false;
   bool _saving = false;
@@ -106,21 +119,25 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
 
     setState(() => _saving = true);
     try {
-      final created = await ref
-          .read(exhibitionRepositoryProvider)
-          .createExhibition(
-            CreateExhibitionRequest(
-              name: _name.text.trim(),
-              venue: _venue.text.trim(),
-              city: _city.text.trim(),
-              startDate: _start,
-              endDate: _end,
-              // New exhibitions always start as Active.
-              status: ExhibitionStatus.active,
-              notes: _notes.text.trim(),
-              attendees: attendees,
-            ),
-          );
+      final req = CreateExhibitionRequest(
+        name: _name.text.trim(),
+        venue: _venue.text.trim(),
+        city: _city.text.trim(),
+        startDate: _start,
+        endDate: _end,
+        // New exhibitions always start as Active.
+        status: _editing ? _status : ExhibitionStatus.active,
+        notes: _notes.text.trim(),
+        attendees: attendees,
+      );
+      final repo = ref.read(exhibitionRepositoryProvider);
+      if (_editing) {
+        await repo.updateExhibition(widget.initial!.id, req);
+        if (!mounted) return;
+        Navigator.pop(context, true);
+        return;
+      }
+      final created = await repo.createExhibition(req);
       if (!mounted) return;
       Navigator.pop(context, created);
     } catch (e) {
@@ -172,7 +189,10 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
                             ),
                           ),
                           const SizedBox(width: 12),
-                          const Expanded(child: Text('New exhibition', style: exHeadingMd)),
+                          Expanded(
+                            child: Text(_editing ? 'Edit exhibition' : 'New exhibition',
+                                style: exHeadingMd),
+                          ),
                         ],
                       ),
                     ),
@@ -215,7 +235,7 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
                                 ),
                               ),
                               _pair(
-                                wide,
+                                true,
                                 _DateField(
                                   label: 'Start date',
                                   value: _start,
@@ -230,6 +250,26 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
                                       : null,
                                 ),
                               ),
+                              if (_editing)
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('Status', style: exHeadingSm.copyWith(fontSize: 15)),
+                                    const SizedBox(height: 8),
+                                    Row(
+                                      children: [
+                                        for (final s in ExhibitionStatus.values) ...[
+                                          ExFilterChip(
+                                            label: s.label,
+                                            selected: _status == s,
+                                            onTap: () => setState(() => _status = s),
+                                          ),
+                                          const SizedBox(width: 8),
+                                        ],
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ExField(
                                 label: 'Notes',
                                 controller: _notes,
@@ -284,8 +324,8 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
                     top: false,
                     child: ExMaxWidth(
                       child: ExPrimaryButton(
-                        label: 'Create Exhibition',
-                        loadingLabel: 'Creating…',
+                        label: _editing ? 'Save Changes' : 'Create Exhibition',
+                        loadingLabel: _editing ? 'Saving…' : 'Creating…',
                         loading: _saving,
                         onPressed: _submit,
                       ),
@@ -415,9 +455,14 @@ class _DateField extends StatelessWidget {
         child: InputDecorator(
           decoration: exInputDecoration(errorText: error).copyWith(
             suffixIcon: const Icon(Icons.calendar_today_outlined, size: 20, color: exSubtle),
+            suffixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
           ),
           child: Text(
             value == null ? 'Select date' : exDateRange(value, value),
+            maxLines: 1,
+            softWrap: false,
+            overflow: TextOverflow.fade,
             style: exBodyTouch.copyWith(color: value == null ? const Color(0xFF9A9AA3) : exInk),
           ),
         ),

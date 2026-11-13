@@ -62,6 +62,9 @@ class AppEndpoint {
   static String exhibitionById(String id) => "api/mobile/exhibitions/$id";
   static String exhibitionDemos(String id) => "api/mobile/exhibitions/$id/demos";
   static String exhibitionLeads(String id) => "api/mobile/exhibitions/$id/leads";
+  static const exhibitionTemplates = "api/mobile/exhibitions/templates";
+  static String exhibitionTemplateById(String id) => "api/mobile/exhibitions/templates/$id";
+  static String exhibitionLeadById(String leadId) => "api/mobile/exhibitions/leads/$leadId";
   static String exhibitionDemoInterest(String demoId) =>
       "api/mobile/exhibitions/demos/$demoId/interest";
 }

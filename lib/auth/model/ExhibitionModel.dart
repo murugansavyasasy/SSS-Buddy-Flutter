@@ -144,6 +144,10 @@ class Exhibition {
   final int leadCount;
   final DateTime? createdAt;
 
+  /// Creator's display name and user id, as far as the API sends them.
+  final String createdBy;
+  final String createdById;
+
   const Exhibition({
     required this.id,
     required this.name,
@@ -158,6 +162,8 @@ class Exhibition {
     this.demoCount = 0,
     this.leadCount = 0,
     this.createdAt,
+    this.createdBy = '',
+    this.createdById = '',
   });
 
   factory Exhibition.fromJson(Map<String, dynamic> j) {
@@ -178,8 +184,15 @@ class Exhibition {
       demoCount: _int(j, ['demoCount', 'DemoCount']),
       leadCount: _int(j, ['leadCount', 'LeadCount', 'interestCount']),
       createdAt: _date(j, ['createdAt', 'CreatedAt', 'createdOn']),
+      createdBy: _str(j, ['createdByName', 'CreatedByName', 'createdBy', 'CreatedBy', 'userName']),
+      createdById: _str(j, ['createdById', 'CreatedById', 'createdByUserId', 'userId', 'UserId']),
     );
   }
+
+  /// True when the signed-in user created this exhibition: matched by user
+  /// id when the API sends one, otherwise by name (case and spaces ignored).
+  bool isCreatedBy({required String userId, required String userName}) =>
+      _isCreator(createdBy, createdById, userId: userId, userName: userName);
 
   /// "Venue, City" — the city is left out when it repeats the venue
   /// (e.g. "Bengaluru, Bengaluru" or "BIEC, Bengaluru, Bengaluru").
@@ -334,19 +347,31 @@ enum InterestLevel { hot, warm, cold }
 
 InterestLevel? parseInterestLevel(String s) {
   final v = s.trim().toLowerCase();
-  if (v.startsWith('hot') || v == 'high') return InterestLevel.hot;
-  if (v.startsWith('warm') || v == 'medium') return InterestLevel.warm;
+  if (v.startsWith('hot') || v == 'high' || v == 'good') return InterestLevel.hot;
+  if (v.startsWith('warm') || v == 'medium' || v == 'average') return InterestLevel.warm;
   if (v.startsWith('cold') || v == 'low') return InterestLevel.cold;
   return null;
 }
 
 extension InterestLevelX on InterestLevel {
   String get label => switch (this) {
-        InterestLevel.hot => 'Hot',
-        InterestLevel.warm => 'Warm',
-        InterestLevel.cold => 'Cold',
+        InterestLevel.hot => 'Good',
+        InterestLevel.warm => 'Average',
+        InterestLevel.cold => 'Low',
       };
   String get apiValue => name;
+}
+
+/// Matches the signed-in user against a record's creator: by user id when
+/// the API sends one, otherwise by name (case and extra spaces ignored).
+bool _isCreator(String byName, String byId, {required String userId, required String userName}) {
+  String norm(String s) => s.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+  // The "createdBy" field sometimes carries the id itself.
+  final ids = {byId.trim(), if (RegExp(r'^\d+$').hasMatch(byName.trim())) byName.trim()}
+    ..remove('');
+  if (ids.isNotEmpty && userId.trim().isNotEmpty && ids.contains(userId.trim())) return true;
+  final by = norm(byName);
+  return by.isNotEmpty && by == norm(userName);
 }
 
 class ExhibitionLead {
@@ -362,6 +387,7 @@ class ExhibitionLead {
   final String demoId;
   final String demoVisitorName;
   final InterestLevel? interestLevel;
+  final String capturedById;
 
   const ExhibitionLead({
     required this.id,
@@ -376,7 +402,11 @@ class ExhibitionLead {
     this.demoId = '',
     this.demoVisitorName = '',
     this.interestLevel,
+    this.capturedById = '',
   });
+
+  bool isCreatedBy({required String userId, required String userName}) =>
+      _isCreator(capturedBy, capturedById, userId: userId, userName: userName);
 
   factory ExhibitionLead.fromJson(Map<String, dynamic> j) => ExhibitionLead(
         id: _str(j, ['id', 'Id', 'leadId', 'interestId', '_id']),
@@ -388,6 +418,7 @@ class ExhibitionLead {
         contactEmail: _str(j, ['contactEmail', 'ContactEmail', 'email']),
         notes: _str(j, ['notes', 'Notes']),
         capturedBy: _str(j, ['createdByName', 'capturedBy', 'createdBy', 'CreatedBy']),
+        capturedById: _str(j, ['createdById', 'CreatedById', 'capturedById', 'createdByUserId', 'userId']),
         createdAt: _date(j, ['createdAt', 'CreatedAt', 'createdOn']),
         demoId: _str(j, ['demoId', 'DemoId']),
         demoVisitorName: _str(j, ['visitorName', 'demoVisitorName', 'VisitorName']),
@@ -434,6 +465,8 @@ class DemoTemplate {
   final String description;
   final Duration duration;
   final String audioUrl;
+  final String createdBy;
+  final String createdById;
 
   const DemoTemplate({
     required this.id,
@@ -441,5 +474,21 @@ class DemoTemplate {
     required this.description,
     required this.duration,
     required this.audioUrl,
+    this.createdBy = '',
+    this.createdById = '',
   });
+
+  /// From GET /exhibitions/templates.
+  factory DemoTemplate.fromJson(Map<String, dynamic> j) => DemoTemplate(
+        id: _str(j, ['id', 'Id', 'templateId', '_id']),
+        title: _str(j, ['title', 'Title', 'name', 'Name']),
+        description: _str(j, ['description', 'Description']),
+        duration: Duration(seconds: _int(j, ['durationSeconds', 'duration', 'Duration'])),
+        audioUrl: _str(j, ['audioUrl', 'AudioUrl', 'fileUrl', 'url']),
+        createdBy: _str(j, ['createdByName', 'CreatedByName', 'createdBy', 'CreatedBy']),
+        createdById: _str(j, ['createdById', 'CreatedById', 'createdByUserId', 'userId']),
+      );
+
+  bool isCreatedBy({required String userId, required String userName}) =>
+      _isCreator(createdBy, createdById, userId: userId, userName: userName);
 }

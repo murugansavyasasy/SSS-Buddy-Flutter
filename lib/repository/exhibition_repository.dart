@@ -96,6 +96,71 @@ class ExhibitionRepository {
         );
       });
 
+  /// PUT /exhibitions/:id with the same body as create.
+  /// NOTE: confirm this endpoint with the backend.
+  Future<void> updateExhibition(String id, CreateExhibitionRequest req) => _guard(() async {
+        final res = await _dio.put(
+          AppEndpoint.exhibitionById(id),
+          data: req.toJson(),
+          options: await _options(contentType: Headers.jsonContentType),
+        );
+        _ensureOk(res);
+      });
+
+  /// DELETE /exhibitions/:id. Only the creator sees this option.
+  /// NOTE: confirm this endpoint with the backend.
+  Future<void> deleteExhibition(String id) => _guard(() async {
+        final res = await _dio.delete(
+          AppEndpoint.exhibitionById(id),
+          options: await _options(),
+        );
+        _ensureOk(res);
+      });
+
+  // MARK: Voice templates
+  // NOTE: confirm these three endpoints with the backend.
+
+  Future<List<DemoTemplate>> fetchTemplates() => _guard(() async {
+        final res = await _dio.get(AppEndpoint.exhibitionTemplates, options: await _options());
+        _ensureOk(res);
+        return extractList(res.data, ['templates']).map(DemoTemplate.fromJson).toList();
+      });
+
+  /// Multipart: the WAV (8 kHz, mono) as `file`, plus title, description and
+  /// durationSeconds.
+  Future<void> createTemplate({
+    required String title,
+    required String description,
+    required String wavPath,
+    required Duration duration,
+  }) =>
+      _guard(() async {
+        final form = FormData.fromMap({
+          'file': await MultipartFile.fromFile(
+            wavPath,
+            filename: 'template_${DateTime.now().millisecondsSinceEpoch}.wav',
+            contentType: DioMediaType('audio', 'wav'),
+          ),
+          'title': title,
+          'description': description,
+          'durationSeconds': duration.inSeconds,
+        });
+        final res = await _dio.post(
+          AppEndpoint.exhibitionTemplates,
+          data: form,
+          options: (await _options()).copyWith(
+            sendTimeout: const Duration(minutes: 2),
+            receiveTimeout: const Duration(minutes: 1),
+          ),
+        );
+        _ensureOk(res);
+      });
+
+  Future<void> deleteTemplate(String id) => _guard(() async {
+        final res = await _dio.delete(AppEndpoint.exhibitionTemplateById(id), options: await _options());
+        _ensureOk(res);
+      });
+
   // MARK: Demos
 
   Future<List<ExhibitionDemo>> fetchDemos(String exhibitionId) => _guard(() async {
@@ -195,6 +260,17 @@ class ExhibitionRepository {
             : AppEndpoint.exhibitionLeads(exhibitionId);
         final res = await _dio.post(
           path,
+          data: req.toJson(),
+          options: await _options(contentType: Headers.jsonContentType),
+        );
+        _ensureOk(res);
+      });
+
+  /// PUT /exhibitions/leads/:leadId with the same body as capture.
+  /// NOTE: confirm this endpoint with the backend.
+  Future<void> updateLead(String leadId, CaptureLeadRequest req) => _guard(() async {
+        final res = await _dio.put(
+          AppEndpoint.exhibitionLeadById(leadId),
           data: req.toJson(),
           options: await _options(contentType: Headers.jsonContentType),
         );

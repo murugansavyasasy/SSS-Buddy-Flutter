@@ -6,9 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 
 import '../../auth/model/ExhibitionModel.dart';
-import '../../core/exhibition/demo_templates.dart';
+import '../../provider/user_session_provider.dart';
 import '../../viewModel/exhibition_viewmodel.dart';
 import 'widget/exhibition_common.dart';
+import 'widget/exhibition_sheets.dart';
 import 'widget/voice_recorder_panel.dart';
 
 /// What the Give Demo flow hands back after a successful send.
@@ -113,7 +114,8 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
     }
     if (d.audioUrl.isNotEmpty) {
       _voice = _Voice.template;
-      _template = exhibitionDemoTemplates.where((t) => t.audioUrl == d.audioUrl).firstOrNull;
+      final templates = ref.read(exhibitionTemplatesProvider).value ?? const <DemoTemplate>[];
+      _template = templates.where((t) => t.audioUrl == d.audioUrl).firstOrNull;
       if (_template == null) {
         _previousVoice = DemoTemplate(
           id: '__previous__',
@@ -635,18 +637,90 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
     ],
   );
 
+  Future<void> _addTemplate() async {
+    final saved = await showAddTemplateSheet(context);
+    if (!saved || !mounted) return;
+    ref.invalidate(exhibitionTemplatesProvider);
+    exToast(context, 'Template added');
+  }
+
+  Future<void> _deleteTemplate(DemoTemplate t) async {
+    final ok = await showExConfirmDialog(
+      context,
+      title: 'Delete this template?',
+      message: '"${t.title}" will no longer be offered for new demos. Demos already sent are not affected.',
+      cancelLabel: 'Cancel',
+      confirmLabel: 'Delete',
+      destructive: true,
+    );
+    if (!ok || !mounted) return;
+    try {
+      await ref.read(exhibitionRepositoryProvider).deleteTemplate(t.id);
+    } catch (e) {
+      if (mounted) exToast(context, e.toString(), error: true);
+      return;
+    }
+    if (!mounted) return;
+    if (_previewId == t.id) _preview.stop();
+    setState(() {
+      if (_template?.id == t.id) _template = null;
+      if (_previewId == t.id) _previewId = null;
+    });
+    ref.invalidate(exhibitionTemplatesProvider);
+    exToast(context, 'Template deleted');
+  }
+
   Widget _templateCards(bool wide) {
-    final list = [?_previousVoice, ...exhibitionDemoTemplates];
-    if (list.isEmpty) {
-      return const ExStateView(
-        icon: Icons.library_music_outlined,
-        title: 'No templates yet',
-        message: 'Record a custom voice instead.',
+    final async = ref.watch(exhibitionTemplatesProvider);
+    final addButton = ExSecondaryButton(
+      label: 'Add template',
+      icon: Icons.add_rounded,
+      color: exBrandBold,
+      onPressed: _addTemplate,
+    );
+    if (async.isLoading && !async.hasValue) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 40),
+        child: Center(child: CircularProgressIndicator(color: exBrandBold)),
       );
     }
+    if (async.hasError && !async.hasValue) {
+      return ExStateView(
+        icon: Icons.cloud_off_rounded,
+        title: "Couldn't load templates",
+        message: 'Check the connection and try again, or record a custom voice.',
+        isError: true,
+        actionLabel: 'Retry',
+        onAction: () => ref.invalidate(exhibitionTemplatesProvider),
+      );
+    }
+    final templates = async.value ?? const <DemoTemplate>[];
+    final prev = _previousVoice;
+    final list = [
+      if (prev != null && !templates.any((t) => t.audioUrl == prev.audioUrl)) prev,
+      ...templates,
+    ];
+    if (list.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const ExStateView(
+            icon: Icons.library_music_outlined,
+            title: 'No templates yet',
+            message: 'Add a template, or record a custom voice.',
+          ),
+          const SizedBox(height: 12),
+          addButton,
+        ],
+      );
+    }
+    final user = ref.watch(userSessionProvider).value;
     Widget card(DemoTemplate t) => _TemplateCard(
       template: t,
-      selected: _template?.id == t.id,
+      // A resend's "previous voice" also matches the same template by URL.
+      selected: _template != null &&
+          (_template!.id == t.id ||
+              (_template!.id == '__previous__' && _template!.audioUrl == t.audioUrl)),
       playing: _previewId == t.id,
       player: _preview,
       onSelect: () => setState(() {
@@ -654,15 +728,24 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
         _step1Error = false;
       }),
       onTogglePlay: () => _togglePreview(t),
+      // Only the person who added a template can delete it.
+      onDelete: t.id != '__previous__' &&
+              user != null &&
+              t.isCreatedBy(userId: user.userId, userName: user.employeeName)
+          ? () => _deleteTemplate(t)
+          : null,
     );
     if (!wide) {
       return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           for (final t in list) ...[card(t), const SizedBox(height: 12)],
+          addButton,
         ],
       );
     }
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (var r = 0; r < (list.length + 1) ~/ 2; r++) ...[
           IntrinsicHeight(
@@ -677,6 +760,7 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
           ),
           const SizedBox(height: 16),
         ],
+        Align(alignment: Alignment.centerLeft, child: SizedBox(width: 260, child: addButton)),
       ],
     );
   }
@@ -1248,6 +1332,7 @@ class _TemplateCard extends StatelessWidget {
   final AudioPlayer player;
   final VoidCallback onSelect;
   final VoidCallback onTogglePlay;
+  final VoidCallback? onDelete;
 
   const _TemplateCard({
     required this.template,
@@ -1256,6 +1341,7 @@ class _TemplateCard extends StatelessWidget {
     required this.player,
     required this.onSelect,
     required this.onTogglePlay,
+    this.onDelete,
   });
 
   @override
@@ -1279,7 +1365,7 @@ class _TemplateCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 16, 16, 16),
+                  padding: const EdgeInsets.fromLTRB(14, 14, 16, 14),
                   child: Row(
                     children: [
                       SizedBox(
@@ -1307,7 +1393,23 @@ class _TemplateCard extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(t.title, style: exHeadingMd),
+                            Text.rich(
+                              TextSpan(
+                                text: t.title,
+                                children: [
+                                  if (t.duration > Duration.zero)
+                                    TextSpan(
+                                      text: '  ${exDuration(t.duration)}',
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                        color: exSubtle,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              style: exHeadingMd,
+                            ),
                             const SizedBox(height: 2),
                             Text(
                               t.description,
@@ -1317,12 +1419,10 @@ class _TemplateCard extends StatelessWidget {
                                 color: exSubtle,
                               ),
                             ),
-                            if (t.duration > Duration.zero || t.audioUrl.isEmpty) ...[
+                            if (t.audioUrl.isEmpty) ...[
                               const SizedBox(height: 2),
                               Text(
-                                t.audioUrl.isEmpty
-                                    ? '${exDuration(t.duration)} · Audio not set up yet'
-                                    : exDuration(t.duration),
+                                'Audio not set up yet',
                                 style: const TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w500,
@@ -1333,6 +1433,16 @@ class _TemplateCard extends StatelessWidget {
                           ],
                         ),
                       ),
+                      if (onDelete != null)
+                        SizedBox(
+                          width: 40,
+                          height: 40,
+                          child: IconButton(
+                            tooltip: 'Delete ${t.title}',
+                            onPressed: onDelete,
+                            icon: const Icon(Icons.delete_outline_rounded, color: exDanger, size: 22),
+                          ),
+                        ),
                       const SizedBox(width: 10),
                       Container(
                         width: 26,

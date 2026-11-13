@@ -3,8 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../auth/model/ExhibitionModel.dart';
-import '../../core/exhibition/demo_templates.dart';
+import '../../provider/user_session_provider.dart';
 import '../../viewModel/exhibition_viewmodel.dart';
+import 'exhibition_create_view.dart';
 import 'give_demo_view.dart';
 import 'widget/exhibition_common.dart';
 import 'widget/exhibition_sheets.dart';
@@ -18,8 +19,7 @@ class ExhibitionDetailView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ExPage(
-        title: 'Exhibitions',
-        largeTitle: false,
+        title: 'Exhibition Details',
         headerDivider: false,
         body: ExhibitionDetailPane(exhibitionId: exhibitionId, initial: initial),
       );
@@ -109,6 +109,49 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
     exToast(context, 'Interest captured');
   }
 
+  Future<void> _editExhibition(Exhibition ex) async {
+    final saved = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => ExhibitionCreateView(initial: ex),
+      ),
+    );
+    if (saved != true || !mounted) return;
+    _refresh();
+    exToast(context, 'Exhibition updated');
+  }
+
+  Future<void> _deleteExhibition(Exhibition ex) async {
+    final ok = await showExConfirmDialog(
+      context,
+      title: 'Delete this exhibition?',
+      message: 'Its demos and leads will be removed too. This cannot be undone.',
+      cancelLabel: 'Cancel',
+      confirmLabel: 'Delete',
+      destructive: true,
+    );
+    if (!ok || !mounted) return;
+    try {
+      await ref.read(exhibitionRepositoryProvider).deleteExhibition(ex.id);
+    } catch (e) {
+      if (mounted) exToast(context, e.toString(), error: true);
+      return;
+    }
+    if (!mounted) return;
+    ref.invalidate(exhibitionListProvider);
+    exToast(context, 'Exhibition deleted');
+    // On the iPad split the list picks another exhibition by itself.
+    if (!widget.embedded) Navigator.pop(context);
+  }
+
+  Future<void> _editLead(ExhibitionLead lead) async {
+    final saved = await showCaptureLeadSheet(context, exhibitionId: _id, lead: lead);
+    if (!saved || !mounted) return;
+    _refresh();
+    exToast(context, 'Lead updated');
+  }
+
   void _toggleDemo(ExhibitionDemo d) =>
       setState(() => _expandedDemoId = _expandedDemoId == d.id ? null : d.id);
 
@@ -133,9 +176,15 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
         final wide = box.maxWidth >= 640;
         final pad = embedded ? 24.0 : (wide ? 24.0 : 16.0);
 
+        final user = ref.watch(userSessionProvider).value;
+        final isOwner = user != null &&
+            ex.isCreatedBy(userId: user.userId, userName: user.employeeName);
         final header = _Header(
           ex: ex,
           onGiveDemo: () => _giveDemo(ex),
+          // Only the creator can edit or delete the exhibition.
+          onEdit: isOwner ? () => _editExhibition(ex) : null,
+          onDelete: isOwner ? () => _deleteExhibition(ex) : null,
           // Hidden for completed shows, and until the first demo
           // (the empty Demos tab offers "Give first demo").
           showGiveDemo:
@@ -223,6 +272,7 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
       );
 
   List<Widget> _demoSlivers(AsyncValue<List<ExhibitionDemo>> demos, Exhibition ex, double pad) {
+    final templates = ref.watch(exhibitionTemplatesProvider).value ?? const <DemoTemplate>[];
     return demos.when<List<Widget>>(
       loading: () => [
         const SliverToBoxAdapter(child: ExMaxWidth(child: ExSkeletonList(count: 2))),
@@ -283,6 +333,7 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
                 onTap: () => _toggleDemo(items[i]),
                 onCaptureLead: () => _captureLead(demo: items[i]),
                 onSendAgain: () => _giveDemo(ex, resendFrom: items[i]),
+                templates: templates,
               ),
             ),
           ),
@@ -292,6 +343,7 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
   }
 
   List<Widget> _leadSlivers(AsyncValue<List<ExhibitionLead>> leads, double pad, bool twoCols) {
+    final user = ref.watch(userSessionProvider).value;
     final addButton = SliverToBoxAdapter(
       child: _padded(
         pad,
@@ -342,7 +394,15 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
             itemCount: rows,
             separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (_, r) {
-              Widget card(int i) => _LeadCard(lead: items[i], isNew: _highlightNewestLead && i == 0);
+              Widget card(int i) => _LeadCard(
+                    lead: items[i],
+                    isNew: _highlightNewestLead && i == 0,
+                    // Only the person who captured the lead can edit it.
+                    onEdit: user != null &&
+                            items[i].isCreatedBy(userId: user.userId, userName: user.employeeName)
+                        ? () => _editLead(items[i])
+                        : null,
+                  );
               return _padded(
                 pad,
                 perRow == 1
@@ -373,12 +433,16 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
 class _Header extends StatelessWidget {
   final Exhibition ex;
   final VoidCallback onGiveDemo;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
   final bool loadingTeam;
   final bool showGiveDemo;
 
   const _Header({
     required this.ex,
     required this.onGiveDemo,
+    this.onEdit,
+    this.onDelete,
     required this.loadingTeam,
     required this.showGiveDemo,
   });
@@ -390,33 +454,44 @@ class _Header extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Wrap(
-          spacing: 10,
-          runSpacing: 6,
-          crossAxisAlignment: WrapCrossAlignment.center,
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(ex.name, style: exHeadingXl),
-            ExStatusBadge(status: ex.status, large: true),
-          ],
-        ),
-        if (where.isNotEmpty) ...[
-          const SizedBox(height: 10),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Padding(
-                padding: EdgeInsets.only(top: 1),
-                child: Icon(Icons.location_on_outlined, size: 17, color: exSubtle),
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(where,
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w500, color: exSubtle)),
+            Expanded(child: Text(ex.name, style: exHeadingLg)),
+            if (onEdit != null) ...[
+              const SizedBox(width: 8),
+              _EditButton(tooltip: 'Edit exhibition', onPressed: onEdit!),
+            ],
+            if (onDelete != null) ...[
+              const SizedBox(width: 8),
+              _EditButton(
+                tooltip: 'Delete exhibition',
+                icon: Icons.delete_outline_rounded,
+                color: exDanger,
+                onPressed: onDelete!,
               ),
             ],
-          ),
-        ],
+          ],
+        ),
+        const SizedBox(height: 8),
+        // Status and where/when share one line to keep the header short.
+        Row(
+          children: [
+            ExStatusBadge(status: ex.status),
+            if (where.isNotEmpty) ...[
+              const SizedBox(width: 10),
+              const Icon(Icons.location_on_outlined, size: 17, color: exSubtle),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(where,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontSize: 15, fontWeight: FontWeight.w500, color: exSubtle)),
+              ),
+            ],
+          ],
+        ),
         if (ex.notes.trim().isNotEmpty) ...[
           const SizedBox(height: 12),
           ExNoteBox(text: ex.notes.trim()),
@@ -589,12 +664,16 @@ class _DemoRow extends StatelessWidget {
     required this.onTap,
     required this.onCaptureLead,
     required this.onSendAgain,
+    required this.templates,
   });
+
+  /// Voice templates from the API, to name the voice a demo used.
+  final List<DemoTemplate> templates;
 
   String? get _voiceTitle {
     final url = demo.audioUrl;
     if (url.isEmpty) return null;
-    for (final t in exhibitionDemoTemplates) {
+    for (final t in templates) {
       if (t.audioUrl.isNotEmpty && t.audioUrl == url) return t.title;
     }
     return null;
@@ -653,7 +732,12 @@ class _DemoRow extends StatelessWidget {
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Expanded(child: Text(d.displayName, style: exHeadingSm)),
+                                  Expanded(
+                                    child: Text(d.displayName,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: exHeadingSm),
+                                  ),
                                   const SizedBox(width: 8),
                                   ExPill(label: d.status.label, background: bg, foreground: fg),
                                 ],
@@ -697,8 +781,9 @@ class _DemoRow extends StatelessWidget {
 class _LeadCard extends StatelessWidget {
   final ExhibitionLead lead;
   final bool isNew;
+  final VoidCallback? onEdit;
 
-  const _LeadCard({required this.lead, required this.isNew});
+  const _LeadCard({required this.lead, required this.isNew, this.onEdit});
 
   @override
   Widget build(BuildContext context) {
@@ -731,6 +816,10 @@ class _LeadCard extends StatelessWidget {
                       style: const TextStyle(
                           fontSize: 14, fontWeight: FontWeight.w500, color: exSubtle)),
                 ),
+              ],
+              if (onEdit != null) ...[
+                const SizedBox(width: 4),
+                _EditButton(tooltip: 'Edit lead', onPressed: onEdit!),
               ],
             ],
           ),
@@ -854,4 +943,34 @@ class _DashedBorderPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+/// Small pencil button used on the exhibition header and lead cards.
+class _EditButton extends StatelessWidget {
+  final String tooltip;
+  final VoidCallback onPressed;
+  final IconData icon;
+  final Color color;
+  const _EditButton({
+    required this.tooltip,
+    required this.onPressed,
+    this.icon = Icons.edit_outlined,
+    this.color = exBrandBold,
+  });
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+        width: 40,
+        height: 40,
+        child: IconButton(
+          tooltip: tooltip,
+          onPressed: onPressed,
+          padding: EdgeInsets.zero,
+          style: IconButton.styleFrom(
+            side: const BorderSide(color: exBorder),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+          icon: Icon(icon, size: 20, color: color),
+        ),
+      );
 }
