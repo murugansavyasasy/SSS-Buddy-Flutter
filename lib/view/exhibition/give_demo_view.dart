@@ -9,6 +9,7 @@ import '../../auth/model/ExhibitionModel.dart';
 import '../../provider/user_session_provider.dart';
 import '../../viewModel/exhibition_viewmodel.dart';
 import 'widget/exhibition_common.dart';
+import 'widget/demo_audio.dart';
 import 'widget/exhibition_sheets.dart';
 import 'widget/voice_recorder_panel.dart';
 
@@ -148,6 +149,22 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
     super.dispose();
   }
 
+  /// Length read from the template's audio URL (falls back to the listed one).
+  Duration _realDuration(DemoTemplate t) =>
+      ref.watch(audioDurationProvider(t.audioUrl)).value ?? t.duration;
+
+  /// Plays the cached download when there is one, else streams the URL.
+  Future<void> _openVoice(String url) async {
+    final local = await ref.read(localAudioProvider(url).future);
+    if (local != null) {
+      try {
+        await _preview.setFilePath(local.path);
+        return;
+      } catch (_) {}
+    }
+    await _preview.setUrl(url);
+  }
+
   // MARK: Template preview
 
   Future<void> _togglePreview(DemoTemplate t) async {
@@ -163,7 +180,8 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
     setState(() => _previewId = t.id);
     try {
       await _preview.stop();
-      await _preview.setUrl(t.audioUrl);
+      await _openVoice(t.audioUrl);
+      await exPreparePlayback();
       _preview.play();
     } catch (_) {
       if (!mounted) return;
@@ -190,8 +208,9 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
       if (path != null) {
         await _preview.setFilePath(path);
       } else {
-        await _preview.setUrl(url);
+        await _openVoice(url);
       }
+      await exPreparePlayback();
       _preview.play();
     } catch (_) {
       if (!mounted) return;
@@ -716,7 +735,7 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
     }
     final user = ref.watch(userSessionProvider).value;
     Widget card(DemoTemplate t) => _TemplateCard(
-      template: t,
+      template: t.withDuration(_realDuration(t)),
       // A resend's "previous voice" also matches the same template by URL.
       selected: _template != null &&
           (_template!.id == t.id ||
@@ -995,7 +1014,7 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
   Widget _reviewVoiceRow() {
     final playing = _previewId == _reviewPreviewId;
     final fallback = _voice == _Voice.template
-        ? (_template?.duration ?? Duration.zero)
+        ? (_template == null ? Duration.zero : _realDuration(_template!))
         : _recordingLength;
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
@@ -1062,9 +1081,9 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
     if (_voice == _Voice.template) {
       return _template == null
           ? 'Not chosen'
-          : _template!.duration == Duration.zero
+          : _realDuration(_template!) == Duration.zero
           ? _template!.title
-          : '${_template!.title} · ${exDuration(_template!.duration)}';
+          : '${_template!.title} · ${exDuration(_realDuration(_template!))}';
     }
     return _recordingPath == null
         ? 'Not chosen'

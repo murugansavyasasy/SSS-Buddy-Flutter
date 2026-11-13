@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import 'package:just_audio/just_audio.dart';
 import '../../../auth/model/ExhibitionModel.dart';
 import '../../../viewModel/exhibition_viewmodel.dart';
 import 'exhibition_common.dart';
+import 'demo_audio.dart';
 import 'voice_recorder_panel.dart';
 
 Future<T?> _showSheet<T>(BuildContext context, WidgetBuilder builder, {bool full = false}) =>
@@ -522,7 +524,7 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
 
 /// Voice player, recipients with call status, and the capture-lead action of
 /// one demo. Lives inside the demo card when it is expanded.
-class DemoDetailPanel extends StatefulWidget {
+class DemoDetailPanel extends ConsumerStatefulWidget {
   final ExhibitionDemo demo;
   final VoidCallback onCaptureLead;
   final VoidCallback? onSendAgain;
@@ -535,12 +537,22 @@ class DemoDetailPanel extends StatefulWidget {
   });
 
   @override
-  State<DemoDetailPanel> createState() => _DemoDetailPanelState();
+  ConsumerState<DemoDetailPanel> createState() => _DemoDetailPanelState();
 }
 
-class _DemoDetailPanelState extends State<DemoDetailPanel> {
+class _DemoDetailPanelState extends ConsumerState<DemoDetailPanel> {
   final AudioPlayer _player = AudioPlayer();
-  bool _loading = false;
+
+  /// Preload of the voice URL (gives the total length before play).
+  Future<Duration?>? _load;
+  bool _loadFailed = false;
+  bool _playWhenReady = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _prepare();
+  }
 
   @override
   void dispose() {
@@ -548,9 +560,61 @@ class _DemoDetailPanelState extends State<DemoDetailPanel> {
     super.dispose();
   }
 
-  Future<void> _toggle() async {
+  /// Uses the copy downloaded when the demo list loaded (instant), else
+  /// streams the URL. The duration then shows without pressing play.
+  Future<Duration?> _prepare() {
     final url = widget.demo.audioUrl;
-    if (url.isEmpty) {
+    if (url.isEmpty) return Future.value(null);
+    _loadFailed = false;
+    Future<Duration?> open() async {
+      final local = await ref.read(localAudioProvider(url).future);
+      if (local != null) {
+        try {
+          return await _player.setFilePath(local.path);
+        } catch (_) {}
+      }
+      return _player.setUrl(url).timeout(const Duration(seconds: 30));
+    }
+
+    final f = open();
+    _load = f;
+    f.then((_) {
+      if (!mounted) return;
+      setState(() {});
+      if (_playWhenReady) {
+        _playWhenReady = false;
+        _play();
+      }
+    }).catchError((_) {
+      if (!mounted) return;
+      setState(() {
+        _loadFailed = true;
+        _playWhenReady = false;
+        _load = null;
+      });
+    });
+    return f;
+  }
+
+  bool get _ready =>
+      _player.audioSource != null &&
+      _player.processingState != ProcessingState.idle &&
+      _player.processingState != ProcessingState.loading;
+
+  Future<void> _play() async {
+    try {
+      await exPreparePlayback();
+      if (_player.processingState == ProcessingState.completed) {
+        await _player.seek(Duration.zero);
+      }
+      unawaited(_player.play());
+    } catch (_) {
+      if (mounted) exToast(context, 'Could not play audio', error: true);
+    }
+  }
+
+  Future<void> _toggle() async {
+    if (widget.demo.audioUrl.isEmpty) {
       exToast(context, 'No audio available for this demo', error: true);
       return;
     }
@@ -558,22 +622,18 @@ class _DemoDetailPanelState extends State<DemoDetailPanel> {
       await _player.pause();
       return;
     }
-    try {
-      if (_player.audioSource == null) {
-        setState(() => _loading = true);
-        await _player.setUrl(url);
-        if (mounted) setState(() => _loading = false);
-      }
-      if (_player.processingState == ProcessingState.completed) {
-        await _player.seek(Duration.zero);
-      }
-      _player.play();
-    } catch (e) {
-      if (mounted) {
-        setState(() => _loading = false);
-        exToast(context, 'Could not play audio', error: true);
-      }
+    if (_loadFailed || _load == null) {
+      // Retry a failed load, then play.
+      setState(() => _playWhenReady = true);
+      _prepare();
+      return;
     }
+    if (!_ready) {
+      // Still loading: start as soon as it is ready.
+      setState(() => _playWhenReady = true);
+      return;
+    }
+    await _play();
   }
 
   @override
@@ -591,7 +651,13 @@ class _DemoDetailPanelState extends State<DemoDetailPanel> {
           child: StreamBuilder<PlayerState>(
             stream: _player.playerStateStream,
             builder: (_, snap) {
-              final playing = snap.data?.playing ?? false;
+              final state = snap.data;
+              final completed = state?.processingState == ProcessingState.completed;
+              final playing = (state?.playing ?? false) && !completed;
+              final buffering = d.audioUrl.isNotEmpty &&
+                  !_loadFailed &&
+                  (_playWhenReady ||
+                      (playing && state?.processingState == ProcessingState.buffering));
               return Row(
                 children: [
                   SizedBox(
@@ -601,45 +667,67 @@ class _DemoDetailPanelState extends State<DemoDetailPanel> {
                       style: IconButton.styleFrom(backgroundColor: exInk),
                       tooltip: playing ? 'Pause' : 'Play voice',
                       onPressed: _toggle,
-                      icon: _loading
+                      icon: buffering
                           ? const SizedBox(
                               width: 20,
                               height: 20,
                               child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                             )
-                          : Icon(playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                          : Icon(
+                              playing
+                                  ? Icons.pause_rounded
+                                  : completed
+                                      ? Icons.replay_rounded
+                                      : Icons.play_arrow_rounded,
                               color: Colors.white),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: StreamBuilder<Duration>(
-                      stream: _player.positionStream,
-                      builder: (_, pos) {
-                        final total = _player.duration ?? Duration.zero;
-                        final p = pos.data ?? Duration.zero;
-                        final f = total.inMilliseconds == 0
-                            ? 0.0
-                            : (p.inMilliseconds / total.inMilliseconds).clamp(0.0, 1.0);
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('Demo voice', style: exHeadingSm),
-                            const SizedBox(height: 8),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(2),
-                              child: LinearProgressIndicator(
-                                value: f,
-                                minHeight: 4,
-                                backgroundColor: exBorder,
-                                color: exBrand,
+                    child: StreamBuilder<Duration?>(
+                      stream: _player.durationStream,
+                      builder: (_, durSnap) => StreamBuilder<Duration>(
+                        stream: _player.positionStream,
+                        builder: (_, pos) {
+                          final total = durSnap.data ?? _player.duration;
+                          var p = pos.data ?? Duration.zero;
+                          if (total != null && p > total) p = total;
+                          final f = total == null || total.inMilliseconds == 0
+                              ? 0.0
+                              : (p.inMilliseconds / total.inMilliseconds).clamp(0.0, 1.0);
+                          final String timeText;
+                          if (d.audioUrl.isEmpty) {
+                            timeText = 'No audio';
+                          } else if (_loadFailed) {
+                            timeText = "Couldn't load audio · tap play to retry";
+                          } else if (total == null) {
+                            timeText = 'Loading…';
+                          } else {
+                            timeText = '${exDuration(p)} / ${exDuration(total)}';
+                          }
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Demo voice', style: exHeadingSm),
+                              const SizedBox(height: 8),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(2),
+                                child: LinearProgressIndicator(
+                                  value: f,
+                                  minHeight: 4,
+                                  backgroundColor: exBorder,
+                                  color: exBrand,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text('${exDuration(p)} / ${exDuration(total)}', style: exBodySm),
-                          ],
-                        );
-                      },
+                              const SizedBox(height: 4),
+                              Text(timeText,
+                                  style: _loadFailed
+                                      ? exBodySm.copyWith(color: exDanger)
+                                      : exBodySm),
+                            ],
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ],
