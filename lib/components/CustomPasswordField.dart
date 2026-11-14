@@ -6,12 +6,18 @@ class CustomPasswordField extends StatefulWidget {
   final TextEditingController controller;
   final String labelText;
   final String? Function(String?)? validator;
+  final IconData? prefixIcon;
+  final TextInputAction? textInputAction;
+  final ValueChanged<String>? onFieldSubmitted;
 
   const CustomPasswordField({
     super.key,
     required this.controller,
     required this.labelText,
     this.validator,
+    this.prefixIcon,
+    this.textInputAction,
+    this.onFieldSubmitted,
   });
 
   @override
@@ -27,8 +33,14 @@ class _CustomPasswordFieldState extends State<CustomPasswordField> {
       controller: widget.controller,
       obscureText: isPasswordHidden,
       validator: widget.validator,
+      textInputAction: widget.textInputAction,
+      onFieldSubmitted: widget.onFieldSubmitted,
       decoration: InputDecoration(
         labelText: widget.labelText,
+        prefixIcon:
+            widget.prefixIcon == null ? null : Icon(widget.prefixIcon, size: 20),
+        filled: true,
+        fillColor: Colors.white,
         labelStyle: TextStyle(color: AppColors.grey),
         floatingLabelStyle: TextStyle(color: AppColors.primary),
         suffixIcon: IconButton(

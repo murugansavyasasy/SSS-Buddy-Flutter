@@ -366,6 +366,7 @@ class Dashboard extends ConsumerWidget {
 
                         return SizedBox(
                           width: (MediaQuery.of(context).size.width - 48) / 2, // 2 columns
+                          height: 106, // same size for every tile, even with 2-line titles
                           child: DashboardTile(
                             title: item.title,
                             icon: item.icon,

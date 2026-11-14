@@ -7,6 +7,7 @@ class CustomButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final bool isOutlined;
   final double height;
+  final bool isLoading;
 
   const CustomButton({
     super.key,
@@ -14,6 +15,7 @@ class CustomButton extends StatelessWidget {
     this.onPressed,
     this.isOutlined = false,
     this.height = 40,
+    this.isLoading = false,
   });
 
   @override
@@ -27,12 +29,25 @@ class CustomButton extends StatelessWidget {
           )
         : ElevatedButton.styleFrom(
             backgroundColor: AppColors.secondaryprimary,
+            // Keep the brand colour while a spinner is showing.
+            disabledBackgroundColor: isLoading
+                ? AppColors.secondaryprimary.withValues(alpha: 0.7)
+                : null,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
           );
 
-    final child = Text(
+    final Widget child = isLoading
+        ? SizedBox(
+            width: 22,
+            height: 22,
+            child: CircularProgressIndicator(
+              strokeWidth: 2.4,
+              color: isOutlined ? AppColors.secondaryprimary : Colors.white,
+            ),
+          )
+        : Text(
       text,
       style: TextStyle(
         fontSize: 15,

@@ -188,13 +188,33 @@ class HeaderToolbar extends ConsumerWidget {
                       items: [
                         PopupMenuItem(
                           value: "Change Password",
-                          child: Text("Change Password"),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.lock_reset_rounded,
+                                size: 20,
+                                color: AppColors.primary,
+                              ),
+                              const SizedBox(width: 12),
+                              const Text("Change Password"),
+                            ],
+                          ),
                         ),
                         PopupMenuItem(
                           value: "Logout",
-                          child: Text(
-                            "Logout",
-                            style: const TextStyle(color: Colors.red),
+                          child: const Row(
+                            children: [
+                              Icon(
+                                Icons.logout_rounded,
+                                size: 20,
+                                color: Colors.red,
+                              ),
+                              SizedBox(width: 12),
+                              Text(
+                                "Logout",
+                                style: TextStyle(color: Colors.red),
+                              ),
+                            ],
                           ),
                         ),
                       ],

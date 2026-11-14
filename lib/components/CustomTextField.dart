@@ -6,6 +6,9 @@ class CustomTextField extends StatelessWidget {
   final String labelText;
   final String? Function(String?)? validator;
   final bool obscureText;
+  final IconData? prefixIcon;
+  final TextInputAction? textInputAction;
+  final ValueChanged<String>? onFieldSubmitted;
 
   const CustomTextField({
     super.key,
@@ -13,6 +16,9 @@ class CustomTextField extends StatelessWidget {
     required this.labelText,
     this.validator,
     this.obscureText = false,
+    this.prefixIcon,
+    this.textInputAction,
+    this.onFieldSubmitted,
   });
 
   @override
@@ -21,8 +27,13 @@ class CustomTextField extends StatelessWidget {
       controller: controller,
       obscureText: obscureText,
       validator: validator,
+      textInputAction: textInputAction,
+      onFieldSubmitted: onFieldSubmitted,
       decoration: InputDecoration(
         labelText: labelText,
+        prefixIcon: prefixIcon == null ? null : Icon(prefixIcon, size: 20),
+        filled: true,
+        fillColor: Colors.white,
         labelStyle: TextStyle(
           color: AppColors.grey,
         ),

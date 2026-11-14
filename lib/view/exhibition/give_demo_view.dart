@@ -1574,7 +1574,12 @@ class _NumberChip extends StatelessWidget {
           child: IconButton(
             tooltip: 'Remove ${formatIndianMobile(number)}',
             onPressed: onRemove,
-            icon: const Icon(Icons.close_rounded, size: 20, color: exInk),
+            icon: Container(
+              width: 22,
+              height: 22,
+              decoration: const BoxDecoration(color: Color(0xFFD5DCEC), shape: BoxShape.circle),
+              child: const Icon(Icons.close_rounded, size: 14, color: exInk),
+            ),
           ),
         ),
       ],

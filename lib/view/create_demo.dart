@@ -58,6 +58,8 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
 
   @override
   Widget build(BuildContext context) {
+    final isCreating = ref.watch(createdemoProvider).isLoading;
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -87,7 +89,7 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
                   child: SingleChildScrollView(
                     child: Column(
                       children: [
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 8),
 
                         CustomTextField(
                           label: "School Name *",
@@ -138,7 +140,7 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
                                     child: CustomTextField(
                                       label: index == 0
                                           ? "Demo Parent Number *"
-                                          : "",
+                                          : "Demo Parent Number ${index + 1}",
                                       hint: "Enter 10-digit mobile number",
                                       controller: parentControllers[index],
                                       keyboardType: TextInputType.phone,
@@ -163,24 +165,25 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
                                     ),
                                   ),
                                   if (index != 0)
-                                    GestureDetector(
-                                      onTap: () {
-                                        setState(() {
-                                          parentControllers.removeAt(index);
-                                        });
-                                      },
-                                      child: Container(
-                                        margin: const EdgeInsets.only(left: 10, top: 8),
-                                        height: 40,
-                                        width: 40,
-                                        decoration: BoxDecoration(
-                                          color: Colors.red.shade100,
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: const Icon(
-                                          Icons.close,
-                                          color: Colors.red,
-                                          size: 20,
+                                    // Same height as the field so the button sits centred beside it.
+                                    SizedBox(
+                                      height: 56,
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(left: 6),
+                                        child: IconButton(
+                                          tooltip: "Remove number",
+                                          onPressed: () {
+                                            setState(() {
+                                              parentControllers
+                                                  .removeAt(index)
+                                                  .dispose();
+                                            });
+                                          },
+                                          icon: const Icon(
+                                            Icons.cancel_rounded,
+                                            color: Colors.red,
+                                            size: 28,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -192,8 +195,8 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
 
                         Align(
                           alignment: Alignment.centerRight,
-                          child: GestureDetector(
-                            onTap: () {
+                          child: TextButton.icon(
+                            onPressed: () {
                               if (parentControllers.isNotEmpty &&
                                   parentControllers.last.text.trim().isEmpty) {
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -210,12 +213,24 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
                                 parentControllers.add(TextEditingController());
                               });
                             },
-                            child: Text(
-                              "+ Add another number",
+                            style: TextButton.styleFrom(
+                              foregroundColor: AppColors.primary,
+                              backgroundColor:
+                                  AppColors.primary.withValues(alpha: 0.08),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 10,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            icon: const Icon(Icons.add_rounded, size: 20),
+                            label: const Text(
+                              "Add another number",
                               style: TextStyle(
-                                fontSize: 15,
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.w500,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),
@@ -227,7 +242,9 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
                           width: double.infinity,
                           child: CustomButton(
                             text: "Create Demo",
-                            onPressed: () async {
+                            height: 48,
+                            isLoading: isCreating,
+                            onPressed: isCreating ? null : () async {
                               if (!_formKey.currentState!.validate()) return;
 
                               final loginData = ref.read(loginProvider);
