@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../auth/model/ExhibitionModel.dart';
 import '../../../viewModel/exhibition_viewmodel.dart';
@@ -230,6 +233,13 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
   bool _tried = false;
   bool _saving = false;
   String? _error;
+  String _savingLabel = 'Saving…';
+
+  /// Already-uploaded files (when editing) and newly picked local files.
+  late final List<String> _existing = [...?widget.lead?.attachments];
+  final List<_LocalFile> _picked = [];
+  static const _maxFiles = 10;
+  int get _fileCount => _existing.length + _picked.length;
 
   @override
   void dispose() {
@@ -239,18 +249,145 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
     super.dispose();
   }
 
+  // Only school name and city are mandatory; number / email are optional
+  // but must be valid when filled in.
   String? get _numberError {
     final n = _number.text.trim();
-    if (!_tried) return null;
-    if (n.isEmpty) return 'Contact number is required';
+    if (!_tried || n.isEmpty) return null;
     return isValidIndianMobile(normalizeIndianMobile(n)) ? null : 'Enter a 10-digit mobile number';
   }
 
   String? get _emailError {
     final e = _email.text.trim();
-    if (!_tried) return null;
-    if (e.isEmpty) return 'Contact email is required';
+    if (!_tried || e.isEmpty) return null;
     return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(e) ? null : 'Enter a valid email';
+  }
+
+  // ── Attachments ──
+
+  void _tooMany() => setState(() => _error = 'You can attach up to $_maxFiles files.');
+
+  Future<void> _addFromCamera() async {
+    if (_fileCount >= _maxFiles) return _tooMany();
+    try {
+      final x = await ImagePicker()
+          .pickImage(source: ImageSource.camera, imageQuality: 75, maxWidth: 2000);
+      if (x == null || !mounted) return;
+      setState(() => _picked.add(_LocalFile(x.path, x.name, isPdf: false)));
+    } catch (e) {
+      if (mounted) setState(() => _error = 'Could not open the camera. $e');
+    }
+  }
+
+  Future<void> _addPhotos() async {
+    if (_fileCount >= _maxFiles) return _tooMany();
+    try {
+      final xs = await ImagePicker()
+          .pickMultiImage(imageQuality: 75, maxWidth: 2000, limit: _maxFiles - _fileCount);
+      if (xs.isEmpty || !mounted) return;
+      setState(() {
+        for (final x in xs.take(_maxFiles - _fileCount)) {
+          _picked.add(_LocalFile(x.path, x.name, isPdf: false));
+        }
+      });
+    } catch (e) {
+      if (mounted) setState(() => _error = 'Could not open photos. $e');
+    }
+  }
+
+  Future<void> _addPdfs() async {
+    if (_fileCount >= _maxFiles) return _tooMany();
+    try {
+      final result = await FilePicker.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+      );
+      if (result.isEmpty || !mounted) return;
+      setState(() {
+        for (final f in result.where((f) => f.path != null).take(_maxFiles - _fileCount)) {
+          _picked.add(_LocalFile(f.path!, f.name, isPdf: true));
+        }
+      });
+    } catch (e) {
+      if (mounted) setState(() => _error = 'Could not open files. $e');
+    }
+  }
+
+  /// Uploads newly picked files to S3; returns all attachment URLs.
+  Future<List<String>> _uploadFiles() async {
+    final repo = ref.read(exhibitionRepositoryProvider);
+    final urls = [..._existing];
+    for (var i = 0; i < _picked.length; i++) {
+      if (mounted) {
+        setState(() => _savingLabel = 'Uploading files ${i + 1}/${_picked.length}…');
+      }
+      final f = _picked[i];
+      urls.add(await repo.uploadLeadFile(
+        exhibitionId: widget.exhibitionId,
+        path: f.path,
+        fileName: f.name,
+      ));
+    }
+    if (mounted) setState(() => _savingLabel = 'Saving…');
+    return urls;
+  }
+
+  Widget _attachmentsSection() {
+    final full = _fileCount >= _maxFiles;
+    Widget addButton(IconData icon, String label, VoidCallback onTap) => Expanded(
+          child: ExSecondaryButton(
+            label: label,
+            icon: icon,
+            height: 48,
+            onPressed: _saving || full ? null : onTap,
+          ),
+        );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text('Attachments', style: exHeadingSm.copyWith(fontSize: 15)),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text('(optional · photos or PDF)',
+                  maxLines: 1, overflow: TextOverflow.ellipsis, style: exBodySm),
+            ),
+            if (_fileCount > 0) Text('$_fileCount/$_maxFiles', style: exBodySm),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            addButton(Icons.photo_camera_outlined, 'Camera', _addFromCamera),
+            const SizedBox(width: 8),
+            addButton(Icons.photo_library_outlined, 'Photos', _addPhotos),
+            const SizedBox(width: 8),
+            addButton(Icons.picture_as_pdf_outlined, 'PDF', _addPdfs),
+          ],
+        ),
+        if (_fileCount > 0) ...[
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              for (final url in _existing)
+                ExAttachmentTile(
+                  url: url,
+                  gallery: _existing,
+                  onRemove: _saving ? null : () => setState(() => _existing.remove(url)),
+                ),
+              for (final f in _picked)
+                ExAttachmentTile._local(
+                  local: f,
+                  onRemove: _saving ? null : () => setState(() => _picked.remove(f)),
+                ),
+            ],
+          ),
+        ],
+      ],
+    );
   }
 
   Future<void> _save() async {
@@ -267,6 +404,7 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
     }
     setState(() => _saving = true);
     try {
+      final attachments = await _uploadFiles();
       final req = CaptureLeadRequest(
         schoolName: _school.text.trim(),
         city: _city.text.trim(),
@@ -275,6 +413,7 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
         contactEmail: _email.text.trim(),
         notes: _notes.text.trim(),
         interestLevel: _level,
+        attachments: attachments,
       );
       final repo = ref.read(exhibitionRepositoryProvider);
       if (_editing) {
@@ -291,6 +430,7 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
       if (mounted) {
         setState(() {
           _saving = false;
+          _savingLabel = 'Saving…';
           _error = e.toString();
         });
       }
@@ -455,7 +595,6 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
                 pair(
                   ExField(
                     label: 'Contact number',
-                    required: true,
                     controller: _number,
                     hint: 'Enter 10-digit mobile number',
                     prefixText: '+91',
@@ -472,7 +611,6 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
                   ),
                   ExField(
                     label: 'Contact email',
-                    required: true,
                     controller: _email,
                     hint: 'name@school.edu.in',
                     keyboardType: TextInputType.emailAddress,
@@ -490,6 +628,8 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
                   hint: 'e.g. Wants a full product walkthrough',
                   maxLines: 3,
                 ),
+                const SizedBox(height: 16),
+                _attachmentsSection(),
                 if (_error != null) ...[
                   const SizedBox(height: 16),
                   ExInlineNote(message: _error!),
@@ -508,7 +648,7 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
               top: false,
               child: ExPrimaryButton(
                 label: _editing ? 'Save Changes' : 'Save Lead',
-                loadingLabel: 'Saving…',
+                loadingLabel: _savingLabel,
                 loading: _saving,
                 onPressed: _save,
               ),
@@ -518,6 +658,222 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
       ),
     );
   }
+}
+
+/// A photo / PDF picked on the device, not uploaded yet.
+class _LocalFile {
+  final String path;
+  final String name;
+  final bool isPdf;
+  const _LocalFile(this.path, this.name, {required this.isPdf});
+}
+
+/// Thumbnail for a lead attachment (local file or uploaded URL), with an
+/// optional remove button. Tapping an uploaded photo opens a full-screen
+/// viewer; a PDF opens in the system viewer.
+class ExAttachmentTile extends StatelessWidget {
+  final _LocalFile? local;
+  final String? url;
+  final VoidCallback? onRemove;
+  final double size;
+
+  /// All attachment URLs of the lead, so the viewer can swipe between photos.
+  final List<String> gallery;
+
+  const ExAttachmentTile({
+    super.key,
+    this.url,
+    this.onRemove,
+    this.size = 84,
+    this.gallery = const [],
+  }) : local = null;
+
+  const ExAttachmentTile._local({required _LocalFile this.local, this.onRemove})
+      : url = null,
+        size = 84,
+        gallery = const [];
+
+  void _open(BuildContext context) {
+    final u = url;
+    if (u == null) return;
+    if (_isPdf) {
+      launchUrl(Uri.parse(u), mode: LaunchMode.externalApplication);
+      return;
+    }
+    final photos = gallery.where((g) => !isPdfUrl(g)).toList();
+    if (!photos.contains(u)) photos.insert(0, u);
+    showExPhotoViewer(context, photos, initial: photos.indexOf(u));
+  }
+
+  bool get _isPdf => local?.isPdf ?? isPdfUrl(url ?? '');
+
+  String get _name {
+    if (local != null) return local!.name;
+    final path = Uri.tryParse(url ?? '')?.pathSegments;
+    return (path == null || path.isEmpty) ? 'File' : Uri.decodeComponent(path.last);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final small = size < 72;
+    final Widget content = _isPdf
+        ? Container(
+            color: exDangerBg,
+            padding: const EdgeInsets.all(6),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.picture_as_pdf_rounded, color: exDanger, size: small ? 24 : 28),
+                const SizedBox(height: 4),
+                Text(small ? 'PDF' : _name,
+                    maxLines: small ? 1 : 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: exInk)),
+              ],
+            ),
+          )
+        : local != null
+            ? Image.file(File(local!.path), fit: BoxFit.cover, cacheWidth: 240)
+            : Image.network(
+                url!,
+                fit: BoxFit.cover,
+                cacheWidth: 240,
+                errorBuilder: (_, __, ___) => const ColoredBox(
+                  color: exNeutralBg,
+                  child: Icon(Icons.image_not_supported_outlined, color: exSubtle),
+                ),
+              );
+    return Semantics(
+      label: _isPdf ? 'PDF $_name' : 'Photo $_name',
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Positioned.fill(
+              child: Material(
+                color: Colors.white,
+                clipBehavior: Clip.antiAlias,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  side: const BorderSide(color: exBorder),
+                ),
+                child: InkWell(
+                  onTap: url == null ? null : () => _open(context),
+                  child: content,
+                ),
+              ),
+            ),
+            if (onRemove != null)
+              Positioned(
+                top: -8,
+                right: -8,
+                child: Material(
+                  color: exInk,
+                  shape: const CircleBorder(),
+                  child: InkWell(
+                    customBorder: const CircleBorder(),
+                    onTap: onRemove,
+                    child: const Padding(
+                      padding: EdgeInsets.all(4),
+                      child: Icon(Icons.close_rounded, size: 16, color: Colors.white),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+bool isPdfUrl(String url) => url.toLowerCase().split('?').first.endsWith('.pdf');
+
+/// Full-screen, swipeable, pinch-to-zoom photo viewer.
+Future<void> showExPhotoViewer(BuildContext context, List<String> urls, {int initial = 0}) =>
+    Navigator.of(context).push(
+      PageRouteBuilder<void>(
+        opaque: false,
+        barrierColor: Colors.black,
+        pageBuilder: (_, __, ___) => _PhotoViewer(urls: urls, initial: initial),
+        transitionsBuilder: (_, a, __, child) => FadeTransition(opacity: a, child: child),
+      ),
+    );
+
+class _PhotoViewer extends StatefulWidget {
+  final List<String> urls;
+  final int initial;
+  const _PhotoViewer({required this.urls, required this.initial});
+
+  @override
+  State<_PhotoViewer> createState() => _PhotoViewerState();
+}
+
+class _PhotoViewerState extends State<_PhotoViewer> {
+  late final _controller = PageController(initialPage: widget.initial);
+  late int _index = widget.initial;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        backgroundColor: Colors.black,
+        body: Stack(
+          children: [
+            PageView.builder(
+              controller: _controller,
+              itemCount: widget.urls.length,
+              onPageChanged: (i) => setState(() => _index = i),
+              itemBuilder: (_, i) => InteractiveViewer(
+                minScale: 1,
+                maxScale: 4,
+                child: Center(
+                  child: Image.network(
+                    widget.urls[i],
+                    fit: BoxFit.contain,
+                    loadingBuilder: (_, child, p) => p == null
+                        ? child
+                        : const CircularProgressIndicator(color: Colors.white),
+                    errorBuilder: (_, __, ___) => const Icon(
+                        Icons.image_not_supported_outlined,
+                        color: Colors.white54,
+                        size: 48),
+                  ),
+                ),
+              ),
+            ),
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: Row(
+                  children: [
+                    IconButton(
+                      tooltip: 'Close',
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close_rounded, color: Colors.white, size: 28),
+                    ),
+                    const Spacer(),
+                    if (widget.urls.length > 1)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 12),
+                        child: Text('${_index + 1} / ${widget.urls.length}',
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
 }
 
 // MARK: - Demo detail (shown inside the expanded demo card)

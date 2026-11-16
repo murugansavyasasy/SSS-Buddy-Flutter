@@ -43,12 +43,7 @@ class GiveDemoView extends ConsumerStatefulWidget {
   /// prefilled and the flow opens on the review step (Back to edit).
   final ExhibitionDemo? resendFrom;
 
-  const GiveDemoView({
-    super.key,
-    required this.exhibition,
-    this.initialStep = 0,
-    this.resendFrom,
-  });
+  const GiveDemoView({super.key, required this.exhibition, this.initialStep = 0, this.resendFrom});
 
   @override
   ConsumerState<GiveDemoView> createState() => _GiveDemoViewState();
@@ -253,13 +248,13 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
   // MARK: Navigation
 
   Future<bool> _confirmDiscard() => showExConfirmDialog(
-        context,
-        title: 'Discard this demo?',
-        message: 'The voice and numbers you entered will be lost.',
-        cancelLabel: 'Keep editing',
-        confirmLabel: 'Discard',
-        destructive: true,
-      );
+    context,
+    title: 'Discard this demo?',
+    message: 'The voice and numbers you entered will be lost.',
+    cancelLabel: 'Keep editing',
+    confirmLabel: 'Discard',
+    destructive: true,
+  );
 
   Future<void> _close() async {
     if (_sending) return;
@@ -408,12 +403,10 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
                             wide ? 40 : 16,
                             24,
                           ),
-                          child: wide ? _stepBody(wide) : ExMaxWidth(child: _stepBody(wide)),
+                          // Centred column on iPad so wide screens don't stretch.
+                          child: ExMaxWidth(child: _stepBody(wide)),
                         ),
                       ),
-                      // iPad: right summary panel on Voice / Visitors only;
-                      // Review shows the same call-summary card as the phone.
-                      if (wide && _step < 2) _summaryPanel(),
                     ],
                   ),
                 ),
@@ -620,16 +613,10 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
         _title('Choose a voice', 'Play a ready-made template or record a message for this visitor.')
       else
         _phoneTitle('Choose a voice'),
-      Align(
-        alignment: Alignment.centerLeft,
-        child: SizedBox(
-          width: wide ? 460 : double.infinity,
-          child: _Segmented(
-            wide: wide,
-            selected: _voice == _Voice.template ? 0 : 1,
-            onChanged: (i) => _setVoice(i == 0 ? _Voice.template : _Voice.record),
-          ),
-        ),
+      _Segmented(
+        wide: wide,
+        selected: _voice == _Voice.template ? 0 : 1,
+        onChanged: (i) => _setVoice(i == 0 ? _Voice.template : _Voice.record),
       ),
       // Validation sits right under the switch so it is always in view.
       if (_step1Error) ...[
@@ -669,7 +656,8 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
     final ok = await showExConfirmDialog(
       context,
       title: 'Delete this template?',
-      message: '"${t.title}" will no longer be offered for new demos. Demos already sent are not affected.',
+      message:
+          '"${t.title}" will no longer be offered for new demos. Demos already sent are not affected.',
       cancelLabel: 'Cancel',
       confirmLabel: 'Delete',
       destructive: true,
@@ -693,12 +681,7 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
 
   Widget _templateCards(bool wide) {
     final async = ref.watch(exhibitionTemplatesProvider);
-    final addButton = ExSecondaryButton(
-      label: 'Add template',
-      icon: Icons.add_rounded,
-      color: exBrandBold,
-      onPressed: _addTemplate,
-    );
+    final addButton = _AddTemplateTile(onTap: _addTemplate);
     if (async.isLoading && !async.hasValue) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 40),
@@ -739,7 +722,8 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
     Widget card(DemoTemplate t) => _TemplateCard(
       template: t.withDuration(_realDuration(t)),
       // A resend's "previous voice" also matches the same template by URL.
-      selected: _template != null &&
+      selected:
+          _template != null &&
           (_template!.id == t.id ||
               (_template!.id == '__previous__' && _template!.audioUrl == t.audioUrl)),
       playing: _previewId == t.id,
@@ -750,38 +734,42 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
       }),
       onTogglePlay: () => _togglePreview(t),
       // Only the person who added a template can delete it.
-      onDelete: t.id != '__previous__' &&
+      onDelete:
+          t.id != '__previous__' &&
               user != null &&
               t.isCreatedBy(userId: user.userId, userName: user.employeeName)
           ? () => _deleteTemplate(t)
           : null,
     );
+    // Templates + the "Add template" tile, 1 column on phone, 2 on iPad.
+    final tiles = [for (final t in list) card(t), addButton];
     if (!wide) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          for (final t in list) ...[card(t), const SizedBox(height: 12)],
-          addButton,
+          for (var i = 0; i < tiles.length; i++) ...[
+            if (i > 0) const SizedBox(height: 12),
+            tiles[i],
+          ],
         ],
       );
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        for (var r = 0; r < (list.length + 1) ~/ 2; r++) ...[
+        for (var r = 0; r < (tiles.length + 1) ~/ 2; r++) ...[
+          if (r > 0) const SizedBox(height: 16),
           IntrinsicHeight(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(child: card(list[r * 2])),
+                Expanded(child: tiles[r * 2]),
                 const SizedBox(width: 16),
-                Expanded(child: r * 2 + 1 < list.length ? card(list[r * 2 + 1]) : const SizedBox()),
+                Expanded(child: r * 2 + 1 < tiles.length ? tiles[r * 2 + 1] : const SizedBox()),
               ],
             ),
           ),
-          const SizedBox(height: 16),
         ],
-        Align(alignment: Alignment.centerLeft, child: SizedBox(width: 260, child: addButton)),
       ],
     );
   }
@@ -905,7 +893,6 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
     final title = wide
         ? _title('Review & send', 'Check everything before the calls go out.')
         : _phoneTitle('Review & send');
-    final total = _numbers.length + _team.length;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -952,43 +939,6 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
                   ],
                 ),
               ),
-              // Call summary: same card on phone and iPad.
-              const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFD5DCEC)),
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0xFFF4F6FA), Color(0xFFD9E0F0)],
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.phone_outlined, color: exInk, size: 26),
-                      const SizedBox(width: 18),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('$total ${total == 1 ? 'call' : 'calls'}', style: exHeadingXl),
-                            Text(
-                              '${_numbers.length} ${_numbers.length == 1 ? 'visitor' : 'visitors'}'
-                              ' + ${_team.length} ${_team.length == 1 ? 'attendee' : 'attendees'}',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                                color: exInk,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               if (_sendError != null) ...[
                 const SizedBox(height: 16),
                 ExInlineNote(
@@ -1089,73 +1039,6 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
     return _recordingPath == null
         ? 'Not chosen'
         : 'Custom recording · ${exDuration(_recordingLength)}';
-  }
-
-  /// iPad: Call summary panel on the right.
-  Widget _summaryPanel() => Container(
-    width: 360,
-    decoration: const BoxDecoration(
-      color: Colors.white,
-      border: Border(left: BorderSide(color: exBorder)),
-    ),
-    padding: const EdgeInsets.fromLTRB(32, 40, 32, 24),
-    child: SingleChildScrollView(child: _summaryContent()),
-  );
-
-  Widget _summaryContent() {
-    final total = _numbers.length + _team.length;
-    String voice;
-    if (_voice == _Voice.template) {
-      voice = _template?.title ?? 'Not chosen';
-    } else {
-      voice = _recordingPath == null ? 'Not chosen' : 'Recording · ${exDuration(_recordingLength)}';
-    }
-    Widget row(String k, String v) => Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            k,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: exSubtle),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              v,
-              textAlign: TextAlign.right,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: exInk),
-            ),
-          ),
-        ],
-      ),
-    );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Text('Call summary', style: exHeadingMd),
-        const SizedBox(height: 14),
-        row('Voice', voice),
-        row('Visitors', '${_numbers.length}'),
-        row('Attendees', '${_team.length}'),
-        const Padding(
-          padding: EdgeInsets.symmetric(vertical: 10),
-          child: Divider(height: 1, color: exBorder),
-        ),
-        Row(
-          children: [
-            const Expanded(
-              child: Text(
-                'Total calls',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: exSubtle),
-              ),
-            ),
-            Text('$total', style: exHeadingXl),
-          ],
-        ),
-      ],
-    );
   }
 
   static const _strong = TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: exInk);
@@ -1274,6 +1157,8 @@ class _Stepper extends StatelessWidget {
 }
 
 /// "Use Template | Record Custom Voice" segmented control.
+/// Voice source tabs (Template / Record). A white pill slides under the
+/// active tab, so it reads as tabs rather than two options to pick.
 class _Segmented extends StatelessWidget {
   final bool wide;
   final int selected;
@@ -1283,41 +1168,38 @@ class _Segmented extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget seg(int i, String label, IconData icon) {
+    final height = wide ? 56.0 : 50.0;
+    Widget tab(int i, String label, IconData icon) {
       final on = selected == i;
       return Expanded(
         child: Semantics(
           button: true,
           selected: on,
+          label: '$label tab',
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onTap: () => onChanged(i),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: on ? Colors.white : Colors.transparent,
-                borderRadius: BorderRadius.circular(8),
-                boxShadow: on
-                    ? const [
-                        BoxShadow(color: Color(0x1A1E2B45), blurRadius: 6, offset: Offset(0, 2)),
-                      ]
-                    : null,
-              ),
+            onTap: () {
+              if (on) return;
+              HapticFeedback.selectionClick();
+              onChanged(i);
+            },
+            child: Center(
               child: FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(icon, size: 20, color: on ? exInk : exSubtle),
+                    Icon(icon, size: wide ? 22 : 20, color: on ? exBrandBold : exSubtle),
                     const SizedBox(width: 8),
-                    Text(
-                      label,
+                    AnimatedDefaultTextStyle(
+                      duration: const Duration(milliseconds: 200),
                       style: TextStyle(
-                        fontSize: wide ? 17 : 16,
-                        fontWeight: FontWeight.w600,
+                        fontFamily: exFont,
+                        fontSize: wide ? 17 : 15,
+                        fontWeight: on ? FontWeight.w700 : FontWeight.w600,
                         color: on ? exInk : exSubtle,
                       ),
+                      child: Text(label),
                     ),
                   ],
                 ),
@@ -1329,20 +1211,89 @@ class _Segmented extends StatelessWidget {
     }
 
     return Container(
-      height: wide ? 60 : 56,
+      height: height,
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFFE3E7EF),
-        borderRadius: BorderRadius.circular(10),
+        color: exNeutralBg,
+        borderRadius: BorderRadius.circular(height / 2),
       ),
-      child: Row(
+      child: Stack(
         children: [
-          seg(0, wide ? 'Use Template' : 'Template', Icons.description_outlined),
-          seg(1, wide ? 'Record Custom Voice' : 'Record voice', Icons.mic_none_rounded),
+          // Sliding indicator under the active tab.
+          AnimatedAlign(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOutCubic,
+            alignment: selected == 0 ? Alignment.centerLeft : Alignment.centerRight,
+            child: FractionallySizedBox(
+              widthFactor: 0.5,
+              heightFactor: 1,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(height / 2),
+                  boxShadow: const [
+                    BoxShadow(color: Color(0x1A1E2B45), blurRadius: 8, offset: Offset(0, 2)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Row(
+            children: [
+              tab(0, wide ? 'Use Template' : 'Template', Icons.library_music_outlined),
+              tab(1, wide ? 'Record Custom Voice' : 'Record Voice', Icons.mic_none_rounded),
+            ],
+          ),
         ],
       ),
     );
   }
+}
+
+/// Dashed "Add template" tile shown after the template cards.
+class _AddTemplateTile extends StatelessWidget {
+  final VoidCallback onTap;
+  const _AddTemplateTile({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    label: 'Add template',
+    child: Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: CustomPaint(
+          painter: _DashedRRectPainter(radius: 16, color: exIndicator),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 84),
+            child: const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.add_circle_outline_rounded, color: exBrandBold, size: 24),
+                    SizedBox(width: 10),
+                    Text(
+                      'Add template',
+                      style: TextStyle(
+                        fontFamily: exFont,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: exBrandBold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
 }
 
 class _TemplateCard extends StatelessWidget {
@@ -1369,134 +1320,165 @@ class _TemplateCard extends StatelessWidget {
     final t = template;
     return Semantics(
       selected: selected,
-      child: Material(
-        color: selected ? exTint : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          onTap: onSelect,
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: selected ? exBrand : exBorder, width: selected ? 2 : 1),
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 14, 16, 14),
-                  child: Row(
-                    children: [
-                      SizedBox(
-                        width: 52,
-                        height: 52,
-                        child: IconButton(
-                          tooltip: playing
-                              ? 'Pause preview of ${t.title}'
-                              : 'Play preview of ${t.title}',
-                          onPressed: onTogglePlay,
-                          style: IconButton.styleFrom(
-                            backgroundColor: playing ? exInk : Colors.white,
-                            side: playing ? null : const BorderSide(color: exStrongBorder),
-                            shape: const CircleBorder(),
-                          ),
-                          icon: Icon(
-                            playing ? Icons.pause_rounded : Icons.play_arrow_outlined,
-                            color: playing ? Colors.white : exInk,
-                            size: 26,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text.rich(
-                              TextSpan(
-                                text: t.title,
-                                children: [
-                                  if (t.duration > Duration.zero)
-                                    TextSpan(
-                                      text: '  ${exDuration(t.duration)}',
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                        color: exSubtle,
-                                      ),
-                                    ),
-                                ],
-                              ),
-                              style: exHeadingMd,
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              t.description,
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                                color: exSubtle,
-                              ),
-                            ),
-                            if (t.audioUrl.isEmpty) ...[
-                              const SizedBox(height: 2),
-                              Text(
-                                'Audio not set up yet',
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w500,
-                                  color: exSubtle,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                      if (onDelete != null)
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: selected
+              ? const [BoxShadow(color: Color(0x1F5770A6), blurRadius: 16, offset: Offset(0, 6))]
+              : const [BoxShadow(color: Color(0x0A1E2B45), blurRadius: 8, offset: Offset(0, 2))],
+        ),
+        child: Material(
+          color: selected ? exTint : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          child: InkWell(
+            onTap: onSelect,
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: selected ? exBrand : exBorder, width: selected ? 2 : 1),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 14, 16, 14),
+                    child: Row(
+                      children: [
                         SizedBox(
-                          width: 40,
-                          height: 40,
+                          width: 52,
+                          height: 52,
                           child: IconButton(
-                            tooltip: 'Delete ${t.title}',
-                            onPressed: onDelete,
-                            icon: const Icon(Icons.delete_outline_rounded, color: exDanger, size: 22),
+                            tooltip: playing
+                                ? 'Pause preview of ${t.title}'
+                                : 'Play preview of ${t.title}',
+                            onPressed: onTogglePlay,
+                            style: IconButton.styleFrom(
+                              backgroundColor: playing
+                                  ? exBrand
+                                  : (selected ? Colors.white : exTint),
+                              shape: const CircleBorder(),
+                            ),
+                            icon: Icon(
+                              playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                              color: playing ? Colors.white : exBrandBold,
+                              size: 28,
+                            ),
                           ),
                         ),
-                      const SizedBox(width: 10),
-                      Container(
-                        width: 26,
-                        height: 26,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: selected ? exBrand : Colors.white,
-                          border: selected ? null : Border.all(color: exStrongBorder, width: 2),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                t.title,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: exHeadingMd,
+                              ),
+                              if (t.duration > Duration.zero) ...[
+                                const SizedBox(height: 4),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: selected ? Colors.white : exPageBg,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.schedule_rounded, size: 13, color: exSubtle),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        exDuration(t.duration),
+                                        style: const TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                          color: exSubtle,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                              if (t.description.isNotEmpty) const SizedBox(height: 4),
+                              if (t.description.isNotEmpty)
+                                Text(
+                                  t.description,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
+                                    color: exSubtle,
+                                  ),
+                                ),
+                              if (t.audioUrl.isEmpty) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Audio not set up yet',
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
+                                    color: exSubtle,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
                         ),
-                        child: selected
-                            ? const Icon(Icons.check_rounded, size: 16, color: Colors.white)
-                            : null,
-                      ),
-                    ],
+                        if (onDelete != null)
+                          SizedBox(
+                            width: 40,
+                            height: 40,
+                            child: IconButton(
+                              tooltip: 'Delete ${t.title}',
+                              onPressed: onDelete,
+                              icon: const Icon(
+                                Icons.delete_outline_rounded,
+                                color: exDanger,
+                                size: 22,
+                              ),
+                            ),
+                          ),
+                        const SizedBox(width: 10),
+                        Container(
+                          width: 26,
+                          height: 26,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: selected ? exBrand : Colors.white,
+                            border: selected ? null : Border.all(color: exStrongBorder, width: 2),
+                          ),
+                          child: selected
+                              ? const Icon(Icons.check_rounded, size: 16, color: Colors.white)
+                              : null,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                if (playing)
-                  StreamBuilder<Duration>(
-                    stream: player.positionStream,
-                    builder: (_, snap) {
-                      final total = player.duration ?? t.duration;
-                      final p = snap.data ?? Duration.zero;
-                      final f = total.inMilliseconds == 0
-                          ? 0.0
-                          : (p.inMilliseconds / total.inMilliseconds).clamp(0.0, 1.0);
-                      return LinearProgressIndicator(
-                        value: f,
-                        minHeight: 3,
-                        backgroundColor: Colors.transparent,
-                        color: exBrand,
-                      );
-                    },
-                  ),
-              ],
+                  if (playing)
+                    StreamBuilder<Duration>(
+                      stream: player.positionStream,
+                      builder: (_, snap) {
+                        final total = player.duration ?? t.duration;
+                        final p = snap.data ?? Duration.zero;
+                        final f = total.inMilliseconds == 0
+                            ? 0.0
+                            : (p.inMilliseconds / total.inMilliseconds).clamp(0.0, 1.0);
+                        return LinearProgressIndicator(
+                          value: f,
+                          minHeight: 3,
+                          backgroundColor: Colors.transparent,
+                          color: exBrand,
+                        );
+                      },
+                    ),
+                ],
+              ),
             ),
           ),
         ),
@@ -1512,7 +1494,7 @@ class _DashedNote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => CustomPaint(
-    painter: _DashedRRectPainter(),
+    painter: const _DashedRRectPainter(),
     child: Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Text(
@@ -1524,16 +1506,18 @@ class _DashedNote extends StatelessWidget {
 }
 
 class _DashedRRectPainter extends CustomPainter {
+  final double radius;
+  final Color color;
+  const _DashedRRectPainter({this.radius = 8, this.color = exStrongBorder});
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = exStrongBorder
+      ..color = color
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2;
     final path = Path()
-      ..addRRect(
-        RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(8)).deflate(0.6),
-      );
+      ..addRRect(RRect.fromRectAndRadius(Offset.zero & size, Radius.circular(radius)).deflate(0.6));
     for (final m in path.computeMetrics()) {
       var d = 0.0;
       while (d < m.length) {

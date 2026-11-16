@@ -389,6 +389,9 @@ class ExhibitionLead {
   final InterestLevel? interestLevel;
   final String capturedById;
 
+  /// Photo / PDF URLs attached to the lead (uploaded to S3).
+  final List<String> attachments;
+
   const ExhibitionLead({
     required this.id,
     required this.schoolName,
@@ -403,6 +406,7 @@ class ExhibitionLead {
     this.demoVisitorName = '',
     this.interestLevel,
     this.capturedById = '',
+    this.attachments = const [],
   });
 
   bool isCreatedBy({required String userId, required String userName}) =>
@@ -424,7 +428,25 @@ class ExhibitionLead {
         demoVisitorName: _str(j, ['visitorName', 'demoVisitorName', 'VisitorName']),
         interestLevel: parseInterestLevel(
             _str(j, ['interestLevel', 'InterestLevel', 'level', 'leadLevel'])),
+        attachments: _urlList(j, ['attachments', 'Attachments', 'files', 'Files']),
       );
+}
+
+/// URLs from a list of strings or of objects with a `url`/`fileUrl`.
+List<String> _urlList(Map m, List<String> keys) {
+  for (final k in keys) {
+    final v = m[k];
+    if (v is List) {
+      return [
+        for (final e in v)
+          if (e is String && e.isNotEmpty)
+            e
+          else if (e is Map)
+            _str(e, ['url', 'Url', 'fileUrl', 'FileUrl', 'link'])
+      ].where((u) => u.isNotEmpty).toList();
+    }
+  }
+  return const [];
 }
 
 /// Body for POST /api/mobile/exhibitions/demos/:demoId/interest.
@@ -437,6 +459,9 @@ class CaptureLeadRequest {
   final String notes;
   final InterestLevel interestLevel;
 
+  /// S3 URLs of attached photos / PDFs.
+  final List<String> attachments;
+
   const CaptureLeadRequest({
     required this.schoolName,
     this.city = '',
@@ -445,6 +470,7 @@ class CaptureLeadRequest {
     this.contactEmail = '',
     this.notes = '',
     this.interestLevel = InterestLevel.warm,
+    this.attachments = const [],
   });
 
   Map<String, dynamic> toJson() => {
@@ -455,6 +481,7 @@ class CaptureLeadRequest {
         'contactEmail': contactEmail,
         'notes': notes,
         'interestLevel': interestLevel.apiValue,
+        'attachments': attachments,
       };
 }
 

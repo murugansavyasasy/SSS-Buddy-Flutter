@@ -28,6 +28,7 @@ void main() {
     final out = logs.single;
     expect(out, contains('✅ 200 POST https://example.test/api/mobile/login'));
     expect(out, contains('"employeeId": "E1"'));
+    expect(out, contains('│ Status  : 200 OK'));
     expect(out, contains('"status": "success"'));
     expect(out, isNot(contains('secret')));
     expect(out, isNot(contains('abc123')));

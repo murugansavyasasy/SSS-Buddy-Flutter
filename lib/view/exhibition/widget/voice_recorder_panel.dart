@@ -231,23 +231,31 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
 
   @override
   Widget build(BuildContext context) {
+    final wide = MediaQuery.sizeOf(context).width >= 900;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
+      padding: EdgeInsets.fromLTRB(wide ? 32 : 16, wide ? 32 : 20, wide ? 32 : 16, wide ? 24 : 16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: exBorder),
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Colors.white, Color(0xFFF7F8FC)],
+        ),
+        boxShadow: const [
+          BoxShadow(color: Color(0x0A1E2B45), blurRadius: 12, offset: Offset(0, 4)),
+        ],
       ),
       child: Column(
         children: [
           if (_state == _RecState.denied) _denied() else ..._recorderBody(),
           const SizedBox(height: 14),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color: exPageBg,
-              borderRadius: BorderRadius.circular(8),
+              color: exTint,
+              borderRadius: BorderRadius.circular(20),
             ),
             child: const Row(
               mainAxisSize: MainAxisSize.min,

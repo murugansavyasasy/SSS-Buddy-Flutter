@@ -9,6 +9,7 @@ import 'package:flutter/foundation.dart';
 ///   ┌─ ✅ 200 POST https://host/api/mobile/login  ·  312 ms
 ///   │ Query   : {...}
 ///   │ Request : {...}
+///   │ Status  : 200 OK
 ///   │ Response: {...}
 ///   └─────
 ///
@@ -67,6 +68,7 @@ class ApiLogInterceptor extends Interceptor {
       _section(b, 'Query   ', o.queryParameters);
     }
     if (o.data != null) _section(b, 'Request ', _requestBody(o.data));
+    b.writeln('│ Status  : $code${_reason(status)}');
     if (error != null) b.writeln('│ Error   : $error');
     if (response != null && response.toString().isNotEmpty) {
       _section(b, 'Response', response);
@@ -74,6 +76,25 @@ class ApiLogInterceptor extends Interceptor {
     b.write('└─────');
     debugPrint(b.toString());
   }
+
+  static String _reason(int? status) => switch (status) {
+        null => ' (no response)',
+        200 => ' OK',
+        201 => ' Created',
+        204 => ' No Content',
+        400 => ' Bad Request',
+        401 => ' Unauthorized',
+        403 => ' Forbidden',
+        404 => ' Not Found',
+        408 => ' Timeout',
+        409 => ' Conflict',
+        422 => ' Unprocessable',
+        429 => ' Too Many Requests',
+        500 => ' Server Error',
+        502 => ' Bad Gateway',
+        503 => ' Unavailable',
+        _ => '',
+      };
 
   /// Full URL without the query string (query is printed separately).
   /// Presigned S3 URLs carry long signatures; show only the path for them.

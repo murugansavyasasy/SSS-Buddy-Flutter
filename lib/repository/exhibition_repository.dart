@@ -277,6 +277,31 @@ class ExhibitionRepository {
 
   // MARK: Leads
 
+  /// Uploads a lead photo / PDF to S3 and returns its URL.
+  Future<String> uploadLeadFile({
+    required String exhibitionId,
+    required String path,
+    required String fileName,
+  }) =>
+      _guard(() {
+        final dot = fileName.lastIndexOf('.');
+        final ext = dot < 0 ? '' : fileName.substring(dot + 1).toLowerCase();
+        final type = switch (ext) {
+          'pdf' => 'application/pdf',
+          'png' => 'image/png',
+          'heic' => 'image/heic',
+          'webp' => 'image/webp',
+          _ => 'image/jpeg',
+        };
+        final safe = fileName.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
+        return _s3.uploadFile(
+          file: File(path),
+          fileName: '${DateTime.now().millisecondsSinceEpoch}_$safe',
+          bucketPath: 'exhibitions/$exhibitionId/leads',
+          contentType: type,
+        );
+      });
+
   Future<List<ExhibitionLead>> fetchLeads(String exhibitionId) => _guard(() async {
         final res = await _dio.get(AppEndpoint.exhibitionLeads(exhibitionId),
             options: await _options());
