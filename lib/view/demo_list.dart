@@ -1,3 +1,4 @@
+import 'package:sssbuddy/components/ResponsiveCardList.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -62,8 +63,9 @@ class DemoListView extends ConsumerWidget {
                       if (list.isEmpty) {
                         return const Center(child: Text("No Data Found"));
                       }
-                      return ListView.builder(
+                      return ResponsiveCardList(
                         padding: const EdgeInsets.all(12),
+                        spacing: 0,
                         itemCount: list.length,
                         itemBuilder: (context, index) {
                           final item = list[index];

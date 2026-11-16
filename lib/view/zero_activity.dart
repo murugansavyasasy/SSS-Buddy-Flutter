@@ -1,3 +1,4 @@
+import 'package:sssbuddy/components/ResponsiveCardList.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -97,7 +98,8 @@ class _ZeroActivityScreenState
                     );
                   }
 
-                  return ListView.builder(
+                  return ResponsiveCardList(
+                    spacing: 0,
                     padding: const EdgeInsets.fromLTRB(
                       16,
                       18,

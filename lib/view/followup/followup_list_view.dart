@@ -1,3 +1,4 @@
+import 'package:sssbuddy/components/ResponsiveCardList.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -157,10 +158,10 @@ class _FollowUpListViewState extends ConsumerState<FollowUpListView> {
         Expanded(
           child: items.isEmpty
               ? _empty(tab, all.isEmpty)
-              : ListView.separated(
+              : ResponsiveCardList(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
                   itemCount: items.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  spacing: 10,
                   itemBuilder: (_, i) {
                     final f = items[i];
                     return FollowUpCard(

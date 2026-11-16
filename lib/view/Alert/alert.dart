@@ -1,3 +1,4 @@
+import 'package:sssbuddy/components/ResponsiveCardList.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -100,10 +101,10 @@ class AlertScreen extends ConsumerWidget {
                         );
                       }
 
-                      return ListView.separated(
+                      return ResponsiveCardList(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                         itemCount: alerts.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 10),
+                        spacing: 10,
                         itemBuilder: (context, index) {
                           return AlertCard(alert: alerts[index]);
                         },

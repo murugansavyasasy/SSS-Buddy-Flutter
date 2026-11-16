@@ -1,3 +1,4 @@
+import 'package:sssbuddy/components/ResponsiveCardList.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -100,12 +101,11 @@ class _ManagementInfoScreenState extends ConsumerState<ManagementInfo> {
                             style: TextStyle(color: Colors.grey),
                           ),
                         )
-                            : ListView.separated(
+                            : ResponsiveCardList(
                           padding:
                           const EdgeInsets.fromLTRB(16, 8, 16, 16),
                           itemCount: members.length,
-                          separatorBuilder: (_, __) =>
-                          const SizedBox(height: 12),
+                          spacing: 12,
                           itemBuilder: (context, index) => MemberCard(
                               member: members[index], index: index),
                         ),

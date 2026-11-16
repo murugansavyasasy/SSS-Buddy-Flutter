@@ -1,3 +1,4 @@
+import 'package:sssbuddy/components/ResponsiveCardList.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -164,11 +165,11 @@ class ServerStatusScreen extends ConsumerWidget {
 
   // 📋 List
   Widget _buildList(List<DialoutServerModel> list) {
-    return ListView.separated(
+    return ResponsiveCardList(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
       itemCount: list.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      spacing: 10,
       itemBuilder: (context, index) => _ServerCard(item: list[index]),
     );
   }

@@ -1,3 +1,4 @@
+import 'package:sssbuddy/components/ResponsiveCardList.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -95,21 +96,21 @@ class _CustomerListViewState extends ConsumerState<CustomerListView> {
                       if (list.isEmpty) {
                         return const Center(child: Text("No Data Found"));
                       }
-                      return ListView.builder(
+                      return ResponsiveCardList(
                         controller: _scrollController,
                         padding:
                         const EdgeInsets.fromLTRB(16, 20, 16, 20),
-                        itemCount: list.length + (isLoadingMore ? 1 : 0),
+                        spacing: 0,
+                        itemCount: list.length,
+                        footer: isLoadingMore
+                            ? const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 16),
+                                child: Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                              )
+                            : null,
                         itemBuilder: (context, index) {
-                          if (index >= list.length) {
-                            return const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 16),
-                              child: Center(
-                                child: CircularProgressIndicator(),
-                              ),
-                            );
-                          }
-
                           final item = list[index];
 
                           return InkWell(

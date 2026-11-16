@@ -1,3 +1,4 @@
+import 'package:sssbuddy/components/ResponsiveCardList.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -94,8 +95,11 @@ class SchoolDocuments extends ConsumerWidget {
                                   ),
                                 ),
                               ),
-                              ...section.value.map(
-                                (item) => SchoolDocumentCard(item: item),
+                              ResponsiveCardWrap(
+                                children: [
+                                  for (final item in section.value)
+                                    SchoolDocumentCard(item: item),
+                                ],
                               ),
                             ],
                           );
