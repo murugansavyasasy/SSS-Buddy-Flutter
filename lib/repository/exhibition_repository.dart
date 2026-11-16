@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -5,6 +6,7 @@ import 'package:dio/dio.dart';
 import '../auth/model/ExhibitionModel.dart';
 import '../core/aws/s3_upload_service.dart';
 import '../core/network/DioClient.dart';
+import '../core/storage/secure_storage.dart';
 import 'app_endpoint.dart';
 
 /// REST calls for the Exhibitions module. Every request carries the login
@@ -38,11 +40,29 @@ class ExhibitionRepository {
 
   Dio get _dio => _client.dio;
 
+  /// Login token from the in-memory session, falling back to the login
+  /// response saved in secure storage (e.g. while the session is reloading).
+  Future<String> _token() async {
+    final live = await _client.getToken();
+    if (live != null && live.isNotEmpty) return live;
+    try {
+      final raw = await SecureStorage.getLoginResponse();
+      if (raw == null || raw.isEmpty) return '';
+      final json = jsonDecode(raw);
+      if (json is! Map) return '';
+      final data = json['data'];
+      final t = (data is Map ? data['token'] : null) ?? json['token'];
+      return t?.toString() ?? '';
+    } catch (_) {
+      return '';
+    }
+  }
+
   Future<Options> _options({String? contentType}) async {
-    final token = await _client.getToken();
+    final token = await _token();
     return Options(
       headers: {
-        if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
+        if (token.isNotEmpty) 'Authorization': 'Bearer $token',
         'Accept': 'application/json',
       },
       contentType: contentType,
@@ -149,9 +169,8 @@ class ExhibitionRepository {
         return extractList(res.data, ['templates']).map(DemoTemplate.fromJson).toList();
       });
 
-  /// Uploads the WAV (8 kHz, mono) to S3, then posts JSON with title,
-  /// description, durationSeconds and the S3 `audioUrl`.
-  /// NOTE: backend must accept `audioUrl` (JSON) instead of a multipart file.
+  /// Multipart: the WAV (8 kHz, mono) as `file`, plus title, description and
+  /// durationSeconds. (Not S3 — only recorded demos go to S3.)
   Future<void> createTemplate({
     required String title,
     required String description,
@@ -159,17 +178,23 @@ class ExhibitionRepository {
     required Duration duration,
   }) =>
       _guard(() async {
-        final audioUrl =
-            await _uploadWav(wavPath, folder: 'templates', prefix: 'template');
+        final form = FormData.fromMap({
+          'file': await MultipartFile.fromFile(
+            wavPath,
+            filename: 'template_${DateTime.now().millisecondsSinceEpoch}.wav',
+            contentType: DioMediaType('audio', 'wav'),
+          ),
+          'title': title,
+          'description': description,
+          'durationSeconds': duration.inSeconds,
+        });
         final res = await _dio.post(
           AppEndpoint.exhibitionTemplates,
-          data: {
-            'title': title,
-            'description': description,
-            'durationSeconds': duration.inSeconds,
-            'audioUrl': audioUrl,
-          },
-          options: await _options(contentType: Headers.jsonContentType),
+          data: form,
+          options: (await _options()).copyWith(
+            sendTimeout: const Duration(minutes: 2),
+            receiveTimeout: const Duration(minutes: 1),
+          ),
         );
         _ensureOk(res);
       });
@@ -197,13 +222,18 @@ class ExhibitionRepository {
     String visitorName = '',
   }) =>
       _guard(() async {
+        if ((await _token()).isEmpty) {
+          throw ApiException('Session expired. Please log in again.',
+              statusCode: 401);
+        }
+        final body = {
+          'visitorName': visitorName,
+          'visitorNumbers': visitorNumbers,
+          'audioUrl': audioUrl,
+        };
         final res = await _dio.post(
           AppEndpoint.exhibitionDemos(exhibitionId),
-          data: {
-            'visitorName': visitorName,
-            'visitorNumbers': visitorNumbers,
-            'audioUrl': audioUrl,
-          },
+          data: body,
           options: await _options(contentType: Headers.jsonContentType),
         );
         _ensureOk(res);

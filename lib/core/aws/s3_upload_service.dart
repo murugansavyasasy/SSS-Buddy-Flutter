@@ -8,7 +8,8 @@ import 'aws_key.dart';
 import 'upload_response.dart';
 
 /// Uploads a local file to S3 in two steps:
-///   1. GET a presigned URL from the AWS API ([AppEndpoint.getpresignedurl]).
+///   1. GET a presigned URL from [AwsKey.prisigned_url] +
+///      [AppEndpoint.getpresignedurl].
 ///   2. PUT the file to S3 with that presigned URL (streamed, not read into
 ///      memory).
 ///
@@ -25,8 +26,10 @@ class S3UploadService {
     required String fileType,
     String bucket = '',
   }) async {
+    // Presign API base comes from AwsKey.prisigned_url (absolute URL, so it
+    // overrides the AWS Dio's own baseUrl).
     final response = await _client.awsGet(
-      AppEndpoint.getpresignedurl,
+      '${AwsKey.prisigned_url}${AppEndpoint.getpresignedurl}',
       query: {
         'bucket': bucket.isEmpty ? AwsKey.SCHOOL_CHIMES_COMMUNICATION : bucket,
         'fileName': fileName,
