@@ -19,6 +19,38 @@ class S3UploadService {
 
   final DioClient _client;
 
+  /// Lower-case extension of [path] without the dot ('' when none).
+  static String extensionOf(String path) {
+    final name = path.split(RegExp(r'[/\\]')).last;
+    final dot = name.lastIndexOf('.');
+    return dot <= 0 ? '' : name.substring(dot + 1).toLowerCase();
+  }
+
+  /// MIME type for a file, from its own extension.
+  static String contentTypeFor(String path) => switch (extensionOf(path)) {
+        'wav' => 'audio/wav',
+        'm4a' || 'mp4' || 'aac' => 'audio/mp4',
+        'mp3' => 'audio/mpeg',
+        'ogg' || 'opus' => 'audio/ogg',
+        'flac' => 'audio/flac',
+        'pdf' => 'application/pdf',
+        'png' => 'image/png',
+        'heic' => 'image/heic',
+        'heif' => 'image/heif',
+        'webp' => 'image/webp',
+        'gif' => 'image/gif',
+        'jpg' || 'jpeg' => 'image/jpeg',
+        _ => 'application/octet-stream',
+      };
+
+  /// S3 object name: `score_<timestamp>.<ext>` (no ids), keeping the
+  /// file's own extension.
+  static String scoreFileName(String path) {
+    final ext = extensionOf(path);
+    final ts = DateTime.now().millisecondsSinceEpoch;
+    return ext.isEmpty ? 'score_$ts' : 'score_$ts.$ext';
+  }
+
   /// Step 1: ask the API for a presigned PUT URL.
   Future<UploadData> getPresignedUrl({
     required String fileName,

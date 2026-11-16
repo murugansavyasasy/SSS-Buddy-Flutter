@@ -17,20 +17,17 @@ class ExhibitionRepository {
 
   ExhibitionRepository(this._client) : _s3 = S3UploadService(_client);
 
-  static const _wavType = 'audio/wav';
-
-  /// Uploads an Exhibitions WAV to S3 and returns its public URL.
-  Future<String> _uploadWav(
-    String wavPath, {
-    required String folder,
-    required String prefix,
+  /// Uploads a recorded demo voice to S3 and returns its public URL.
+  /// Object name is `score_<timestamp>.<ext>` with the file's own type.
+  Future<String> _uploadVoice(
+    String path, {
     void Function(double progress)? onProgress,
   }) =>
       _s3.uploadFile(
-        file: File(wavPath),
-        fileName: '${prefix}_${DateTime.now().millisecondsSinceEpoch}.wav',
-        bucketPath: 'exhibitions/$folder',
-        contentType: _wavType,
+        file: File(path),
+        fileName: S3UploadService.scoreFileName(path),
+        bucketPath: 'exhibitions/demos',
+        contentType: S3UploadService.contentTypeFor(path),
         onProgress: onProgress == null
             ? null
             : (sent, total) {
@@ -251,10 +248,8 @@ class ExhibitionRepository {
     void Function(double progress)? onProgress,
   }) =>
       _guard(() async {
-        final audioUrl = await _uploadWav(
+        final audioUrl = await _uploadVoice(
           wavPath,
-          folder: exhibitionId,
-          prefix: 'demo',
           onProgress: onProgress,
         );
         onProgress?.call(1);
@@ -284,21 +279,13 @@ class ExhibitionRepository {
     required String fileName,
   }) =>
       _guard(() {
-        final dot = fileName.lastIndexOf('.');
-        final ext = dot < 0 ? '' : fileName.substring(dot + 1).toLowerCase();
-        final type = switch (ext) {
-          'pdf' => 'application/pdf',
-          'png' => 'image/png',
-          'heic' => 'image/heic',
-          'webp' => 'image/webp',
-          _ => 'image/jpeg',
-        };
-        final safe = fileName.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
+        // Picked name first (camera paths can lack an extension), then path.
+        final source = S3UploadService.extensionOf(fileName).isNotEmpty ? fileName : path;
         return _s3.uploadFile(
           file: File(path),
-          fileName: '${DateTime.now().millisecondsSinceEpoch}_$safe',
-          bucketPath: 'exhibitions/$exhibitionId/leads',
-          contentType: type,
+          fileName: S3UploadService.scoreFileName(source),
+          bucketPath: 'exhibitions/leads',
+          contentType: S3UploadService.contentTypeFor(source),
         );
       });
 

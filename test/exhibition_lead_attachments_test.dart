@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sssbuddy/auth/model/ExhibitionModel.dart';
+import 'package:sssbuddy/core/aws/s3_upload_service.dart';
 
 void main() {
   test('lead attachments parse from strings or objects', () {
@@ -24,5 +25,16 @@ void main() {
     expect(json['attachments'], ['https://s3/a.jpg']);
     expect(json['contactNumber'], '');
     expect(json['contactEmail'], '');
+  });
+
+  test('S3 names are score_<timestamp> with the file\'s own type', () {
+    expect(S3UploadService.scoreFileName('/tmp/a/exhibition_demo_1.m4a'),
+        matches(RegExp(r'^score_\d+\.m4a$')));
+    expect(S3UploadService.scoreFileName('/tmp/IMG_1.HEIC'), matches(RegExp(r'^score_\d+\.heic$')));
+    expect(S3UploadService.scoreFileName('/tmp/noext'), matches(RegExp(r'^score_\d+$')));
+    expect(S3UploadService.contentTypeFor('x.wav'), 'audio/wav');
+    expect(S3UploadService.contentTypeFor('x.pdf'), 'application/pdf');
+    expect(S3UploadService.contentTypeFor('x.jpeg'), 'image/jpeg');
+    expect(S3UploadService.contentTypeFor('x.bin'), 'application/octet-stream');
   });
 }
