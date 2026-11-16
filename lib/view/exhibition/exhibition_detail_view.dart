@@ -238,7 +238,8 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
                       children: [
                         ExMaxWidth(
                           child: Padding(
-                            padding: EdgeInsets.fromLTRB(pad, 0, pad, 16),
+                            // Room below the curved top edge of the page.
+                            padding: EdgeInsets.fromLTRB(pad, 24, pad, 16),
                             child: header,
                           ),
                         ),

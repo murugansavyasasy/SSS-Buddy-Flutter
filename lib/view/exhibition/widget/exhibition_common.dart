@@ -6,36 +6,36 @@ import '../../../auth/model/ExhibitionModel.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Design system (Exhibition Demos App spec)
-// One brand colour (slate blue) on ink. Touch scale for a busy stall: every
+// One brand colour (sky blue) on ink. Touch scale for a busy stall: every
 // target ≥ 48 px, inputs and buttons 52 px, body copy 16 px.
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// text.default
-const exInk = Color(0xFF1E2B45);
+const exInk = Color(0xFF14243B);
 
 /// background.brand
-const exBrand = Color(0xFF5770A6);
+const exBrand = Color(0xFF3B8FD9);
 
 /// background.brand.bold
-const exBrandBold = Color(0xFF3F5485);
+const exBrandBold = Color(0xFF1F6FB8);
 
 /// selected.bold — tab underline, stepper line, toast tick
-const exIndicator = Color(0xFFAFC0E8);
+const exIndicator = Color(0xFFA9D0F2);
 
 /// background.selected — blue tint
-const exTint = Color(0xFFECEFF8);
+const exTint = Color(0xFFE8F3FC);
 
 /// text.subtle
 const exSubtle = Color(0xFF71717A);
 
 /// background.neutral — page
-const exPageBg = Color(0xFFF4F6FA);
+const exPageBg = Color(0xFFF3F7FB);
 
 /// border.default
-const exBorder = Color(0xFFE3E7EF);
+const exBorder = Color(0xFFE1E8F0);
 
 /// Inputs and outlined buttons.
-const exStrongBorder = Color(0xFFCDD3DF);
+const exStrongBorder = Color(0xFFC9D5E3);
 
 /// accent.orange.subtle — calling / ringing / warm
 const exCalling = Color(0xFFFFEBDC);
@@ -56,7 +56,7 @@ const exSuccessBg = Color(0xFFE5F5EA);
 const exNeutralBg = Color(0xFFEFF1F5);
 
 /// Completed (exhibition, demo) and answered call: blue tint, brand bold text.
-const exCompletedBg = Color(0xFFE4E9F5);
+const exCompletedBg = Color(0xFFE3EEF9);
 const exCompletedInk = exBrandBold;
 
 /// Recipient "Visitor" badge.
@@ -70,12 +70,31 @@ const exBrandGradient = LinearGradient(colors: [exBrandBold, exBrand]);
 
 const exFont = 'DMSans';
 
+/// Screen header: deep navy fading into [exHeaderBase] (same as the app's
+/// other screens); the page body curves up over it.
+const exHeaderBase = Color(0xFFBCDDF6);
+const exHeaderGradient = LinearGradient(
+  begin: Alignment.topCenter,
+  end: Alignment.bottomCenter,
+  colors: [Color(0xFF59A9E6), Color(0xFF8FC6F0), exHeaderBase],
+  stops: [0.0, 0.55, 1.0],
+);
+
+/// Status bar over the light sky header: dark icons.
+const exHeaderOverlay = SystemUiOverlayStyle(
+  statusBarColor: Colors.transparent,
+  statusBarIconBrightness: Brightness.dark,
+  statusBarBrightness: Brightness.light,
+  systemNavigationBarColor: Colors.white,
+  systemNavigationBarIconBrightness: Brightness.dark,
+);
+
 /// Kept for older call sites; the spec uses border, no shadow, on cards.
 const exCardShadow = <BoxShadow>[];
 
 /// Toast / FAB overlay elevation.
 const exOverlayShadow = [
-  BoxShadow(color: Color(0x2E3F5485), blurRadius: 14, offset: Offset(0, 4)),
+  BoxShadow(color: Color(0x2E1F6FB8), blurRadius: 14, offset: Offset(0, 4)),
 ];
 
 /// Content never stretches wider than this on an iPad / tablet.
@@ -330,67 +349,191 @@ class ExPage extends StatelessWidget {
     final pad = exIsWide(context) ? 24.0 : 16.0;
     return ExTheme(
       child: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: const SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.dark,
-          statusBarBrightness: Brightness.light,
-          systemNavigationBarColor: Colors.white,
-          systemNavigationBarIconBrightness: Brightness.dark,
-        ),
+        value: exHeaderOverlay,
         child: Scaffold(
-          backgroundColor: exPageBg,
+          backgroundColor: exHeaderBase,
           floatingActionButton: floatingActionButton,
           body: Column(
             children: [
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: headerDivider
-                      ? const Border(bottom: BorderSide(color: exBorder))
-                      : null,
-                ),
-                child: SafeArea(
-                  bottom: false,
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(pad - 8, 8, pad, headerBottom == null ? 8 : 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Row(
-                          children: [
-                            ExBackButton(
-                              onPressed: onBackPressed ?? () => Navigator.maybePop(context),
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                title,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: largeTitle
-                                    ? exHeadingXl
-                                    : const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w500,
-                                        color: exSubtle,
-                                      ),
-                              ),
-                            ),
-                            ...actions,
-                          ],
-                        ),
-                        if (headerBottom != null)
-                          Padding(
-                            padding: const EdgeInsets.only(left: 8, top: 12),
-                            child: headerBottom!,
-                          ),
-                      ],
+              ExGradientHeader(
+                padding: EdgeInsets.fromLTRB(pad - 8, 8, pad, 18),
+                child: Row(
+                  children: [
+                    ExBackButton(
+                      onPressed: onBackPressed ?? () => Navigator.maybePop(context),
                     ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: largeTitle
+                            ? exHeadingLg
+                            : TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: exInk.withValues(alpha: 0.7),
+                              ),
+                      ),
+                    ),
+                    ...actions,
+                  ],
+                ),
+              ),
+              Expanded(
+                child: ExCurvedBody(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (headerBottom != null)
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            border: headerDivider
+                                ? const Border(bottom: BorderSide(color: exBorder))
+                                : null,
+                          ),
+                          padding: EdgeInsets.fromLTRB(pad, 16, pad, 14),
+                          child: headerBottom!,
+                        ),
+                      Expanded(child: body),
+                    ],
                   ),
                 ),
               ),
-              Expanded(child: body),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Sky gradient screen header. Draws under the status bar; buttons inside
+/// ([ExBackButton], [ExHeaderIconButton]) switch to glass / white circles.
+class ExGradientHeader extends StatelessWidget {
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+
+  const ExGradientHeader({
+    super.key,
+    required this.child,
+    this.padding = const EdgeInsets.fromLTRB(8, 8, 16, 18),
+  });
+
+  @override
+  Widget build(BuildContext context) => DecoratedBox(
+        decoration: const BoxDecoration(gradient: exHeaderGradient),
+        child: SafeArea(
+          bottom: false,
+          child: Padding(
+            padding: padding,
+            child: _ExOnHeader(
+              child: DefaultTextStyle.merge(
+                style: const TextStyle(color: exInk),
+                child: IconTheme.merge(
+                  data: const IconThemeData(color: exInk),
+                  child: child,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+}
+
+/// Page body with rounded top corners, sitting under an [ExGradientHeader]
+/// (put [exHeaderBase] behind it so the corners show the header colour).
+class ExCurvedBody extends StatelessWidget {
+  final Widget child;
+  final Color color;
+
+  const ExCurvedBody({super.key, required this.child, this.color = exPageBg});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: double.infinity,
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
+        ),
+        child: child,
+      );
+}
+
+/// Marks widgets that sit on the sky header.
+class _ExOnHeader extends InheritedWidget {
+  const _ExOnHeader({required super.child});
+
+  static bool of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<_ExOnHeader>() != null;
+
+  @override
+  bool updateShouldNotify(_ExOnHeader oldWidget) => false;
+}
+
+/// 48 px touch target; on the sky header a glass / white circle.
+class _ExHeaderButton extends StatelessWidget {
+  final IconData icon;
+  final double size;
+  final String tooltip;
+  final VoidCallback? onTap;
+  final bool solid;
+
+  const _ExHeaderButton({
+    required this.icon,
+    required this.size,
+    required this.tooltip,
+    required this.onTap,
+    this.solid = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_ExOnHeader.of(context)) {
+      return SizedBox(
+        width: 48,
+        height: 48,
+        child: IconButton(
+          tooltip: tooltip,
+          onPressed: onTap,
+          icon: Icon(icon, size: size, color: exInk),
+        ),
+      );
+    }
+    // Back: frosted glass circle. Actions: solid white circle.
+    final shape = CircleBorder(
+      side: BorderSide(
+        color: solid ? Colors.white : Colors.white.withValues(alpha: 0.85),
+        width: 1.2,
+      ),
+    );
+    return SizedBox(
+      width: 48,
+      height: 48,
+      child: Center(
+        child: Tooltip(
+          message: tooltip,
+          child: Material(
+            color: solid ? Colors.white : Colors.white.withValues(alpha: 0.35),
+            shape: shape,
+            elevation: solid ? 0.5 : 0,
+            shadowColor: const Color(0x331F6FB8),
+            child: InkWell(
+              onTap: onTap,
+              customBorder: const CircleBorder(),
+              child: SizedBox(
+                width: 44,
+                height: 44,
+                child: Icon(
+                  icon,
+                  size: size,
+                  color: onTap == null ? exInk.withValues(alpha: 0.35) : exInk,
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -404,22 +547,19 @@ class ExBackButton extends StatelessWidget {
   const ExBackButton({super.key, required this.onPressed});
 
   @override
-  Widget build(BuildContext context) => SizedBox(
-        width: 48,
-        height: 48,
-        child: IconButton(
-          tooltip: 'Back',
-          onPressed: onPressed,
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: exInk),
-        ),
+  Widget build(BuildContext context) => _ExHeaderButton(
+        icon: Icons.arrow_back_ios_new_rounded,
+        size: 20,
+        tooltip: 'Back',
+        onTap: onPressed,
       );
 }
 
-/// 48 px plain icon button for the white header (e.g. split / full screen).
+/// 48 px header icon button (e.g. split / full screen, close, search).
 class ExHeaderIconButton extends StatelessWidget {
   final IconData icon;
   final String tooltip;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const ExHeaderIconButton({
     super.key,
@@ -429,15 +569,8 @@ class ExHeaderIconButton extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => SizedBox(
-        width: 48,
-        height: 48,
-        child: IconButton(
-          tooltip: tooltip,
-          onPressed: onTap,
-          icon: Icon(icon, size: 22, color: exInk),
-        ),
-      );
+  Widget build(BuildContext context) =>
+      _ExHeaderButton(icon: icon, size: 22, tooltip: tooltip, onTap: onTap, solid: true);
 }
 
 /// Centres content and caps its width on tablets.
@@ -727,7 +860,7 @@ class _ExPrimaryButtonState extends State<ExPrimaryButton> {
                 exBrand.withValues(alpha: 0.7),
               ])
             : _down
-                ? const LinearGradient(colors: [Color(0xFF34466F), exBrandBold])
+                ? const LinearGradient(colors: [Color(0xFF185E9E), exBrandBold])
                 : exBrandGradient;
     final fg = disabled ? exSubtle : Colors.white;
     return Semantics(

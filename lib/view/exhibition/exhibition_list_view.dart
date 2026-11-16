@@ -101,25 +101,11 @@ class _ExhibitionListViewState extends ConsumerState<ExhibitionListView> {
     });
   }
 
-  /// Larger, filled circle so the search action is easy to spot and tap.
-  Widget _searchButton() => Padding(
-        padding: const EdgeInsets.only(left: 4),
-        child: Tooltip(
-          message: 'Search',
-          child: Material(
-            color: const Color(0xFFEEF1F6),
-            shape: const CircleBorder(),
-            child: InkWell(
-              customBorder: const CircleBorder(),
-              onTap: _openSearch,
-              child: const SizedBox(
-                width: 48,
-                height: 48,
-                child: Icon(Icons.search_rounded, size: 28, color: exInk),
-              ),
-            ),
-          ),
-        ),
+  /// Search action on the sky header.
+  Widget _searchButton() => ExHeaderIconButton(
+        icon: Icons.search_rounded,
+        tooltip: 'Search',
+        onTap: _openSearch,
       );
 
   /// Search bar (when open) above the category tabs.
@@ -330,86 +316,83 @@ class _ExhibitionListViewState extends ConsumerState<ExhibitionListView> {
     final width = MediaQuery.sizeOf(context).width;
     final listWidth = (width * 0.36).clamp(340.0, 440.0);
 
-    return Row(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // ── Left: title, search, chips, list ──
-        Container(
-          width: listWidth,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(right: BorderSide(color: exBorder)),
-          ),
-          child: Stack(
+        // ── Blue header across both panes ──
+        ExGradientHeader(
+          padding: const EdgeInsets.fromLTRB(16, 8, 24, 18),
+          child: Row(
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  SafeArea(
-                    bottom: false,
-                    right: false,
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 12, 24, 0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Row(
-                            children: [
-                              ExBackButton(onPressed: () => Navigator.maybePop(context)),
-                              const SizedBox(width: 4),
-                              const Expanded(child: Text('Exhibitions', style: exHeadingXl)),
-                              if (!_searchOpen) _searchButton(),
-                              toggle,
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Padding(
-                            padding: const EdgeInsets.only(left: 8),
-                            child: _headerControls(),
-                          ),
-                          const SizedBox(height: 8),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: _listArea(
-                      async,
-                      grid: false,
-                      selectedId: selected?.id,
-                      padding: const EdgeInsets.fromLTRB(28, 12, 24, 120),
-                    ),
-                  ),
-                ],
+              ExBackButton(onPressed: () => Navigator.maybePop(context)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text('Exhibitions', style: exHeadingLg),
               ),
-              Positioned(
-                right: 24,
-                bottom: 24 + MediaQuery.paddingOf(context).bottom,
-                child: ExFab(onPressed: _openCreate),
-              ),
+              if (!_searchOpen) _searchButton(),
+              toggle,
             ],
           ),
         ),
-        // ── Right: the selected exhibition ──
         Expanded(
-          child: SafeArea(
-            bottom: false,
-            left: false,
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              child: selected == null
-                  ? const ExStateView(
-                      key: ValueKey('none'),
-                      icon: Icons.storefront_outlined,
-                      title: 'Select an exhibition',
-                      message: 'Pick a trade show on the left to see its demos and leads.',
-                    )
-                  : ExhibitionDetailPane(
-                      key: ValueKey(selected.id),
-                      exhibitionId: selected.id,
-                      initial: selected,
-                      embedded: true,
-                    ),
+          child: ExCurvedBody(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // ── Left: search, chips, list ──
+                Container(
+                  width: listWidth,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    border: Border(right: BorderSide(color: exBorder)),
+                  ),
+                  child: Stack(
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(28, 20, 24, 8),
+                            child: _headerControls(),
+                          ),
+                          Expanded(
+                            child: _listArea(
+                              async,
+                              grid: false,
+                              selectedId: selected?.id,
+                              padding: const EdgeInsets.fromLTRB(28, 12, 24, 120),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Positioned(
+                        right: 24,
+                        bottom: 24 + MediaQuery.paddingOf(context).bottom,
+                        child: ExFab(onPressed: _openCreate),
+                      ),
+                    ],
+                  ),
+                ),
+                // ── Right: the selected exhibition ──
+                Expanded(
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: selected == null
+                        ? const ExStateView(
+                            key: ValueKey('none'),
+                            icon: Icons.storefront_outlined,
+                            title: 'Select an exhibition',
+                            message: 'Pick a trade show on the left to see its demos and leads.',
+                          )
+                        : ExhibitionDetailPane(
+                            key: ValueKey(selected.id),
+                            exhibitionId: selected.id,
+                            initial: selected,
+                            embedded: true,
+                          ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -418,7 +401,7 @@ class _ExhibitionListViewState extends ConsumerState<ExhibitionListView> {
   }
 }
 
-/// Bare scaffold for the iPad split (each pane draws its own header).
+/// Scaffold for the iPad split (sky header across both panes).
 class _SplitScaffold extends StatelessWidget {
   final Widget child;
   const _SplitScaffold({required this.child});
@@ -426,12 +409,8 @@ class _SplitScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ExTheme(
         child: AnnotatedRegion<SystemUiOverlayStyle>(
-          value: const SystemUiOverlayStyle(
-            statusBarColor: Colors.transparent,
-            statusBarIconBrightness: Brightness.dark,
-            statusBarBrightness: Brightness.light,
-          ),
-          child: Scaffold(backgroundColor: exPageBg, body: child),
+          value: exHeaderOverlay,
+          child: Scaffold(backgroundColor: exHeaderBase, body: child),
         ),
       );
 }
@@ -467,7 +446,7 @@ class _SearchBox extends StatelessWidget {
                 decoration: InputDecoration(
                   isDense: true,
                   filled: true,
-                  fillColor: const Color(0xFFEEF1F6),
+                  fillColor: const Color(0xFFEEF4FA),
                   hintText: 'Search name, city or venue',
                   hintStyle: const TextStyle(fontSize: 16, color: exSubtle),
                   contentPadding: const EdgeInsets.symmetric(vertical: 13),

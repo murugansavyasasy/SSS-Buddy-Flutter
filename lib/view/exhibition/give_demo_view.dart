@@ -381,16 +381,17 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
       },
       child: ExTheme(
         child: AnnotatedRegion<SystemUiOverlayStyle>(
-          value: const SystemUiOverlayStyle(
-            statusBarColor: Colors.transparent,
-            statusBarIconBrightness: Brightness.dark,
-            statusBarBrightness: Brightness.light,
-          ),
+          value: exHeaderOverlay,
           child: Scaffold(
-            backgroundColor: exPageBg,
+            backgroundColor: exHeaderBase,
             body: Column(
               children: [
                 _header(wide),
+                Expanded(
+                  child: ExCurvedBody(
+                    child: Column(
+                      children: [
+                        _stepperBar(wide),
                 Expanded(
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -411,6 +412,10 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
                   ),
                 ),
                 _footer(wide),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -425,84 +430,54 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
     _ => _reviewStep(wide),
   };
 
-  Widget _header(bool wide) {
-    final titleBlock = Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SizedBox(
-          width: 48,
-          height: 48,
-          child: IconButton(
-            tooltip: 'Close',
-            icon: const Icon(Icons.close_rounded, color: exInk, size: 26),
-            onPressed: _close,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Flexible(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('Give Demo', style: exHeadingMd),
-              Text(
-                widget.exhibition.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: exBodyMd,
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-    final stepper = _Stepper(
-      step: _step,
-      wide: wide,
-      onTap: (i) {
-        if (i < _step && !_sending) setState(() => _step = i);
-      },
-    );
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: exBorder)),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(wide ? 24 : 8, 8, wide ? 24 : 16, wide ? 8 : 12),
-          child: wide
-              ? SizedBox(
-                  height: 72,
-                  child: Row(
-                    children: [
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 260),
-                        child: titleBlock,
-                      ),
-                      const SizedBox(width: 24),
-                      Expanded(
-                        child: Center(
-                          child: FittedBox(fit: BoxFit.scaleDown, child: stepper),
-                        ),
-                      ),
-                      const SizedBox(width: 120),
-                    ],
+  Widget _header(bool wide) => ExGradientHeader(
+        padding: EdgeInsets.fromLTRB(wide ? 24 : 8, 8, wide ? 24 : 16, 18),
+        child: Row(
+          children: [
+            ExHeaderIconButton(icon: Icons.close_rounded, tooltip: 'Close', onTap: _close),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Give Demo',
+                      style: exHeadingMd.copyWith(fontSize: 19)),
+                  Text(
+                    widget.exhibition.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: exBodyMd.copyWith(color: exInk.withValues(alpha: 0.7)),
                   ),
-                )
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    titleBlock,
-                    const SizedBox(height: 10),
-                    Padding(padding: const EdgeInsets.only(left: 8), child: stepper),
-                  ],
-                ),
+                ],
+              ),
+            ),
+          ],
         ),
-      ),
-    );
-  }
+      );
+
+  /// Step indicator in a white strip at the top of the curved body.
+  Widget _stepperBar(bool wide) => Container(
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(bottom: BorderSide(color: exBorder)),
+        ),
+        padding: EdgeInsets.fromLTRB(wide ? 24 : 16, 16, wide ? 24 : 16, 14),
+        child: Builder(builder: (_) {
+          final stepper = _Stepper(
+            step: _step,
+            wide: wide,
+            onTap: (i) {
+              if (i < _step && !_sending) setState(() => _step = i);
+            },
+          );
+          // Phone stepper stretches (its lines are Expanded); iPad is centred.
+          return wide
+              ? Center(child: FittedBox(fit: BoxFit.scaleDown, child: stepper))
+              : stepper;
+        }),
+      );
 
   Widget _footer(bool wide) {
     final primary = _step < 2
@@ -1325,7 +1300,7 @@ class _TemplateCard extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
           boxShadow: selected
-              ? const [BoxShadow(color: Color(0x1F5770A6), blurRadius: 16, offset: Offset(0, 6))]
+              ? const [BoxShadow(color: Color(0x1F3B8FD9), blurRadius: 16, offset: Offset(0, 6))]
               : const [BoxShadow(color: Color(0x0A1E2B45), blurRadius: 8, offset: Offset(0, 2))],
         ),
         child: Material(
@@ -1544,7 +1519,7 @@ class _NumberChip extends StatelessWidget {
     decoration: BoxDecoration(
       color: exTint,
       borderRadius: BorderRadius.circular(8),
-      border: Border.all(color: const Color(0xFFD5DCEC)),
+      border: Border.all(color: const Color(0xFFD3E5F5)),
     ),
     child: Row(
       mainAxisSize: MainAxisSize.min,
@@ -1562,7 +1537,7 @@ class _NumberChip extends StatelessWidget {
             icon: Container(
               width: 22,
               height: 22,
-              decoration: const BoxDecoration(color: Color(0xFFD5DCEC), shape: BoxShape.circle),
+              decoration: const BoxDecoration(color: Color(0xFFD3E5F5), shape: BoxShape.circle),
               child: const Icon(Icons.close_rounded, size: 14, color: exInk),
             ),
           ),
@@ -1581,7 +1556,7 @@ class _TeamCard extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.fromLTRB(16, 18, 16, 12),
     decoration: BoxDecoration(
-      color: const Color(0xFFF0F2F7),
+      color: const Color(0xFFEFF5FB),
       borderRadius: BorderRadius.circular(12),
       border: Border.all(color: exBorder),
     ),
