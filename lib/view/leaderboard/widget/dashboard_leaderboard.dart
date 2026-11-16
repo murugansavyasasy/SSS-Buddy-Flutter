@@ -29,15 +29,9 @@ class DashboardLeaderboard extends ConsumerWidget {
       children: [
         Row(
           children: [
-            const Text(
-              'Leaderboard',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-            ),
+            const Text('Leaderboard', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
             const SizedBox(width: 6),
-            Text(
-              '· This Month',
-              style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600),
-            ),
+            Text('· This Month', style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600)),
             const Spacer(),
             GestureDetector(
               onTap: openFull,
@@ -99,8 +93,7 @@ class DashboardLeaderboard extends ConsumerWidget {
                 const Expanded(child: Divider(color: Color(0xFFE2E8F0))),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Icon(Icons.more_horiz_rounded,
-                      size: 16, color: Colors.grey.shade400),
+                  child: Icon(Icons.more_horiz_rounded, size: 16, color: Colors.grey.shade400),
                 ),
                 const Expanded(child: Divider(color: Color(0xFFE2E8F0))),
               ],
@@ -125,13 +118,9 @@ class _Row extends StatelessWidget {
 
     return Container(
       margin: EdgeInsets.symmetric(vertical: e.isMe && !top3 ? 6 : 0),
-      padding: EdgeInsets.symmetric(
-          vertical: 10, horizontal: e.isMe && !top3 ? 10 : 0),
+      padding: EdgeInsets.symmetric(vertical: 10, horizontal: e.isMe && !top3 ? 10 : 0),
       decoration: e.isMe && !top3
-          ? BoxDecoration(
-              color: const Color(0xFFEDF2FC),
-              borderRadius: BorderRadius.circular(12),
-            )
+          ? BoxDecoration(color: const Color(0xFFEDF2FC), borderRadius: BorderRadius.circular(12))
           : null,
       child: Row(
         children: [
@@ -213,13 +202,13 @@ class _Skeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget bar(double w, double h) => Container(
-          width: w,
-          height: h,
-          decoration: BoxDecoration(
-            color: const Color(0xFFEFF2F7),
-            borderRadius: BorderRadius.circular(6),
-          ),
-        );
+      width: w,
+      height: h,
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF2F7),
+        borderRadius: BorderRadius.circular(6),
+      ),
+    );
     return Column(
       children: [
         for (var i = 0; i < 3; i++)

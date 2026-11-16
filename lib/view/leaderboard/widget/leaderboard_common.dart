@@ -10,12 +10,29 @@ const medalBronze = Color(0xFFB8733A);
 const rankUpColor = Color(0xFF1E8E4E);
 const rankDownColor = Color(0xFFC93A3A);
 
+// Leaderboard palette (light page, white cards, brand blue accent).
+const lbPage = Color(0xFFF4F6FA);
+const lbInk = Color(0xFF111827);
+const lbMuted = Color(0xFF6B7280);
+const lbLine = Color(0xFFE3E7EF);
+const lbAccent = Color(0xFF4F6693);
+const lbAccentDeep = Color(0xFF2C4463);
+const lbTint = Color(0xFFECF0FA);
+const lbProgress = LinearGradient(colors: [Color(0xFF6C8BD6), lbAccent]);
+const lbShadow = [
+  BoxShadow(color: Color(0x0D111827), blurRadius: 18, offset: Offset(0, 6)),
+  BoxShadow(color: Color(0x08111827), blurRadius: 3, offset: Offset(0, 1)),
+];
+
+/// Content never stretches wider than this on an iPad.
+const double lbMaxWidth = 760;
+
 Color medalFor(int rank) => switch (rank) {
-      1 => medalGold,
-      2 => medalSilver,
-      3 => medalBronze,
-      _ => const Color(0xFF94A3B8),
-    };
+  1 => medalGold,
+  2 => medalSilver,
+  3 => medalBronze,
+  _ => const Color(0xFF94A3B8),
+};
 
 final _inr = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
 
@@ -73,8 +90,11 @@ class RankChange extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(up ? Icons.arrow_drop_up_rounded : Icons.arrow_drop_down_rounded,
-            size: 18, color: color),
+        Icon(
+          up ? Icons.arrow_drop_up_rounded : Icons.arrow_drop_down_rounded,
+          size: 18,
+          color: color,
+        ),
         Text(
           '${c.abs()}',
           style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: color),

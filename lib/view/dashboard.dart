@@ -25,6 +25,26 @@ const bool _showLeaderboardCard = false;
 class Dashboard extends ConsumerWidget {
   const Dashboard({super.key});
 
+  /// School stat cards: a horizontal scroll on phones; on tablets the cards
+  /// share the full width equally. [children] holds the cards and their
+  /// spacers.
+  Widget _statsRow(BuildContext context, List<Widget> children) {
+    if (MediaQuery.sizeOf(context).width < 600) {
+      return ListView(
+        scrollDirection: Axis.horizontal,
+        // Let card shadows show instead of being cut off.
+        clipBehavior: Clip.none,
+        children: children,
+      );
+    }
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final c in children) c is SizedBox ? c : Expanded(child: c),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final demoState = ref.watch(demoviewProvider);
@@ -102,11 +122,7 @@ class Dashboard extends ConsumerWidget {
                     SizedBox(
                       height: 172,
                       child: schoolStats.when(
-                        loading: () => ListView(
-                          scrollDirection: Axis.horizontal,
-                          // Let card glows show instead of being cut off.
-                          clipBehavior: Clip.none,
-                          children: [
+                        loading: () => _statsRow(context, [
                             DashboardCard(
                               title: "Live Schools",
                               activeLabel: "Active",
@@ -133,8 +149,7 @@ class Dashboard extends ConsumerWidget {
                               icon: Icons.block_rounded,
                               isLoading: true,
                             ),
-                          ],
-                        ),
+                          ]),
 
                         error: (e, _) => Center(
                             child: Text(e.toString(),
@@ -223,10 +238,7 @@ class Dashboard extends ConsumerWidget {
                             return sum;
                           });
 
-                          return ListView(
-                            scrollDirection: Axis.horizontal,
-                            clipBehavior: Clip.none,
-                            children: [
+                          return _statsRow(context, [
                               DashboardCard(
                                 title: "Live Schools",
                                 activeLabel: "Active",
@@ -265,8 +277,7 @@ class Dashboard extends ConsumerWidget {
                                 color: HomeGlass.orange,
                                 icon: Icons.block_rounded,
                               ),
-                            ],
-                          );
+                            ]);
                         },
                       ),
                     ),
