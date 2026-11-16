@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'glass_card.dart';
+
 class DashboardTile extends StatefulWidget {
   final String title;
   final IconData icon;
@@ -43,8 +45,7 @@ class _DashboardTileState extends State<DashboardTile>
     super.dispose();
   }
 
-  Color get _iconBg => widget.color.withOpacity(0.10);
-  Color get _borderColor => widget.color.withOpacity(0.25);
+  Color get _iconBg => widget.color.withValues(alpha: 0.12);
 
   @override
   Widget build(BuildContext context) {
@@ -57,20 +58,9 @@ class _DashboardTileState extends State<DashboardTile>
       onTapCancel: () => _ctrl.reverse(),
       child: ScaleTransition(
         scale: _scale,
-        child: Container(
+        child: SoftCard(
+          radius: 20,
           padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: _borderColor, width: 0.8),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.04),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -80,13 +70,13 @@ class _DashboardTileState extends State<DashboardTile>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    height: 40,
-                    width: 40,
+                    height: 42,
+                    width: 42,
                     decoration: BoxDecoration(
                       color: _iconBg,
-                      borderRadius: BorderRadius.circular(12),
+                      shape: BoxShape.circle,
                     ),
-                    child: Icon(widget.icon, color: widget.color, size: 19),
+                    child: Icon(widget.icon, color: widget.color, size: 21),
                   ),
                   const Spacer(),
                   if (widget.badgeCount > 0)
@@ -121,9 +111,9 @@ class _DashboardTileState extends State<DashboardTile>
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 12.5,
+                        fontSize: 13.5,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF1C2340),
+                        color: HomeGlass.ink,
                         height: 1.35,
                       ),
                     ),
@@ -134,12 +124,12 @@ class _DashboardTileState extends State<DashboardTile>
                     width: 22,
                     height: 22,
                     decoration: BoxDecoration(
-                      color: _iconBg,
-                      borderRadius: BorderRadius.circular(6),
+                      color: HomeGlass.bg,
+                      shape: BoxShape.circle,
                     ),
-                    child: Icon(
+                    child: const Icon(
                       Icons.arrow_outward_rounded,
-                      color: widget.color,
+                      color: HomeGlass.muted,
                       size: 13,
                     ),
                   ),

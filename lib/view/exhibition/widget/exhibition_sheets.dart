@@ -332,16 +332,80 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
     return urls;
   }
 
+  /// Popup to choose the attachment type (camera, photos or PDF).
+  Future<void> _pickAttachment() async {
+    if (_fileCount >= _maxFiles) return _tooMany();
+    FocusScope.of(context).unfocus();
+    final choice = await _showSheet<int>(context, (ctx) {
+      Widget option(int value, IconData icon, Color bg, Color fg, String title, String sub) =>
+          InkWell(
+            onTap: () => Navigator.pop(ctx, value),
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
+                    child: Icon(icon, color: fg, size: 22),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(title, style: exBodyTouch.copyWith(fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 2),
+                        Text(sub, style: exBodySm),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right_rounded, color: exSubtle),
+                ],
+              ),
+            ),
+          );
+      return SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(child: _handle()),
+              const SizedBox(height: 14),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text('Add attachment', style: exHeadingMd),
+              ),
+              const SizedBox(height: 8),
+              option(0, Icons.photo_camera_outlined, exTint, exBrandBold, 'Take photo',
+                  'Capture with the camera'),
+              option(1, Icons.photo_library_outlined, exSuccessBg, exSuccess, 'Choose photos',
+                  'Pick one or more from the gallery'),
+              option(2, Icons.picture_as_pdf_outlined, exDangerBg, exDanger, 'PDF document',
+                  'Pick a PDF file'),
+            ],
+          ),
+        ),
+      );
+    });
+    if (!mounted) return;
+    switch (choice) {
+      case 0:
+        await _addFromCamera();
+      case 1:
+        await _addPhotos();
+      case 2:
+        await _addPdfs();
+    }
+  }
+
   Widget _attachmentsSection() {
     final full = _fileCount >= _maxFiles;
-    Widget addButton(IconData icon, String label, VoidCallback onTap) => Expanded(
-          child: ExSecondaryButton(
-            label: label,
-            icon: icon,
-            height: 48,
-            onPressed: _saving || full ? null : onTap,
-          ),
-        );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -357,14 +421,14 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
           ],
         ),
         const SizedBox(height: 8),
-        Row(
-          children: [
-            addButton(Icons.photo_camera_outlined, 'Camera', _addFromCamera),
-            const SizedBox(width: 8),
-            addButton(Icons.photo_library_outlined, 'Photos', _addPhotos),
-            const SizedBox(width: 8),
-            addButton(Icons.picture_as_pdf_outlined, 'PDF', _addPdfs),
-          ],
+        SizedBox(
+          width: double.infinity,
+          child: ExSecondaryButton(
+            label: 'Add attachment',
+            icon: Icons.attach_file_rounded,
+            height: 48,
+            onPressed: _saving || full ? null : _pickAttachment,
+          ),
         ),
         if (_fileCount > 0) ...[
           const SizedBox(height: 12),

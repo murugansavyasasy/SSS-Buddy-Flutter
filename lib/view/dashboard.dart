@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:sssbuddy/Values/Colors/app_colors.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sssbuddy/Values/Colors/app_colors.dart';
 import 'package:sssbuddy/auth/Menulists.dart';
 import 'package:sssbuddy/components/header_toolbar.dart';
 import '../auth/model/Menuitem.dart';
 import '../components/dashboard_card.dart';
 import '../components/dashboard_tile.dart';
+import '../components/glass_card.dart';
 import '../components/upcoming_demo_card.dart';
 import 'leaderboard/widget/dashboard_leaderboard.dart';
 import '../utils/routes/routes_name.dart';
@@ -74,20 +75,26 @@ class Dashboard extends ConsumerWidget {
         },  child:Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: AppColors.primary,
-      body: Column(
+      body: Stack(
+        children: [
+          Column(
         children: [
           const HeaderToolbar(),
 
           /// MAIN CONTENT
           Expanded(
             child: Container(
+              width: double.infinity,
+              clipBehavior: Clip.antiAlias,
               decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+                color: HomeGlass.bg,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(25),
+                  topRight: Radius.circular(25),
+                ),
               ),
-
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
 
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -97,12 +104,14 @@ class Dashboard extends ConsumerWidget {
                       child: schoolStats.when(
                         loading: () => ListView(
                           scrollDirection: Axis.horizontal,
+                          // Let card glows show instead of being cut off.
+                          clipBehavior: Clip.none,
                           children: [
                             DashboardCard(
                               title: "Live Schools",
                               activeLabel: "Active",
                               inactiveLabel: "Inactive",
-                              color: const Color(0xFF1DB954),
+                              color: HomeGlass.green,
                               icon: Icons.school_rounded,
                               isLoading: true,
                             ),
@@ -111,7 +120,7 @@ class Dashboard extends ConsumerWidget {
                               title: "POC Schools",
                               activeLabel: "Active",
                               inactiveLabel: "Inactive",
-                              color: const Color(0xFF2E4F7D),
+                              color: HomeGlass.blue,
                               icon: Icons.science_rounded,
                               isLoading: true,
                             ),
@@ -120,14 +129,16 @@ class Dashboard extends ConsumerWidget {
                               title: "Stopped Schools",
                               activeLabel: "",
                               inactiveLabel: "",
-                              color: const Color(0xFFE53935),
+                              color: HomeGlass.orange,
                               icon: Icons.block_rounded,
                               isLoading: true,
                             ),
                           ],
                         ),
 
-                        error: (e, _) => Center(child: Text(e.toString())),
+                        error: (e, _) => Center(
+                            child: Text(e.toString(),
+                                style: TextStyle(color: HomeGlass.muted))),
 
                         data: (stats) {
                           final schoolList = stats.rawList;
@@ -214,6 +225,7 @@ class Dashboard extends ConsumerWidget {
 
                           return ListView(
                             scrollDirection: Axis.horizontal,
+                            clipBehavior: Clip.none,
                             children: [
                               DashboardCard(
                                 title: "Live Schools",
@@ -223,9 +235,7 @@ class Dashboard extends ConsumerWidget {
                                 inactiveCount: stats.liveInactive.toString(),
                                 totalStudent: totalLiveStudents.toString(),
                                 totalStaff: totalLiveStaff.toString(),
-                                color: const Color(
-                                  0xFF1DB954,
-                                ), // vibrant green
+                                color: HomeGlass.green,
                                 icon: Icons.school_rounded,
                               ),
 
@@ -239,7 +249,7 @@ class Dashboard extends ConsumerWidget {
                                 inactiveCount: stats.pocInactive.toString(),
                                 totalStudent: totalPOCStudents.toString(),
                                 totalStaff: totalPOCStaff.toString(),
-                                color: const Color(0xFF2E4F7D),
+                                color: HomeGlass.blue,
                                 icon: Icons.science_rounded,
                               ),
 
@@ -252,7 +262,7 @@ class Dashboard extends ConsumerWidget {
                                 activeCount: stats.stopped.toString(),
                                 totalStudent: totalStoppedStudents.toString(),
                                 totalStaff: totalStoppedStaff.toString(),
-                                color: const Color(0xFFE53935),
+                                color: HomeGlass.orange,
                                 icon: Icons.block_rounded,
                               ),
                             ],
@@ -268,25 +278,36 @@ class Dashboard extends ConsumerWidget {
                         const Text(
                           "Recent Demo",
                           style: TextStyle(
-                            fontSize: 15,
+                            fontSize: 20,
                             fontWeight: FontWeight.w600,
+                            color: HomeGlass.ink,
                           ),
                         ),
                         const Spacer(),
-                        GestureDetector(
+                        GlassPill(
+                          light: true,
                           onTap: () {
                             Navigator.pushNamed(
                               context,
                               RoutesName.demolistview,
                             );
                           },
-                          child: Text(
-                            "View all",
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.primary,
-                            ),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                "View all",
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: HomeGlass.ink,
+                                ),
+                              ),
+                              SizedBox(width: 4),
+                              Icon(Icons.chevron_right_rounded,
+                                  size: 17, color: HomeGlass.ink),
+                            ],
                           ),
                         ),
                       ],
@@ -297,14 +318,18 @@ class Dashboard extends ConsumerWidget {
                       height: 95,
                       child: demoState.when(
                         loading: () =>
-                        const Center(child: CircularProgressIndicator()),
+                        const Center(
+                            child: CircularProgressIndicator(color: HomeGlass.ink)),
 
-                        error: (e, _) => Center(child: Text(e.toString())),
+                        error: (e, _) => Center(
+                            child: Text(e.toString(),
+                                style: TextStyle(color: HomeGlass.muted))),
 
                         data: (demos) {
                           if (demos.isEmpty) {
                             return const Center(
-                              child: Text("No demo list found"),
+                              child: Text("No demo list found",
+                                  style: TextStyle(color: Color(0xFF6B7280))),
                             );
                           }
 
@@ -312,6 +337,7 @@ class Dashboard extends ConsumerWidget {
 
                           return ListView.separated(
                             scrollDirection: Axis.horizontal,
+                            clipBehavior: Clip.none,
                             itemCount: limitedList.length,
                             separatorBuilder: (_, __) =>
                             const SizedBox(width: 12),
@@ -344,17 +370,13 @@ class Dashboard extends ConsumerWidget {
                     ],
 
                     /// 🔥 MENU HEADER
-                    Row(
-                      children: [
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF0F4FF),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                      ],
+                    const Text(
+                      "Quick Actions",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: HomeGlass.ink,
+                      ),
                     ),
 
                     const SizedBox(height: 15),
@@ -473,6 +495,8 @@ class Dashboard extends ConsumerWidget {
               ),
             ),
           ),
+        ],
+      ),
         ],
       ),
     ));

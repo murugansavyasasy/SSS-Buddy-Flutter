@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'glass_card.dart';
+
 class UpcomingDemoCard extends StatelessWidget {
   final String demoId;
   final String schoolName;
@@ -14,53 +16,27 @@ class UpcomingDemoCard extends StatelessWidget {
     this.onTap,
   });
 
-  static const Color _navy = Color(0xFF2E4F7D);
-
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 268,
-        height: 90,
-        clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFECEEF1)),
-          boxShadow: [
-            BoxShadow(
-              color: _navy.withOpacity(0.08),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
+    return SizedBox(
+      width: 268,
+      height: 90,
+      child: SoftCard(
+        radius: 20,
+        onTap: onTap,
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
         child: Row(
           children: [
-            // ── Left icon panel ──────────────────────────────
             Container(
-              width: 62,
-              height: double.infinity,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFF3A6098), _navy],
-                ),
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: homePastel(HomeGlass.blue),
               ),
-              child: const Center(
-                child: Icon(
-                  Icons.keyboard_voice_rounded,
-                  size: 30,
-                  color: Colors.white,
-                ),
-              ),
+              child: Icon(Icons.keyboard_voice_rounded, size: 22, color: homeDeep(HomeGlass.blue)),
             ),
-
             const SizedBox(width: 12),
-
-            // ── Content ──────────────────────────────────────
             Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -70,11 +46,11 @@ class UpcomingDemoCard extends StatelessWidget {
                     "DEMO #$demoId",
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
-                      letterSpacing: 0.6,
-                      color: Color(0xFF9099A3),
+                      letterSpacing: 0.8,
+                      color: HomeGlass.muted,
                     ),
                   ),
                   const SizedBox(height: 3),
@@ -83,28 +59,25 @@ class UpcomingDemoCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 14,
+                      fontSize: 14.5,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF1A2530),
+                      color: HomeGlass.ink,
                     ),
                   ),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(
-                        Icons.phone_rounded,
-                        size: 12,
-                        color: Color(0xFF7A828C),
-                      ),
+                      Icon(Icons.phone_rounded,
+                          size: 12, color: HomeGlass.muted),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
                           "$principalNumber",
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
-                            color: Color(0xFF6B7280),
+                            color: HomeGlass.muted,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -114,25 +87,16 @@ class UpcomingDemoCard extends StatelessWidget {
                 ],
               ),
             ),
-
             const SizedBox(width: 8),
-
-            // ── Action button ────────────────────────────────
             Container(
               width: 30,
               height: 30,
               decoration: BoxDecoration(
-                color: _navy.withOpacity(0.10),
+                color: HomeGlass.bg,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 13,
-                color: _navy,
-              ),
+              child: const Icon(Icons.arrow_forward_ios_rounded, size: 12, color: HomeGlass.muted),
             ),
-
-            const SizedBox(width: 12),
           ],
         ),
       ),
