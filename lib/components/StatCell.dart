@@ -29,12 +29,12 @@ class StatCell extends StatelessWidget {
           label,
           style: TextStyle(
             color: const Color(0xFF6B7280),
-            fontSize: 12.5,
+            fontSize: 11.5,
             fontWeight: FontWeight.w500,
             letterSpacing: 0.2,
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 2),
         isLoading
             ? ShimmerBox(width: 40, height: 28)
             : SlideTransition(
@@ -45,7 +45,7 @@ class StatCell extends StatelessWidget {
               value,
               style: TextStyle(
                 color: valueColor,
-                fontSize: 34,
+                fontSize: 28,
                 fontWeight: FontWeight.w700,
                 letterSpacing: -0.5,
                 height: 1.05,

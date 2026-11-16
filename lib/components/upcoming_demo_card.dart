@@ -19,8 +19,8 @@ class UpcomingDemoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 268,
-      height: 90,
+      width: 248,
+      height: 80,
       child: SoftCard(
         radius: 20,
         onTap: onTap,
@@ -28,13 +28,13 @@ class UpcomingDemoCard extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              width: 46,
-              height: 46,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: homePastel(HomeGlass.blue),
               ),
-              child: Icon(Icons.keyboard_voice_rounded, size: 22, color: homeDeep(HomeGlass.blue)),
+              child: Icon(Icons.keyboard_voice_rounded, size: 19, color: homeDeep(HomeGlass.blue)),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -47,7 +47,7 @@ class UpcomingDemoCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 9.5,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.8,
                       color: HomeGlass.muted,
@@ -59,7 +59,7 @@ class UpcomingDemoCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 14.5,
+                      fontSize: 13.5,
                       fontWeight: FontWeight.w700,
                       color: HomeGlass.ink,
                     ),
@@ -76,7 +76,7 @@ class UpcomingDemoCard extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 11.5,
                             color: HomeGlass.muted,
                             fontWeight: FontWeight.w500,
                           ),
@@ -89,8 +89,8 @@ class UpcomingDemoCard extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Container(
-              width: 30,
-              height: 30,
+              width: 26,
+              height: 26,
               decoration: BoxDecoration(
                 color: HomeGlass.bg,
                 shape: BoxShape.circle,

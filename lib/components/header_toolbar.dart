@@ -146,8 +146,8 @@ class HeaderToolbar extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Container(
-                  height: 48,
-                  width: 48,
+                  height: 42,
+                  width: 42,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: const LinearGradient(
@@ -161,7 +161,7 @@ class HeaderToolbar extends ConsumerWidget {
                     child: Text(
                       initials,
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 15,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
                       ),
@@ -178,7 +178,7 @@ class HeaderToolbar extends ConsumerWidget {
                       Text(
                         _greeting(),
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: 12,
                           fontWeight: FontWeight.w500,
                           color: Colors.white.withValues(alpha: 0.75),
                         ),
@@ -189,7 +189,7 @@ class HeaderToolbar extends ConsumerWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 22,
+                          fontSize: 19,
                           fontWeight: FontWeight.w700,
                           letterSpacing: -0.2,
                           color: Colors.white,

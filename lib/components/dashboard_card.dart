@@ -34,8 +34,7 @@ class DashboardCard extends StatefulWidget {
   State<DashboardCard> createState() => _DashboardCardState();
 }
 
-class _DashboardCardState extends State<DashboardCard>
-    with SingleTickerProviderStateMixin {
+class _DashboardCardState extends State<DashboardCard> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnim;
   late Animation<Offset> _slideAnim;
@@ -43,10 +42,7 @@ class _DashboardCardState extends State<DashboardCard>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 600),
-    );
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
     _fadeAnim = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
     _slideAnim = Tween<Offset>(
       begin: const Offset(0, 0.15),
@@ -73,108 +69,108 @@ class _DashboardCardState extends State<DashboardCard>
   @override
   Widget build(BuildContext context) {
     // Fixed width so the card doesn't shrink while loading or with short values.
-    final cardWidth =
-        (MediaQuery.of(context).size.width * 0.78).clamp(260.0, 320.0);
-    final hasCounts =
-        widget.activeLabel.isNotEmpty || widget.inactiveLabel.isNotEmpty;
+    final cardWidth = (MediaQuery.of(context).size.width * 0.72).clamp(240.0, 290.0);
+    final hasCounts = widget.activeLabel.isNotEmpty || widget.inactiveLabel.isNotEmpty;
     return SizedBox(
       width: cardWidth,
       child: SoftCard(
         gradient: homePastelGradient(widget.color),
         borderColor: widget.color.withValues(alpha: 0.18),
-        padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+        child: Stack(
+          clipBehavior: Clip.none,
           children: [
-            Row(
+            // Decorative bubbles (clipped by the card's rounded edge).
+            ..._bubbles(widget.color),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Expanded(
-                  child: Text(
-                    widget.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: HomeGlass.ink,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: homeDeep(widget.color),
-                  ),
-                  child: Icon(
-                    widget.icon ?? Icons.school_rounded,
-                    color: Colors.white,
-                    size: 17,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            if (hasCounts)
-              Row(
-                children: [
-                  if (widget.activeLabel.isNotEmpty)
+                Row(
+                  children: [
                     Expanded(
-                      child: StatCell(
-                        label: widget.activeLabel,
-                        value: widget.activeCount ?? "—",
-                        isLoading: widget.isLoading,
-                        fadeAnim: _fadeAnim,
-                        slideAnim: _slideAnim,
-                        valueColor: homeDeep(widget.color),
+                      child: Text(
+                        widget.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: HomeGlass.ink,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
-                  if (widget.activeLabel.isNotEmpty &&
-                      widget.inactiveLabel.isNotEmpty)
                     Container(
-                      width: 1,
-                      height: 40,
-                      margin: const EdgeInsets.symmetric(horizontal: 12),
-                      color: widget.color.withValues(alpha: 0.2),
-                    ),
-                  if (widget.inactiveLabel.isNotEmpty)
-                    Expanded(
-                      child: StatCell(
-                        label: widget.inactiveLabel,
-                        value: widget.inactiveCount ?? "—",
-                        isLoading: widget.isLoading,
-                        fadeAnim: _fadeAnim,
-                        slideAnim: _slideAnim,
-                        valueColor: homeDeep(widget.color),
+                      width: 30,
+                      height: 30,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: homeDeep(widget.color),
+                      ),
+                      child: Icon(
+                        widget.icon ?? Icons.school_rounded,
+                        color: Colors.white,
+                        size: 15,
                       ),
                     ),
-                ],
-              ),
-            const Spacer(),
-            Row(
-              children: [
-                PillStat(
-                  icon: Icons.people_alt_rounded,
-                  label: widget.title == "Live Schools"
-                      ? "Active Students"
-                      : "Students",
-                  value: widget.totalStudent ?? "—",
-                  isLoading: widget.isLoading,
-                  fadeAnim: _fadeAnim,
-                  accent: homeDeep(widget.color),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                PillStat(
-                  icon: Icons.badge_rounded,
-                  label: widget.title == "Live Schools"
-                      ? "Active Staff"
-                      : "Staff",
-                  value: widget.totalStaff ?? "—",
-                  isLoading: widget.isLoading,
-                  fadeAnim: _fadeAnim,
-                  accent: homeDeep(widget.color),
+                const SizedBox(height: 8),
+                if (hasCounts)
+                  Row(
+                    children: [
+                      if (widget.activeLabel.isNotEmpty)
+                        Expanded(
+                          child: StatCell(
+                            label: widget.activeLabel,
+                            value: widget.activeCount ?? "—",
+                            isLoading: widget.isLoading,
+                            fadeAnim: _fadeAnim,
+                            slideAnim: _slideAnim,
+                            valueColor: homeDeep(widget.color),
+                          ),
+                        ),
+                      if (widget.activeLabel.isNotEmpty && widget.inactiveLabel.isNotEmpty)
+                        Container(
+                          width: 1,
+                          height: 34,
+                          margin: const EdgeInsets.symmetric(horizontal: 12),
+                          color: widget.color.withValues(alpha: 0.2),
+                        ),
+                      if (widget.inactiveLabel.isNotEmpty)
+                        Expanded(
+                          child: StatCell(
+                            label: widget.inactiveLabel,
+                            value: widget.inactiveCount ?? "—",
+                            isLoading: widget.isLoading,
+                            fadeAnim: _fadeAnim,
+                            slideAnim: _slideAnim,
+                            valueColor: homeDeep(widget.color),
+                          ),
+                        ),
+                    ],
+                  ),
+                const Spacer(),
+                Row(
+                  children: [
+                    PillStat(
+                      icon: Icons.people_alt_rounded,
+                      label: widget.title == "Live Schools" ? "Active Students" : "Students",
+                      value: widget.totalStudent ?? "—",
+                      isLoading: widget.isLoading,
+                      fadeAnim: _fadeAnim,
+                      accent: homeDeep(widget.color),
+                    ),
+                    const SizedBox(width: 8),
+                    PillStat(
+                      icon: Icons.badge_rounded,
+                      label: widget.title == "Live Schools" ? "Active Staff" : "Staff",
+                      value: widget.totalStaff ?? "—",
+                      isLoading: widget.isLoading,
+                      fadeAnim: _fadeAnim,
+                      accent: homeDeep(widget.color),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -182,5 +178,37 @@ class _DashboardCardState extends State<DashboardCard>
         ),
       ),
     );
+  }
+
+  /// Soft translucent circles in the card colour, mostly off the top-right
+  /// and bottom-right edges.
+  List<Widget> _bubbles(Color c) {
+    Widget bubble(double size, double alpha, {double? top, double? right, double? bottom}) =>
+        Positioned(
+          top: top,
+          right: right,
+          bottom: bottom,
+          child: IgnorePointer(
+            child: Container(
+              width: size,
+              height: size,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    c.withValues(alpha: alpha),
+                    c.withValues(alpha: alpha * 0.35),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+    return [
+      bubble(110, 0.18, top: -52, right: -40),
+      bubble(46, 0.15, top: 40, right: 54),
+      bubble(80, 0.15, bottom: -44, right: 30),
+      bubble(18, 0.2, bottom: 44, right: 12),
+    ];
   }
 }
