@@ -884,9 +884,6 @@ class ClientRepository {
         body: body,
       );
 
-      print("Status Code: ${response.statusCode}");
-      print("Response: ${response.data}");
-
       final data = response.data;
 
       if (data is List && data.isNotEmpty) {
