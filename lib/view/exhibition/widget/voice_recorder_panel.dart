@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:just_audio/just_audio.dart';
@@ -15,7 +16,8 @@ import 'exhibition_common.dart';
 
 enum _RecState { idle, recording, recorded, denied }
 
-/// Records the custom demo voice as WAV, 8 kHz, mono (what the dialer needs).
+/// Records the custom demo voice as WAV, 8 kHz, mono (what the dialer needs),
+/// or picks an existing audio file ([pickableAudioExtensions]).
 /// Reports the file via [onChanged]; `null` means nothing usable is recorded.
 class VoiceRecorderPanel extends StatefulWidget {
   final String? initialPath;
@@ -33,8 +35,15 @@ class VoiceRecorderPanel extends StatefulWidget {
   State<VoiceRecorderPanel> createState() => _VoiceRecorderPanelState();
 }
 
+/// Audio-only files that can be picked instead of recording (.m4a is
+/// MPEG-4 audio). No .mp4, since that is usually video.
+const pickableAudioExtensions = ['wav', 'mp3', 'm4a'];
+
 class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
   static const _maxLength = Duration(minutes: 3);
+
+  /// Name of the picked audio file; null for a recording.
+  String? _pickedName;
   static const _bars = 40;
 
   final AudioRecorder _recorder = AudioRecorder();
@@ -139,6 +148,7 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
       });
       setState(() {
         _path = path;
+        _pickedName = null;
         _elapsed = Duration.zero;
         _state = _RecState.recording;
       });
@@ -174,6 +184,69 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
     widget.onChanged(path, _elapsed);
   }
 
+  /// Picks an audio file and uses it as the demo voice. It is copied into
+  /// the temp folder so Discard never deletes the user's original.
+  Future<void> _pickAudio() async {
+    if (_busy) return;
+    _busy = true;
+    try {
+      final result = await FilePicker.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: pickableAudioExtensions,
+      );
+      final picked = result.where((f) => f.path != null).firstOrNull;
+      if (picked == null || !mounted) return;
+      final dot = picked.name.lastIndexOf('.');
+      final ext = dot < 0 ? '' : picked.name.substring(dot + 1).toLowerCase();
+      if (!pickableAudioExtensions.contains(ext)) {
+        exToast(context, 'Only audio files: WAV, MP3 or M4A.', error: true);
+        return;
+      }
+      // Check the file first, so a bad pick keeps the current audio.
+      final dir = await getTemporaryDirectory();
+      final check = await File(picked.path!).copy('${dir.path}/exhibition_demo_check.$ext');
+      Duration length = Duration.zero;
+      final probe = AudioPlayer();
+      try {
+        length = await probe.setFilePath(check.path) ?? Duration.zero;
+      } catch (_) {
+      } finally {
+        await probe.dispose();
+      }
+      if (!mounted) return;
+      String? problem;
+      if (length < const Duration(seconds: 1)) {
+        problem = 'This audio file could not be played.';
+      } else if (length > _maxLength) {
+        problem = 'Audio must be 3 minutes or shorter.';
+      }
+      if (problem != null) {
+        await check.delete().catchError((_) => check);
+        if (mounted) exToast(context, problem, error: true);
+        return;
+      }
+      await _player.stop();
+      await _deleteFile();
+      final copy = await check.rename('${dir.path}/exhibition_demo_upload.$ext');
+      await _player.setFilePath(copy.path);
+      if (!mounted) return;
+      HapticFeedback.lightImpact();
+      setState(() {
+        _path = copy.path;
+        _pickedName = picked.name;
+        _elapsed = length;
+        _position = Duration.zero;
+        _levels.clear();
+        _state = _RecState.recorded;
+      });
+      widget.onChanged(copy.path, length);
+    } catch (e) {
+      if (mounted) exToast(context, 'Could not open the audio file. $e', error: true);
+    } finally {
+      _busy = false;
+    }
+  }
+
   Future<void> _togglePlay() async {
     if (_path == null) return;
     if (_playing) {
@@ -199,6 +272,7 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
     await _deleteFile();
     setState(() {
       _path = null;
+      _pickedName = null;
       _elapsed = Duration.zero;
       _position = Duration.zero;
       _levels.clear();
@@ -264,7 +338,7 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
                 Icon(Icons.info_outline_rounded, size: 17, color: exInk),
                 SizedBox(width: 8),
                 Flexible(
-                  child: Text('Audio is saved as WAV, 8 kHz, mono',
+                  child: Text('Record (WAV, 8 kHz, mono) or upload WAV, MP3, M4A',
                       style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: exInk)),
                 ),
               ],
@@ -330,10 +404,28 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
             ),
           ],
         ),
+        if (_pickedName != null) ...[
+          const SizedBox(height: 10),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.audio_file_outlined, size: 18, color: exSubtle),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(_pickedName!,
+                    maxLines: 1, overflow: TextOverflow.ellipsis, style: exBodyMd),
+              ),
+            ],
+          ),
+        ],
         const SizedBox(height: 16),
         Row(
           children: [
-            Expanded(child: ExSecondaryButton(label: 'Re-record', onPressed: _start)),
+            Expanded(
+              child: _pickedName != null
+                  ? ExSecondaryButton(label: 'Choose another', onPressed: _pickAudio)
+                  : ExSecondaryButton(label: 'Re-record', onPressed: _start),
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: ExSecondaryButton(label: 'Discard', color: exDanger, onPressed: _discard),
@@ -406,8 +498,29 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
         ),
         const SizedBox(height: 10),
         SizedBox(width: 140, child: ExSecondaryButton(label: 'Stop', height: 44, onPressed: _stop)),
-      ] else
+      ] else ...[
         const Text('Tap to record', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
+        const SizedBox(height: 14),
+        Row(
+          children: [
+            const Expanded(child: Divider(color: exBorder)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text('or', style: exBodyMd),
+            ),
+            const Expanded(child: Divider(color: exBorder)),
+          ],
+        ),
+        const SizedBox(height: 12),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 320),
+          child: ExSecondaryButton(
+            label: 'Upload audio file',
+            icon: Icons.upload_file_rounded,
+            onPressed: _pickAudio,
+          ),
+        ),
+      ],
     ];
   }
 

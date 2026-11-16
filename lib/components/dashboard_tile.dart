@@ -60,7 +60,7 @@ class _DashboardTileState extends State<DashboardTile>
         scale: _scale,
         child: SoftCard(
           radius: 20,
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -70,13 +70,13 @@ class _DashboardTileState extends State<DashboardTile>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    height: 42,
-                    width: 42,
+                    height: 36,
+                    width: 36,
                     decoration: BoxDecoration(
                       color: _iconBg,
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(widget.icon, color: widget.color, size: 21),
+                    child: Icon(widget.icon, color: widget.color, size: 18),
                   ),
                   const Spacer(),
                   if (widget.badgeCount > 0)
@@ -111,7 +111,7 @@ class _DashboardTileState extends State<DashboardTile>
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 13.5,
+                        fontSize: 12.5,
                         fontWeight: FontWeight.w600,
                         color: HomeGlass.ink,
                         height: 1.35,

@@ -24,7 +24,7 @@ class PillStat extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -32,7 +32,7 @@ class PillStat extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(icon, color: accent, size: 15),
+            Icon(icon, color: accent, size: 14),
             const SizedBox(width: 7),
             Expanded(
               child: Column(
@@ -42,7 +42,7 @@ class PillStat extends StatelessWidget {
                     label,
                     style: TextStyle(
                       color: const Color(0xFF6B7280),
-                      fontSize: 9.5,
+                      fontSize: 9,
                       fontWeight: FontWeight.w500,
                     ),
                     overflow: TextOverflow.ellipsis,
@@ -55,7 +55,7 @@ class PillStat extends StatelessWidget {
                       value,
                       style: const TextStyle(
                         color: Color(0xFF111827),
-                        fontSize: 13,
+                        fontSize: 12,
                         fontWeight: FontWeight.w700,
                       ),
                     ),

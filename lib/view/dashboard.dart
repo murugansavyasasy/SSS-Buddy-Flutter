@@ -100,7 +100,7 @@ class Dashboard extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SizedBox(
-                      height: 200,
+                      height: 172,
                       child: schoolStats.when(
                         loading: () => ListView(
                           scrollDirection: Axis.horizontal,
@@ -278,7 +278,7 @@ class Dashboard extends ConsumerWidget {
                         const Text(
                           "Recent Demo",
                           style: TextStyle(
-                            fontSize: 20,
+                            fontSize: 17,
                             fontWeight: FontWeight.w600,
                             color: HomeGlass.ink,
                           ),
@@ -315,7 +315,7 @@ class Dashboard extends ConsumerWidget {
 
                     const SizedBox(height: 12),
                     SizedBox(
-                      height: 95,
+                      height: 84,
                       child: demoState.when(
                         loading: () =>
                         const Center(
@@ -373,13 +373,13 @@ class Dashboard extends ConsumerWidget {
                     const Text(
                       "Quick Actions",
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: 17,
                         fontWeight: FontWeight.w600,
                         color: HomeGlass.ink,
                       ),
                     ),
 
-                    const SizedBox(height: 15),
+                    const SizedBox(height: 12),
                     LayoutBuilder(builder: (context, constraints) {
                       // 2 columns on phones, 3 on small tablets, 4 on iPad / large screens.
                       final maxW = constraints.maxWidth;
@@ -391,7 +391,7 @@ class Dashboard extends ConsumerWidget {
                       const spacing = 12.0;
                       final tileWidth =
                           ((maxW - spacing * (columns - 1)) / columns).floorToDouble();
-                      final tileHeight = columns > 2 ? 120.0 : 106.0;
+                      final tileHeight = columns > 2 ? 108.0 : 98.0;
                       return Wrap(
                       spacing: spacing,
                       runSpacing: spacing,

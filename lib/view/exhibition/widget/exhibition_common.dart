@@ -777,16 +777,20 @@ class ExNoteBox extends StatelessWidget {
 class ExPersonChip extends StatelessWidget {
   final String name;
   final String number;
-  const ExPersonChip({super.key, required this.name, required this.number});
+
+  /// Shows a ✕ to remove the person (e.g. while adding attendees).
+  final VoidCallback? onRemove;
+
+  const ExPersonChip({super.key, required this.name, required this.number, this.onRemove});
 
   @override
   Widget build(BuildContext context) => Container(
         height: 56,
-        padding: const EdgeInsets.fromLTRB(8, 0, 14, 0),
+        padding: EdgeInsets.fromLTRB(8, 0, onRemove == null ? 14 : 2, 0),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: exBorder),
+          color: onRemove == null ? Colors.white : exTint,
+          borderRadius: BorderRadius.circular(onRemove == null ? 8 : 28),
+          border: Border.all(color: onRemove == null ? exBorder : exIndicator),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -795,19 +799,37 @@ class ExPersonChip extends StatelessWidget {
               width: 36,
               height: 36,
               alignment: Alignment.center,
-              decoration: const BoxDecoration(color: exTint, shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                color: onRemove == null ? exTint : Colors.white,
+                shape: BoxShape.circle,
+              ),
               child: Text(exInitials(name),
                   style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: exInk)),
             ),
             const SizedBox(width: 10),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(name, style: exHeadingSm.copyWith(fontSize: 15)),
-                Text(number, style: exBodyMd.copyWith(fontSize: 13)),
-              ],
+            Flexible(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: exHeadingSm.copyWith(fontSize: 15)),
+                  Text(number, maxLines: 1, style: exBodyMd.copyWith(fontSize: 13)),
+                ],
+              ),
             ),
+            if (onRemove != null)
+              SizedBox(
+                width: 44,
+                height: 48,
+                child: IconButton(
+                  tooltip: 'Remove $name',
+                  onPressed: onRemove,
+                  icon: const Icon(Icons.close_rounded, size: 18, color: exSubtle),
+                ),
+              ),
           ],
         ),
       );
