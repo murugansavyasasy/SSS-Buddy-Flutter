@@ -139,14 +139,32 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
     }
   }
 
+  // Same look as the Change Password screen.
+  static const Color _ink = Color(0xFF1C2340);
+  static const Color _muted = Color(0xFF6B7280);
+  static const Color _fieldBorder = Color(0xFFE2E6EE);
+  static const Color _fieldFill = Color(0xFFF7F8FB);
+
+  OutlineInputBorder _border(Color color, [double width = 1.2]) =>
+      OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: color, width: width),
+      );
+
   Widget _buildLabeledField({
     required String label,
     required String hint,
+    required IconData icon,
     required TextEditingController controller,
     required String? errorText,
     required bool isVisible,
     required VoidCallback onToggleVisibility,
+    TextInputAction textInputAction = TextInputAction.next,
+    VoidCallback? onSubmitted,
+    String? helperText,
+    Widget? trailingHint,
   }) {
+    final hasError = errorText != null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -156,23 +174,23 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
             style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: Colors.black87,
+              color: _ink,
             ),
             children: const [
               TextSpan(
                 text: " *",
-                style: TextStyle(
-                  color: Colors.red,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(color: Colors.red, fontWeight: FontWeight.w700),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         TextField(
           controller: controller,
           obscureText: !isVisible,
+          textInputAction: textInputAction,
+          onSubmitted: (_) => onSubmitted?.call(),
+          style: const TextStyle(fontSize: 15, color: _ink),
           onChanged: (_) {
             setState(() {
               if (controller == newPasswordController) newPasswordError = null;
@@ -181,57 +199,72 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
           },
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(color: Colors.black38, fontSize: 14),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 14,
-            ),
+            hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
+            contentPadding: const EdgeInsets.symmetric(vertical: 16),
             filled: true,
-            fillColor: errorText != null
-                ? Colors.red.withOpacity(0.04)
-                : Colors.grey.withOpacity(0.07),
-            suffixIcon: IconButton(
-              onPressed: onToggleVisibility,
-              icon: Icon(
-                isVisible
-                    ? Icons.visibility_outlined
-                    : Icons.visibility_off_outlined,
-                size: 20,
-                color: errorText != null ? Colors.red : Colors.grey.shade500,
-              ),
-              splashRadius: 20,
+            fillColor: hasError ? Colors.red.withValues(alpha: 0.04) : _fieldFill,
+            prefixIcon: Icon(
+              icon,
+              size: 20,
+              color: hasError ? Colors.red : _muted,
             ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(
-                color: errorText != null ? Colors.red : Colors.grey.shade300,
-                width: 1.5,
-              ),
+            suffixIcon: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (trailingHint != null) trailingHint,
+                IconButton(
+                  tooltip: isVisible ? "Hide password" : "Show password",
+                  onPressed: onToggleVisibility,
+                  icon: Icon(
+                    isVisible
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                    size: 20,
+                    color: hasError ? Colors.red : _muted,
+                  ),
+                ),
+              ],
             ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(
-                color: errorText != null ? Colors.red : AppColors.primary,
-                width: 1.8,
-              ),
-            ),
+            enabledBorder: _border(hasError ? Colors.red : _fieldBorder),
+            focusedBorder:
+                _border(hasError ? Colors.red : AppColors.primary, 1.6),
           ),
         ),
-        if (errorText != null) ...[
-          const SizedBox(height: 5),
+        if (hasError) ...[
+          const SizedBox(height: 6),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.info_outline, color: Colors.red, size: 14),
+              const Padding(
+                padding: EdgeInsets.only(top: 1),
+                child: Icon(Icons.info_outline, color: Colors.red, size: 14),
+              ),
               const SizedBox(width: 4),
-              Text(
-                errorText,
-                style: const TextStyle(color: Colors.red, fontSize: 12),
+              Expanded(
+                child: Text(
+                  errorText,
+                  style: const TextStyle(color: Colors.red, fontSize: 12),
+                ),
               ),
             ],
+          ),
+        ] else if (helperText != null) ...[
+          const SizedBox(height: 6),
+          Text(
+            helperText,
+            style: const TextStyle(color: _muted, fontSize: 12),
           ),
         ],
       ],
     );
+  }
+
+  /// Green tick inside the confirm field once both passwords match.
+  Widget? _matchIndicator() {
+    final newPassword = newPasswordController.text.trim();
+    final confirm = confirmPasswordController.text.trim();
+    if (confirm.isEmpty || newPassword != confirm) return null;
+    return const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 20);
   }
 
   @override
@@ -254,7 +287,6 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
             Expanded(
               child: Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(20),
                 decoration: const BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.only(
@@ -263,37 +295,87 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                   ),
                 ),
                 child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 28, 20, 24),
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 20),
+                      // ── intro ──
+                      Center(
+                        child: Container(
+                          width: 64,
+                          height: 64,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.10),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.lock_reset_rounded,
+                            color: AppColors.primary,
+                            size: 32,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      const Center(
+                        child: Text(
+                          "Create a new password",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            color: _ink,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Center(
+                        child: Text(
+                          widget.empId.trim().isEmpty
+                              ? "Choose a new password for your account."
+                              : "Choose a new password for Employee ID ${widget.empId.trim()}.",
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontSize: 13, color: _muted, height: 1.45),
+                        ),
+                      ),
+                      const SizedBox(height: 28),
+
+                      // ── fields ──
                       _buildLabeledField(
                         label: "New Password",
                         hint: "Enter new password",
+                        icon: Icons.key_rounded,
                         controller: newPasswordController,
                         errorText: newPasswordError,
+                        helperText: "At least 6 characters",
                         isVisible: _newPasswordVisible,
                         onToggleVisibility: () => setState(
                               () => _newPasswordVisible = !_newPasswordVisible,
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 18),
                       _buildLabeledField(
                         label: "Confirm Password",
                         hint: "Re-enter new password",
+                        icon: Icons.key_rounded,
                         controller: confirmPasswordController,
                         errorText: confirmPasswordError,
                         isVisible: _confirmPasswordVisible,
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: _isLoading ? null : _submit,
+                        trailingHint: _matchIndicator(),
                         onToggleVisibility: () => setState(
                               () => _confirmPasswordVisible =
                           !_confirmPasswordVisible,
                         ),
                       ),
-                      const SizedBox(height: 28),
+                      const SizedBox(height: 32),
                       SizedBox(
                         width: double.infinity,
                         child: CustomButton(
-                          text: _isLoading ? "Please wait..." : "Reset Password",
+                          text: "Reset Password",
+                          height: 50,
+                          isLoading: _isLoading,
                           onPressed: _isLoading ? null : _submit,
                         ),
                       ),

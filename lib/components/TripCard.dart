@@ -11,11 +11,15 @@ class TripCard extends StatelessWidget {
   final bool isExpanded;
   final VoidCallback onExpand;
 
+  /// Opens this trip's route on the map; the button is hidden when null.
+  final VoidCallback? onViewRouteMap;
+
   const TripCard({
     super.key,
     required this.trip,
     required this.isExpanded,
     required this.onExpand,
+    this.onViewRouteMap,
   });
 
   double? _toCoord(dynamic value) {
@@ -404,6 +408,35 @@ class TripCard extends StatelessWidget {
               ),
             ),
           ],
+
+          if (onViewRouteMap != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 6, 14, 2),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: OutlinedButton.icon(
+                  onPressed: onViewRouteMap,
+                  icon: const Icon(Icons.map_outlined, size: 15),
+                  label: const Text(
+                    'View Route Map',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    minimumSize: const Size(0, 32),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    visualDensity: VisualDensity.compact,
+                    side: BorderSide(
+                      color: AppColors.primary.withValues(alpha: 0.4),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ),
+            ),
 
           const SizedBox(height: 6),
         ],

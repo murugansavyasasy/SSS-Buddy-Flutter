@@ -464,6 +464,17 @@ class _ReportsBodyState extends ConsumerState<ReportsBody> {
                                     isExpanded:
                                     expandedTripId ==
                                         trip.trip_id,
+                                    onViewRouteMap: () =>
+                                        Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => RootTrackerScreen(
+                                          initialMember: selectedMember,
+                                          initialDate: date,
+                                          initialShowMap: true,
+                                        ),
+                                      ),
+                                    ),
                                     onExpand: () {
                                       setState(() {
                                         if (expandedTripId ==

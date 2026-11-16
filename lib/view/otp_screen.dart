@@ -200,12 +200,13 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
   // MARK: - OTP Box
 
   Widget _otpBox(int index) {
+    final filled = _otpControllers[index].text.isNotEmpty;
     return SizedBox(
-      width: 46,
       height: 56,
       child: TextField(
         controller: _otpControllers[index],
         focusNode: _focusNodes[index],
+        autofocus: index == 0,
         keyboardType: TextInputType.number,
         maxLength: 1,
         textAlign: TextAlign.center,
@@ -213,21 +214,26 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
           FilteringTextInputFormatter.digitsOnly,
         ],
         style: const TextStyle(
-          fontSize: 20,
+          fontSize: 22,
           fontWeight: FontWeight.bold,
+          color: Color(0xFF1C2340),
         ),
         decoration: InputDecoration(
           counterText: "",
-          contentPadding: const EdgeInsets.symmetric(vertical: 10),
+          filled: true,
+          fillColor: filled
+              ? AppColors.primary.withValues(alpha: 0.06)
+              : const Color(0xFFF7F8FB),
+          contentPadding: const EdgeInsets.symmetric(vertical: 14),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(
-              color: AppColors.primary,
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+              color: filled ? AppColors.primary : const Color(0xFFD9DEE8),
               width: 1.5,
             ),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(
               color: AppColors.primary,
               width: 2,
@@ -235,10 +241,13 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
           ),
         ),
         onChanged: (value) {
+          setState(() {});
           if (value.isNotEmpty && index < _otpLength - 1) {
             FocusScope.of(context).requestFocus(
               _focusNodes[index + 1],
             );
+          } else if (value.isNotEmpty) {
+            FocusScope.of(context).unfocus();
           } else if (value.isEmpty && index > 0) {
             FocusScope.of(context).requestFocus(
               _focusNodes[index - 1],
@@ -258,7 +267,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
     final secs =
     (_seconds % 60).toString().padLeft(2, '0');
 
-    return "$mins : $secs";
+    return "$mins:$secs";
   }
 
   @override
@@ -278,6 +287,10 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    const ink = Color(0xFF1C2340);
+    const muted = Color(0xFF6B7280);
+    final canResend = _seconds == 0 && !_isResending;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Column(
@@ -291,221 +304,238 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
           Expanded(
             child: SafeArea(
               top: false,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                ),
-                child: Column(
-                  crossAxisAlignment:
-                  CrossAxisAlignment.center,
-                  children: [
-                    const SizedBox(height: 30),
-
-                    // MARK: - Title
-
-                    const Text(
-                      "Verify your OTP",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    // MARK: - Description
-
-                    Text(
-                      widget.message.isNotEmpty
-                          ? widget.message
-                          : "We just sent a 6-digit OTP to your registered email address.",
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        color: Colors.grey,
-                        height: 1.5,
-                      ),
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    const Text(
-                      "Please enter the OTP to continue.",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey,
-                      ),
-                    ),
-
-                    const SizedBox(height: 40),
-                    Row(mainAxisAlignment:
-                      MainAxisAlignment.spaceEvenly,
-                      children: List.generate(
-                        _otpLength,
-                        _otpBox,
-                      ),
-                    ),
-
-                    const SizedBox(height: 40),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: _isResending ? null : _verifyOtp,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                          AppColors.primary,
-                          disabledBackgroundColor:
-                          AppColors.primary
-                              .withOpacity(0.5),
-                          shape: RoundedRectangleBorder(
-                            borderRadius:
-                            BorderRadius.circular(14),
-                          ),
-                        ),
-                        child: const Text(
-                          "Continue",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight:
-                            FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-                    const Text(
-                      "Didn't receive code?",
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey,
-                      ),
-                    ),
-
-                    const SizedBox(height: 6),
-
-                    Row(
-                      mainAxisAlignment:
-                      MainAxisAlignment.center,
-                      children: [
-                        GestureDetector(
-                          onTap:
-                          _seconds == 0 &&
-                              !_isResending
-                              ? _resendOtp
-                              : null,
-                          child: _isResending
-                              ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child:
-                            CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color:
-                              AppColors.primary,
-                            ),
-                          )
-                              : Text(
-                            "Resend",
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight:
-                              FontWeight.bold,
-                              color: _seconds == 0
-                                  ? const Color(
-                                0xFF5C5CE0,
-                              )
-                                  : Colors.grey,
-                            ),
-                          ),
-                        ),
-
-                        if (_seconds > 0) ...[
-                          const SizedBox(width: 8),
-                          Text(
-                            _timerText,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-
-                    const Spacer(),
-
-                    // MARK: - Email Information
-
-                    Container(
-                      width: double.infinity,
-                      padding:
-                      const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary
-                            .withOpacity(0.06),
-                        borderRadius:
-                        BorderRadius.circular(14),
-                        border: Border.all(
-                          color: AppColors.primary
-                              .withOpacity(0.15),
-                        ),
-                      ),
-                      child: Row(
-                        crossAxisAlignment:
-                        CrossAxisAlignment.start,
+              // Scrolls when the keyboard is up; the info card stays at the
+              // bottom when there is room.
+              child: LayoutBuilder(
+                builder: (context, constraints) => SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  child: ConstrainedBox(
+                    constraints:
+                        BoxConstraints(minHeight: constraints.maxHeight),
+                    child: IntrinsicHeight(
+                      child: Column(
                         children: [
+                          const SizedBox(height: 28),
+
+                          // MARK: - Icon
+
                           Container(
-                            padding:
-                            const EdgeInsets.all(8),
+                            width: 64,
+                            height: 64,
                             decoration: BoxDecoration(
-                              color: AppColors.primary
-                                  .withOpacity(0.1),
+                              color: AppColors.primary.withValues(alpha: 0.10),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
-                              Icons.email_outlined,
-                              color:
-                              AppColors.primary,
-                              size: 20,
+                              Icons.mark_email_read_outlined,
+                              color: AppColors.primary,
+                              size: 30,
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          const Expanded(
-                            child: Column(
-                              crossAxisAlignment:
-                              CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Check your registered email",
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight:
-                                    FontWeight.bold,
+
+                          const SizedBox(height: 16),
+
+                          // MARK: - Title
+
+                          const Text(
+                            "Verify your OTP",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: ink,
+                            ),
+                          ),
+
+                          const SizedBox(height: 8),
+
+                          // MARK: - Description
+
+                          Text(
+                            widget.message.isNotEmpty
+                                ? widget.message
+                                : "We just sent a 6-digit OTP to your registered email address.",
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: muted,
+                              height: 1.5,
+                            ),
+                          ),
+
+                          if (widget.empId.trim().isNotEmpty) ...[
+                            const SizedBox(height: 10),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF1F3F8),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                "Employee ID: ${widget.empId.trim()}",
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: ink,
+                                ),
+                              ),
+                            ),
+                          ],
+
+                          const SizedBox(height: 32),
+
+                          // MARK: - OTP Boxes (equal width, edge to edge)
+
+                          Row(
+                            children: [
+                              for (var i = 0; i < _otpLength; i++) ...[
+                                if (i > 0) const SizedBox(width: 10),
+                                Expanded(child: _otpBox(i)),
+                              ],
+                            ],
+                          ),
+
+                          const SizedBox(height: 28),
+
+                          SizedBox(
+                            width: double.infinity,
+                            height: 50,
+                            child: ElevatedButton(
+                              onPressed: _isResending ? null : _verifyOtp,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                disabledBackgroundColor:
+                                    AppColors.primary.withValues(alpha: 0.5),
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: const Text(
+                                "Continue",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          // MARK: - Resend
+
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Text(
+                                "Didn't receive code?",
+                                style: TextStyle(fontSize: 14, color: muted),
+                              ),
+                              if (_isResending)
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 14),
+                                  child: SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                )
+                              else
+                                TextButton(
+                                  onPressed: canResend ? _resendOtp : null,
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: AppColors.primary,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    _seconds > 0
+                                        ? "Resend in $_timerText"
+                                        : "Resend",
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                    ),
                                   ),
                                 ),
-                                SizedBox(height: 4),
-                                Text(
-                                  "The OTP has been sent to your registered email address. Please check your inbox and spam folder.",
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey,
-                                    height: 1.4,
+                            ],
+                          ),
+
+                          const Spacer(),
+                          const SizedBox(height: 24),
+
+                          // MARK: - Email Information
+
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.05),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: AppColors.primary.withValues(alpha: 0.15),
+                              ),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        AppColors.primary.withValues(alpha: 0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.email_outlined,
+                                    color: AppColors.primary,
+                                    size: 18,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                const Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "Check your registered email",
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: ink,
+                                        ),
+                                      ),
+                                      SizedBox(height: 4),
+                                      Text(
+                                        "Please check your inbox and spam folder.",
+                                        style: TextStyle(
+                                          fontSize: 12.5,
+                                          color: muted,
+                                          height: 1.4,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
                             ),
                           ),
+                          const SizedBox(height: 20),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 24),
-                  ],
+                  ),
                 ),
               ),
             ),

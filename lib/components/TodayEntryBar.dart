@@ -43,7 +43,7 @@ class TodayEntryBar extends ConsumerWidget {
               _EntrySection(
                 tone: _Tone.success,
                 icon: Icons.check_circle_rounded,
-                title: 'Entered today (${status.present.length})',
+                title: 'Entered today',
                 members: status.present,
               ),
 
@@ -52,7 +52,7 @@ class TodayEntryBar extends ConsumerWidget {
               _EntrySection(
                 tone: _Tone.danger,
                 icon: Icons.event_busy_rounded,
-                title: 'No entry today (${status.absent.length})',
+                title: 'No entry today',
                 members: status.absent,
               ),
           ],
@@ -83,19 +83,19 @@ class _ToneColors {
     switch (tone) {
       case _Tone.success:
         return _ToneColors(
-          bg: const Color(0xFFE8F5E9),
-          border: const Color(0xFFA5D6A7),
+          bg: const Color(0xFFF1F8F2),
+          border: const Color(0xFFCDE8D1),
           fg: const Color(0xFF2E7D32),
           chipBg: Colors.white,
-          chipAvatarBg: const Color(0xFFC8E6C9),
+          chipAvatarBg: const Color(0xFFDCEFDF),
         );
       case _Tone.danger:
         return _ToneColors(
-          bg: const Color(0xFFFFEBEE),
-          border: const Color(0xFFEF9A9A),
+          bg: const Color(0xFFFDF3F3),
+          border: const Color(0xFFF3D0D0),
           fg: const Color(0xFFC62828),
           chipBg: Colors.white,
-          chipAvatarBg: const Color(0xFFFFCDD2),
+          chipAvatarBg: const Color(0xFFFBE0E0),
         );
       case _Tone.neutral:
         return _ToneColors(
@@ -134,19 +134,47 @@ class _EntrySection extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, size: 14, color: colors.fg),
-              const SizedBox(width: 6),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
+              Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: colors.chipAvatarBg,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 14, color: colors.fg),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: colors.fg,
+                  ),
+                ),
+              ),
+              // Member count badge
+              Container(
+                constraints: const BoxConstraints(minWidth: 26),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
                   color: colors.fg,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '${members.length}',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 10),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -175,11 +203,11 @@ class _Shell extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.fromLTRB(16, 3, 16, 5),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      margin: const EdgeInsets.fromLTRB(16, 4, 16, 6),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: colors.bg,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: colors.border),
       ),
       child: child,
@@ -199,23 +227,25 @@ class _MemberChip extends StatelessWidget {
     final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
 
     return Container(
-      margin: const EdgeInsets.only(right: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      height: 32,
+      margin: const EdgeInsets.only(right: 8),
+      padding: const EdgeInsets.only(left: 4, right: 12),
       decoration: BoxDecoration(
         color: colors.chipBg,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: colors.border),
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
           CircleAvatar(
-            radius: 9,
+            radius: 12,
             backgroundColor: colors.chipAvatarBg,
             child: Text(
               initial,
               style: TextStyle(
                 color: colors.fg,
-                fontSize: 10,
+                fontSize: 11,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -223,10 +253,10 @@ class _MemberChip extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             name,
-            style: TextStyle(
-              fontSize: 12,
+            style: const TextStyle(
+              fontSize: 12.5,
               fontWeight: FontWeight.w500,
-              color: colors.fg,
+              color: Color(0xFF1F2937),
             ),
           ),
         ],

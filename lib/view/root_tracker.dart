@@ -26,7 +26,15 @@ class RootTrackerScreen extends ConsumerStatefulWidget {
   final Reportingmembersmodel? initialMember;
   final DateTime? initialDate;
 
-  const RootTrackerScreen({super.key, this.initialMember, this.initialDate});
+  /// Open on the map instead of the timeline.
+  final bool initialShowMap;
+
+  const RootTrackerScreen({
+    super.key,
+    this.initialMember,
+    this.initialDate,
+    this.initialShowMap = false,
+  });
 
   @override
   ConsumerState<RootTrackerScreen> createState() => _RootTrackerScreenState();
@@ -42,7 +50,7 @@ class _RootTrackerScreenState extends ConsumerState<RootTrackerScreen> {
   Reportingmembersmodel? _member;
   late DateTime _date = widget.initialDate ?? DateTime.now();
   Timer? _refreshTimer;
-  bool _showMap = false;
+  late bool _showMap = widget.initialShowMap;
 
   @override
   void initState() {

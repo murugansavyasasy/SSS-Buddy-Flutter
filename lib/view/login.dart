@@ -232,13 +232,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final isLoading =
         isLoginLoading || _forgotPasswordLoading;
 
+    final keyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
       ),
       child: Scaffold(
-        resizeToAvoidBottomInset: false,
+        resizeToAvoidBottomInset: true,
         backgroundColor: Colors.grey[100],
         body: SafeArea(
           top: false,
@@ -249,20 +251,31 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               HeaderContainer(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text(
+                  children: [
+                    Container(
+                      width: 56,
+                      height: 56,
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Image.asset("assets/images/logo.png"),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
                       Strings.welcometoSSSBuddy,
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: 22,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
                     ),
-                    SizedBox(height: 8),
-                    Text(
+                    const SizedBox(height: 6),
+                    const Text(
                       Strings.logintocontinue,
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 15,
                         color: Colors.white70,
                       ),
                     ),
@@ -270,7 +283,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
               ),
 
-              const SizedBox(height: 40),
+              const SizedBox(height: 32),
 
               // MARK: - Form
 
@@ -289,6 +302,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           CustomTextField(
                             controller: emailController,
                             labelText: Strings.empIDMobileNumber,
+                            prefixIcon: Icons.badge_outlined,
+                            textInputAction: TextInputAction.next,
                             validator: (value) {
                               if (value == null ||
                                   value.trim().isEmpty) {
@@ -306,6 +321,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           CustomPasswordField(
                             controller: passwordController,
                             labelText: Strings.password,
+                            prefixIcon: Icons.lock_outline_rounded,
+                            textInputAction: TextInputAction.done,
+                            onFieldSubmitted: (_) {
+                              if (!isLoading) _login();
+                            },
                             validator: (value) {
                               if (value == null ||
                                   value.isEmpty) {
@@ -320,7 +340,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               return null;
                             },
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 4),
                           Align(
                             alignment: Alignment.centerRight,
                             child: TextButton(
@@ -337,7 +357,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ),
                             ),
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 12),
 
                           // MARK: - Login Buttons
 
@@ -347,6 +367,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 child: CustomButton(
                                   text: Strings.clear,
                                   isOutlined: true,
+                                  height: 50,
                                   onPressed: isLoading
                                       ? null
                                       : _clearFields,
@@ -356,8 +377,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               const SizedBox(width: 16),
 
                               Expanded(
+                                flex: 2,
                                 child: SizedBox(
-                                  height: 40,
+                                  height: 50,
                                   child: ElevatedButton(
                                     style:
                                     ElevatedButton.styleFrom(
@@ -392,7 +414,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                         : const Text(
                                       Strings.login,
                                       style: TextStyle(
-                                        fontSize: 15,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
                                         color: Colors.white,
                                       ),
                                     ),
@@ -438,9 +461,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
               // MARK: - Footer
 
+              if (!keyboardOpen)
               Padding(
                 padding: const EdgeInsets.only(
-                  bottom: 20,
+                  bottom: 16,
                 ),
                 child: Row(
                   mainAxisAlignment:
@@ -448,15 +472,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   children: [
                     Image.asset(
                       "assets/images/savyasasy.webp",
-                      width: 50,
-                      height: 50,
+                      width: 36,
+                      height: 36,
                     ),
                     const SizedBox(width: 8),
                     const Text(
                       Strings.poweredbySavyasasy,
                       style: TextStyle(
                         color: Colors.grey,
-                        fontSize: 15,
+                        fontSize: 13,
                       ),
                     ),
                   ],
