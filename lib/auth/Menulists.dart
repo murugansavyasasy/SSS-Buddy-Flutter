@@ -7,6 +7,7 @@ const Set<int> _hiddenMenuIds = {
   20, // Chat
   21, // Follow-ups
   22, // Leaderboard
+  19, // Root Tracker
 };
 
 List<MenuItem> getMenuItems({
