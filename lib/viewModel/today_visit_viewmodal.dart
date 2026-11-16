@@ -402,8 +402,6 @@ class TodayVisitViewmodel extends AsyncNotifier<TripState?> {
         loginData.userId.toString(),
       );
 
-      print("ManageTrip Response => $response");
-
       final backendStatus = response["status"];
       final result = response["result"]?.toString();
 

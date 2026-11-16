@@ -1,3 +1,4 @@
+import 'package:sssbuddy/components/ResponsiveCardList.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -12,7 +13,6 @@ import '../utils/VimeoPlayerScreen.dart';
 import '../viewModel/management_videos_viewmodel.dart';
 import 'dashboard.dart';
 
-
 class ManagementVideos extends ConsumerWidget {
   final String userId;
   const ManagementVideos({super.key, required this.userId});
@@ -21,17 +21,13 @@ class ManagementVideos extends ConsumerWidget {
     final uri = Uri.parse(url);
 
     try {
-      await launchUrl(
-        uri,
-        mode: LaunchMode.externalApplication,
-      );
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Could not open YouTube")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Could not open YouTube")));
     }
   }
-
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -63,51 +59,75 @@ class ManagementVideos extends ConsumerWidget {
                   ),
                 ),
                 child: videosAsync.when(
-                  loading: () => const Center(child: CircularProgressIndicator()),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
                   error: (e, _) => Center(child: Text("Error: $e")),
-                  data: (videos) => ListView.separated(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  data: (videos) => ResponsiveCardList(
+                    padding: const EdgeInsets.all(16),
                     itemCount: videos.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    spacing: 12,
                     itemBuilder: (context, index) {
                       final video = videos[index];
-                      return ListTile(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        leading: _buildThumbnail(video),
-                        title: Text(
-                          video.videoName,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: Icon(Icons.share, color: AppColors.primary,
-                                size: 18,
-                              ),
-                              onPressed: () => _shareVideo(video),
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFE8EBF0)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 3),
                             ),
-                            const Icon(Icons.chevron_right),
                           ],
                         ),
-                        onTap: () {
-                          if (video.videoType == "youtube") {
-                            _launchYoutube(context, video.videoURL);
-                          } else {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => VimeoPlayerScreen(
-                                  videoUrl: video.videoURL,
-                                  videoName: video.videoName,
-                                ),
+                        clipBehavior: Clip.antiAlias,
+                        child: Material(
+                          color: Colors.transparent,
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            leading: _buildThumbnail(video),
+                            title: Text(
+                              video.videoName,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
                               ),
-                            );
-                          }
-                        },
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.share,
+                                    color: AppColors.primary,
+                                    size: 18,
+                                  ),
+                                  onPressed: () => _shareVideo(video),
+                                ),
+                                const Icon(Icons.chevron_right),
+                              ],
+                            ),
+                            onTap: () {
+                              if (video.videoType == "youtube") {
+                                _launchYoutube(context, video.videoURL);
+                              } else {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => VimeoPlayerScreen(
+                                      videoUrl: video.videoURL,
+                                      videoName: video.videoName,
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                        ),
                       );
                     },
                   ),
@@ -130,10 +150,7 @@ class ManagementVideos extends ConsumerWidget {
     }
 
     SharePlus.instance.share(
-      ShareParams(
-        text: '🎬 $title\n\nWatch here:\n$url',
-        subject: title,
-      ),
+      ShareParams(text: '🎬 $title\n\nWatch here:\n$url', subject: title),
     );
   }
 
@@ -172,15 +189,9 @@ class ManagementVideos extends ConsumerWidget {
           Container(
             width: 90,
             height: 60,
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.3),
-            ),
+            decoration: BoxDecoration(color: Colors.black.withOpacity(0.3)),
           ),
-          const Icon(
-            Icons.play_circle_fill,
-            color: Colors.white,
-            size: 28,
-          ),
+          const Icon(Icons.play_circle_fill, color: Colors.white, size: 28),
         ],
       ),
     );

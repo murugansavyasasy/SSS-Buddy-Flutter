@@ -77,9 +77,12 @@ class _DashboardCardState extends State<DashboardCard>
 
   @override
   Widget build(BuildContext context) {
-    return IntrinsicWidth(
+    // Fixed width so the card doesn't shrink while loading or with short values.
+    final cardWidth =
+        (MediaQuery.of(context).size.width * 0.78).clamp(260.0, 320.0);
+    return SizedBox(
+      width: cardWidth,
       child: Container(
-      constraints:const BoxConstraints(maxWidth: 300),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         gradient: LinearGradient(

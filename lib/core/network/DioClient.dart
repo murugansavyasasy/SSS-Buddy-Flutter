@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:sssbuddy/repository/app_url.dart';
+import 'api_log_interceptor.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../viewModel/login_view_model.dart';
@@ -60,12 +61,8 @@ class DioClient {
       ),
     );
 
-    dio.interceptors.add(
-      LogInterceptor(
-        requestBody: true,
-        responseBody: true,
-      ),
-    );
+    // One clean request + response block per call (debug builds only).
+    dio.interceptors.add(ApiLogInterceptor());
 
     return dio;
   }

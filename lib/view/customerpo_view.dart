@@ -1,3 +1,4 @@
+import 'package:sssbuddy/components/ResponsiveCardList.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -143,15 +144,14 @@ class _CustomerPOViewState extends ConsumerState<CustomerPOView> {
                               style: TextStyle(color: Colors.grey),
                             ),
                           )
-                              : ListView.builder(
+                              : ResponsiveCardList(
                             padding: const EdgeInsets.all(16),
                             itemCount: filteredList.length,
                             itemBuilder: (context, index) {
                               final item = filteredList[index];
 
                               return Padding(
-                                padding:
-                                const EdgeInsets.only(bottom: 12),
+                                padding: EdgeInsets.zero,
                                 child: InkWell(
                                   borderRadius:
                                   BorderRadius.circular(18),

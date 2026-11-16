@@ -1,25 +1,68 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:dio/dio.dart';
 
 import '../auth/model/ExhibitionModel.dart';
+import '../core/aws/s3_upload_service.dart';
 import '../core/network/DioClient.dart';
+import '../core/storage/secure_storage.dart';
 import 'app_endpoint.dart';
 
 /// REST calls for the Exhibitions module. Every request carries the login
 /// token as `Authorization: Bearer <token>`.
 class ExhibitionRepository {
   final DioClient _client;
+  final S3UploadService _s3;
 
-  ExhibitionRepository(this._client);
+  ExhibitionRepository(this._client) : _s3 = S3UploadService(_client);
+
+  static const _wavType = 'audio/wav';
+
+  /// Uploads an Exhibitions WAV to S3 and returns its public URL.
+  Future<String> _uploadWav(
+    String wavPath, {
+    required String folder,
+    required String prefix,
+    void Function(double progress)? onProgress,
+  }) =>
+      _s3.uploadFile(
+        file: File(wavPath),
+        fileName: '${prefix}_${DateTime.now().millisecondsSinceEpoch}.wav',
+        bucketPath: 'exhibitions/$folder',
+        contentType: _wavType,
+        onProgress: onProgress == null
+            ? null
+            : (sent, total) {
+                if (total > 0) onProgress(sent / total);
+              },
+      );
 
   Dio get _dio => _client.dio;
 
+  /// Login token from the in-memory session, falling back to the login
+  /// response saved in secure storage (e.g. while the session is reloading).
+  Future<String> _token() async {
+    final live = await _client.getToken();
+    if (live != null && live.isNotEmpty) return live;
+    try {
+      final raw = await SecureStorage.getLoginResponse();
+      if (raw == null || raw.isEmpty) return '';
+      final json = jsonDecode(raw);
+      if (json is! Map) return '';
+      final data = json['data'];
+      final t = (data is Map ? data['token'] : null) ?? json['token'];
+      return t?.toString() ?? '';
+    } catch (_) {
+      return '';
+    }
+  }
+
   Future<Options> _options({String? contentType}) async {
-    final token = await _client.getToken();
+    final token = await _token();
     return Options(
       headers: {
-        if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
+        if (token.isNotEmpty) 'Authorization': 'Bearer $token',
         'Accept': 'application/json',
       },
       contentType: contentType,
@@ -127,7 +170,7 @@ class ExhibitionRepository {
       });
 
   /// Multipart: the WAV (8 kHz, mono) as `file`, plus title, description and
-  /// durationSeconds.
+  /// durationSeconds. (Not S3 — only recorded demos go to S3.)
   Future<void> createTemplate({
     required String title,
     required String description,
@@ -179,20 +222,27 @@ class ExhibitionRepository {
     String visitorName = '',
   }) =>
       _guard(() async {
+        if ((await _token()).isEmpty) {
+          throw ApiException('Session expired. Please log in again.',
+              statusCode: 401);
+        }
+        final body = {
+          'visitorName': visitorName,
+          'visitorNumbers': visitorNumbers,
+          'audioUrl': audioUrl,
+        };
         final res = await _dio.post(
           AppEndpoint.exhibitionDemos(exhibitionId),
-          data: {
-            'visitorName': visitorName,
-            'visitorNumbers': visitorNumbers,
-            'audioUrl': audioUrl,
-          },
+          data: body,
           options: await _options(contentType: Headers.jsonContentType),
         );
         _ensureOk(res);
         return _demoId(res.data);
       });
 
-  /// Custom recording: multipart with the WAV (8 kHz, mono) as `file`.
+  /// Custom recording: uploads the WAV (8 kHz, mono) to S3, then sends the
+  /// demo as JSON with its `audioUrl` (same call as a template demo).
+  /// [onProgress] reports the S3 upload (0–1).
   Future<String> sendRecordedDemo({
     required String exhibitionId,
     required String wavPath,
@@ -201,30 +251,19 @@ class ExhibitionRepository {
     void Function(double progress)? onProgress,
   }) =>
       _guard(() async {
-        final form = FormData.fromMap({
-          'file': await MultipartFile.fromFile(
-            wavPath,
-            filename: 'demo_${DateTime.now().millisecondsSinceEpoch}.wav',
-            contentType: DioMediaType('audio', 'wav'),
-          ),
-          'visitorNumbers': jsonEncode(visitorNumbers),
-          'visitorName': visitorName,
-        });
-        final res = await _dio.post(
-          AppEndpoint.exhibitionDemos(exhibitionId),
-          data: form,
-          options: (await _options()).copyWith(
-            sendTimeout: const Duration(minutes: 2),
-            receiveTimeout: const Duration(minutes: 1),
-          ),
-          onSendProgress: onProgress == null
-              ? null
-              : (sent, total) {
-                  if (total > 0) onProgress(sent / total);
-                },
+        final audioUrl = await _uploadWav(
+          wavPath,
+          folder: exhibitionId,
+          prefix: 'demo',
+          onProgress: onProgress,
         );
-        _ensureOk(res);
-        return _demoId(res.data);
+        onProgress?.call(1);
+        return sendTemplateDemo(
+          exhibitionId: exhibitionId,
+          audioUrl: audioUrl,
+          visitorNumbers: visitorNumbers,
+          visitorName: visitorName,
+        );
       });
 
   String _demoId(dynamic body) {

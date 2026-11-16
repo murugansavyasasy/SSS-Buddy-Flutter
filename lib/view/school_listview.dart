@@ -1,3 +1,4 @@
+import 'package:sssbuddy/components/ResponsiveCardList.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -157,9 +158,10 @@ class SchoolListview extends ConsumerWidget {
                                           const Duration(milliseconds: 600),
                                         );
                                       },
-                                      child: ListView.builder(
+                                      child: ResponsiveCardList(
                                         physics:
                                         const AlwaysScrollableScrollPhysics(),
+                                        spacing: 0,
                                         padding: const EdgeInsets.fromLTRB(
                                             16, 4, 16, 24),
                                         itemCount: filteredList.length,

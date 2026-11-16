@@ -1,3 +1,4 @@
+import 'package:sssbuddy/components/ResponsiveCardList.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -59,7 +60,8 @@ class CircularListview extends ConsumerWidget {
                       return const Center(
                           child: Text("No Data Found"));
                     }
-                    return ListView.builder(
+                    return ResponsiveCardList(
+                      spacing: 0,
                       padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
                       itemCount: list.length,
                       itemBuilder: (context, index) {
