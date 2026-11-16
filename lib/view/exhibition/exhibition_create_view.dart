@@ -6,20 +6,6 @@ import '../../auth/model/ExhibitionModel.dart';
 import '../../viewModel/exhibition_viewmodel.dart';
 import 'widget/exhibition_common.dart';
 
-class _TeamRow {
-  final TextEditingController name;
-  final TextEditingController mobile;
-
-  _TeamRow([Attendee? a])
-    : name = TextEditingController(text: a?.name ?? ''),
-      mobile = TextEditingController(text: a?.mobile ?? '');
-
-  void dispose() {
-    name.dispose();
-    mobile.dispose();
-  }
-}
-
 /// POST /api/mobile/exhibitions. Pops with the created [Exhibition].
 /// With [initial] it edits that exhibition instead (PUT) and pops with true.
 class ExhibitionCreateView extends ConsumerStatefulWidget {
@@ -38,10 +24,11 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
   late final _notes = TextEditingController(text: widget.initial?.notes ?? '');
   late DateTime? _start = widget.initial?.startDate;
   late DateTime? _end = widget.initial?.endDate;
-  late final List<_TeamRow> _team = [
-    for (final a in widget.initial?.attendees ?? const <Attendee>[]) _TeamRow(a),
-    if ((widget.initial?.attendees ?? const []).isEmpty) _TeamRow(),
-  ];
+  /// Added attendees, shown as chips; the two fields below add one more.
+  late final List<Attendee> _attendees = [...?widget.initial?.attendees];
+  final _attName = TextEditingController();
+  final _attMobile = TextEditingController();
+  String? _attError;
 
   bool get _editing => widget.initial != null;
 
@@ -55,24 +42,36 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
     _venue.dispose();
     _city.dispose();
     _notes.dispose();
-    for (final r in _team) {
-      r.dispose();
-    }
+    _attName.dispose();
+    _attMobile.dispose();
     super.dispose();
   }
 
-  String? _rowError(_TeamRow r) {
-    if (!_tried) return null;
-    final m = r.mobile.text.trim();
-    if (m.isNotEmpty && !isValidIndianMobile(m)) return 'Enter a 10-digit mobile number';
-    if (m.isEmpty && r.name.text.trim().isNotEmpty) return 'Add a mobile number or remove this row';
-    return null;
-  }
-
-  void _removeRow(_TeamRow r) {
-    setState(() => _team.remove(r));
-    // Dispose after the row's text fields have left the tree.
-    WidgetsBinding.instance.addPostFrameCallback((_) => r.dispose());
+  /// Adds the typed name + number as a chip. Returns false (and shows the
+  /// reason) when the number is missing, invalid or already added.
+  bool _addAttendee() {
+    final m = _attMobile.text.trim();
+    final n = _attName.text.trim();
+    String? err;
+    if (m.isEmpty) {
+      err = 'Enter a mobile number';
+    } else if (!isValidIndianMobile(m)) {
+      err = 'Enter a 10-digit mobile number';
+    } else if (_attendees.any((a) => a.mobile == m)) {
+      err = 'This number is already added';
+    }
+    if (err != null) {
+      setState(() => _attError = err);
+      return false;
+    }
+    HapticFeedback.selectionClick();
+    setState(() {
+      _attendees.add(Attendee(name: n.isEmpty ? 'Attendee' : n, mobile: m));
+      _attName.clear();
+      _attMobile.clear();
+      _attError = null;
+    });
+    return true;
   }
 
   bool get _endBeforeStart => _start != null && _end != null && _end!.isBefore(_start!);
@@ -103,18 +102,13 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
       _tried = true;
       _serverError = null;
     });
-    final hasRowError = _team.any((r) => _rowError(r) != null);
-    if (_name.text.trim().isEmpty || hasRowError || _endBeforeStart) return;
+    // A number still in the fields (Add not tapped) is added now; an
+    // invalid one blocks saving.
+    final pending = _attMobile.text.trim().isNotEmpty || _attName.text.trim().isNotEmpty;
+    final attendeeOk = !pending || _addAttendee();
+    if (_name.text.trim().isEmpty || !attendeeOk || _endBeforeStart) return;
 
-    final attendees = _team
-        .where((r) => isValidIndianMobile(r.mobile.text.trim()))
-        .map(
-          (r) => Attendee(
-            name: r.name.text.trim().isEmpty ? 'Attendee' : r.name.text.trim(),
-            mobile: r.mobile.text.trim(),
-          ),
-        )
-        .toList();
+    final attendees = List<Attendee>.of(_attendees);
 
     setState(() => _saving = true);
     try {
@@ -251,26 +245,8 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
                                     title: 'Attendees',
                                     subtitle: 'These people will receive a call on every demo.',
                                     children: [
-                                      if (_team.isEmpty)
-                                        Container(
-                                          padding: const EdgeInsets.all(14),
-                                          decoration: BoxDecoration(
-                                            color: exPageBg,
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                          child: const Text(
-                                            'No attendees yet.',
-                                            textAlign: TextAlign.center,
-                                            style: exBodyMd,
-                                          ),
-                                        ),
-                                      for (var i = 0; i < _team.length; i++) _teamRow(i, wide),
-                                      ExSecondaryButton(
-                                        label: 'Add attendee',
-                                        icon: Icons.person_add_alt_outlined,
-                                        color: exBrandBold,
-                                        onPressed: () => setState(() => _team.add(_TeamRow())),
-                                      ),
+                                      _attendeeInput(wide),
+                                      _attendeeChips(),
                                     ],
                                   ),
                                   if (_serverError != null) ...[
@@ -342,71 +318,103 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
         )
       : Column(children: [a, const SizedBox(height: 16), b]);
 
-  Widget _teamRow(int i, bool wide) {
-    final r = _team[i];
-    final err = _rowError(r);
+  /// Name + number fields with an Add button.
+  Widget _attendeeInput(bool wide) {
     final name = TextField(
-      controller: r.name,
+      controller: _attName,
       textCapitalization: TextCapitalization.words,
+      textInputAction: TextInputAction.next,
       style: exBodyTouch,
       decoration: exInputDecoration(hint: 'Name'),
     );
     final mobile = TextField(
-      controller: r.mobile,
+      controller: _attMobile,
       keyboardType: TextInputType.phone,
+      textInputAction: TextInputAction.done,
+      onSubmitted: (_) => _addAttendee(),
       inputFormatters: [
         const ExAsciiDigitsFormatter(),
         FilteringTextInputFormatter.digitsOnly,
         LengthLimitingTextInputFormatter(10),
       ],
       onChanged: (_) {
-        if (_tried) setState(() {});
+        if (_attError != null) setState(() => _attError = null);
       },
       style: exBodyTouch,
       decoration: exInputDecoration(
-        hint: 'Enter 10-digit mobile number',
+        hint: '10-digit mobile number',
         prefixText: '+91',
-        errorText: err,
+        errorText: _attError,
       ),
     );
-    final remove = SizedBox(
-      width: 48,
+    final add = SizedBox(
       height: 52,
-      child: IconButton(
-        tooltip: 'Remove attendee ${i + 1}',
-        icon: const Icon(Icons.delete_outline_rounded, color: exDanger),
-        onPressed: () => _removeRow(r),
+      child: FilledButton.icon(
+        onPressed: _saving ? null : _addAttendee,
+        style: FilledButton.styleFrom(
+          backgroundColor: exBrandBold,
+          padding: const EdgeInsets.symmetric(horizontal: 18),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          textStyle: const TextStyle(fontFamily: exFont, fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        icon: const Icon(Icons.add_rounded, size: 20),
+        label: const Text('Add'),
       ),
     );
-    return Dismissible(
-      key: ObjectKey(r),
-      direction: DismissDirection.endToStart,
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        decoration: BoxDecoration(color: exDangerBg, borderRadius: BorderRadius.circular(8)),
-        child: const Icon(Icons.delete_outline_rounded, color: exDanger),
-      ),
-      onDismissed: (_) => _removeRow(r),
-      child: wide
-          ? Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: name),
-                const SizedBox(width: 10),
-                Expanded(child: mobile),
-                const SizedBox(width: 4),
-                remove,
-              ],
-            )
-          : Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: Column(children: [name, const SizedBox(height: 8), mobile])),
-                const SizedBox(width: 4),
-                remove,
-              ],
-            ),
+    // Add sits below the number field (full width on phones).
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (wide)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: name),
+              const SizedBox(width: 10),
+              Expanded(child: mobile),
+            ],
+          )
+        else ...[
+          name,
+          const SizedBox(height: 8),
+          mobile,
+        ],
+        const SizedBox(height: 10),
+        if (wide) Align(alignment: Alignment.centerRight, child: add) else add,
+      ],
+    );
+  }
+
+  /// Added attendees as removable chips.
+  Widget _attendeeChips() {
+    if (_attendees.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(color: exPageBg, borderRadius: BorderRadius.circular(8)),
+        child: const Text('No attendees added yet.', textAlign: TextAlign.center, style: exBodyMd),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Added (${_attendees.length})', style: exBodySm),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final a in _attendees)
+              ExPersonChip(
+                key: ValueKey(a.mobile),
+                name: a.name,
+                number: formatIndianMobile(a.mobile),
+                onRemove: () {
+                  if (!_saving) setState(() => _attendees.remove(a));
+                },
+              ),
+          ],
+        ),
+      ],
     );
   }
 }
