@@ -479,8 +479,9 @@ class _Header extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 8),
-        // Status and where/when share one line to keep the header short.
+        // Status and where/when; the venue wraps so long names stay visible.
         Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ExStatusBadge(status: ex.status),
             if (where.isNotEmpty) ...[
@@ -489,8 +490,6 @@ class _Header extends StatelessWidget {
               const SizedBox(width: 4),
               Expanded(
                 child: Text(where,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                         fontSize: 15, fontWeight: FontWeight.w500, color: exSubtle)),
               ),
@@ -908,6 +907,25 @@ class _LeadCard extends StatelessWidget {
                         style: const TextStyle(fontSize: 14, height: 1.35, color: exInk)),
                   ),
                 ],
+              ),
+            ),
+          // Uploaded photos / PDFs
+          if (l.attachments.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: SizedBox(
+                height: 72,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                  itemCount: l.attachments.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  itemBuilder: (_, i) => ExAttachmentTile(
+                    url: l.attachments[i],
+                    size: 64,
+                    gallery: l.attachments,
+                  ),
+                ),
               ),
             ),
           const SizedBox(height: 12),
