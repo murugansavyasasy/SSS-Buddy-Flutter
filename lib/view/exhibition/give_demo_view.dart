@@ -411,7 +411,9 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
                           child: wide ? _stepBody(wide) : ExMaxWidth(child: _stepBody(wide)),
                         ),
                       ),
-                      if (wide) _summaryPanel(),
+                      // iPad: right summary panel on Voice / Visitors only;
+                      // Review shows the same call-summary card as the phone.
+                      if (wide && _step < 2) _summaryPanel(),
                     ],
                   ),
                 ),
@@ -950,8 +952,8 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
                   ],
                 ),
               ),
-              if (!wide) ...[
-                const SizedBox(height: 16),
+              // Call summary: same card on phone and iPad.
+              const SizedBox(height: 16),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                   decoration: BoxDecoration(
@@ -987,7 +989,6 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
                     ],
                   ),
                 ),
-              ],
               if (_sendError != null) ...[
                 const SizedBox(height: 16),
                 ExInlineNote(
