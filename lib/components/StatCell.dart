@@ -9,8 +9,10 @@ class StatCell extends StatelessWidget {
   final bool isLoading;
   final Animation<double> fadeAnim;
   final Animation<Offset> slideAnim;
+  final Color valueColor;
 
   const StatCell({
+    this.valueColor = const Color(0xFF111827),
     required this.label,
     required this.value,
     required this.isLoading,
@@ -26,10 +28,10 @@ class StatCell extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            color: Colors.white.withOpacity(0.75),
-            fontSize: 11,
+            color: const Color(0xFF6B7280),
+            fontSize: 12.5,
             fontWeight: FontWeight.w500,
-            letterSpacing: 0.4,
+            letterSpacing: 0.2,
           ),
         ),
         const SizedBox(height: 4),
@@ -41,11 +43,12 @@ class StatCell extends StatelessWidget {
             opacity: fadeAnim,
             child: Text(
               value,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 28,
-                fontWeight: FontWeight.w800,
-                height: 1,
+              style: TextStyle(
+                color: valueColor,
+                fontSize: 34,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.5,
+                height: 1.05,
               ),
             ),
           ),

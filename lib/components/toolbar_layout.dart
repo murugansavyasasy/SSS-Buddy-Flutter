@@ -159,7 +159,7 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
         systemNavigationBarIconBrightness: Brightness.dark,
       ),
       child: Container(
-        color: AppColors.primary,
+        decoration: const BoxDecoration(gradient: AppColors.headerGradient),
         padding: EdgeInsets.only(
           top: topPadding + 10,
           left: 16,
@@ -185,14 +185,15 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                     height: 42,
                     width: 42,
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(21),
+                      color: Colors.white.withValues(alpha: 0.16),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.28)),
                     ),
                     child: const Center(
                       child: Icon(
-                        Icons.arrow_back,
-                        color: Colors.black,
-                        size: 20,
+                        Icons.arrow_back_ios_new_rounded,
+                        color: Colors.white,
+                        size: 18,
                       ),
                     ),
                   ),
@@ -204,8 +205,9 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                   child: Text(
                     widget.title,
                     style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 19,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.2,
                       color: Colors.white,
                     ),
                     overflow: TextOverflow.ellipsis,
@@ -237,9 +239,9 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                       height: 42,
                       width: 42,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(21),
-                        border: Border.all(color: Colors.white30),
+                        color: Colors.white.withValues(alpha: 0.16),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.28)),
                       ),
                       child: Center(
                         child: _isRefreshing
@@ -269,9 +271,9 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                       height: 42,
                       width: 42,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(21),
-                        border: Border.all(color: Colors.white30),
+                        color: Colors.white.withValues(alpha: 0.16),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.28)),
                       ),
                       child: const Icon(
                         Icons.search,

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sssbuddy/Values/Colors/app_colors.dart';
 import 'package:sssbuddy/main.dart';
+import 'glass_card.dart';
 import '../View/login.dart';
 import '../core/chat/chat_notification_service.dart';
 import '../core/followup/followup_reminders.dart';
@@ -27,6 +28,13 @@ class HeaderToolbar extends ConsumerWidget {
     }
 
     return "${words.first[0]}${words.last[0]}".toUpperCase();
+  }
+
+  String _greeting() {
+    final h = DateTime.now().hour;
+    if (h < 12) return 'Good morning';
+    if (h < 17) return 'Good afternoon';
+    return 'Good evening';
   }
 
   void confirmationLogout(BuildContext context) {
@@ -110,16 +118,19 @@ class HeaderToolbar extends ConsumerWidget {
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
-        systemNavigationBarColor: Colors.white,
+        statusBarBrightness: Brightness.dark,
+        systemNavigationBarColor: HomeGlass.bg,
         systemNavigationBarIconBrightness: Brightness.dark,
       ),
       child: Container(
-        color: AppColors.primary,
+        // Same blue gradient header as the other screens; the content below
+        // curves over it.
+        decoration: const BoxDecoration(gradient: AppColors.headerGradient),
         padding: EdgeInsets.only(
-          top: topPadding + 20,
+          top: topPadding + 14,
           left: 16,
           right: 16,
-          bottom: 20,
+          bottom: 22,
         ),
         child: userSession.when(
           loading: () => const SizedBox(),
@@ -132,52 +143,84 @@ class HeaderToolbar extends ConsumerWidget {
             final initials = getInitials(name);
 
             return Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Container(
-                  height: 45,
-                  width: 45,
+                  height: 48,
+                  width: 48,
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
+                    shape: BoxShape.circle,
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFF6C9BE0), Color(0xFF3B5E9E)],
+                    ),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.45), width: 1.5),
                   ),
                   child: Center(
                     child: Text(
                       initials,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
                       ),
                     ),
                   ),
                 ),
 
-                const SizedBox(width: 12),
+                const SizedBox(width: 14),
 
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _greeting(),
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white.withValues(alpha: 0.75),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      role,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Colors.white70,
+                      const SizedBox(height: 2),
+                      Text(
+                        name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.2,
+                          color: Colors.white,
+                        ),
                       ),
-                    ),
-                  ],
+                      if (role.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.16),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.28)),
+                          ),
+                          child: Text(
+                            role,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
 
-                const Spacer(),
+                const SizedBox(width: 12),
 
                 GestureDetector(
                   onTap: () {
@@ -233,10 +276,19 @@ class HeaderToolbar extends ConsumerWidget {
                     });
                   },
 
-                  child: const Icon(
-                    Icons.more_vert_rounded,
-                    color: Colors.white,
-                    size: 27,
+                  child: Container(
+                    height: 42,
+                    width: 42,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.16),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.28)),
+                    ),
+                    child: const Icon(
+                      Icons.more_horiz_rounded,
+                      color: Colors.white,
+                      size: 24,
+                    ),
                   ),
                 ),
               ],

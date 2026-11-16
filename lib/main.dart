@@ -5,6 +5,7 @@ import 'package:sssbuddy/core/notifications/local_notifications.dart';
 import 'package:sssbuddy/utils/network_utils.dart';
 import 'package:sssbuddy/utils/routes/routes.dart';
 import 'package:sssbuddy/utils/routes/routes_name.dart';
+import 'package:sssbuddy/values/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -51,6 +52,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      theme: AppTheme.light,
       navigatorKey: appNavigatorKey,
       onGenerateRoute: Routes.generateRoutes,
       initialRoute: RoutesName.splashscreen,

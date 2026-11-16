@@ -9,8 +9,10 @@ class PillStat extends StatelessWidget {
   final String value;
   final bool isLoading;
   final Animation<double> fadeAnim;
+  final Color accent;
 
   const PillStat({
+    this.accent = const Color(0xFF4F6693),
     required this.icon,
     required this.label,
     required this.value,
@@ -22,16 +24,16 @@ class PillStat extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.15),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: accent.withValues(alpha: 0.12), width: 1),
         ),
         child: Row(
           children: [
-            Icon(icon, color: Colors.white70, size: 13),
-            const SizedBox(width: 5),
+            Icon(icon, color: accent, size: 15),
+            const SizedBox(width: 7),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -39,8 +41,8 @@ class PillStat extends StatelessWidget {
                   Text(
                     label,
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
-                      fontSize: 7,
+                      color: const Color(0xFF6B7280),
+                      fontSize: 9.5,
                       fontWeight: FontWeight.w500,
                     ),
                     overflow: TextOverflow.ellipsis,
@@ -52,7 +54,7 @@ class PillStat extends StatelessWidget {
                     child: Text(
                       value,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: Color(0xFF111827),
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                       ),
