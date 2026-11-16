@@ -358,15 +358,27 @@ class Dashboard extends ConsumerWidget {
                     ),
 
                     const SizedBox(height: 15),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
+                    LayoutBuilder(builder: (context, constraints) {
+                      // 2 columns on phones, 3 on small tablets, 4 on iPad / large screens.
+                      final maxW = constraints.maxWidth;
+                      final columns = maxW >= 900
+                          ? 4
+                          : maxW >= 600
+                              ? 3
+                              : 2;
+                      const spacing = 12.0;
+                      final tileWidth =
+                          ((maxW - spacing * (columns - 1)) / columns).floorToDouble();
+                      final tileHeight = columns > 2 ? 120.0 : 106.0;
+                      return Wrap(
+                      spacing: spacing,
+                      runSpacing: spacing,
                       children: List.generate(menus.length, (index) {
                         final item = menus[index];
 
                         return SizedBox(
-                          width: (MediaQuery.of(context).size.width - 48) / 2, // 2 columns
-                          height: 106, // same size for every tile, even with 2-line titles
+                          width: tileWidth,
+                          height: tileHeight, // same size for every tile, even with 2-line titles
                           child: DashboardTile(
                             title: item.title,
                             icon: item.icon,
@@ -453,7 +465,8 @@ class Dashboard extends ConsumerWidget {
                           ),
                         );
                       }),
-                    ),
+                    );
+                    }),
                     const SizedBox(height: 20),
                   ],
                 ),
