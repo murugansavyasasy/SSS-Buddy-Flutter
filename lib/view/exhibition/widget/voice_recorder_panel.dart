@@ -107,7 +107,8 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
       await _player.stop();
       await _deleteFile();
       final dir = await getTemporaryDirectory();
-      final path = '${dir.path}/exhibition_demo_${DateTime.now().millisecondsSinceEpoch}.wav';
+      // Fixed local name; the timestamp is added only to the S3 object name.
+      final path = '${dir.path}/exhibition_demo.wav';
 
       await _recorder.start(
         const RecordConfig(

@@ -11,8 +11,8 @@ class _TeamRow {
   final TextEditingController mobile;
 
   _TeamRow([Attendee? a])
-      : name = TextEditingController(text: a?.name ?? ''),
-        mobile = TextEditingController(text: a?.mobile ?? '');
+    : name = TextEditingController(text: a?.name ?? ''),
+      mobile = TextEditingController(text: a?.mobile ?? '');
 
   void dispose() {
     name.dispose();
@@ -156,159 +156,151 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
 
     return ExTheme(
       child: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: const SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.dark,
-          statusBarBrightness: Brightness.light,
-        ),
+        value: exHeaderOverlay,
         child: Scaffold(
-          backgroundColor: exPageBg,
+          backgroundColor: exHeaderBase,
           body: SafeArea(
             top: false,
             bottom: false, // the white footer draws under the home indicator
             child: Column(
               children: [
-                Container(
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    border: Border(bottom: BorderSide(color: exBorder)),
-                  ),
-                  child: SafeArea(
-                    bottom: false,
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(8, 8, 16, 8),
-                      child: Row(
-                        children: [
-                          SizedBox(
-                            width: 48,
-                            height: 48,
-                            child: IconButton(
-                              tooltip: 'Close',
-                              icon: const Icon(Icons.close_rounded, color: exInk, size: 26),
-                              onPressed: _saving ? null : () => Navigator.pop(context),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(_editing ? 'Edit exhibition' : 'New exhibition',
-                                style: exHeadingMd),
-                          ),
-                        ],
+                ExGradientHeader(
+                  child: Row(
+                    children: [
+                      ExHeaderIconButton(
+                        icon: Icons.close_rounded,
+                        tooltip: 'Close',
+                        onTap: _saving ? null : () => Navigator.pop(context),
                       ),
-                    ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          _editing ? 'Edit exhibition' : 'New exhibition',
+                          style: exHeadingMd.copyWith(fontSize: 19),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 Expanded(
-                  child: SingleChildScrollView(
-                    padding: EdgeInsets.all(wide ? 24 : 16),
-                    child: ExMaxWidth(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _section(
-                            title: 'Details',
-                            children: [
-                              ExField(
-                                label: 'Name',
-                                required: true,
-                                controller: _name,
-                                hint: 'e.g. DIDAC India 2026',
-                                errorText: nameError,
-                                textCapitalization: TextCapitalization.words,
-                                onChanged: (_) {
-                                  if (_tried) setState(() {});
-                                },
-                              ),
-                              _pair(
-                                wide,
-                                ExField(
-                                  label: 'Venue',
-                                  controller: _venue,
-                                  hint: 'e.g. Yashobhoomi (IICC)',
-                                  textCapitalization: TextCapitalization.words,
-                                ),
-                                ExField(
-                                  label: 'City',
-                                  controller: _city,
-                                  hint: 'e.g. New Delhi',
-                                  textCapitalization: TextCapitalization.words,
-                                ),
-                              ),
-                              _pair(
-                                true,
-                                _DateField(
-                                  label: 'Start date',
-                                  value: _start,
-                                  onTap: () => _pickDate(true),
-                                ),
-                                _DateField(
-                                  label: 'End date',
-                                  value: _end,
-                                  onTap: () => _pickDate(false),
-                                  error: _tried && _endBeforeStart
-                                      ? "End date can't be before the start date"
-                                      : null,
-                                ),
-                              ),
-                              ExField(
-                                label: 'Notes',
-                                controller: _notes,
-                                hint: 'e.g. Hall 3, Stall 42',
-                                maxLines: 3,
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          _section(
-                            title: 'Attendees',
-                            subtitle: 'These people will receive a call on every demo.',
-                            children: [
-                              if (_team.isEmpty)
-                                Container(
-                                  padding: const EdgeInsets.all(14),
-                                  decoration: BoxDecoration(
-                                    color: exPageBg,
-                                    borderRadius: BorderRadius.circular(8),
+                  child: ExCurvedBody(
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: SingleChildScrollView(
+                            padding: EdgeInsets.all(wide ? 24 : 16),
+                            child: ExMaxWidth(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  _section(
+                                    title: 'Details',
+                                    children: [
+                                      ExField(
+                                        label: 'Name',
+                                        required: true,
+                                        controller: _name,
+                                        hint: 'e.g. DIDAC India 2026',
+                                        errorText: nameError,
+                                        textCapitalization: TextCapitalization.words,
+                                        onChanged: (_) {
+                                          if (_tried) setState(() {});
+                                        },
+                                      ),
+                                      _pair(
+                                        wide,
+                                        ExField(
+                                          label: 'Venue',
+                                          controller: _venue,
+                                          hint: 'e.g. Yashobhoomi (IICC)',
+                                          textCapitalization: TextCapitalization.words,
+                                        ),
+                                        ExField(
+                                          label: 'City',
+                                          controller: _city,
+                                          hint: 'e.g. New Delhi',
+                                          textCapitalization: TextCapitalization.words,
+                                        ),
+                                      ),
+                                      _pair(
+                                        true,
+                                        _DateField(
+                                          label: 'Start date',
+                                          value: _start,
+                                          onTap: () => _pickDate(true),
+                                        ),
+                                        _DateField(
+                                          label: 'End date',
+                                          value: _end,
+                                          onTap: () => _pickDate(false),
+                                          error: _tried && _endBeforeStart
+                                              ? "End date can't be before the start date"
+                                              : null,
+                                        ),
+                                      ),
+                                      ExField(
+                                        label: 'Notes',
+                                        controller: _notes,
+                                        hint: 'e.g. Hall 3, Stall 42',
+                                        maxLines: 3,
+                                      ),
+                                    ],
                                   ),
-                                  child: const Text(
-                                    'No attendees yet.',
-                                    textAlign: TextAlign.center,
-                                    style: exBodyMd,
+                                  const SizedBox(height: 16),
+                                  _section(
+                                    title: 'Attendees',
+                                    subtitle: 'These people will receive a call on every demo.',
+                                    children: [
+                                      if (_team.isEmpty)
+                                        Container(
+                                          padding: const EdgeInsets.all(14),
+                                          decoration: BoxDecoration(
+                                            color: exPageBg,
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: const Text(
+                                            'No attendees yet.',
+                                            textAlign: TextAlign.center,
+                                            style: exBodyMd,
+                                          ),
+                                        ),
+                                      for (var i = 0; i < _team.length; i++) _teamRow(i, wide),
+                                      ExSecondaryButton(
+                                        label: 'Add attendee',
+                                        icon: Icons.person_add_alt_outlined,
+                                        color: exBrandBold,
+                                        onPressed: () => setState(() => _team.add(_TeamRow())),
+                                      ),
+                                    ],
                                   ),
-                                ),
-                              for (var i = 0; i < _team.length; i++) _teamRow(i, wide),
-                              ExSecondaryButton(
-                                label: 'Add attendee',
-                                icon: Icons.person_add_alt_outlined,
-                                color: exBrandBold,
-                                onPressed: () => setState(() => _team.add(_TeamRow())),
+                                  if (_serverError != null) ...[
+                                    const SizedBox(height: 16),
+                                    ExInlineNote(message: _serverError!),
+                                  ],
+                                ],
                               ),
-                            ],
+                            ),
                           ),
-                          if (_serverError != null) ...[
-                            const SizedBox(height: 16),
-                            ExInlineNote(message: _serverError!),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                Container(
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    border: Border(top: BorderSide(color: exBorder)),
-                  ),
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                  child: SafeArea(
-                    top: false,
-                    child: ExMaxWidth(
-                      child: ExPrimaryButton(
-                        label: _editing ? 'Save Changes' : 'Create Exhibition',
-                        loadingLabel: _editing ? 'Saving…' : 'Creating…',
-                        loading: _saving,
-                        onPressed: _submit,
-                      ),
+                        ),
+                        Container(
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            border: Border(top: BorderSide(color: exBorder)),
+                          ),
+                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                          child: SafeArea(
+                            top: false,
+                            child: ExMaxWidth(
+                              child: ExPrimaryButton(
+                                label: _editing ? 'Save Changes' : 'Create Exhibition',
+                                loadingLabel: _editing ? 'Saving…' : 'Creating…',
+                                loading: _saving,
+                                onPressed: _submit,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -371,7 +363,11 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
         if (_tried) setState(() {});
       },
       style: exBodyTouch,
-      decoration: exInputDecoration(hint: 'Enter 10-digit mobile number', prefixText: '+91', errorText: err),
+      decoration: exInputDecoration(
+        hint: 'Enter 10-digit mobile number',
+        prefixText: '+91',
+        errorText: err,
+      ),
     );
     final remove = SizedBox(
       width: 48,

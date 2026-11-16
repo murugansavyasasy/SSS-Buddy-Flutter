@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../auth/model/InitiateDemoCallRequest.dart';
 import '../auth/model/UploadState.dart';
 import '../core/aws/aws_key.dart';
+import '../core/aws/s3_upload_service.dart';
 import '../provider/app_providers.dart';
 import '../provider/user_session_provider.dart';
 
@@ -54,16 +55,13 @@ class RecordVoiceViewModel extends AsyncNotifier<UploadState> {
             "${now.year}-${_pad(now.month)}-${_pad(now.day)}_"
             "${_pad(now.hour)}-${_pad(now.minute)}-${_pad(now.second)}/$loginId";
 
-        final fileName = "demoVoice.wav";
-        // final fileName =
-        //     '${loginId}_${demoId}_${DateTime.now().millisecondsSinceEpoch}.wav';
-
+        // S3 name: score_<timestamp>.<ext> (no ids), with the recording's
+        // own file type.
         final uploadResponse = await repo.getPresignedUrl(
           bucket: AwsKey.SCHOOL_CHIMES_COMMUNICATION,
-          fileName: '${loginId}_${demoId}_${DateTime.now().millisecondsSinceEpoch}.m4a',
+          fileName: S3UploadService.scoreFileName(audioPath),
           bucketPath: bucketPath,
-          fileType: 'audio/mp4',
-
+          fileType: S3UploadService.contentTypeFor(audioPath),
         );
 
         _presignedUrl = uploadResponse.data?.presignedUrl;
@@ -92,7 +90,7 @@ class RecordVoiceViewModel extends AsyncNotifier<UploadState> {
       final uploaded = await repo.uploadToS3(
         presignedUrl: _presignedUrl!,
         fileBytes: fileBytes,
-        contentType: 'audio/mp4',
+        contentType: S3UploadService.contentTypeFor(audioPath),
       );
 
       if (!uploaded) throw Exception("Upload returned a failure status.");
