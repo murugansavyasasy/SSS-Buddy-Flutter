@@ -65,7 +65,9 @@ class _LocalConveyenceDetailState extends ConsumerState<LocalConveyenceDetail> {
                     }
                     final detail = data.first;
                     return SingleChildScrollView(
-                      padding: const EdgeInsets.all(16),
+                      // Keep the totals above the Android navigation bar.
+                      padding: EdgeInsets.fromLTRB(16, 16, 16,
+                          16 + MediaQuery.paddingOf(context).bottom),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -165,13 +167,19 @@ class _LocalConveyenceDetailState extends ConsumerState<LocalConveyenceDetail> {
                     color: titleColor,
                   ),
                 ),
-                const Spacer(),
-                Text(
-                  "Total: ₹${total.toStringAsFixed(2)}",
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: titleColor,
+                const SizedBox(width: 8),
+                Expanded(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      "Total: ₹${total.toStringAsFixed(2)}",
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: titleColor,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -282,10 +290,14 @@ class _TotalChip extends StatelessWidget {
             style: TextStyle(fontSize: 11, color: Colors.white70),
             textAlign: TextAlign.center),
         const SizedBox(height: 4),
-        Text(
-          "₹${amount.toStringAsFixed(2)}",
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: color),
-          textAlign: TextAlign.center,
+        // Three chips share the row; shrink long amounts instead of wrapping.
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            "₹${amount.toStringAsFixed(2)}",
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: color),
+            textAlign: TextAlign.center,
+          ),
         ),
       ],
     );

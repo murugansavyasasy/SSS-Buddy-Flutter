@@ -373,7 +373,10 @@ class _RootTrackerScreenState extends ConsumerState<RootTrackerScreen> {
           left: 0,
           right: 0,
           bottom: 0,
-          child: _buildStats(data, points, live),
+          child: SafeArea(
+            top: false,
+            child: _buildStats(data, points, live),
+          ),
         ),
       ],
     );
@@ -446,12 +449,16 @@ class _RootTrackerScreenState extends ConsumerState<RootTrackerScreen> {
                       color: _ink,
                       height: 1)),
               const SizedBox(width: 6),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Text(usingGps ? "km travelled (GPS)" : "km (approx.)",
-                    style: const TextStyle(fontSize: 13, color: _muted)),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text(usingGps ? "km travelled (GPS)" : "km (approx.)",
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 13, color: _muted)),
+                ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
               _statusChip(live, data.hasTrip || points.isNotEmpty),
             ],
           ),

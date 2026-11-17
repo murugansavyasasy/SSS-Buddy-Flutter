@@ -336,7 +336,7 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
         }
         demoId = await repo.sendRecordedDemo(
           exhibitionId: widget.exhibition.id,
-          wavPath: path,
+          audioPath: path,
           visitorNumbers: List.of(_numbers),
           visitorName: _visitorName.text.trim(),
           onProgress: (p) {
@@ -768,7 +768,7 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
                 label: 'Visitor name',
                 required: true,
                 controller: _visitorName,
-                hint: 'e.g. Mrs. Lakshmi, Principal',
+                hint: 'Enter name',
                 errorText: _nameError ? 'Visitor name is required' : null,
                 textCapitalization: TextCapitalization.words,
                 textInputAction: TextInputAction.next,
@@ -811,7 +811,7 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
                       },
                       style: exBodyTouch,
                       decoration: exInputDecoration(
-                        hint: '10-digit number',
+                        hint: 'Enter 10-digit mobile number',
                         prefixText: '+91',
                         errorText: _numberError,
                       ),

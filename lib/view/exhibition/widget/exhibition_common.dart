@@ -139,8 +139,11 @@ class ExTheme extends StatelessWidget {
 }
 
 /// Phone text is set a step smaller than iPad (the spec sizes are tuned for
-/// the tablet). The user's own accessibility text size still applies on top.
+/// the tablet). The user's own accessibility text size still applies on top,
+/// capped at [exMaxUserTextScale] so large Android font settings don't break
+/// the fixed-height cards and rows.
 const double exPhoneTextScale = 0.85;
+const double exMaxUserTextScale = 1.15;
 
 bool exIsPhone(BuildContext context) => MediaQuery.sizeOf(context).shortestSide < 600;
 
@@ -150,11 +153,15 @@ class _ExTextScale extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!exIsPhone(context)) return child;
     final mq = MediaQuery.of(context);
     if (mq.textScaler is _ScaledTextScaler) return child; // already applied above
+    // The app root (DeviceTextScale) already caps the user's setting and
+    // shrinks text on narrow phones; this cap only guards screens shown
+    // outside it.
+    final user = mq.textScaler.clamp(maxScaleFactor: exMaxUserTextScale);
+    final factor = exIsPhone(context) ? exPhoneTextScale : 1.0;
     return MediaQuery(
-      data: mq.copyWith(textScaler: _ScaledTextScaler(mq.textScaler, exPhoneTextScale)),
+      data: mq.copyWith(textScaler: _ScaledTextScaler(user, factor)),
       child: child,
     );
   }
@@ -397,7 +404,12 @@ class ExPage extends StatelessWidget {
                           padding: EdgeInsets.fromLTRB(pad, 16, pad, 14),
                           child: headerBottom!,
                         ),
-                      Expanded(child: body),
+                      // Keep the last rows above the Android navigation bar /
+                      // iOS home indicator; the curved body colour still
+                      // fills the area behind it.
+                      Expanded(
+                        child: SafeArea(top: false, child: body),
+                      ),
                     ],
                   ),
                 ),
@@ -924,9 +936,8 @@ class _ExPrimaryButtonState extends State<ExPrimaryButton> {
                 const SizedBox(width: 10),
               ],
               Flexible(
-                child: Text(
+                child: _FitLabel(
                   widget.loading ? (widget.loadingLabel ?? widget.label) : widget.label,
-                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                       fontSize: widget.height >= 56 ? 18 : 17,
                       fontWeight: FontWeight.w600,
@@ -976,7 +987,7 @@ class ExSecondaryButton extends StatelessWidget {
             backgroundColor: Colors.white,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             textStyle: const TextStyle(fontFamily: exFont, fontSize: 16, fontWeight: FontWeight.w600),
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
           ).copyWith(
             overlayColor: const WidgetStatePropertyAll(exPageBg),
           ),
@@ -994,7 +1005,7 @@ class ExSecondaryButton extends StatelessWidget {
                 Icon(icon, size: 20),
                 const SizedBox(width: 8),
               ],
-              Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
+              Flexible(child: _FitLabel(label)),
             ],
           ),
         ),
@@ -1459,13 +1470,14 @@ Future<bool> showExConfirmDialog(
                       child: FilledButton(
                         onPressed: () => Navigator.pop(ctx, true),
                         style: FilledButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
                           backgroundColor: destructive ? exDanger : exBrandBold,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           textStyle:
                               const TextStyle(fontFamily: exFont, fontSize: 16, fontWeight: FontWeight.w600),
                         ),
-                        child: Text(confirmLabel, overflow: TextOverflow.ellipsis),
+                        child: _FitLabel(confirmLabel),
                       ),
                     ),
                   ),
@@ -1478,4 +1490,20 @@ Future<bool> showExConfirmDialog(
     ),
   );
   return ok == true;
+}
+
+
+/// One-line button label that shrinks to fit narrow buttons (small phones)
+/// instead of being cut off with an ellipsis.
+class _FitLabel extends StatelessWidget {
+  final String text;
+  final TextStyle? style;
+
+  const _FitLabel(this.text, {this.style});
+
+  @override
+  Widget build(BuildContext context) => FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(text, maxLines: 1, softWrap: false, style: style),
+      );
 }

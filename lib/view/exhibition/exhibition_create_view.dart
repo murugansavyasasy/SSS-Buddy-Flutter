@@ -74,6 +74,15 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
     return true;
   }
 
+  /// Everything except City and Notes is mandatory.
+  bool get _hasErrors =>
+      _name.text.trim().isEmpty ||
+      _venue.text.trim().isEmpty ||
+      _start == null ||
+      _end == null ||
+      _endBeforeStart ||
+      _attendees.isEmpty;
+
   bool get _endBeforeStart => _start != null && _end != null && _end!.isBefore(_start!);
 
   Future<void> _pickDate(bool isStart) async {
@@ -106,7 +115,7 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
     // invalid one blocks saving.
     final pending = _attMobile.text.trim().isNotEmpty || _attName.text.trim().isNotEmpty;
     final attendeeOk = !pending || _addAttendee();
-    if (_name.text.trim().isEmpty || !attendeeOk || _endBeforeStart) return;
+    if (!attendeeOk || _hasErrors) return;
 
     final attendees = List<Attendee>.of(_attendees);
 
@@ -147,6 +156,17 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
   Widget build(BuildContext context) {
     final wide = exIsWide(context);
     final nameError = _tried && _name.text.trim().isEmpty ? 'Exhibition name is required' : null;
+    final venueError = _tried && _venue.text.trim().isEmpty ? 'Venue is required' : null;
+    final startError = _tried && _start == null ? 'Start date is required' : null;
+    final endError = !_tried
+        ? null
+        : _end == null
+            ? 'End date is required'
+            : _endBeforeStart
+                ? "End date can't be before the start date"
+                : null;
+    final attendeesError =
+        _tried && _attendees.isEmpty ? 'Add at least one attendee' : null;
 
     return ExTheme(
       child: AnnotatedRegion<SystemUiOverlayStyle>(
@@ -194,7 +214,7 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
                                         label: 'Name',
                                         required: true,
                                         controller: _name,
-                                        hint: 'e.g. DIDAC India 2026',
+                                        hint: 'Enter exhibition name',
                                         errorText: nameError,
                                         textCapitalization: TextCapitalization.words,
                                         onChanged: (_) {
@@ -205,14 +225,19 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
                                         wide,
                                         ExField(
                                           label: 'Venue',
+                                          required: true,
                                           controller: _venue,
-                                          hint: 'e.g. Yashobhoomi (IICC)',
+                                          errorText: venueError,
+                                          onChanged: (_) {
+                                            if (_tried) setState(() {});
+                                          },
+                                          hint: 'Enter venue',
                                           textCapitalization: TextCapitalization.words,
                                         ),
                                         ExField(
                                           label: 'City',
                                           controller: _city,
-                                          hint: 'e.g. New Delhi',
+                                          hint: 'Enter city',
                                           textCapitalization: TextCapitalization.words,
                                         ),
                                       ),
@@ -220,22 +245,23 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
                                         true,
                                         _DateField(
                                           label: 'Start date',
+                                          required: true,
                                           value: _start,
+                                          error: startError,
                                           onTap: () => _pickDate(true),
                                         ),
                                         _DateField(
                                           label: 'End date',
                                           value: _end,
+                                          required: true,
                                           onTap: () => _pickDate(false),
-                                          error: _tried && _endBeforeStart
-                                              ? "End date can't be before the start date"
-                                              : null,
+                                          error: endError,
                                         ),
                                       ),
                                       ExField(
                                         label: 'Notes',
                                         controller: _notes,
-                                        hint: 'e.g. Hall 3, Stall 42',
+                                        hint: 'Enter notes',
                                         maxLines: 3,
                                       ),
                                     ],
@@ -243,10 +269,16 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
                                   const SizedBox(height: 16),
                                   _section(
                                     title: 'Attendees',
+                                    required: true,
                                     subtitle: 'These people will receive a call on every demo.',
                                     children: [
                                       _attendeeInput(wide),
                                       _attendeeChips(),
+                                      if (attendeesError != null)
+                                        Text(
+                                          attendeesError,
+                                          style: exBodySm.copyWith(color: exDanger),
+                                        ),
                                     ],
                                   ),
                                   if (_serverError != null) ...[
@@ -288,7 +320,12 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
     );
   }
 
-  Widget _section({required String title, String? subtitle, required List<Widget> children}) =>
+  Widget _section({
+    required String title,
+    String? subtitle,
+    bool required = false,
+    required List<Widget> children,
+  }) =>
       Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
@@ -299,7 +336,15 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(title, style: exHeadingMd),
+            Text.rich(
+              TextSpan(
+                text: title,
+                children: [
+                  if (required) const TextSpan(text: ' *', style: TextStyle(color: exDanger)),
+                ],
+              ),
+              style: exHeadingMd,
+            ),
             if (subtitle != null) ...[const SizedBox(height: 2), Text(subtitle, style: exBodyMd)],
             const SizedBox(height: 16),
             for (final c in children) ...[c, const SizedBox(height: 16)],
@@ -325,7 +370,7 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
       textCapitalization: TextCapitalization.words,
       textInputAction: TextInputAction.next,
       style: exBodyTouch,
-      decoration: exInputDecoration(hint: 'Name'),
+      decoration: exInputDecoration(hint: 'Enter name'),
     );
     final mobile = TextField(
       controller: _attMobile,
@@ -342,7 +387,7 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
       },
       style: exBodyTouch,
       decoration: exInputDecoration(
-        hint: '10-digit mobile number',
+        hint: 'Enter 10-digit mobile number',
         prefixText: '+91',
         errorText: _attError,
       ),
@@ -424,14 +469,29 @@ class _DateField extends StatelessWidget {
   final DateTime? value;
   final VoidCallback onTap;
   final String? error;
+  final bool required;
 
-  const _DateField({required this.label, required this.value, required this.onTap, this.error});
+  const _DateField({
+    required this.label,
+    required this.value,
+    required this.onTap,
+    this.error,
+    this.required = false,
+  });
 
   @override
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(label, style: exHeadingSm.copyWith(fontSize: 15)),
+      Text.rich(
+        TextSpan(
+          text: label,
+          children: [
+            if (required) const TextSpan(text: ' *', style: TextStyle(color: exDanger)),
+          ],
+        ),
+        style: exHeadingSm.copyWith(fontSize: 15),
+      ),
       const SizedBox(height: 8),
       InkWell(
         onTap: onTap,

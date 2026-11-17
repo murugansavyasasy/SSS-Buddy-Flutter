@@ -74,11 +74,12 @@ class HeaderCard extends StatelessWidget {
         const SizedBox(height: 12),
 
         // ── Tags  (customerTypeName  +  customerBranchType) ───────
-        Row(
+        Wrap(
+          spacing: 8,
+          runSpacing: 6,
           children: [
             if (customerTypeName.isNotEmpty)
               _TagChip(label: customerTypeName.toUpperCase()),
-            const SizedBox(width: 8),
             if (customerBranchType.isNotEmpty)
               _TagChip(label: customerBranchType),
           ],

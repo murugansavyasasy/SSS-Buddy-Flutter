@@ -6,6 +6,7 @@ import 'package:sssbuddy/utils/network_utils.dart';
 import 'package:sssbuddy/utils/routes/routes.dart';
 import 'package:sssbuddy/utils/routes/routes_name.dart';
 import 'package:sssbuddy/values/app_theme.dart';
+import 'package:sssbuddy/utils/device_text_scale.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -60,7 +61,9 @@ class MyApp extends StatelessWidget {
       builder: (context, child) => GestureDetector(
         behavior: HitTestBehavior.translucent,
         onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-        child: ConnectivityWrapper(child: child ?? const SizedBox.shrink()),
+        child: DeviceTextScale(
+          child: ConnectivityWrapper(child: child ?? const SizedBox.shrink()),
+        ),
       ),
     );
   }

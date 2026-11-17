@@ -116,7 +116,9 @@ class _AdavanceTourExpenseDetailState
     final grandTotal = totalWithBill + totalWithoutBill;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+      // Keep the grand total above the Android navigation bar.
+      padding: EdgeInsets.fromLTRB(
+          16, 20, 16, 20 + MediaQuery.paddingOf(context).bottom),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

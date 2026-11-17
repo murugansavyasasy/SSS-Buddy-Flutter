@@ -236,10 +236,13 @@ class _FeedbackCardState extends State<_FeedbackCard> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _InfoChip(
-                    icon: Icons.person_outline,
-                    label: widget.item.sentBy,
+                  Flexible(
+                    child: _InfoChip(
+                      icon: Icons.person_outline,
+                      label: widget.item.sentBy,
+                    ),
                   ),
+                  const SizedBox(width: 8),
                   _InfoChip(
                     icon: Icons.calendar_today_outlined,
                     label: _formatDate(widget.item.sentOn),
@@ -268,12 +271,17 @@ class _InfoChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: 14, color: Colors.grey.shade500),
         const SizedBox(width: 4),
-        Text(
-          label,
-          style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+          ),
         ),
       ],
     );

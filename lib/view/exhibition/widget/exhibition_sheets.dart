@@ -618,7 +618,7 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
                     label: 'School name',
                     required: true,
                     controller: _school,
-                    hint: 'e.g. Green Valley Public School',
+                    hint: 'Enter school name',
                     errorText: schoolError,
                     textCapitalization: TextCapitalization.words,
                     onChanged: (_) {
@@ -629,7 +629,7 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
                     label: 'City',
                     required: true,
                     controller: _city,
-                    hint: 'e.g. Chennai',
+                    hint: 'Enter city',
                     errorText: cityError,
                     textCapitalization: TextCapitalization.words,
                     onChanged: (_) {
@@ -652,7 +652,7 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
                 ExField(
                   label: 'Contact name',
                   controller: _contact,
-                  hint: 'Name and role',
+                  hint: 'Enter name',
                   textCapitalization: TextCapitalization.words,
                 ),
                 const SizedBox(height: 16),
@@ -676,7 +676,7 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
                   ExField(
                     label: 'Contact email',
                     controller: _email,
-                    hint: 'name@school.edu.in',
+                    hint: 'Enter email address',
                     keyboardType: TextInputType.emailAddress,
                     errorText: _emailError,
                     onChanged: (_) {
@@ -689,7 +689,7 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
                 ExField(
                   label: 'Notes',
                   controller: _notes,
-                  hint: 'e.g. Wants a full product walkthrough',
+                  hint: 'Enter notes',
                   maxLines: 3,
                 ),
                 const SizedBox(height: 16),
@@ -1309,7 +1309,7 @@ class _AddTemplateSheetState extends ConsumerState<_AddTemplateSheet> {
       await ref.read(exhibitionRepositoryProvider).createTemplate(
             title: _title.text.trim(),
             description: _description.text.trim(),
-            wavPath: _path!,
+            audioPath: _path!,
             duration: _length,
           );
       if (mounted) Navigator.pop(context, true);
@@ -1361,7 +1361,7 @@ class _AddTemplateSheetState extends ConsumerState<_AddTemplateSheet> {
                   label: 'Template name',
                   required: true,
                   controller: _title,
-                  hint: 'e.g. Product Intro (Tamil)',
+                  hint: 'Enter template name',
                   errorText: _tried && _title.text.trim().isEmpty ? 'Template name is required' : null,
                   textCapitalization: TextCapitalization.sentences,
                   onChanged: (_) {
@@ -1372,7 +1372,7 @@ class _AddTemplateSheetState extends ConsumerState<_AddTemplateSheet> {
                 ExField(
                   label: 'Description',
                   controller: _description,
-                  hint: 'e.g. Short overview for principals',
+                  hint: 'Enter description',
                   textCapitalization: TextCapitalization.sentences,
                 ),
                 const SizedBox(height: 20),

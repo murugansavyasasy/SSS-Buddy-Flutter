@@ -190,12 +190,18 @@ class FollowUpCard extends StatelessWidget {
                 children: [
                   Icon(icon, size: 15, color: filled ? Colors.white : color),
                   const SizedBox(width: 4),
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: filled ? Colors.white : color,
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: filled ? Colors.white : color,
+                        ),
+                      ),
                     ),
                   ),
                 ],

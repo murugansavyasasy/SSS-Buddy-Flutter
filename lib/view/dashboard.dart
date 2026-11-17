@@ -114,7 +114,9 @@ class Dashboard extends ConsumerWidget {
                 ),
               ),
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+                // Keep the last menu row above the Android navigation bar.
+                padding: EdgeInsets.fromLTRB(
+                    16, 20, 16, 16 + MediaQuery.paddingOf(context).bottom),
 
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -402,7 +404,12 @@ class Dashboard extends ConsumerWidget {
                       const spacing = 12.0;
                       final tileWidth =
                           ((maxW - spacing * (columns - 1)) / columns).floorToDouble();
-                      final tileHeight = columns > 2 ? 108.0 : 98.0;
+                      // Grow with large system font sizes so the 2-line
+                      // title (2 × 12.5 × 1.35 ≈ 34 px at scale 1) still fits.
+                      final textScale =
+                          MediaQuery.textScalerOf(context).scale(12.5) / 12.5;
+                      final tileHeight = (columns > 2 ? 108.0 : 98.0) +
+                          (textScale > 1 ? (textScale - 1) * 34 : 0);
                       return Wrap(
                       spacing: spacing,
                       runSpacing: spacing,

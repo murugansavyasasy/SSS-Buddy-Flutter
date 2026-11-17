@@ -78,10 +78,9 @@ class LocalConveyence extends ConsumerWidget {
                       }
                       return ResponsiveCardList(
                         spacing: 0,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 20,
-                        ),
+                        // Bottom: clear the add button (ResponsiveCardList
+                        // adds the navigation-bar inset).
+                        padding: const EdgeInsets.fromLTRB(16, 20, 16, 80),
                         itemCount: list.length,
                         itemBuilder: (context, index) {
                           final item = list[index];

@@ -186,7 +186,8 @@ class _FollowUpFormViewState extends ConsumerState<FollowUpFormView> {
                 child: Form(
                   key: _formKey,
                   child: ListView(
-                    padding: const EdgeInsets.fromLTRB(20, 22, 20, 32),
+                    padding: EdgeInsets.fromLTRB(
+                        20, 22, 20, 32 + MediaQuery.paddingOf(context).bottom),
                     children: [
                       if (_readOnly) _doneBanner(),
                       _label('School'),
@@ -199,7 +200,7 @@ class _FollowUpFormViewState extends ConsumerState<FollowUpFormView> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 _label('Contact person'),
-                                _field(_contact, 'Principal / Admin',
+                                _field(_contact, 'Enter name',
                                     icon: Icons.person_outline_rounded),
                               ],
                             ),
@@ -251,7 +252,7 @@ class _FollowUpFormViewState extends ConsumerState<FollowUpFormView> {
                       _reminderChips(),
                       const SizedBox(height: 18),
                       _label('Note'),
-                      _field(_note, 'What to discuss, objections, next step…',
+                      _field(_note, 'Enter notes',
                           lines: 3),
                       const SizedBox(height: 26),
                       if (!_readOnly) _saveButton(),

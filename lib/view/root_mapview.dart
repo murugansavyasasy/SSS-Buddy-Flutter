@@ -348,19 +348,32 @@ class _TodayVisitMapScreenState extends ConsumerState<TodayVisitMapScreen> {
             const Divider(height: 20, color: Color(0xFFF0F1F5)),
             Row(
               children: [
-                _InfoChip(
-                  icon: Icons.straighten_rounded,
-                  label:
-                  "${trip.distance.toStringAsFixed(1)} km",
-                  color: _primaryBlue,
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _InfoChip(
+                            icon: Icons.straighten_rounded,
+                            label:
+                            "${trip.distance.toStringAsFixed(1)} km",
+                            color: _primaryBlue,
+                          ),
+                          const SizedBox(width: 12),
+                          _InfoChip(
+                            icon: Icons.place_rounded,
+                            label: "${vm.trackedPoints.length} pts",
+                            color: const Color(0xFF22C55E),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
-                const SizedBox(width: 12),
-                _InfoChip(
-                  icon: Icons.place_rounded,
-                  label: "${vm.trackedPoints.length} pts",
-                  color: const Color(0xFF22C55E),
-                ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 SizedBox(
                   width: 130,
                   child: _buildEndDayButton(),

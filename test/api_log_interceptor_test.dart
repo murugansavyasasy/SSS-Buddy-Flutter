@@ -33,4 +33,33 @@ void main() {
     expect(out, isNot(contains('secret')));
     expect(out, isNot(contains('abc123')));
   });
+
+  test('big list responses log only the first rows', () async {
+    final logs = <String>[];
+    final old = debugPrint;
+    debugPrint = (String? m, {int? wrapWidth}) => logs.add(m ?? '');
+    addTearDown(() => debugPrint = old);
+
+    final rows = List.generate(1000, (i) => '{"SchoolName":"School $i"}').join(',');
+    final dio = Dio(BaseOptions(baseUrl: 'https://example.test/'))
+      ..httpClientAdapter = _ListAdapter('[$rows]')
+      ..interceptors.add(ApiLogInterceptor());
+    await dio.get('schools');
+
+    final out = logs.single;
+    expect(out, contains('School 4'));
+    expect(out, isNot(contains('School 5"')));
+    expect(out, contains('995 more items (1000 total)'));
+  });
+}
+
+class _ListAdapter implements HttpClientAdapter {
+  final String body;
+  _ListAdapter(this.body);
+  @override
+  Future<ResponseBody> fetch(RequestOptions o, Stream<List<int>>? _, Future<void>? __) async =>
+      ResponseBody.fromString(body, 200,
+          headers: {Headers.contentTypeHeader: ['application/json']});
+  @override
+  void close({bool force = false}) {}
 }

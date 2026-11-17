@@ -16,8 +16,9 @@ import 'exhibition_common.dart';
 
 enum _RecState { idle, recording, recorded, denied }
 
-/// Records the custom demo voice as WAV, 8 kHz, mono (what the dialer needs),
-/// or picks an existing audio file ([pickableAudioExtensions]).
+/// Records the custom demo voice as M4A (AAC), which both Android and iOS
+/// record natively (no conversion in the app), or picks an existing audio
+/// file ([pickableAudioExtensions]: M4A, MP3 or WAV).
 /// Reports the file via [onChanged]; `null` means nothing usable is recorded.
 class VoiceRecorderPanel extends StatefulWidget {
   final String? initialPath;
@@ -37,10 +38,14 @@ class VoiceRecorderPanel extends StatefulWidget {
 
 /// Audio-only files that can be picked instead of recording (.m4a is
 /// MPEG-4 audio). No .mp4, since that is usually video.
-const pickableAudioExtensions = ['wav', 'mp3', 'm4a'];
+const pickableAudioExtensions = ['m4a', 'mp3', 'wav'];
 
 class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
+  /// Longest demo voice allowed, for both recording and picked files.
   static const _maxLength = Duration(minutes: 3);
+
+  /// Slack for picked files whose metadata rounds a 3:00 clip up a little.
+  static const _pickTolerance = Duration(milliseconds: 500);
 
   /// Name of the picked audio file; null for a recording.
   String? _pickedName;
@@ -58,6 +63,7 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
   final List<double> _levels = [];
 
   Timer? _timer;
+  Timer? _limitTimer;
   StreamSubscription<Amplitude>? _ampSub;
   StreamSubscription<PlayerState>? _playerSub;
   StreamSubscription<Duration>? _posSub;
@@ -92,6 +98,7 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
   @override
   void dispose() {
     _timer?.cancel();
+    _limitTimer?.cancel();
     _ampSub?.cancel();
     _playerSub?.cancel();
     _posSub?.cancel();
@@ -109,21 +116,23 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
         setState(() => _state = _RecState.denied);
         return;
       }
-      if (!await _recorder.isEncoderSupported(AudioEncoder.wav)) {
-        if (mounted) exToast(context, 'This device cannot record WAV audio.', error: true);
+      if (!await _recorder.isEncoderSupported(AudioEncoder.aacLc)) {
+        if (mounted) exToast(context, 'This device cannot record M4A audio.', error: true);
         return;
       }
       await _player.stop();
       await _deleteFile();
       final dir = await getTemporaryDirectory();
       // Fixed local name; the timestamp is added only to the S3 object name.
-      final path = '${dir.path}/exhibition_demo.wav';
+      final path = '${dir.path}/exhibition_demo.m4a';
 
       await _recorder.start(
+        // M4A / AAC-LC, mono voice at 64 kbps (~1.4 MB for 3 minutes).
         const RecordConfig(
-          encoder: AudioEncoder.wav,
-          sampleRate: 8000,
+          encoder: AudioEncoder.aacLc,
+          sampleRate: 44100,
           numChannels: 1,
+          bitRate: 64000,
         ),
         path: path,
       );
@@ -140,11 +149,14 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
       _timer = Timer.periodic(const Duration(milliseconds: 200), (_) {
         final e = DateTime.now().difference(started);
         if (!mounted) return;
-        setState(() => _elapsed = e);
-        if (e >= _maxLength) {
-          _stop();
-          exToast(context, 'Maximum length (3 minutes) reached');
-        }
+        setState(() => _elapsed = e > _maxLength ? _maxLength : e);
+      });
+      // Stop exactly at the limit rather than on the next 200 ms tick.
+      _limitTimer = Timer(_maxLength, () {
+        if (!mounted || _state != _RecState.recording) return;
+        setState(() => _elapsed = _maxLength);
+        _stop();
+        exToast(context, 'Maximum length (3 minutes) reached');
       });
       setState(() {
         _path = path;
@@ -161,8 +173,11 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
   }
 
   Future<void> _stop() async {
+    if (_state != _RecState.recording) return;
     _timer?.cancel();
     _timer = null;
+    _limitTimer?.cancel();
+    _limitTimer = null;
     await _ampSub?.cancel();
     _ampSub = null;
     final path = await _recorder.stop();
@@ -199,7 +214,7 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
       final dot = picked.name.lastIndexOf('.');
       final ext = dot < 0 ? '' : picked.name.substring(dot + 1).toLowerCase();
       if (!pickableAudioExtensions.contains(ext)) {
-        exToast(context, 'Only audio files: WAV, MP3 or M4A.', error: true);
+        exToast(context, 'Only audio files: M4A, MP3 or WAV.', error: true);
         return;
       }
       // Check the file first, so a bad pick keeps the current audio.
@@ -217,8 +232,8 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
       String? problem;
       if (length < const Duration(seconds: 1)) {
         problem = 'This audio file could not be played.';
-      } else if (length > _maxLength) {
-        problem = 'Audio must be 3 minutes or shorter.';
+      } else if (length > _maxLength + _pickTolerance) {
+        problem = 'Audio is ${exDuration(length)} long. It must be 3 minutes or shorter.';
       }
       if (problem != null) {
         await check.delete().catchError((_) => check);
@@ -234,12 +249,12 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
       setState(() {
         _path = copy.path;
         _pickedName = picked.name;
-        _elapsed = length;
+        _elapsed = length > _maxLength ? _maxLength : length;
         _position = Duration.zero;
         _levels.clear();
         _state = _RecState.recorded;
       });
-      widget.onChanged(copy.path, length);
+      widget.onChanged(copy.path, length > _maxLength ? _maxLength : length);
     } catch (e) {
       if (mounted) exToast(context, 'Could not open the audio file. $e', error: true);
     } finally {
@@ -338,7 +353,7 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
                 Icon(Icons.info_outline_rounded, size: 17, color: exInk),
                 SizedBox(width: 8),
                 Flexible(
-                  child: Text('Record (WAV, 8 kHz, mono) or upload WAV, MP3, M4A',
+                  child: Text('Record or upload M4A, MP3, WAV · max 3 min',
                       style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: exInk)),
                 ),
               ],
@@ -437,8 +452,21 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
 
     final heights = _barHeights();
     return [
-      Text(
-        exDuration(_elapsed),
+      // One line; shrinks on very narrow cards instead of wrapping.
+      FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text.rich(
+        maxLines: 1,
+        TextSpan(
+          text: exDuration(_elapsed),
+          children: [
+            TextSpan(
+              text: ' / ${exDuration(_maxLength)}',
+              // Same size / weight as the elapsed time; only the colour differs.
+              style: const TextStyle(color: exSubtle),
+            ),
+          ],
+        ),
         style: TextStyle(
           fontSize: 34,
           fontWeight: FontWeight.w600,
@@ -446,17 +474,21 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
           color: recording ? exDanger : exInk,
         ),
       ),
+      ),
       const SizedBox(height: 8),
       SizedBox(
         height: 44,
-        child: recording
+        // Bars/dots take a fixed 8 / 10 px each; show only as many as fit
+        // so small phones don't overflow.
+        child: LayoutBuilder(
+          builder: (context, c) => recording
             ? Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  for (var i = 0; i < heights.length; i++)
+                  for (final h in heights.skip(math.max(0, heights.length - (c.maxWidth / 8).floor())))
                     Container(
                       width: 4,
-                      height: 6 + 36 * heights[i],
+                      height: 6 + 36 * h,
                       margin: const EdgeInsets.symmetric(horizontal: 2),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(2),
@@ -469,7 +501,7 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    for (var i = 0; i < 24; i++)
+                    for (var i = 0; i < math.min(24, (c.maxWidth / 10).floor()); i++)
                       Container(
                         width: 4,
                         height: 4,
@@ -482,6 +514,7 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
                   ],
                 ),
               ),
+        ),
       ),
       const SizedBox(height: 8),
       _RecordButton(recording: recording, onTap: recording ? _stop : _start),
@@ -570,12 +603,14 @@ class _RecordButton extends StatefulWidget {
 }
 
 class _RecordButtonState extends State<_RecordButton> with SingleTickerProviderStateMixin {
-  late final AnimationController _pulse =
-      AnimationController(vsync: this, duration: const Duration(milliseconds: 1400));
+  // Created in initState (not lazily) so dispose() never builds it on a
+  // deactivated element.
+  late final AnimationController _pulse;
 
   @override
   void initState() {
     super.initState();
+    _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 1400));
     if (widget.recording) _pulse.repeat(reverse: true);
   }
 

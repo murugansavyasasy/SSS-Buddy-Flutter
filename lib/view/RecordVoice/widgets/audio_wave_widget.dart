@@ -8,9 +8,14 @@ class AudioWaveWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     const totalBars = 30;
 
+    // 30 bars need 120 dp; scale them down when the card is narrower
+    // (small phones) instead of overflowing.
     return SizedBox(
       height: 28,
-      child: Row(
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Row(
+        mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: List.generate(totalBars, (index) {
           final isPlayed = index < (totalBars * progress);
@@ -31,6 +36,7 @@ class AudioWaveWidget extends StatelessWidget {
             ),
           );
         }),
+      ),
       ),
     );
   }
