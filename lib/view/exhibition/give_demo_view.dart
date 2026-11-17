@@ -488,7 +488,7 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
             onPressed: _next,
           )
         : ExPrimaryButton(
-            label: 'Send Demo Call',
+            label: 'Initiate Demo Call',
             height: 56,
             loading: _sending,
             loadingLabel: _sendPhase,
@@ -632,7 +632,7 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
       context,
       title: 'Delete this template?',
       message:
-          '"${t.title}" will no longer be offered for new demos. Demos already sent are not affected.',
+          '"${t.title}" will no longer be offered for new demos. Demo calls already initiated are not affected.',
       cancelLabel: 'Cancel',
       confirmLabel: 'Delete',
       destructive: true,
@@ -851,7 +851,7 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
               ],
               if (_step2Error) ...[
                 const SizedBox(height: 16),
-                const ExInlineNote(message: 'Add at least one visitor number to send the demo.'),
+                const ExInlineNote(message: 'Add at least one visitor number to initiate the demo call.'),
               ],
               const SizedBox(height: 24),
               _TeamCard(team: _team),
@@ -866,8 +866,8 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
 
   Widget _reviewStep(bool wide) {
     final title = wide
-        ? _title('Review & send', 'Check everything before the calls go out.')
-        : _phoneTitle('Review & send');
+        ? _title('Review & Initiate', 'Check everything before the demo calls are initiated.')
+        : _phoneTitle('Review & Initiate');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -1055,7 +1055,7 @@ class _Stepper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final labels = ['Voice', 'Visitors', wide ? 'Review & Send' : 'Review'];
+    final labels = ['Voice', 'Visitors', wide ? 'Review & Initiate' : 'Review'];
     final d = wide ? 36.0 : 28.0;
     final fs = wide ? 17.0 : 15.0;
     Widget line(int i) {

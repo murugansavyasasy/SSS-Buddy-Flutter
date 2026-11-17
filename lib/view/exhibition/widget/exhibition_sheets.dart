@@ -1212,7 +1212,7 @@ class _DemoDetailPanelState extends ConsumerState<DemoDetailPanel> {
             if (widget.onSendAgain != null)
               Expanded(
                 child: ExSecondaryButton(
-                  label: 'Send again',
+                  label: 'Initiate Again',
                   color: exBrandBold,
                   height: 48,
                   onPressed: () {
