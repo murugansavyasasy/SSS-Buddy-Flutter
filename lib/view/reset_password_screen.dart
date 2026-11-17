@@ -7,6 +7,7 @@ import '../Components/toolbar_layout.dart';
 import '../Components/CustomButton.dart';
 import '../viewModel/login_view_model.dart';
 import 'login.dart';
+import '../components/form_width.dart';
 
 class ResetPasswordScreen extends ConsumerStatefulWidget {
   final String empId;
@@ -295,7 +296,8 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                   ),
                 ),
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(20, 28, 20, 24),
+                  padding: EdgeInsets.fromLTRB(formSidePadding(context, 20),
+                      28, formSidePadding(context, 20), 24),
                   keyboardDismissBehavior:
                       ScrollViewKeyboardDismissBehavior.onDrag,
                   child: Column(

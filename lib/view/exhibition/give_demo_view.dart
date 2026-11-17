@@ -405,7 +405,10 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
                             24,
                           ),
                           // Centred column on iPad so wide screens don't stretch.
-                          child: ExMaxWidth(child: _stepBody(wide)),
+                          child: ExMaxWidth(
+                            maxWidth: exFormMaxWidth,
+                            child: _stepBody(wide),
+                          ),
                         ),
                       ),
                     ],
@@ -522,7 +525,10 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
       padding: EdgeInsets.fromLTRB(wide ? 40 : 16, 12, wide ? 40 : 16, 12),
       child: SafeArea(
         top: false,
-        child: wide
+        // Same centred width as the step body so buttons line up on iPad.
+        child: ExMaxWidth(
+          maxWidth: exFormMaxWidth,
+          child: wide
             ? Row(
                 children: [
                   Text(
@@ -544,6 +550,7 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
                   Expanded(child: primary),
                 ],
               ),
+        ),
       ),
     );
   }

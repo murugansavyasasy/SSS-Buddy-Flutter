@@ -10,6 +10,7 @@ import '../Values/Colors/app_colors.dart';
 import '../components/toolbar_layout.dart';
 import '../core/storage/secure_storage.dart';
 import '../viewModel/today_visit_viewmodal.dart';
+import '../components/form_width.dart';
 
 class TodayVisitPage extends ConsumerStatefulWidget {
   const TodayVisitPage({super.key});
@@ -363,7 +364,8 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
 
                   Expanded(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                      padding: EdgeInsets.fromLTRB(formSidePadding(context, 20),
+                          0, formSidePadding(context, 20), 20),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [

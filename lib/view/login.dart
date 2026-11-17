@@ -10,6 +10,7 @@ import '../Components/CustomTextField.dart';
 import '../Components/header_container.dart';
 import '../utils/routes/routes_name.dart';
 import '../viewModel/login_view_model.dart';
+import '../components/form_width.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -289,8 +290,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: formSidePadding(context, 24),
                   ),
                   child: SingleChildScrollView(
                     child: Form(

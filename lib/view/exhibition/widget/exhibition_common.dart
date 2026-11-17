@@ -100,6 +100,10 @@ const exOverlayShadow = [
 /// Content never stretches wider than this on an iPad / tablet.
 const double exMaxContentWidth = 820;
 
+/// Narrower centred column for single-column forms (Create Exhibition,
+/// Give Demo) so iPad doesn't stretch them edge to edge.
+const double exFormMaxWidth = 640;
+
 bool exIsWide(BuildContext context) => MediaQuery.sizeOf(context).width >= 700;
 
 /// iPad only: list on the left, the selected exhibition on the right.
@@ -588,13 +592,18 @@ class ExHeaderIconButton extends StatelessWidget {
 /// Centres content and caps its width on tablets.
 class ExMaxWidth extends StatelessWidget {
   final Widget child;
-  const ExMaxWidth({super.key, required this.child});
+  final double maxWidth;
+  const ExMaxWidth({
+    super.key,
+    required this.child,
+    this.maxWidth = exMaxContentWidth,
+  });
 
   @override
   Widget build(BuildContext context) => Align(
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: exMaxContentWidth),
+          constraints: BoxConstraints(maxWidth: maxWidth),
           child: child,
         ),
       );

@@ -14,6 +14,7 @@ import '../provider/user_session_provider.dart';
 import '../viewModel/advance_tour_detail_viewmodel.dart';
 import '../viewModel/movetosettlement_viewmodal.dart';
 import 'advance_tour_expense.dart';
+import '../components/form_width.dart';
 
 class MoveToToursettlement extends ConsumerStatefulWidget {
   final Advancetourexpensemodel item;
@@ -420,7 +421,8 @@ class _MoveToToursettlementState extends ConsumerState<MoveToToursettlement> {
     return Form(
       key: _formKey,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+        padding: EdgeInsets.symmetric(
+            horizontal: formSidePadding(context, 16), vertical: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
