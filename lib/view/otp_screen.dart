@@ -6,6 +6,7 @@ import '../Values/Colors/app_colors.dart';
 import '../utils/routes/routes_name.dart';
 import '../Components/toolbar_layout.dart';
 import '../viewModel/login_view_model.dart';
+import '../components/form_width.dart';
 
 class OtpScreen extends ConsumerStatefulWidget {
   final String empId;
@@ -308,7 +309,8 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
               // bottom when there is room.
               child: LayoutBuilder(
                 builder: (context, constraints) => SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  padding: EdgeInsets.symmetric(
+                      horizontal: formSidePadding(context, 24)),
                   keyboardDismissBehavior:
                       ScrollViewKeyboardDismissBehavior.onDrag,
                   child: ConstrainedBox(

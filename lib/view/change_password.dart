@@ -10,6 +10,7 @@ import '../viewModel/changepassword_view_model.dart';
 import 'dashboard.dart';
 import '../viewModel/login_view_model.dart';
 import 'login.dart';
+import '../components/form_width.dart';
 
 class ChangePassword extends ConsumerStatefulWidget {
   const ChangePassword({super.key});
@@ -332,7 +333,10 @@ class _ChangePasswordState extends ConsumerState<ChangePassword> {
                 child: SingleChildScrollView(
                   // Keep the button above the Android navigation bar.
                   padding: EdgeInsets.fromLTRB(
-                      20, 28, 20, 24 + MediaQuery.paddingOf(context).bottom),
+                      formSidePadding(context, 20),
+                      28,
+                      formSidePadding(context, 20),
+                      24 + MediaQuery.paddingOf(context).bottom),
                   keyboardDismissBehavior:
                       ScrollViewKeyboardDismissBehavior.onDrag,
                   child: Column(

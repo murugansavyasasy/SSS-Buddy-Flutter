@@ -204,6 +204,7 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
                           child: SingleChildScrollView(
                             padding: EdgeInsets.all(wide ? 24 : 16),
                             child: ExMaxWidth(
+                              maxWidth: exFormMaxWidth,
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
@@ -299,6 +300,7 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
                           child: SafeArea(
                             top: false,
                             child: ExMaxWidth(
+                              maxWidth: exFormMaxWidth,
                               child: ExPrimaryButton(
                                 label: _editing ? 'Save Changes' : 'Create Exhibition',
                                 loadingLabel: _editing ? 'Saving…' : 'Creating…',

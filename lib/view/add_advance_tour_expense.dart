@@ -9,6 +9,7 @@ import '../components/toolbar_layout.dart';
 import '../viewModel/addAdvace_tour_viewmodal.dart';
 import '../viewModel/login_view_model.dart';
 import 'advance_tour_expense.dart';
+import '../components/form_width.dart';
 
 class AddAdvanceTourExpense extends ConsumerStatefulWidget {
   final Advancetourexpensemodel? editData;
@@ -350,7 +351,10 @@ class _AddAdvanceTourExpenseState extends ConsumerState<AddAdvanceTourExpense> {
                 child: SingleChildScrollView(
                   // Keep Submit above the Android navigation bar.
                   padding: EdgeInsets.fromLTRB(
-                      18, 24, 18, 30 + MediaQuery.paddingOf(context).bottom),
+                      formSidePadding(context, 18),
+                      24,
+                      formSidePadding(context, 18),
+                      30 + MediaQuery.paddingOf(context).bottom),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

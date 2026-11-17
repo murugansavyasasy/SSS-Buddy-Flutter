@@ -9,6 +9,7 @@ import '../components/toolbar_layout.dart';
 import '../provider/user_session_provider.dart';
 import '../viewModel/demolist_edit_viewmodel.dart';
 import '../viewModel/demolist_view_model.dart';
+import '../components/form_width.dart';
 
 class DemolistEditView extends ConsumerStatefulWidget {
   final Demolist item;
@@ -105,7 +106,10 @@ class _DemolistEditViewState extends ConsumerState<DemolistEditView> {
     return SingleChildScrollView(
       // Keep the buttons above the Android navigation bar.
       padding: EdgeInsets.fromLTRB(
-          16, 16, 16, 16 + MediaQuery.paddingOf(context).bottom),
+          formSidePadding(context, 16),
+          16,
+          formSidePadding(context, 16),
+          16 + MediaQuery.paddingOf(context).bottom),
       child: Column(
         children: [
           CustomTextField(

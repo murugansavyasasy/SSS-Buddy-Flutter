@@ -9,6 +9,7 @@ import '../Values/Colors/app_colors.dart';
 import '../components/toolbar_layout.dart';
 import '../viewModel/local_conveyence_viewmodel.dart';
 import 'local_conveyence.dart';
+import '../components/form_width.dart';
 
 class ExpenseEntry {
   final String label;
@@ -253,7 +254,9 @@ class _AddLocalConveyenceState extends ConsumerState<AddLocalConveyence> {
                     ),
                   ),
                   child: ListView(
-                    padding: const EdgeInsets.all(16),
+                    padding: EdgeInsets.symmetric(
+                        horizontal: formSidePadding(context, 16),
+                        vertical: 16),
                     children: [
                       _ExpenseSectionCard(
                         title: 'With Bill',
