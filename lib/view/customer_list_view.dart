@@ -73,10 +73,8 @@ class _CustomerListViewState extends ConsumerState<CustomerListView> {
                 navigateTo: const Dashboard(),
                 backendSearch: true,
                 searchHint: "Search school name....",
-                onSearch: (query) {
-                  print("🔍 onSearch called with query: '$query'");
-                  ref.read(customerviewProvider.notifier).filter(query);
-                },
+                onSearch: (query) =>
+                    ref.read(customerviewProvider.notifier).filter(query),
               ),
               Expanded(
                 child: Container(
@@ -90,43 +88,69 @@ class _CustomerListViewState extends ConsumerState<CustomerListView> {
                   ),
                   child: customerlistAsync.when(
                     loading: () =>
-                    const Center(child: CircularProgressIndicator()),
-                    error: (e, _) => Center(child: Text("Error: $e")),
+                        const Center(child: CircularProgressIndicator()),
+                    error: (e, _) => Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              e.toString(),
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(color: Colors.black54),
+                            ),
+                            const SizedBox(height: 12),
+                            OutlinedButton(
+                              onPressed: () => ref
+                                  .read(customerviewProvider.notifier)
+                                  .refreshList(),
+                              child: const Text("Retry"),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                     data: (list) {
                       if (list.isEmpty) {
-                        return const Center(child: Text("No Data Found"));
+                        return const Center(child: Text("No customers found"));
                       }
-                      return ResponsiveCardList(
-                        controller: _scrollController,
-                        padding:
-                        const EdgeInsets.fromLTRB(16, 20, 16, 20),
-                        spacing: 0,
-                        itemCount: list.length,
-                        footer: isLoadingMore
-                            ? const Padding(
-                                padding: EdgeInsets.symmetric(vertical: 16),
-                                child: Center(
-                                  child: CircularProgressIndicator(),
-                                ),
-                              )
-                            : null,
-                        itemBuilder: (context, index) {
-                          final item = list[index];
+                      return RefreshIndicator(
+                        onRefresh: () => ref
+                            .read(customerviewProvider.notifier)
+                            .refreshList(),
+                        child: ResponsiveCardList(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          controller: _scrollController,
+                          padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
+                          spacing: 0,
+                          itemCount: list.length,
+                          footer: isLoadingMore
+                              ? const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 16),
+                                  child: Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                )
+                              : null,
+                          itemBuilder: (context, index) {
+                            final item = list[index];
 
-                          return InkWell(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                  // CustomerInfoView(item: item),
-                                  CustomerPOView(customerId: item.id),
-                                ),
-                              );
-                            },
-                            child: CustomerCardDetails(item: item),
-                          );
-                        },
+                            return InkWell(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        // CustomerInfoView(item: item),
+                                        CustomerPOView(customerId: item.id),
+                                  ),
+                                );
+                              },
+                              child: CustomerCardDetails(item: item),
+                            );
+                          },
+                        ),
                       );
                     },
                   ),
