@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sssbuddy/view/root_mapview.dart';
 import 'package:sssbuddy/view/status_report.dart';
@@ -166,6 +167,10 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
     if (districtController.text.trim().isEmpty) return "District is required";
     if (selectedPerson == null) return "Please select Person Met";
     if (selectedReason == null) return "Please select Reason for Visit";
+    final contact = contactController.text.trim();
+    if (contact.isNotEmpty && !RegExp(r'^\d{10}$').hasMatch(contact)) {
+      return "Contact Number must be 10 digits";
+    }
     return null;
   }
 
@@ -425,6 +430,10 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
                                 icon: Icons.phone_outlined,
                                 keyboardType: TextInputType.phone,
                                 hint: "Enter 10-digit mobile number",
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                  LengthLimitingTextInputFormatter(10),
+                                ],
                               ),
                             ],
                           ),
@@ -691,6 +700,7 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
     bool readOnly = false,
     int maxLines = 1,
     TextInputType keyboardType = TextInputType.text,
+    List<TextInputFormatter>? inputFormatters,
     IconData? suffixIcon,
   }) {
     final isEnabled = isTripStarted;
@@ -725,6 +735,7 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
             readOnly: readOnly,
             maxLines: maxLines,
             keyboardType: keyboardType,
+            inputFormatters: inputFormatters,
             style: TextStyle(
               fontSize: 14,
               color: isEnabled ? primaryColor : mutedText,
