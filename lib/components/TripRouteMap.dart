@@ -403,11 +403,26 @@ class TripRouteMapState extends State<TripRouteMap> {
               child: const _LiveDot(color: _blue),
             ),
         ]),
-        SimpleAttributionWidget(
-          source: Text(_styleFailed
-              ? 'OpenStreetMap contributors, © CARTO'
-              : 'OpenFreeMap © OpenMapTiles, OpenStreetMap contributors'),
-          backgroundColor: const Color(0xCCFFFFFF),
+        // Map credits. Not SimpleAttributionWidget: its text can't shrink and
+        // overflowed on phones (~400 pt wide maps).
+        SafeArea(
+          child: Align(
+            alignment: Alignment.bottomRight,
+            child: ColoredBox(
+              color: const Color(0xCCFFFFFF),
+              child: Padding(
+                padding: const EdgeInsets.all(3),
+                child: Text(
+                  _styleFailed
+                      ? '© OpenStreetMap contributors, © CARTO'
+                      : '© OpenFreeMap, OpenMapTiles, OpenStreetMap contributors',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 11, color: Colors.black87),
+                ),
+              ),
+            ),
+          ),
         ),
       ],
     );

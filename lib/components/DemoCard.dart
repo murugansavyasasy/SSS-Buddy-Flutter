@@ -4,6 +4,9 @@ import '../auth/model/FollowUpModel.dart';
 import '../utils/routes/routes_name.dart';
 
 class DemoCard extends StatelessWidget {
+  /// Follow-ups are hidden app-wide for now; flip to bring the button back.
+  static const bool _showFollowUp = false;
+
   final Demolist item;
   const DemoCard({super.key, required this.item});
 
@@ -148,9 +151,9 @@ class DemoCard extends StatelessWidget {
             ),
           ),
 
+          // Follow-up Button (hidden for now; see _showFollowUp)
+          if (_showFollowUp) ...[
           const SizedBox(width: 12),
-
-          // Follow-up Button
           GestureDetector(
             onTap: () => Navigator.pushNamed(
               context,
@@ -183,6 +186,7 @@ class DemoCard extends StatelessWidget {
               ],
             ),
           ),
+          ],
 
           const SizedBox(width: 12),
 
