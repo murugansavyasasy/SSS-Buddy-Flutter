@@ -1,25 +1,15 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:audio_session/audio_session.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:path_provider/path_provider.dart';
 
-/// Puts iOS/Android audio into plain playback mode before a voice plays.
-///
-/// The recorder switches the session to play-and-record, which on iPhone
-/// routes audio to the quiet earpiece and obeys the silent switch. Calling
-/// this before every play keeps demo voices on the loudspeaker.
-Future<void> exPreparePlayback() async {
-  try {
-    final session = await AudioSession.instance;
-    await session.configure(const AudioSessionConfiguration.music());
-    await session.setActive(true);
-  } catch (_) {
-    // Playback still works with the default session.
-  }
-}
+import '../../../core/audio/voice_audio.dart';
+
+/// Puts audio into plain playback mode before a voice plays, so it plays
+/// loud on the loudspeaker. See [prepareVoicePlayback].
+Future<void> exPreparePlayback() => prepareVoicePlayback();
 
 /// A voice downloaded to the device, with its total length.
 class LocalAudio {

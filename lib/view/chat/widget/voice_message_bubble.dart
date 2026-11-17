@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:sssbuddy/core/audio/voice_audio.dart';
 
 import 'chat_common.dart';
 
@@ -68,7 +69,12 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
       }
     }
     final p = _player!;
-    p.playing ? await p.pause() : await p.play();
+    if (p.playing) {
+      await p.pause();
+    } else {
+      await prepareVoicePlayback();
+      await p.play();
+    }
   }
 
   @override

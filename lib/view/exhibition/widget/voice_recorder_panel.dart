@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:just_audio/just_audio.dart';
 
+import '../../../core/audio/voice_audio.dart';
 import 'demo_audio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -61,6 +62,10 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
   bool _playing = false;
   bool _busy = false;
   final List<double> _levels = [];
+
+  /// Last ~3 s of amplitude readings (dBFS), for the volume hint.
+  final List<double> _recentDb = [];
+  VoiceLevel _voiceLevel = VoiceLevel.ok;
 
   Timer? _timer;
   Timer? _limitTimer;
@@ -127,23 +132,29 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
       final path = '${dir.path}/exhibition_demo.m4a';
 
       await _recorder.start(
-        // M4A / AAC-LC, mono voice at 64 kbps (~1.4 MB for 3 minutes).
-        const RecordConfig(
-          encoder: AudioEncoder.aacLc,
-          sampleRate: 44100,
-          numChannels: 1,
-          bitRate: 64000,
-        ),
+        // M4A / AAC-LC mono voice with noise suppression; see voiceRecordConfig.
+        voiceRecordConfig,
         path: path,
       );
       HapticFeedback.mediumImpact();
       _levels.clear();
+      _recentDb.clear();
+      _voiceLevel = VoiceLevel.ok;
       _ampSub = _recorder
           .onAmplitudeChanged(const Duration(milliseconds: 120))
           .listen((a) {
         // dBFS (-60..0) to 0..1
         final v = ((a.current + 60) / 60).clamp(0.06, 1.0).toDouble();
-        if (mounted) setState(() => _levels.add(v));
+        _recentDb.add(a.current);
+        if (_recentDb.length > 25) _recentDb.removeAt(0);
+        // Judge the volume only after ~1.5 s, so the first breath doesn't warn.
+        final level = _recentDb.length >= 12 ? voiceLevelOf(_recentDb) : VoiceLevel.ok;
+        if (mounted) {
+          setState(() {
+            _levels.add(v);
+            _voiceLevel = level;
+          });
+        }
       });
       final started = DateTime.now();
       _timer = Timer.periodic(const Duration(milliseconds: 200), (_) {
@@ -529,10 +540,15 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
                 style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: exDanger)),
           ],
         ),
+        const SizedBox(height: 8),
+        _LevelHint(level: _voiceLevel),
         const SizedBox(height: 10),
         SizedBox(width: 140, child: ExSecondaryButton(label: 'Stop', height: 44, onPressed: _stop)),
       ] else ...[
         const Text('Tap to record', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
+        const SizedBox(height: 4),
+        Text('For a clear voice, record in a quiet place and hold the phone 10–15 cm from your mouth.',
+            textAlign: TextAlign.center, style: exBodyMd),
         const SizedBox(height: 14),
         Row(
           children: [
@@ -688,6 +704,37 @@ class _RecordButtonState extends State<_RecordButton> with SingleTickerProviderS
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Live hint under the recorder: tells the speaker when the voice is too
+/// quiet or too loud to come out clear. Keeps its height so the layout
+/// doesn't jump when it appears.
+class _LevelHint extends StatelessWidget {
+  final VoiceLevel level;
+
+  const _LevelHint({required this.level});
+
+  @override
+  Widget build(BuildContext context) {
+    final (IconData icon, String text, Color color) = switch (level) {
+      VoiceLevel.ok => (Icons.check_circle_outline_rounded, 'Voice level is good', exSuccess),
+      VoiceLevel.quiet => (Icons.volume_down_rounded, 'Too quiet. Move the phone closer.', exCallingInk),
+      VoiceLevel.loud => (Icons.volume_up_rounded, 'Too loud. Move the phone a little away.', exDanger),
+    };
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 18, color: color),
+        const SizedBox(width: 6),
+        Flexible(
+          child: Text(text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: color)),
+        ),
+      ],
     );
   }
 }

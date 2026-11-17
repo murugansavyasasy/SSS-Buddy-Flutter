@@ -17,6 +17,7 @@ import '../../auth/model/UploadState.dart';
 import '../../components/CustomRecordingButton.dart';
 import '../../components/CustomRecordingWaveWidget.dart';
 import '../../components/toolbar_layout.dart';
+import '../../core/audio/voice_audio.dart';
 import '../../viewModel/record_voice_viewmodel.dart';
 import '../dashboard.dart';
 
@@ -168,7 +169,7 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> with Widg
       });
 
       await _audioRecorder.start(
-        const RecordConfig(encoder: AudioEncoder.aacLc),
+        voiceRecordConfig,
         path: '${dir.path}/$id.m4a',
       );
     } catch (e) {
@@ -259,7 +260,9 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> with Widg
           await _audioPlayer.setFilePath(_audioPath!);
         }
 
-        await _audioPlayer.play();
+        await prepareVoicePlayback();
+        // play() completes only when playback ends, so don't wait for it.
+        unawaited(_audioPlayer.play());
         setState(() => _isPlaying = true);
       } catch (e) {
         debugPrint("Playback error: $e");

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
+import 'package:sssbuddy/core/audio/voice_audio.dart';
 
 import '../../../Values/Colors/app_colors.dart';
 import 'chat_common.dart';
@@ -74,7 +75,7 @@ class _ChatInputBarState extends State<ChatInputBar> {
     final path =
         '${dir.path}/chat_voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
     await _recorder.start(
-      const RecordConfig(encoder: AudioEncoder.aacLc),
+      voiceRecordConfig,
       path: path,
     );
     _startedAt = DateTime.now();
