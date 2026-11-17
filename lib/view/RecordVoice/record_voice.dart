@@ -23,7 +23,15 @@ import '../dashboard.dart';
 
 class RecordVoiceScreen extends ConsumerStatefulWidget {
   final Demolist item;
-  const RecordVoiceScreen({super.key, required this.item});
+
+  /// iPad: shown as a centred popup card over the previous screen instead of
+  /// a full page (see the recordvoice route).
+  final bool asDialog;
+  const RecordVoiceScreen({
+    super.key,
+    required this.item,
+    this.asDialog = false,
+  });
 
   @override
   ConsumerState<RecordVoiceScreen> createState() => _RecordVoiceScreenState();
@@ -41,6 +49,13 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> with Widg
   DateTime? _recordingStart;
 
   final AudioPlayer _audioPlayer = AudioPlayer();
+
+  /// Popup mode keeps its own messenger so snackbars (and RETRY) show inside
+  /// the popup instead of behind its barrier.
+  final _dialogMessengerKey = GlobalKey<ScaffoldMessengerState>();
+  ScaffoldMessengerState? get _messenger => widget.asDialog
+      ? _dialogMessengerKey.currentState
+      : ScaffoldMessenger.maybeOf(context);
   Duration _duration = Duration.zero;
   Duration _position = Duration.zero;
 
@@ -283,7 +298,7 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> with Widg
 
   void _showSnackBar(String message, {bool isError = false}) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
+    _messenger?.showSnackBar(
       SnackBar(
         content: Text(message),
         backgroundColor: isError ? Colors.red.shade600 : Colors.green.shade600,
@@ -304,7 +319,7 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> with Widg
       _ => "Upload failed",
     };
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    _messenger?.showSnackBar(
       SnackBar(
         content: Text("$stepLabel — $message"),
         backgroundColor: Colors.red.shade600,
@@ -350,6 +365,25 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> with Widg
           UploadStep.success,
         ].contains(uploadState.step);
 
+    final overlay = isUploading
+        ? UploadOverlayWidget(
+            step: uploadState.step,
+            onSuccessOkay: uploadState.step == UploadStep.success
+                ? () {
+                    ref.invalidate(demoviewProvider);
+                    Navigator.pop(context);
+                  }
+                : null,
+          )
+        : null;
+
+    if (widget.asDialog) {
+      return PopScope(
+        canPop: !isUploading,
+        child: _buildDialog(isUploading, overlay),
+      );
+    }
+
     return WillPopScope(
       onWillPop: () async => !isUploading,
       child: AnnotatedRegion<SystemUiOverlayStyle>(
@@ -380,69 +414,7 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> with Widg
                       child: Column(
                         children: [
                           const SizedBox(height: 40),
-
-                          if (isRecording) ...[
-                            const CustomRecordingWaveWidget(),
-                            const SizedBox(height: 12),
-
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.red.shade50,
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: Colors.red.shade200),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    width: 10,
-                                    height: 10,
-                                    decoration: const BoxDecoration(
-                                      color: Colors.red,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    "${_formatDuration(_elapsedSeconds)} / 03:00",
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.red.shade700,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-
-                          const SizedBox(height: 20),
-
-                          CustomRecordingButton(
-                            isRecording: isRecording,
-                            onPressed: isUploading ? () {} : _record,
-                          ),
-                          const SizedBox(height: 20),
-
-                          if (_audioPath != null) ...[
-                            PlaybackCardWidget(
-                              isPlaying: _isPlaying,
-                              progress: _progress,
-                              position: _position,
-                              totalDuration: _duration,
-                              onTogglePlay: _togglePlay,
-                            ),
-                            const SizedBox(height: 40),
-                            CreateButtonWidget(
-                              isLoading: isUploading,
-                              onPressed: _onCreatePressed,
-                            ),
-                          ],
-
+                          ..._recorderContent(isUploading),
                           const Spacer(),
                         ],
                       ),
@@ -450,17 +422,144 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> with Widg
                   ),
                 ],
               ),
-              if (isUploading)
-                UploadOverlayWidget(
-                  step: uploadState!.step,
-                  onSuccessOkay: uploadState.step == UploadStep.success
-                      ? () {
-                          ref.invalidate(demoviewProvider);
-                          Navigator.pop(context);
-                        }
-                      : null,
-                ),
+              if (overlay != null) overlay,
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Recorder, timer, playback and Create button — shared by page and popup.
+  List<Widget> _recorderContent(bool isUploading) => [
+        if (isRecording) ...[
+          const CustomRecordingWaveWidget(),
+          const SizedBox(height: 12),
+
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 8,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.red.shade50,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.red.shade200),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 10,
+                  height: 10,
+                  decoration: const BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  "${_formatDuration(_elapsedSeconds)} / 03:00",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.red.shade700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+
+        const SizedBox(height: 20),
+
+        CustomRecordingButton(
+          isRecording: isRecording,
+          onPressed: isUploading ? () {} : _record,
+        ),
+        const SizedBox(height: 20),
+
+        if (_audioPath != null) ...[
+          PlaybackCardWidget(
+            isPlaying: _isPlaying,
+            progress: _progress,
+            position: _position,
+            totalDuration: _duration,
+            onTogglePlay: _togglePlay,
+          ),
+          const SizedBox(height: 40),
+          CreateButtonWidget(
+            isLoading: isUploading,
+            onPressed: _onCreatePressed,
+          ),
+        ],
+
+      ];
+
+  /// iPad popup: white card (max 480 wide) centred over a dimmed barrier.
+  Widget _buildDialog(bool isUploading, Widget? overlay) {
+    return ScaffoldMessenger(
+      key: _dialogMessengerKey,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 480),
+                child: Material(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  clipBehavior: Clip.antiAlias,
+                  elevation: 12,
+                  child: Stack(
+                    children: [
+                      SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(24, 12, 12, 32),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Row(
+                              children: [
+                                const Expanded(
+                                  child: Text(
+                                    "Record Voice",
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF1C2340),
+                                    ),
+                                  ),
+                                ),
+                                IconButton(
+                                  tooltip: "Close",
+                                  icon: const Icon(Icons.close_rounded),
+                                  onPressed: isUploading
+                                      ? null
+                                      : () => Navigator.maybePop(context),
+                                ),
+                              ],
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(right: 12),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const SizedBox(height: 16),
+                                  ..._recorderContent(isUploading),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (overlay != null) Positioned.fill(child: overlay),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),

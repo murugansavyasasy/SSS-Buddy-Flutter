@@ -200,11 +200,16 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
 
   // MARK: - OTP Box
 
-  Widget _otpBox(int index) {
+  Widget _otpBox(int index, double side) {
     final filled = _otpControllers[index].text.isNotEmpty;
     return SizedBox(
-      height: 56,
+      width: side,
+      height: side,
       child: TextField(
+        // Fill the square box and keep the digit centred in it.
+        expands: true,
+        maxLines: null,
+        textAlignVertical: TextAlignVertical.center,
         controller: _otpControllers[index],
         focusNode: _focusNodes[index],
         autofocus: index == 0,
@@ -225,7 +230,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
           fillColor: filled
               ? AppColors.primary.withValues(alpha: 0.06)
               : const Color(0xFFF7F8FB),
-          contentPadding: const EdgeInsets.symmetric(vertical: 14),
+          contentPadding: EdgeInsets.zero,
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(
@@ -391,15 +396,30 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
 
                           const SizedBox(height: 32),
 
-                          // MARK: - OTP Boxes (equal width, edge to edge)
+                          // MARK: - OTP Boxes (square, centred; max 64 pt)
 
-                          Row(
-                            children: [
-                              for (var i = 0; i < _otpLength; i++) ...[
-                                if (i > 0) const SizedBox(width: 10),
-                                Expanded(child: _otpBox(i)),
-                              ],
-                            ],
+                          // Sized from the screen width, not LayoutBuilder:
+                          // this column sits inside IntrinsicHeight.
+                          Builder(
+                            builder: (context) {
+                              const gap = 10.0;
+                              final contentWidth =
+                                  MediaQuery.sizeOf(context).width -
+                                      2 * formSidePadding(context, 24);
+                              final side = ((contentWidth -
+                                          gap * (_otpLength - 1)) /
+                                      _otpLength)
+                                  .clamp(36.0, 64.0);
+                              return Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  for (var i = 0; i < _otpLength; i++) ...[
+                                    if (i > 0) const SizedBox(width: gap),
+                                    _otpBox(i, side),
+                                  ],
+                                ],
+                              );
+                            },
                           ),
 
                           const SizedBox(height: 28),

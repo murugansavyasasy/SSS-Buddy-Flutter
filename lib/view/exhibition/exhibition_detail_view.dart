@@ -47,6 +47,18 @@ class ExhibitionDetailPane extends ConsumerStatefulWidget {
 
 class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
   int _tab = 0; // 0 = demos, 1 = leads
+
+  /// From the iPad split: show this exhibition on its own full page.
+  void _openFullView(Exhibition ex) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ExhibitionDetailView(exhibitionId: ex.id, initial: ex),
+      ),
+    ).then((_) {
+      if (mounted) _refresh();
+    });
+  }
   String? _newDemoId;
   String? _expandedDemoId;
   bool _highlightNewestLead = false;
@@ -210,9 +222,31 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               if (embedded) ...[
+                // Open just this exhibition full screen (iPad split view).
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: EdgeInsets.fromLTRB(pad, 24, pad, 0),
+                    padding: EdgeInsets.fromLTRB(pad, 12, pad, 0),
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        onPressed: () => _openFullView(ex),
+                        icon: const Icon(Icons.open_in_full_rounded, size: 18),
+                        label: const Text('Full view'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: exBrandBold,
+                          textStyle: const TextStyle(
+                            fontFamily: exFont,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(pad, 4, pad, 0),
                     child: Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(

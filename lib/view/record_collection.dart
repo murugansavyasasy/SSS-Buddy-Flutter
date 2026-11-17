@@ -15,6 +15,7 @@ import '../Values/Colors/app_colors.dart';
 import '../auth/model/FinancialYearModel.dart';
 import '../components/DropdownError.dart';
 import '../components/DropdownSkeleton.dart';
+import '../components/form_width.dart';
 import '../components/payment_forms.dart';
 import '../components/searchable_dropdown.dart';
 import '../components/toolbar_layout.dart';
@@ -83,6 +84,10 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
   // ── Basic fields ─────────────────────────────────────────────────────────
   final _amountController = TextEditingController();
 
+  /// Read-only invoice field; reused across builds instead of a new
+  /// controller on every rebuild.
+  final _invoiceDisplayController = TextEditingController();
+
   String? selectedSchool;
   String? selectedSchoolCusId;
   String? selectedFinancialYearName;
@@ -147,6 +152,7 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
 
   @override
   void dispose() {
+    _invoiceDisplayController.dispose();
     _amountController.dispose();
     _cashDepositedOnCtrl.dispose();
     _cashDepositedBranchCtrl.dispose();
@@ -650,8 +656,12 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
                   borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
                 ),
                 child: SingleChildScrollView(
+                  // iPad: centred 640 pt column (see form_width.dart).
                   padding: EdgeInsets.fromLTRB(
-                      20, 24, 20, 32 + MediaQuery.paddingOf(context).bottom),
+                      formSidePadding(context, 20),
+                      24,
+                      formSidePadding(context, 20),
+                      32 + MediaQuery.paddingOf(context).bottom),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -803,10 +813,11 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
                             final displayText =
                                 "${invoices.first.InvoiceNumber} - Pending ₹${invoices.first.PendingAmount}";
 
+                            if (_invoiceDisplayController.text != displayText) {
+                              _invoiceDisplayController.text = displayText;
+                            }
                             return FormInputField(
-                              controller: TextEditingController(
-                                text: displayText,
-                              ),
+                              controller: _invoiceDisplayController,
                               label: "Invoice Details",
                               icon: Icons.receipt_long,
                               readOnly: true,
@@ -892,6 +903,19 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
                       ),
 
                       const SizedBox(height: 32),
+
+                      // Say why Submit is disabled instead of a silent grey
+                      // button.
+                      if (!isSubmitting &&
+                          !hasValidInvoice &&
+                          !(schoolIsSelected && invoiceAsync.isLoading)) ...[
+                        _InactiveDropdownHint(
+                          hint: schoolIsSelected
+                              ? "This school has no pending invoice to record a collection against"
+                              : "Select a school to load its invoice",
+                        ),
+                        const SizedBox(height: 12),
+                      ],
 
                       SizedBox(
                         width: double.infinity,
@@ -1049,12 +1073,14 @@ class _InactiveDropdownHint extends StatelessWidget {
           Icon(
             Icons.info_outline_rounded,
             size: 16,
-            color: Colors.grey.shade400,
+            color: Colors.grey.shade600,
           ),
           const SizedBox(width: 8),
-          Text(
-            hint,
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
+          Expanded(
+            child: Text(
+              hint,
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+            ),
           ),
         ],
       ),

@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../Values/Colors/app_colors.dart';
 import '../components/ReportsBody.dart';
+import '../components/split_view_toggle.dart';
 import '../components/toolbar_layout.dart';
+import '../viewModel/reports_layout_viewmodel.dart';
 import 'dashboard.dart';
 
 class ReportsPage extends ConsumerWidget {
@@ -26,6 +28,16 @@ class ReportsPage extends ConsumerWidget {
               ToolbarLayout(
                 title: "Reports",
                 navigateTo: const Dashboard(),
+                // iPad only (same breakpoint as ReportsBody's two-pane).
+                trailing: MediaQuery.sizeOf(context).width >=
+                        ReportsBody.wideBreakpoint
+                    ? SplitViewToggle(
+                        split: !ref.watch(reportsFullViewProvider),
+                        onTap: () => ref
+                            .read(reportsFullViewProvider.notifier)
+                            .toggle(),
+                      )
+                    : null,
               ),
 
               Expanded(
