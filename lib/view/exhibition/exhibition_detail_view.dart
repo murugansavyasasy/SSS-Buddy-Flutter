@@ -487,7 +487,9 @@ class _Header extends StatelessWidget {
             ExStatusBadge(status: ex.status),
             if (where.isNotEmpty) ...[
               const SizedBox(width: 10),
-              const Icon(Icons.location_on_outlined, size: 17, color: exSubtle),
+              // Calendar when only the dates are known (no venue / city).
+              Icon(ex.place.isNotEmpty ? Icons.location_on_outlined : Icons.calendar_today_outlined,
+                  size: 17, color: exSubtle),
               const SizedBox(width: 4),
               Expanded(
                 child: Text(where,

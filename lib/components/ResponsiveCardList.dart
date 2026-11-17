@@ -56,6 +56,11 @@ class ResponsiveCardList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Keep the last card above the Android navigation bar / iOS home
+    // indicator (0 when a parent SafeArea already handled it).
+    final padding = this.padding.copyWith(
+      bottom: this.padding.bottom + MediaQuery.paddingOf(context).bottom,
+    );
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth - padding.horizontal;

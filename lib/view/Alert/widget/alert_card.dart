@@ -116,10 +116,12 @@ class AlertCard extends StatelessWidget {
                           const Icon(Icons.access_time,
                               size: 13, color: Colors.grey),
                           const SizedBox(width: 4),
-                          Text(
-                            alert.createdOn,
-                            style: const TextStyle(
-                                fontSize: 11, color: Colors.grey),
+                          Flexible(
+                            child: Text(
+                              alert.createdOn,
+                              style: const TextStyle(
+                                  fontSize: 11, color: Colors.grey),
+                            ),
                           ),
                         ],
                       ),
@@ -129,10 +131,12 @@ class AlertCard extends StatelessWidget {
                           const Icon(Icons.source_outlined,
                               size: 13, color: Colors.grey),
                           const SizedBox(width: 4),
-                          Text(
-                            alert.createdFrom,
-                            style: const TextStyle(
-                                fontSize: 11, color: Colors.grey),
+                          Flexible(
+                            child: Text(
+                              alert.createdFrom,
+                              style: const TextStyle(
+                                  fontSize: 11, color: Colors.grey),
+                            ),
                           ),
                         ],
                       ),

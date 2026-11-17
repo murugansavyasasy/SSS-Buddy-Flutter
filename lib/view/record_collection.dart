@@ -650,7 +650,8 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
                   borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
                 ),
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+                  padding: EdgeInsets.fromLTRB(
+                      20, 24, 20, 32 + MediaQuery.paddingOf(context).bottom),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

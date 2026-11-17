@@ -501,19 +501,19 @@ class _MoveToToursettlementState extends ConsumerState<MoveToToursettlement> {
                 children: [
                   _buildTextField(
                     controller: _place1Controller,
-                    hint: "Place 1",
+                    hint: "Enter place",
                     prefixIcon: _placeNumberBadge("1"),
                   ),
                   const SizedBox(height: 8),
                   _buildTextField(
                     controller: _place2Controller,
-                    hint: "Place 2",
+                    hint: "Enter place",
                     prefixIcon: _placeNumberBadge("2"),
                   ),
                   const SizedBox(height: 8),
                   _buildTextField(
                     controller: _place3Controller,
-                    hint: "Place 3",
+                    hint: "Enter place",
                     prefixIcon: _placeNumberBadge("3"),
                   ),
                 ],

@@ -68,7 +68,7 @@ class ImportantInfoScreen extends ConsumerWidget {
                   data: (info) {
                     if (info == null)
                       return const Center(child: Text("No data found"));
-                    return _buildContent(info);
+                    return _buildContent(context, info);
                   },
                 ),
               ),
@@ -125,11 +125,13 @@ class ImportantInfoScreen extends ConsumerWidget {
       ),
     ].where((app) => app.url.isNotEmpty).toList();
   }
-  Widget _buildContent(info) {
+  Widget _buildContent(BuildContext context, info) {
     final appLinks = _getAppLinks(info);
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+      // Keep the last card above the Android navigation bar.
+      padding: EdgeInsets.fromLTRB(
+          16, 20, 16, 32 + MediaQuery.paddingOf(context).bottom),
       children: [
         const SectionLabel(label: "Support"),
         InfoCard(items: [

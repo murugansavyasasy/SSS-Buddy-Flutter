@@ -493,7 +493,7 @@ class _ExpenseFieldRow extends StatelessWidget {
                 prefixText: '₹ ',
                 prefixStyle:
                 TextStyle(fontSize: 13, color: Colors.grey.shade500),
-                hintText: '0.00',
+                hintText: 'Enter amount',
                 hintStyle:
                 TextStyle(fontSize: 13, color: Colors.grey.shade400),
                 isDense: true,

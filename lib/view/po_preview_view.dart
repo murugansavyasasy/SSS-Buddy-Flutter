@@ -56,7 +56,8 @@ class _POPreviewViewState extends ConsumerState<POPreviewView> {
                     return const Center(child: Text("No PO data found"));
                   }
                   return SingleChildScrollView(
-                    padding: const EdgeInsets.all(14),
+                    padding: EdgeInsets.fromLTRB(
+                        14, 14, 14, 14 + MediaQuery.paddingOf(context).bottom),
                     child: POPreviewBody(po: data.first),
                   );
                 },

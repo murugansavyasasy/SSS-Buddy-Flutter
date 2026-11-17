@@ -289,7 +289,7 @@ class _UploadImageViewState extends State<UploadImageView> {
 
   Widget _buildBottomBar() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -300,7 +300,10 @@ class _UploadImageViewState extends State<UploadImageView> {
           ),
         ],
       ),
-      child: Column(
+      child: SafeArea(
+        top: false,
+        minimum: const EdgeInsets.only(bottom: 24),
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (_selectedFiles.isNotEmpty) ...[
@@ -340,6 +343,7 @@ class _UploadImageViewState extends State<UploadImageView> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

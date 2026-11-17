@@ -348,7 +348,9 @@ class _AddAdvanceTourExpenseState extends ConsumerState<AddAdvanceTourExpense> {
                   ),
                 ),
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(18, 24, 18, 30),
+                  // Keep Submit above the Android navigation bar.
+                  padding: EdgeInsets.fromLTRB(
+                      18, 24, 18, 30 + MediaQuery.paddingOf(context).bottom),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -542,20 +544,28 @@ class _AddAdvanceTourExpenseState extends ConsumerState<AddAdvanceTourExpense> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
-                              "Total Tour Expense",
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.black87,
+                            const Flexible(
+                              child: Text(
+                                "Total Tour Expense",
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.black87,
+                                ),
                               ),
                             ),
-                            Text(
-                              "₹ ${_totalExpense.toStringAsFixed(2)}",
-                              style: TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.primary,
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  "₹ ${_totalExpense.toStringAsFixed(2)}",
+                                  style: TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
                               ),
                             ),
                           ],

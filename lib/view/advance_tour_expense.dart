@@ -75,7 +75,9 @@ class AdvanceTourExpense extends ConsumerWidget {
                         return const Center(child: Text("No Data Found"));
                       }
                       return ResponsiveCardList(
-                        padding: const EdgeInsets.all(12),
+                        // Bottom: clear the add button (ResponsiveCardList
+                        // adds the navigation-bar inset).
+                        padding: const EdgeInsets.fromLTRB(12, 12, 12, 80),
                         spacing: 0,
                         itemCount: list.length,
                         itemBuilder: (context, index) {

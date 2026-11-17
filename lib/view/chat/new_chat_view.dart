@@ -109,7 +109,8 @@ class _NewChatViewState extends ConsumerState<NewChatView> {
     }
 
     return ListView(
-      padding: const EdgeInsets.only(top: 8, bottom: 24),
+      padding: EdgeInsets.only(
+          top: 8, bottom: 24 + MediaQuery.paddingOf(context).bottom),
       children: [
         if (team.isNotEmpty) ...[
           _section('My Team'),

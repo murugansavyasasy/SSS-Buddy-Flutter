@@ -66,7 +66,8 @@ class StatusReport extends ConsumerWidget {
                   ),
                 ),
                 child: ListView(
-                  padding: const EdgeInsets.fromLTRB(20, 28, 20, 28),
+                  padding: EdgeInsets.fromLTRB(
+                      20, 28, 20, 28 + MediaQuery.paddingOf(context).bottom),
                   children: [
                     ..._menus.map(
                           (item) => Padding(

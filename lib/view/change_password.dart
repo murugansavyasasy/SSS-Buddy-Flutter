@@ -330,7 +330,9 @@ class _ChangePasswordState extends ConsumerState<ChangePassword> {
                   ),
                 ),
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(20, 28, 20, 24),
+                  // Keep the button above the Android navigation bar.
+                  padding: EdgeInsets.fromLTRB(
+                      20, 28, 20, 24 + MediaQuery.paddingOf(context).bottom),
                   keyboardDismissBehavior:
                       ScrollViewKeyboardDismissBehavior.onDrag,
                   child: Column(

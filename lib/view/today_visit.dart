@@ -389,7 +389,7 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
                                 controller: personNameController,
                                 label: "Name of the Person",
                                 icon: Icons.person_outlined,
-                                hint: "Enter person name",
+                                hint: "Enter name",
                               ),
                               _buildInputField(
                                 controller: contactController,
@@ -419,7 +419,7 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
                                 label: "Any Other Specific Remarks?",
                                 icon: Icons.chat_bubble_outline_rounded,
                                 maxLines: 3,
-                                hint: "Write your remarks here...",
+                                hint: "Enter remarks",
                               ),
                             ],
                           ),
@@ -439,7 +439,7 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
 
   Widget _buildFixedBottomButtons() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
       decoration: BoxDecoration(
         color: const Color(0xFFF5F7FA),
         boxShadow: [
@@ -450,12 +450,16 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
           ),
         ],
       ),
-      child: Row(
-        children: [
-          Expanded(child: _buildRecordVisitButton()),
-          const SizedBox(width: 12),
-          Expanded(child: _buildEndDayButton()),
-        ],
+      child: SafeArea(
+        top: false,
+        minimum: const EdgeInsets.only(bottom: 24),
+        child: Row(
+          children: [
+            Expanded(child: _buildRecordVisitButton()),
+            const SizedBox(width: 12),
+            Expanded(child: _buildEndDayButton()),
+          ],
+        ),
       ),
     );
   }
@@ -839,12 +843,16 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
       width: double.infinity,
       child: ElevatedButton.icon(
         icon: const Icon(Icons.add_location_alt_outlined, size: 20),
-        label: const Text(
-          "RECORD A VISIT",
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1,
+        label: const FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            "RECORD A VISIT",
+            maxLines: 1,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1,
+            ),
           ),
         ),
         style: ElevatedButton.styleFrom(

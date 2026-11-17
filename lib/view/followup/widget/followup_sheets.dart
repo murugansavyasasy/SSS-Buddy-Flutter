@@ -201,7 +201,7 @@ class _CompleteSheetState extends ConsumerState<_CompleteSheet> {
                 maxLines: 4,
                 textCapitalization: TextCapitalization.sentences,
                 decoration: InputDecoration(
-                  hintText: 'What happened?',
+                  hintText: 'Enter outcome',
                   filled: true,
                   fillColor: AppColors.background,
                   border: OutlineInputBorder(

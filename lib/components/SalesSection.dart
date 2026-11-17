@@ -32,20 +32,22 @@ class SalesSection extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                "ACCOUNT MANAGER",
-                style: TextStyle(
-                    fontSize: 10, color: Colors.grey, letterSpacing: 0.5),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                name.isEmpty ? '-' : name,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "ACCOUNT MANAGER",
+                  style: TextStyle(
+                      fontSize: 10, color: Colors.grey, letterSpacing: 0.5),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  name.isEmpty ? '-' : name,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
           ),
         ],
       ),

@@ -346,12 +346,18 @@ class _PendingInvoiceCard extends StatelessWidget {
                   letterSpacing: 0.3,
                 ),
               ),
-              Text(
-                "₹${_formatValue(invoice.pendingAmount)}",
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFFE65100),
+              const SizedBox(width: 6),
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    "₹${_formatValue(invoice.pendingAmount)}",
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFE65100),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -469,19 +475,18 @@ class POCard extends StatelessWidget {
 
           const SizedBox(height: 10),
 
-          // Tags: classification + nature
-          Row(
+          // Tags: classification + nature (wrap to a new line on narrow phones)
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
             children: [
               _Tag(label: classification.toUpperCase()),
-              const SizedBox(width: 6),
               _Tag(label: nature.toUpperCase(), color: const Color(0xFF5C6BC0)),
-              if (isBillable) ...[
-                const SizedBox(width: 6),
+              if (isBillable)
                 const _Tag(
                   label: "BILLABLE",
                   color: Color(0xFF00897B),
                 ),
-              ],
             ],
           ),
 
@@ -610,9 +615,13 @@ class _InfoBit extends StatelessWidget {
           children: [
             Icon(icon, size: 13, color: Colors.grey),
             const SizedBox(width: 4),
-            Text(
-              label,
-              style: const TextStyle(fontSize: 10.5, color: Colors.grey),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 10.5, color: Colors.grey),
+              ),
             ),
           ],
         ),

@@ -87,13 +87,16 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
                 child: Form(
                   key: _formKey,
                   child: SingleChildScrollView(
+                    // Keep Create Demo above the Android navigation bar.
+                    padding: EdgeInsets.only(
+                        bottom: MediaQuery.paddingOf(context).bottom),
                     child: Column(
                       children: [
                         const SizedBox(height: 8),
 
                         CustomTextField(
                           label: "School Name *",
-                          hint: "Enter School Name",
+                          hint: "Enter school name",
                           controller: titleController,
                           validator: (value) =>
                               _validateRequired(value, 'School Name'),
@@ -122,7 +125,7 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
 
                         CustomTextField(
                           label: "Demo Principal E-Mail ID",
-                          hint: "Enter Principal Email ID",
+                          hint: "Enter email address",
                           controller: dateController,
                           validator: _validateEmail,
                         ),

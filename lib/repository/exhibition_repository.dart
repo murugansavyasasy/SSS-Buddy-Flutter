@@ -166,20 +166,24 @@ class ExhibitionRepository {
         return extractList(res.data, ['templates']).map(DemoTemplate.fromJson).toList();
       });
 
-  /// Multipart: the WAV (8 kHz, mono) as `file`, plus title, description and
-  /// durationSeconds. (Not S3 — only recorded demos go to S3.)
+  /// Multipart: the voice (recorded M4A, or a picked M4A / MP3 / WAV) as
+  /// `file`, sent as-is with its own extension and MIME type, plus title,
+  /// description and durationSeconds. (Not S3 — only recorded demos go to S3.)
   Future<void> createTemplate({
     required String title,
     required String description,
-    required String wavPath,
+    required String audioPath,
     required Duration duration,
   }) =>
       _guard(() async {
+        final ext = S3UploadService.extensionOf(audioPath);
+        final mime = S3UploadService.contentTypeFor(audioPath).split('/');
         final form = FormData.fromMap({
           'file': await MultipartFile.fromFile(
-            wavPath,
-            filename: 'template_${DateTime.now().millisecondsSinceEpoch}.wav',
-            contentType: DioMediaType('audio', 'wav'),
+            audioPath,
+            filename: 'template_${DateTime.now().millisecondsSinceEpoch}'
+                '${ext.isEmpty ? '' : '.$ext'}',
+            contentType: mime.length == 2 ? DioMediaType(mime[0], mime[1]) : null,
           ),
           'title': title,
           'description': description,
@@ -237,19 +241,20 @@ class ExhibitionRepository {
         return _demoId(res.data);
       });
 
-  /// Custom recording: uploads the WAV (8 kHz, mono) to S3, then sends the
+  /// Custom recording: uploads the voice file (M4A / MP3 / WAV, as-is) to S3,
+  /// then sends the
   /// demo as JSON with its `audioUrl` (same call as a template demo).
   /// [onProgress] reports the S3 upload (0–1).
   Future<String> sendRecordedDemo({
     required String exhibitionId,
-    required String wavPath,
+    required String audioPath,
     required List<String> visitorNumbers,
     String visitorName = '',
     void Function(double progress)? onProgress,
   }) =>
       _guard(() async {
         final audioUrl = await _uploadVoice(
-          wavPath,
+          audioPath,
           onProgress: onProgress,
         );
         onProgress?.call(1);

@@ -73,7 +73,8 @@ class SchoolDocuments extends ConsumerWidget {
                       final sections = grouped.entries.toList();
 
                       return ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                        padding: EdgeInsets.fromLTRB(16, 16, 16,
+                            24 + MediaQuery.paddingOf(context).bottom),
                         itemCount: sections.length,
                         itemBuilder: (context, i) {
                           final section = sections[i];

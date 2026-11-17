@@ -3,7 +3,7 @@ import '../../auth/model/ExhibitionModel.dart';
 /// Pre-recorded demo voices offered on the Give Demo screen.
 ///
 /// TEMPORARY sample audio: free public-domain speech clips from the Open Speech
-/// Repository (WAV, 8 kHz, mono — the dialer format), so preview and send can
+/// Repository (sample WAVs; real templates may be M4A / MP3 / WAV), so preview and send can
 /// be tested end to end. They are not product recordings.
 /// For now these hardcoded templates are always shown; any templates the
 /// backend returns (GET exhibitions/templates) are added after them.

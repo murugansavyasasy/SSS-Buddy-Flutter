@@ -103,7 +103,9 @@ class _DemolistEditViewState extends ConsumerState<DemolistEditView> {
 
   Widget _buildForm() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      // Keep the buttons above the Android navigation bar.
+      padding: EdgeInsets.fromLTRB(
+          16, 16, 16, 16 + MediaQuery.paddingOf(context).bottom),
       child: Column(
         children: [
           CustomTextField(

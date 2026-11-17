@@ -44,7 +44,8 @@ class SchooldetailView extends ConsumerWidget {
                   borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(28)),
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(16, 18, 16, 24),
+                    padding: EdgeInsets.fromLTRB(
+                        16, 18, 16, 24 + MediaQuery.paddingOf(context).bottom),
                     child: Column(
                       children: [
                         _buildHero(),
@@ -153,11 +154,13 @@ class SchooldetailView extends ConsumerWidget {
                 const Icon(Icons.location_on_rounded,
                     size: 15, color: Colors.white70),
                 const SizedBox(width: 4),
-                Text(
-                  _v('City'),
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 13,
+                Flexible(
+                  child: Text(
+                    _v('City'),
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 13,
+                    ),
                   ),
                 ),
               ],

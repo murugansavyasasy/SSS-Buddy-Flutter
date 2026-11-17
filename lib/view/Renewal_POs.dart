@@ -94,7 +94,9 @@ class RenewalPOsPage extends ConsumerWidget {
                     ),
                   ),
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+                    // Keep the last card above the Android navigation bar.
+                    padding: EdgeInsets.fromLTRB(
+                        16, 20, 16, 16 + MediaQuery.paddingOf(context).bottom),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [

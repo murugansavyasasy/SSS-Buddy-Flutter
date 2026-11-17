@@ -25,6 +25,8 @@ class CustomerInfoView extends ConsumerStatefulWidget {
 class _CustomerInfoScreenState extends ConsumerState<CustomerInfoView> {
   @override
   Widget build(BuildContext context) {
+    // Lift the Continue button above the Android navigation bar.
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
     return Scaffold(
       backgroundColor: AppColors.primary,
       body: Column(
@@ -47,7 +49,8 @@ class _CustomerInfoScreenState extends ConsumerState<CustomerInfoView> {
           ),
           Container(
             color: Colors.white,
-            padding: const EdgeInsets.fromLTRB(30, 12, 30, 24),
+            padding: EdgeInsets.fromLTRB(
+                30, 12, 30, bottomInset > 12 ? bottomInset + 12 : 24),
             child: SizedBox(
               height: 52,
               width: double.infinity,
