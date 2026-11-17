@@ -169,7 +169,34 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
     return null;
   }
 
-  Future<bool> _confirmEndDay() async {
+  Future<bool> _confirmEndDay() => _confirm(
+        title: "End today's trip?",
+        message: 'Location tracking will stop for today.',
+        confirmLabel: 'End Trip',
+        confirmColor: dangerColor,
+      );
+
+  /// Asked before the Record Visit API call.
+  Future<bool> _confirmRecordVisit() {
+    final school = schoolController.text.trim();
+    final date = dateController.text.trim();
+    return _confirm(
+      title: 'Record this visit?',
+      message: date.isEmpty
+          ? 'Your visit to $school will be saved.'
+          : 'Your visit to $school on $date will be saved.',
+      confirmLabel: 'Record',
+      confirmColor: accentColor,
+    );
+  }
+
+  /// Cancel / confirm popup shared by End Day and Record Visit.
+  Future<bool> _confirm({
+    required String title,
+    required String message,
+    required String confirmLabel,
+    required Color confirmColor,
+  }) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => Dialog(
@@ -183,14 +210,14 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                "End today's trip?",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: primaryColor),
+              Text(
+                title,
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: primaryColor),
               ),
               const SizedBox(height: 10),
-              const Text(
-                'Location tracking will stop for today.',
-                style: TextStyle(fontSize: 16, color: mutedText),
+              Text(
+                message,
+                style: const TextStyle(fontSize: 16, color: mutedText),
               ),
               const SizedBox(height: 24),
               Row(
@@ -217,11 +244,11 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
                       child: FilledButton(
                         onPressed: () => Navigator.pop(ctx, true),
                         style: FilledButton.styleFrom(
-                          backgroundColor: dangerColor,
+                          backgroundColor: confirmColor,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
-                        child: const Text('End Trip',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                        child: Text(confirmLabel,
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                       ),
                     ),
                   ),
@@ -236,6 +263,7 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
   }
 
   bool _endingTrip = false;
+  bool _recordingVisit = false;
 
   /// END DAY: no form validation, just confirm and stop the trip.
   Future<void> _handleEndDay() async {
@@ -887,6 +915,10 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
             );
             return;
           }
+          // Confirm before calling the API; ignore taps while saving.
+          if (_recordingVisit) return;
+          if (!await _confirmRecordVisit() || !mounted) return;
+          _recordingVisit = true;
           try {
             final success = await ref
                 .read(todayVisitProvider.notifier)
@@ -931,6 +963,8 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(e.toString())),
             );
+          } finally {
+            _recordingVisit = false;
           }
         }
             : null,
