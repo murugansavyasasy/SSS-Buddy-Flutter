@@ -165,7 +165,19 @@ class ApiLogInterceptor extends Interceptor {
               : _mask(e.value),
       };
     }
-    if (v is List) return v.map(_mask).toList();
+    if (v is List) {
+      // Big lists (e.g. the ~2 MB school list) would take seconds to
+      // pretty-print on the UI thread in debug; log only the first few rows.
+      if (v.length > _maxListItems) {
+        return [
+          ...v.take(_maxListItems).map(_mask),
+          '… ${v.length - _maxListItems} more items (${v.length} total)',
+        ];
+      }
+      return v.map(_mask).toList();
+    }
     return v;
   }
+
+  static const _maxListItems = 5;
 }

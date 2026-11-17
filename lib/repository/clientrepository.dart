@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show compute;
 import 'package:sssbuddy/auth/model/CreatedemoResponse.dart';
 import 'package:sssbuddy/auth/model/UsageCount.dart';
 import 'package:sssbuddy/repository/app_endpoint.dart';
@@ -97,13 +98,22 @@ class ClientRepository {
     return data.map((e) => Demolist.fromJson(e)).toList();
   }
 
-  Future<String> postschoollist(String schoolLoginId) async {
+  /// The school list is large (~2 MB). Returns the decoded rows as-is
+  /// (Dio decodes big JSON off the UI thread); a plain-text body is decoded
+  /// in a background isolate. No encode/decode round trip on the UI thread.
+  Future<List<dynamic>> postschoollist(String schoolLoginId) async {
     final response = await client.schoolPost(
       AppEndpoint.schoollistendpoint,
       body: {"LoginID": schoolLoginId},
     );
 
-    return jsonEncode(response.data);
+    final data = response.data;
+    if (data is List) return data;
+    if (data is String && data.trim().isNotEmpty) {
+      final decoded = await compute(_decodeJsonList, data);
+      return decoded;
+    }
+    return const [];
   }
 
   Future<Createdemoresponse> createdemo(
@@ -920,4 +930,10 @@ class ClientRepository {
 
     return response.data;
   }
+}
+
+/// Top-level so it can run in a background isolate via [compute].
+List<dynamic> _decodeJsonList(String body) {
+  final decoded = jsonDecode(body);
+  return decoded is List ? decoded : const [];
 }
