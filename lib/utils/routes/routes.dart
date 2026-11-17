@@ -40,6 +40,12 @@ import '../../view/server_status.dart';
 import '../../view/zero_activity.dart';
 
 class Routes {
+  /// True on iPad-sized screens (shortest side ≥ 600 pt).
+  static bool _isTablet() {
+    final view = WidgetsBinding.instance.platformDispatcher.views.first;
+    return MediaQueryData.fromView(view).size.shortestSide >= 600;
+  }
+
   static Route<dynamic> generateRoutes(RouteSettings settings) {
     switch (settings.name) {
       case RoutesName.splashscreen:
@@ -56,6 +62,26 @@ class Routes {
 
       case RoutesName.recordvoice:
         final item = settings.arguments as Demolist;
+        // iPad: centred popup over the current screen; phones: full page.
+        if (_isTablet()) {
+          return PageRouteBuilder(
+            settings: settings,
+            opaque: false,
+            barrierColor: Colors.black54,
+            barrierDismissible: false,
+            pageBuilder: (_, _, _) =>
+                RecordVoiceScreen(item: item, asDialog: true),
+            transitionsBuilder: (_, animation, _, child) => FadeTransition(
+              opacity: animation,
+              child: ScaleTransition(
+                scale: Tween(begin: 0.96, end: 1.0).animate(
+                  CurvedAnimation(parent: animation, curve: Curves.easeOut),
+                ),
+                child: child,
+              ),
+            ),
+          );
+        }
         return MaterialPageRoute(builder: (context) => RecordVoiceScreen(item: item));
 
       case RoutesName.demoedit:
