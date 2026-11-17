@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -48,6 +50,7 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
   bool _searchOpen = false;
   bool _isRefreshing = false;
   final TextEditingController _controller = TextEditingController();
+  Timer? _debounce;
 
   late final AnimationController _animController;
   late final Animation<double> _fade;
@@ -121,6 +124,7 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _controller.dispose();
     _animController.dispose();
     _selectedMonthNotifier.dispose();
@@ -135,10 +139,13 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
 
   void _closeSearch() {
     _animController.reverse().then((_) {
+      if (!mounted) return;
+      _debounce?.cancel();
+      final hadQuery = _controller.text.isNotEmpty;
       setState(() => _searchOpen = false);
       _controller.clear();
-     if (!widget.backendSearch){
-      widget.onSearch?.call('');
+      if (!widget.backendSearch || hadQuery) {
+        widget.onSearch?.call('');
       }
     });
   }
@@ -302,13 +309,23 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                       onChanged: (val) {
                         if (widget.backendSearch) {
                           setState(() {});
+                          // Search as you type, once typing pauses.
+                          _debounce?.cancel();
+                          _debounce = Timer(
+                            const Duration(milliseconds: 450),
+                            () => widget.onSearch?.call(val.trim()),
+                          );
                         } else {
                           widget.onSearch?.call(val);
                         }
                       },
                       onSubmitted: widget.backendSearch
-                          ? (val) => widget.onSearch?.call(val)
+                          ? (val) {
+                              _debounce?.cancel();
+                              widget.onSearch?.call(val.trim());
+                            }
                           : null,
+                      textInputAction: TextInputAction.search,
                       style: const TextStyle(
                         fontSize: 14,
                         color: Colors.black87,
@@ -332,6 +349,7 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                             if (_controller.text.isNotEmpty)
                               GestureDetector(
                                 onTap: () {
+                                  _debounce?.cancel();
                                   _controller.clear();
                                   widget.onSearch?.call('');
                                   setState(() {});
@@ -345,8 +363,11 @@ class _ToolbarLayoutState extends ConsumerState<ToolbarLayout>
                             if (widget.backendSearch) ...[
                               const SizedBox(width: 8),
                               GestureDetector(
-                                onTap: () => widget.onSearch
-                                    ?.call(_controller.text),
+                                onTap: () {
+                                  _debounce?.cancel();
+                                  widget.onSearch
+                                      ?.call(_controller.text.trim());
+                                },
                                 child: Padding(
                                   padding:
                                   const EdgeInsets.only(right: 4),
