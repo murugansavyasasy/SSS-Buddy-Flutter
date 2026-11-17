@@ -332,25 +332,15 @@ class _ReportsBodyState extends ConsumerState<ReportsBody> {
     );
   }
 
-  /// Day-wise list. On iPad the month view becomes a two-column grid of days;
-  /// a single picked date stays one wide column with a taller map.
-  Widget _dayList(
+  /// iPad day-wise list: the month view is a two-column grid of days; a
+  /// single picked date stays one wide column with a taller map.
+  Widget _wideDayList(
     _MonthView v,
-    Reportingmembersmodel? selectedMember, {
-    required bool wide,
-  }) {
+    Reportingmembersmodel? selectedMember,
+  ) {
     if (v.isFutureMonth) {
       return const EmptyState(
         message: 'No entry found for the selected month.',
-      );
-    }
-
-    if (!wide) {
-      return ListView.builder(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-        itemCount: v.days.length,
-        itemBuilder: (_, index) =>
-            _dayItem(v, v.days[index], selectedMember),
       );
     }
 
@@ -457,47 +447,75 @@ class _ReportsBodyState extends ConsumerState<ReportsBody> {
     );
   }
 
+  /// Phone: the whole page (today bar, member, filters, summary and the
+  /// day-wise trips) scrolls as one list, so the trips get the full screen
+  /// height once the header scrolls away.
   Widget _phoneLayout(
     AsyncValue<List<Reportingmembersmodel>> membersAsync,
     Reportingmembersmodel? selectedMember,
     AsyncValue<List<Overalltripdetailsmodel>> tripsAsync,
   ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+    final allTrips = selectedMember == null
+        ? null
+        : tripsAsync.when(
+            data: (t) => t,
+            loading: () => null,
+            error: (_, __) => null,
+          );
+    final view = (allTrips != null && allTrips.isNotEmpty)
+        ? _computeView(allTrips)
+        : null;
+
+    return CustomScrollView(
+      slivers: [
         // TODAY'S ENTRY STATUS (entered / no entry)
-        const TodayEntryBar(),
+        const SliverToBoxAdapter(child: TodayEntryBar()),
 
         // MEMBER DROPDOWN
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-          child: _memberSection(membersAsync, selectedMember),
-        ),
-
-        const SizedBox(height: 16),
-
-        // TRIP LIST
-        Expanded(
-          child: _tripsState(
-            tripsAsync,
-            selectedMember,
-            (v) => Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: _filterRow(v),
-                ),
-                const SizedBox(height: 12),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                  child: _summaryCard(v),
-                ),
-                Expanded(child: _dayList(v, selectedMember, wide: false)),
-              ],
-            ),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          sliver: SliverToBoxAdapter(
+            child: _memberSection(membersAsync, selectedMember),
           ),
         ),
+
+        if (view == null)
+          // Loading / error / no member / no trips
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: _tripsState(
+              tripsAsync,
+              selectedMember,
+              (_) => const SizedBox.shrink(),
+            ),
+          )
+        else ...[
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            sliver: SliverToBoxAdapter(child: _filterRow(view)),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            sliver: SliverToBoxAdapter(child: _summaryCard(view)),
+          ),
+          // TRIP LIST
+          if (view.isFutureMonth)
+            const SliverFillRemaining(
+              hasScrollBody: false,
+              child: EmptyState(
+                message: 'No entry found for the selected month.',
+              ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+              sliver: SliverList.builder(
+                itemCount: view.days.length,
+                itemBuilder: (_, index) =>
+                    _dayItem(view, view.days[index], selectedMember),
+              ),
+            ),
+        ],
       ],
     );
   }
@@ -596,7 +614,7 @@ class _ReportsBodyState extends ConsumerState<ReportsBody> {
             child: _tripsState(
               tripsAsync,
               selectedMember,
-              (v) => _dayList(v, selectedMember, wide: true),
+              (v) => _wideDayList(v, selectedMember),
             ),
           ),
         ],
