@@ -589,6 +589,56 @@ class ExHeaderIconButton extends StatelessWidget {
       _ExHeaderButton(icon: icon, size: 22, tooltip: tooltip, onTap: onTap, solid: true);
 }
 
+/// iPad header pill: "Full view" (while split) / "Split view" (while full).
+class ExSplitToggle extends StatelessWidget {
+  final bool split;
+  final VoidCallback onTap;
+  const ExSplitToggle({super.key, required this.split, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final label = split ? 'Full view' : 'Split view';
+    return Semantics(
+      button: true,
+      label: label,
+      excludeSemantics: true,
+      child: Material(
+        color: Colors.white,
+        shape: const StadiumBorder(side: BorderSide(color: Colors.white, width: 1.2)),
+        elevation: 0.5,
+        shadowColor: const Color(0x331F6FB8),
+        child: InkWell(
+          customBorder: const StadiumBorder(),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  split ? Icons.fullscreen_rounded : Icons.vertical_split_outlined,
+                  size: 20,
+                  color: exInk,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontFamily: exFont,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: exInk,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Centres content and caps its width on tablets.
 class ExMaxWidth extends StatelessWidget {
   final Widget child;

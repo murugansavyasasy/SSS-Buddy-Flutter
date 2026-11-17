@@ -159,10 +159,9 @@ class _ExhibitionListViewState extends ConsumerState<ExhibitionListView> {
     final tablet = exIsSplit(context);
     final split = tablet && _splitPref;
     final toggle = tablet
-        ? ExHeaderIconButton(
-            icon: split ? Icons.fullscreen_rounded : Icons.vertical_split_outlined,
-            tooltip: split ? 'Full screen' : 'Split view',
-            onTap: _toggleSplit,
+        ? Padding(
+            padding: const EdgeInsets.only(left: 8),
+            child: ExSplitToggle(split: split, onTap: _toggleSplit),
           )
         : null;
 

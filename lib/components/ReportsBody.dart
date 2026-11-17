@@ -18,9 +18,13 @@ import 'TripCard.dart';
 import 'TripRouteMap.dart';
 import '../auth/model/ReportingMembersModel.dart';
 import '../view/root_tracker.dart';
+import '../viewModel/reports_layout_viewmodel.dart';
 
 class ReportsBody extends ConsumerStatefulWidget {
   const ReportsBody({super.key});
+
+  /// Width from which the page switches to the two-pane iPad layout.
+  static const double wideBreakpoint = 700;
 
   @override
   ConsumerState<ReportsBody> createState() => _ReportsBodyState();
@@ -85,8 +89,6 @@ class _ReportsBodyState extends ConsumerState<ReportsBody> {
     }
   }
 
-  /// Width from which the page switches to the two-pane iPad layout.
-  static const double _wideBreakpoint = 700;
 
   /// Month / date filtering and day-wise grouping of the loaded trips.
   _MonthView _computeView(List<Overalltripdetailsmodel> allTrips) {
@@ -433,7 +435,9 @@ class _ReportsBodyState extends ConsumerState<ReportsBody> {
       top: false,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          if (constraints.maxWidth >= _wideBreakpoint) {
+          // iPad shows the two-pane layout unless "Full view" is chosen.
+          if (constraints.maxWidth >= ReportsBody.wideBreakpoint &&
+              !ref.watch(reportsFullViewProvider)) {
             return _wideLayout(
               constraints,
               membersAsync,
