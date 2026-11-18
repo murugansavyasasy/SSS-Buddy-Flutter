@@ -15,16 +15,52 @@ void main() {
     expect(b.attachments, isEmpty);
   });
 
-  test('capture lead request sends attachments; contact fields optional', () {
+  test('lead mediaUrl (current API) becomes the attachment', () {
+    final l = ExhibitionLead.fromJson({
+      'id': 9,
+      'schoolName': 'ABC',
+      'mediaUrl': 'https://s3/lead-photo.jpg',
+    });
+    expect(l.attachments, ['https://s3/lead-photo.jpg']);
+  });
+
+  test('capture lead request sends mediaUrl; contact fields optional', () {
     const req = CaptureLeadRequest(
       schoolName: 'GV School',
       city: 'Chennai',
       attachments: ['https://s3/a.jpg'],
     );
     final json = req.toJson();
-    expect(json['attachments'], ['https://s3/a.jpg']);
+    expect(json['mediaUrl'], 'https://s3/a.jpg');
     expect(json['contactNumber'], '');
     expect(json['contactEmail'], '');
+    expect(const CaptureLeadRequest(schoolName: 'X').toJson()['mediaUrl'], '');
+  });
+
+  test('demo detail recipients and voice template scope parse', () {
+    final d = ExhibitionDemo.fromJson({
+      'id': 51,
+      'visitorName': 'Mr. Kumar',
+      'recipients': [
+        {'id': 120, 'mobile': '9811112222', 'recipientType': 'visitor',
+         'recipientName': 'Mr. Kumar', 'callStatus': 'queued', 'error': null},
+        {'id': 121, 'mobile': '9876543210', 'recipientType': 'team',
+         'recipientName': 'Ravi', 'callStatus': 'failed', 'error': 'Busy'},
+      ],
+    });
+    expect(d.recipients.length, 2);
+    expect(d.recipients[1].isTeam, isTrue);
+    expect(d.recipients[1].name, 'Ravi');
+    expect(d.recipients[1].status, CallStatus.failed);
+    expect(d.recipients[1].error, 'Busy');
+    expect(d.recipients[0].error, '');
+
+    final t = DemoTemplate.fromJson({'id': 1, 'exhibitionId': null, 'name': 'Intro',
+        'audioUrl': 'https://x/a.wav', 'scope': 'common'});
+    expect(t.title, 'Intro');
+    expect(t.isCommon, isTrue);
+    expect(DemoTemplate.fromJson({'id': 8, 'name': 'Offer', 'scope': 'exhibition'}).isCommon,
+        isFalse);
   });
 
   test('S3 names are score_<timestamp> with the file\'s own type', () {

@@ -308,7 +308,7 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
       );
 
   List<Widget> _demoSlivers(AsyncValue<List<ExhibitionDemo>> demos, Exhibition ex, double pad) {
-    final templates = ref.watch(exhibitionTemplatesProvider).value ?? const <DemoTemplate>[];
+    final templates = ref.watch(exhibitionTemplatesProvider(_id)).value ?? const <DemoTemplate>[];
     return demos.when<List<Widget>>(
       loading: () => [
         const SliverToBoxAdapter(child: ExMaxWidth(child: ExSkeletonList(count: 2))),

@@ -99,7 +99,10 @@ class ExhibitionRepository {
       _guard(() async {
         final res = await _dio.get(
           AppEndpoint.exhibitions,
-          queryParameters: {'status': status, 'search': search},
+          queryParameters: {
+            if (status.isNotEmpty) 'status': status,
+            if (search.isNotEmpty) 'search': search,
+          },
           options: await _options(),
         );
         _ensureOk(res);
@@ -136,8 +139,8 @@ class ExhibitionRepository {
         );
       });
 
-  /// PUT /exhibitions/:id with the same body as create.
-  /// NOTE: confirm this endpoint with the backend.
+  /// PUT /exhibitions/:id with the same body as create. The attendees list
+  /// is always sent, so the travelling team is replaced with it.
   Future<void> updateExhibition(String id, CreateExhibitionRequest req) => _guard(() async {
         final res = await _dio.put(
           AppEndpoint.exhibitionById(id),
@@ -147,8 +150,7 @@ class ExhibitionRepository {
         _ensureOk(res);
       });
 
-  /// DELETE /exhibitions/:id. Only the creator sees this option.
-  /// NOTE: confirm this endpoint with the backend.
+  /// DELETE /exhibitions/:id (soft delete). Only the creator sees this option.
   Future<void> deleteExhibition(String id) => _guard(() async {
         final res = await _dio.delete(
           AppEndpoint.exhibitionById(id),
@@ -158,22 +160,25 @@ class ExhibitionRepository {
       });
 
   // MARK: Voice templates
-  // NOTE: confirm these three endpoints with the backend.
 
-  Future<List<DemoTemplate>> fetchTemplates() => _guard(() async {
-        final res = await _dio.get(AppEndpoint.exhibitionTemplates, options: await _options());
+  /// GET /exhibitions/:id/voice-templates — common templates first, then the
+  /// ones made for this exhibition.
+  Future<List<DemoTemplate>> fetchTemplates(String exhibitionId) => _guard(() async {
+        final res = await _dio.get(AppEndpoint.exhibitionVoiceTemplates(exhibitionId),
+            options: await _options());
         _ensureOk(res);
         return extractList(res.data, ['templates']).map(DemoTemplate.fromJson).toList();
       });
 
-  /// Multipart: the voice (recorded M4A, or a picked M4A / MP3 / WAV) as
-  /// `file`, sent as-is with its own extension and MIME type, plus title,
-  /// description and durationSeconds. (Not S3 — only recorded demos go to S3.)
+  /// POST /exhibitions/:id/voice-templates as multipart: the voice as `file`
+  /// (sent as-is with its own extension and MIME type), plus name,
+  /// description and `common` ("true" = available in every exhibition).
   Future<void> createTemplate({
-    required String title,
+    required String exhibitionId,
+    required String name,
     required String description,
     required String audioPath,
-    required Duration duration,
+    bool common = false,
   }) =>
       _guard(() async {
         final ext = S3UploadService.extensionOf(audioPath);
@@ -185,12 +190,12 @@ class ExhibitionRepository {
                 '${ext.isEmpty ? '' : '.$ext'}',
             contentType: mime.length == 2 ? DioMediaType(mime[0], mime[1]) : null,
           ),
-          'title': title,
+          'name': name,
           'description': description,
-          'durationSeconds': duration.inSeconds,
+          'common': common ? 'true' : 'false',
         });
         final res = await _dio.post(
-          AppEndpoint.exhibitionTemplates,
+          AppEndpoint.exhibitionVoiceTemplates(exhibitionId),
           data: form,
           options: (await _options()).copyWith(
             sendTimeout: const Duration(minutes: 2),
@@ -200,8 +205,10 @@ class ExhibitionRepository {
         _ensureOk(res);
       });
 
-  Future<void> deleteTemplate(String id) => _guard(() async {
-        final res = await _dio.delete(AppEndpoint.exhibitionTemplateById(id), options: await _options());
+  /// DELETE /exhibitions/voice-templates/:templateId (soft delete).
+  Future<void> deleteTemplate(String templateId) => _guard(() async {
+        final res = await _dio.delete(AppEndpoint.exhibitionVoiceTemplateById(templateId),
+            options: await _options());
         _ensureOk(res);
       });
 
@@ -212,6 +219,15 @@ class ExhibitionRepository {
             options: await _options());
         _ensureOk(res);
         return extractList(res.data, ['demos']).map(ExhibitionDemo.fromJson).toList();
+      });
+
+  /// GET /exhibitions/demos/:demoId — visitor, voice and every number
+  /// dialled with its call status.
+  Future<ExhibitionDemo> fetchDemo(String demoId) => _guard(() async {
+        final res = await _dio.get(AppEndpoint.exhibitionDemoById(demoId),
+            options: await _options());
+        _ensureOk(res);
+        return ExhibitionDemo.fromJson(extractObject(res.data, ['demo']));
       });
 
   /// Template voice: JSON with `audioUrl`. Returns the new demo id ('' if the
@@ -322,8 +338,8 @@ class ExhibitionRepository {
         _ensureOk(res);
       });
 
-  /// PUT /exhibitions/leads/:leadId with the same body as capture.
-  /// NOTE: confirm this endpoint with the backend.
+  /// PUT /exhibitions/leads/:leadId with the same body as capture. This
+  /// replaces the lead, so [req] must carry the media URL to keep.
   Future<void> updateLead(String leadId, CaptureLeadRequest req) => _guard(() async {
         final res = await _dio.put(
           AppEndpoint.exhibitionLeadById(leadId),

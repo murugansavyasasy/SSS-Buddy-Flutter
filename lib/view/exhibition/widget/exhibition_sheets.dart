@@ -238,7 +238,8 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
   /// Already-uploaded files (when editing) and newly picked local files.
   late final List<String> _existing = [...?widget.lead?.attachments];
   final List<_LocalFile> _picked = [];
-  static const _maxFiles = 10;
+  /// The API stores one media link per lead (`mediaUrl`).
+  static const _maxFiles = 1;
   int get _fileCount => _existing.length + _picked.length;
 
   @override
@@ -265,7 +266,9 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
 
   // ── Attachments ──
 
-  void _tooMany() => setState(() => _error = 'You can attach up to $_maxFiles files.');
+  void _tooMany() => setState(() => _error = _maxFiles == 1
+      ? 'Only one file can be attached. Remove it to add another.'
+      : 'You can attach up to $_maxFiles files.');
 
   Future<void> _addFromCamera() async {
     if (_fileCount >= _maxFiles) return _tooMany();
@@ -411,7 +414,7 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
       children: [
         Row(
           children: [
-            Text('Attachments', style: exHeadingSm.copyWith(fontSize: 15)),
+            Text('Attachment', style: exHeadingSm.copyWith(fontSize: 15)),
             const SizedBox(width: 6),
             Expanded(
               child: Text('(optional · photos or PDF)',
@@ -1059,6 +1062,12 @@ class _DemoDetailPanelState extends ConsumerState<DemoDetailPanel> {
   @override
   Widget build(BuildContext context) {
     final d = widget.demo;
+    // Every number dialled with its call status, from the demo detail API.
+    final detail = d.id.isEmpty ? null : ref.watch(exhibitionDemoDetailProvider(d.id));
+    final fetched = detail?.value?.recipients ?? const <DemoRecipient>[];
+    final recipients = fetched.isNotEmpty ? fetched : d.recipients;
+    final loadingDetail = detail != null && detail.isLoading && recipients.isEmpty;
+    final detailFailed = detail != null && detail.hasError && recipients.isEmpty;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -1156,10 +1165,37 @@ class _DemoDetailPanelState extends ConsumerState<DemoDetailPanel> {
           ),
         ),
         const SizedBox(height: 14),
-        Text('Recipients (${d.recipients.isEmpty ? d.recipientCount : d.recipients.length})',
-            style: exHeadingSm),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                  'Recipients (${recipients.isEmpty ? d.recipientCount : recipients.length})',
+                  style: exHeadingSm),
+            ),
+            if (detail != null)
+              SizedBox(
+                width: 44,
+                height: 44,
+                child: detail.isLoading
+                    ? const Padding(
+                        padding: EdgeInsets.all(13),
+                        child: CircularProgressIndicator(strokeWidth: 2, color: exBrandBold),
+                      )
+                    : IconButton(
+                        tooltip: 'Refresh call status',
+                        onPressed: () => ref.invalidate(exhibitionDemoDetailProvider(d.id)),
+                        icon: const Icon(Icons.refresh_rounded, color: exBrandBold),
+                      ),
+              ),
+          ],
+        ),
         const SizedBox(height: 8),
-        if (d.recipients.isEmpty)
+        if (loadingDetail)
+          const Text('Loading call details…', style: exBodyMd)
+        else if (detailFailed)
+          Text("Couldn't load call details. Tap refresh to try again.",
+              style: exBodyMd.copyWith(color: exDanger))
+        else if (recipients.isEmpty)
           const Text('Call details are not available yet.', style: exBodyMd)
         else
           Container(
@@ -1169,9 +1205,9 @@ class _DemoDetailPanelState extends ConsumerState<DemoDetailPanel> {
             ),
             child: Column(
               children: [
-                for (var i = 0; i < d.recipients.length; i++) ...[
+                for (var i = 0; i < recipients.length; i++) ...[
                   if (i > 0) const Divider(height: 1, color: exBorder),
-                  _RecipientRow(r: d.recipients[i]),
+                  _RecipientRow(r: recipients[i]),
                 ],
               ],
             ),
@@ -1245,6 +1281,8 @@ class _RecipientRow extends StatelessWidget {
               children: [
                 Text(formatIndianMobile(r.number), style: exHeadingSm.copyWith(fontSize: 15)),
                 if (r.name.isNotEmpty) Text(r.name, style: exBodySm),
+                if (r.error.isNotEmpty)
+                  Text(r.error, style: exBodySm.copyWith(color: exDanger)),
               ],
             ),
           ),
@@ -1266,14 +1304,20 @@ class _RecipientRow extends StatelessWidget {
 
 // MARK: - Add voice template
 
-/// Record a new voice template and upload it. Returns true when saved.
-Future<bool> showAddTemplateSheet(BuildContext context) async {
-  final saved = await _showSheet<bool>(context, (_) => const _AddTemplateSheet(), full: true);
+/// Record a new voice template for [exhibitionId] and upload it. Returns
+/// true when saved.
+Future<bool> showAddTemplateSheet(BuildContext context, {required String exhibitionId}) async {
+  final saved = await _showSheet<bool>(
+    context,
+    (_) => _AddTemplateSheet(exhibitionId: exhibitionId),
+    full: true,
+  );
   return saved == true;
 }
 
 class _AddTemplateSheet extends ConsumerStatefulWidget {
-  const _AddTemplateSheet();
+  final String exhibitionId;
+  const _AddTemplateSheet({required this.exhibitionId});
 
   @override
   ConsumerState<_AddTemplateSheet> createState() => _AddTemplateSheetState();
@@ -1284,6 +1328,9 @@ class _AddTemplateSheetState extends ConsumerState<_AddTemplateSheet> {
   final _description = TextEditingController();
   String? _path;
   Duration _length = Duration.zero;
+
+  /// Offer this template in every exhibition, not just this one.
+  bool _common = false;
   bool _tried = false;
   bool _saving = false;
   String? _error;
@@ -1307,10 +1354,11 @@ class _AddTemplateSheetState extends ConsumerState<_AddTemplateSheet> {
     setState(() => _saving = true);
     try {
       await ref.read(exhibitionRepositoryProvider).createTemplate(
-            title: _title.text.trim(),
+            exhibitionId: widget.exhibitionId,
+            name: _title.text.trim(),
             description: _description.text.trim(),
             audioPath: _path!,
-            duration: _length,
+            common: _common,
           );
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
@@ -1375,7 +1423,16 @@ class _AddTemplateSheetState extends ConsumerState<_AddTemplateSheet> {
                   hint: 'Enter description',
                   textCapitalization: TextCapitalization.sentences,
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 12),
+                SwitchListTile.adaptive(
+                  contentPadding: EdgeInsets.zero,
+                  value: _common,
+                  activeTrackColor: exBrand,
+                  onChanged: _saving ? null : (v) => setState(() => _common = v),
+                  title: Text('Use in all exhibitions', style: exHeadingSm.copyWith(fontSize: 15)),
+                  subtitle: const Text('Off: only this exhibition offers it.', style: exBodySm),
+                ),
+                const SizedBox(height: 8),
                 Text('Voice', style: exHeadingSm.copyWith(fontSize: 15)),
                 const SizedBox(height: 8),
                 VoiceRecorderPanel(

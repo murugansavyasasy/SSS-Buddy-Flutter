@@ -274,11 +274,15 @@ class DemoRecipient {
   final String name;
   final CallStatus status;
 
+  /// Dialler error for this number (from GET /exhibitions/demos/:demoId).
+  final String error;
+
   const DemoRecipient({
     required this.number,
     required this.isTeam,
     this.name = '',
     this.status = CallStatus.queued,
+    this.error = '',
   });
 
   factory DemoRecipient.fromJson(Map<String, dynamic> j) => DemoRecipient(
@@ -286,8 +290,9 @@ class DemoRecipient {
             _str(j, ['number', 'Number', 'mobile', 'mobileNumber', 'phone'])),
         isTeam: _str(j, ['type', 'Type', 'recipientType']).toLowerCase().contains('team') ||
             _pick(j, ['isTeam', 'IsTeam']) == true,
-        name: _str(j, ['name', 'Name', 'attendeeName']),
-        status: parseCallStatus(_str(j, ['status', 'Status', 'callStatus'], 'queued')),
+        name: _str(j, ['recipientName', 'RecipientName', 'name', 'Name', 'attendeeName']),
+        status: parseCallStatus(_str(j, ['callStatus', 'CallStatus', 'status', 'Status'], 'queued')),
+        error: _str(j, ['error', 'Error', 'errorMessage']),
       );
 }
 
@@ -428,8 +433,16 @@ class ExhibitionLead {
         demoVisitorName: _str(j, ['visitorName', 'demoVisitorName', 'VisitorName']),
         interestLevel: parseInterestLevel(
             _str(j, ['interestLevel', 'InterestLevel', 'level', 'leadLevel'])),
-        attachments: _urlList(j, ['attachments', 'Attachments', 'files', 'Files']),
+        attachments: _leadMedia(j),
       );
+}
+
+/// The lead's media: `mediaUrl` (single S3 link, current API), else an
+/// `attachments` list from older responses.
+List<String> _leadMedia(Map m) {
+  final media = _str(m, ['mediaUrl', 'MediaUrl']).trim();
+  if (media.isNotEmpty) return [media];
+  return _urlList(m, ['attachments', 'Attachments', 'files', 'Files']);
 }
 
 /// URLs from a list of strings or of objects with a `url`/`fileUrl`.
@@ -449,7 +462,9 @@ List<String> _urlList(Map m, List<String> keys) {
   return const [];
 }
 
-/// Body for POST /api/mobile/exhibitions/demos/:demoId/interest.
+/// Body for POST /api/mobile/exhibitions/demos/:demoId/interest and
+/// PUT /api/mobile/exhibitions/leads/:leadId. The API keeps one media link
+/// (`mediaUrl`); the PUT replaces the lead, so the current one is resent.
 class CaptureLeadRequest {
   final String schoolName;
   final String city;
@@ -481,7 +496,7 @@ class CaptureLeadRequest {
         'contactEmail': contactEmail,
         'notes': notes,
         'interestLevel': interestLevel.apiValue,
-        'attachments': attachments,
+        'mediaUrl': attachments.isEmpty ? '' : attachments.first,
       };
 }
 
@@ -495,6 +510,9 @@ class DemoTemplate {
   final String createdBy;
   final String createdById;
 
+  /// True for templates shared across all exhibitions (`scope: "common"`).
+  final bool isCommon;
+
   const DemoTemplate({
     required this.id,
     required this.title,
@@ -503,6 +521,7 @@ class DemoTemplate {
     required this.audioUrl,
     this.createdBy = '',
     this.createdById = '',
+    this.isCommon = false,
   });
 
   DemoTemplate withDuration(Duration d) => DemoTemplate(
@@ -513,9 +532,10 @@ class DemoTemplate {
         audioUrl: audioUrl,
         createdBy: createdBy,
         createdById: createdById,
+        isCommon: isCommon,
       );
 
-  /// From GET /exhibitions/templates.
+  /// From GET /exhibitions/:id/voice-templates.
   factory DemoTemplate.fromJson(Map<String, dynamic> j) => DemoTemplate(
         id: _str(j, ['id', 'Id', 'templateId', '_id']),
         title: _str(j, ['title', 'Title', 'name', 'Name']),
@@ -524,6 +544,7 @@ class DemoTemplate {
         audioUrl: _str(j, ['audioUrl', 'AudioUrl', 'fileUrl', 'url']),
         createdBy: _str(j, ['createdByName', 'CreatedByName', 'createdBy', 'CreatedBy']),
         createdById: _str(j, ['createdById', 'CreatedById', 'createdByUserId', 'userId']),
+        isCommon: _str(j, ['scope', 'Scope']).toLowerCase() == 'common',
       );
 
   bool isCreatedBy({required String userId, required String userName}) =>
