@@ -51,8 +51,9 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
       _loadError = null;
     });
     try {
-      ref.invalidate(exhibitionDetailProvider(base.id));
-      final fresh = await ref.read(exhibitionDetailProvider(base.id).future);
+      // Straight from the repository: invalidating exhibitionDetailProvider
+      // here would rebuild the detail screen underneath mid-build and throw.
+      final fresh = await ref.read(exhibitionRepositoryProvider).fetchExhibition(base.id);
       if (!mounted) return;
       _fill(fresh.mergedWith(base));
       setState(() => _loading = false);
