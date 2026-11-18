@@ -189,6 +189,29 @@ class Exhibition {
     );
   }
 
+  /// This exhibition with every empty field filled from [other] (e.g. the
+  /// detail response topped up with what the list row already had).
+  Exhibition mergedWith(Exhibition other) {
+    String pick(String a, String b) => a.trim().isNotEmpty ? a : b;
+    return Exhibition(
+      id: pick(id, other.id),
+      name: pick(name, other.name),
+      venue: pick(venue, other.venue),
+      city: pick(city, other.city),
+      startDate: startDate ?? other.startDate,
+      endDate: endDate ?? other.endDate,
+      status: status,
+      notes: pick(notes, other.notes),
+      attendees: attendees.isNotEmpty ? attendees : other.attendees,
+      attendeeCount: attendeeCount > 0 ? attendeeCount : other.attendeeCount,
+      demoCount: demoCount > 0 ? demoCount : other.demoCount,
+      leadCount: leadCount > 0 ? leadCount : other.leadCount,
+      createdAt: createdAt ?? other.createdAt,
+      createdBy: pick(createdBy, other.createdBy),
+      createdById: pick(createdById, other.createdById),
+    );
+  }
+
   /// True when the signed-in user created this exhibition: matched by user
   /// id when the API sends one, otherwise by name (case and spaces ignored).
   bool isCreatedBy({required String userId, required String userName}) =>
