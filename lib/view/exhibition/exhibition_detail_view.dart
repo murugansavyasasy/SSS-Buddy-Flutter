@@ -173,7 +173,11 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
     final detail = ref.watch(exhibitionDetailProvider(_id));
     final demos = ref.watch(exhibitionDemosProvider(_id));
     final leads = ref.watch(exhibitionLeadsProvider(_id));
-    final ex = detail.value ?? widget.initial;
+    // Detail wins, but fields it leaves out (creator, lead count, …) come
+    // from the list row — otherwise the creator loses Edit / Delete.
+    final fresh = detail.value;
+    final base = widget.initial;
+    final ex = fresh == null ? base : (base == null ? fresh : fresh.mergedWith(base));
 
     if (ex == null) {
       return detail.hasError
@@ -308,7 +312,7 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
       );
 
   List<Widget> _demoSlivers(AsyncValue<List<ExhibitionDemo>> demos, Exhibition ex, double pad) {
-    final templates = ref.watch(exhibitionTemplatesProvider).value ?? const <DemoTemplate>[];
+    final templates = ref.watch(exhibitionTemplatesProvider(_id)).value ?? const <DemoTemplate>[];
     return demos.when<List<Widget>>(
       loading: () => [
         const SliverToBoxAdapter(child: ExMaxWidth(child: ExSkeletonList(count: 2))),

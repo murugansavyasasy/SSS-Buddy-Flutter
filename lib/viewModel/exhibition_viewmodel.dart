@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../auth/model/ExhibitionModel.dart';
-import '../core/exhibition/demo_templates.dart';
 import '../provider/app_providers.dart';
 import '../repository/exhibition_repository.dart';
 
@@ -61,21 +60,17 @@ void refreshExhibition(WidgetRef ref, String id) {
   ref.invalidate(exhibitionListProvider);
 }
 
-/// Voice templates for Give Demo, loaded from the API (not bundled in the
-/// app). Kept alive so demo rows can name the voice without refetching.
-final exhibitionTemplatesProvider = FutureProvider<List<DemoTemplate>>(
+/// One demo with every number dialled and its call status, for the
+/// expanded demo card. Invalidate to refresh the call statuses.
+final exhibitionDemoDetailProvider = FutureProvider.autoDispose.family<ExhibitionDemo, String>(
   retry: _noRetry,
-  (ref) async {
-    // Hardcoded templates for now; API templates are appended when the
-    // endpoint is available (its failure is ignored).
-    List<DemoTemplate> fromApi = const [];
-    try {
-      fromApi = await ref.read(exhibitionRepositoryProvider).fetchTemplates();
-    } catch (_) {}
-    final ids = exhibitionDemoTemplates.map((t) => t.id).toSet();
-    return [
-      ...exhibitionDemoTemplates,
-      ...fromApi.where((t) => !ids.contains(t.id)),
-    ];
-  },
+  (ref, demoId) => ref.read(exhibitionRepositoryProvider).fetchDemo(demoId),
+);
+
+/// Voice templates for an exhibition (common ones first, then its own), from
+/// GET /exhibitions/:id/voice-templates. Kept alive so demo rows can name
+/// the voice without refetching.
+final exhibitionTemplatesProvider = FutureProvider.family<List<DemoTemplate>, String>(
+  retry: _noRetry,
+  (ref, exhibitionId) => ref.read(exhibitionRepositoryProvider).fetchTemplates(exhibitionId),
 );

@@ -110,7 +110,7 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
     }
     if (d.audioUrl.isNotEmpty) {
       _voice = _Voice.template;
-      final templates = ref.read(exhibitionTemplatesProvider).value ?? const <DemoTemplate>[];
+      final templates = ref.read(exhibitionTemplatesProvider(widget.exhibition.id)).value ?? const <DemoTemplate>[];
       _template = templates.where((t) => t.audioUrl == d.audioUrl).firstOrNull;
       if (_template == null) {
         _previousVoice = DemoTemplate(
@@ -628,9 +628,9 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
   );
 
   Future<void> _addTemplate() async {
-    final saved = await showAddTemplateSheet(context);
+    final saved = await showAddTemplateSheet(context, exhibitionId: widget.exhibition.id);
     if (!saved || !mounted) return;
-    ref.invalidate(exhibitionTemplatesProvider);
+    ref.invalidate(exhibitionTemplatesProvider(widget.exhibition.id));
     exToast(context, 'Template added');
   }
 
@@ -657,12 +657,12 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
       if (_template?.id == t.id) _template = null;
       if (_previewId == t.id) _previewId = null;
     });
-    ref.invalidate(exhibitionTemplatesProvider);
+    ref.invalidate(exhibitionTemplatesProvider(widget.exhibition.id));
     exToast(context, 'Template deleted');
   }
 
   Widget _templateCards(bool wide) {
-    final async = ref.watch(exhibitionTemplatesProvider);
+    final async = ref.watch(exhibitionTemplatesProvider(widget.exhibition.id));
     final addButton = _AddTemplateTile(onTap: _addTemplate);
     if (async.isLoading && !async.hasValue) {
       return const Padding(
@@ -677,7 +677,7 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
         message: 'Check the connection and try again, or record a custom voice.',
         isError: true,
         actionLabel: 'Retry',
-        onAction: () => ref.invalidate(exhibitionTemplatesProvider),
+        onAction: () => ref.invalidate(exhibitionTemplatesProvider(widget.exhibition.id)),
       );
     }
     final templates = async.value ?? const <DemoTemplate>[];

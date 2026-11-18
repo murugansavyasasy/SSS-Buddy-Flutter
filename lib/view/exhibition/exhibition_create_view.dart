@@ -24,6 +24,7 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
   late final _notes = TextEditingController(text: widget.initial?.notes ?? '');
   late DateTime? _start = widget.initial?.startDate;
   late DateTime? _end = widget.initial?.endDate;
+
   /// Added attendees, shown as chips; the two fields below add one more.
   late final List<Attendee> _attendees = [...?widget.initial?.attendees];
   final _attName = TextEditingController();
@@ -31,6 +32,55 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
   String? _attError;
 
   bool get _editing => widget.initial != null;
+
+  /// Edit only: the full exhibition (team, notes, …) is fetched first so
+  /// the form shows everything the API has, not just the list row.
+  bool _loading = false;
+  Object? _loadError;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_editing) _loadForEdit();
+  }
+
+  Future<void> _loadForEdit() async {
+    final base = widget.initial!;
+    setState(() {
+      _loading = true;
+      _loadError = null;
+    });
+    try {
+      // Straight from the repository: invalidating exhibitionDetailProvider
+      // here would rebuild the detail screen underneath mid-build and throw.
+      final fresh = await ref.read(exhibitionRepositoryProvider).fetchExhibition(base.id);
+      if (!mounted) return;
+      _fill(fresh.mergedWith(base));
+      setState(() => _loading = false);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _loadError = e;
+      });
+    }
+  }
+
+  void _fill(Exhibition ex) {
+    _name.text = ex.name;
+    _venue.text = ex.venue;
+    _city.text = ex.city;
+    _notes.text = ex.notes;
+    _start = ex.startDate;
+    _end = ex.endDate;
+    _status = ex.status;
+    _attendees
+      ..clear()
+      ..addAll(ex.attendees);
+  }
+
+  /// Kept as-is on edit (there is no status picker); new ones start Active.
+  late ExhibitionStatus _status = widget.initial?.status ?? ExhibitionStatus.active;
 
   bool _tried = false;
   bool _saving = false;
@@ -88,11 +138,16 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
   Future<void> _pickDate(bool isStart) async {
     final now = DateTime.now();
     final initial = (isStart ? _start : _end) ?? _start ?? now;
+    // Widen the range so an older / far-off saved date can still open.
+    var first = DateTime(now.year - 2);
+    var last = DateTime(now.year + 3);
+    if (initial.isBefore(first)) first = DateTime(initial.year);
+    if (initial.isAfter(last)) last = DateTime(initial.year, 12, 31);
     final picked = await showDatePicker(
       context: context,
       initialDate: initial,
-      firstDate: DateTime(now.year - 2),
-      lastDate: DateTime(now.year + 3),
+      firstDate: first,
+      lastDate: last,
     );
     if (picked == null) return;
     setState(() {
@@ -127,9 +182,8 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
         city: _city.text.trim(),
         startDate: _start,
         endDate: _end,
-        // New exhibitions always start as Active.
-        // No status picker: create and edit always send Active.
-        status: ExhibitionStatus.active,
+        // New exhibitions start as Active; an edit keeps the current status.
+        status: _status,
         notes: _notes.text.trim(),
         attendees: attendees,
       );
@@ -161,12 +215,11 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
     final endError = !_tried
         ? null
         : _end == null
-            ? 'End date is required'
-            : _endBeforeStart
-                ? "End date can't be before the start date"
-                : null;
-    final attendeesError =
-        _tried && _attendees.isEmpty ? 'Add at least one attendee' : null;
+        ? 'End date is required'
+        : _endBeforeStart
+        ? "End date can't be before the start date"
+        : null;
+    final attendeesError = _tried && _attendees.isEmpty ? 'Add at least one attendee' : null;
 
     return ExTheme(
       child: AnnotatedRegion<SystemUiOverlayStyle>(
@@ -200,116 +253,132 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
                   child: ExCurvedBody(
                     child: Column(
                       children: [
-                        Expanded(
-                          child: SingleChildScrollView(
-                            padding: EdgeInsets.all(wide ? 24 : 16),
-                            child: ExMaxWidth(
-                              maxWidth: exFormMaxWidth,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  _section(
-                                    title: 'Details',
-                                    children: [
-                                      ExField(
-                                        label: 'Name',
-                                        required: true,
-                                        controller: _name,
-                                        hint: 'Enter exhibition name',
-                                        errorText: nameError,
-                                        textCapitalization: TextCapitalization.words,
-                                        onChanged: (_) {
-                                          if (_tried) setState(() {});
-                                        },
-                                      ),
-                                      _pair(
-                                        wide,
+                        if (_loading)
+                          const Expanded(
+                            child: Center(child: CircularProgressIndicator(color: exBrandBold)),
+                          )
+                        else if (_loadError != null)
+                          Expanded(
+                            child: Center(
+                              child: ExStateView.error(
+                                _loadError!,
+                                title: "Couldn't load exhibition",
+                                onRetry: _loadForEdit,
+                              ),
+                            ),
+                          )
+                        else ...[
+                          Expanded(
+                            child: SingleChildScrollView(
+                              padding: EdgeInsets.all(wide ? 24 : 16),
+                              child: ExMaxWidth(
+                                maxWidth: exFormMaxWidth,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
+                                    _section(
+                                      title: 'Details',
+                                      children: [
                                         ExField(
-                                          label: 'Venue',
+                                          label: 'Name',
                                           required: true,
-                                          controller: _venue,
-                                          errorText: venueError,
+                                          controller: _name,
+                                          hint: 'Enter exhibition name',
+                                          errorText: nameError,
+                                          textCapitalization: TextCapitalization.words,
                                           onChanged: (_) {
                                             if (_tried) setState(() {});
                                           },
-                                          hint: 'Enter venue',
-                                          textCapitalization: TextCapitalization.words,
+                                        ),
+                                        _pair(
+                                          wide,
+                                          ExField(
+                                            label: 'Venue',
+                                            required: true,
+                                            controller: _venue,
+                                            errorText: venueError,
+                                            onChanged: (_) {
+                                              if (_tried) setState(() {});
+                                            },
+                                            hint: 'Enter venue',
+                                            textCapitalization: TextCapitalization.words,
+                                          ),
+                                          ExField(
+                                            label: 'City',
+                                            controller: _city,
+                                            hint: 'Enter city',
+                                            textCapitalization: TextCapitalization.words,
+                                          ),
+                                        ),
+                                        _pair(
+                                          true,
+                                          _DateField(
+                                            label: 'Start date',
+                                            required: true,
+                                            value: _start,
+                                            error: startError,
+                                            onTap: () => _pickDate(true),
+                                          ),
+                                          _DateField(
+                                            label: 'End date',
+                                            value: _end,
+                                            required: true,
+                                            onTap: () => _pickDate(false),
+                                            error: endError,
+                                          ),
                                         ),
                                         ExField(
-                                          label: 'City',
-                                          controller: _city,
-                                          hint: 'Enter city',
-                                          textCapitalization: TextCapitalization.words,
+                                          label: 'Notes',
+                                          controller: _notes,
+                                          hint: 'Enter notes',
+                                          maxLines: 3,
                                         ),
-                                      ),
-                                      _pair(
-                                        true,
-                                        _DateField(
-                                          label: 'Start date',
-                                          required: true,
-                                          value: _start,
-                                          error: startError,
-                                          onTap: () => _pickDate(true),
-                                        ),
-                                        _DateField(
-                                          label: 'End date',
-                                          value: _end,
-                                          required: true,
-                                          onTap: () => _pickDate(false),
-                                          error: endError,
-                                        ),
-                                      ),
-                                      ExField(
-                                        label: 'Notes',
-                                        controller: _notes,
-                                        hint: 'Enter notes',
-                                        maxLines: 3,
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 16),
-                                  _section(
-                                    title: 'Attendees',
-                                    required: true,
-                                    subtitle: 'These people will receive a call on every demo.',
-                                    children: [
-                                      _attendeeInput(wide),
-                                      _attendeeChips(),
-                                      if (attendeesError != null)
-                                        Text(
-                                          attendeesError,
-                                          style: exBodySm.copyWith(color: exDanger),
-                                        ),
-                                    ],
-                                  ),
-                                  if (_serverError != null) ...[
+                                      ],
+                                    ),
                                     const SizedBox(height: 16),
-                                    ExInlineNote(message: _serverError!),
+                                    _section(
+                                      title: 'Attendees',
+                                      required: true,
+                                      subtitle: 'These people will receive a call on every demo.',
+                                      children: [
+                                        _attendeeInput(wide),
+                                        _attendeeChips(),
+                                        if (attendeesError != null)
+                                          Text(
+                                            attendeesError,
+                                            style: exBodySm.copyWith(color: exDanger),
+                                          ),
+                                      ],
+                                    ),
+                                    if (_serverError != null) ...[
+                                      const SizedBox(height: 16),
+                                      ExInlineNote(message: _serverError!),
+                                    ],
                                   ],
-                                ],
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        Container(
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            border: Border(top: BorderSide(color: exBorder)),
-                          ),
-                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                          child: SafeArea(
-                            top: false,
-                            child: ExMaxWidth(
-                              maxWidth: exFormMaxWidth,
-                              child: ExPrimaryButton(
-                                label: _editing ? 'Save Changes' : 'Create Exhibition',
-                                loadingLabel: _editing ? 'Saving…' : 'Creating…',
-                                loading: _saving,
-                                onPressed: _submit,
+                          Container(
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              border: Border(top: BorderSide(color: exBorder)),
+                            ),
+                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                            child: SafeArea(
+                              top: false,
+                              child: ExMaxWidth(
+                                maxWidth: exFormMaxWidth,
+                                child: ExPrimaryButton(
+                                  label: _editing ? 'Save Changes' : 'Create Exhibition',
+                                  loadingLabel: _editing ? 'Saving…' : 'Creating…',
+                                  loading: _saving,
+                                  onPressed: _submit,
+                                ),
                               ),
                             ),
                           ),
-                        ),
+                        ],
                       ],
                     ),
                   ),
@@ -327,32 +396,35 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
     String? subtitle,
     bool required = false,
     required List<Widget> children,
-  }) =>
-      Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: exBorder),
+  }) => Container(
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: exBorder),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text.rich(
+          TextSpan(
+            text: title,
+            children: [
+              if (required)
+                const TextSpan(
+                  text: ' *',
+                  style: TextStyle(color: exDanger),
+                ),
+            ],
+          ),
+          style: exHeadingMd,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text.rich(
-              TextSpan(
-                text: title,
-                children: [
-                  if (required) const TextSpan(text: ' *', style: TextStyle(color: exDanger)),
-                ],
-              ),
-              style: exHeadingMd,
-            ),
-            if (subtitle != null) ...[const SizedBox(height: 2), Text(subtitle, style: exBodyMd)],
-            const SizedBox(height: 16),
-            for (final c in children) ...[c, const SizedBox(height: 16)],
-          ],
-        ),
-      );
+        if (subtitle != null) ...[const SizedBox(height: 2), Text(subtitle, style: exBodyMd)],
+        const SizedBox(height: 16),
+        for (final c in children) ...[c, const SizedBox(height: 16)],
+      ],
+    ),
+  );
 
   Widget _pair(bool wide, Widget a, Widget b) => wide
       ? Row(
@@ -489,7 +561,11 @@ class _DateField extends StatelessWidget {
         TextSpan(
           text: label,
           children: [
-            if (required) const TextSpan(text: ' *', style: TextStyle(color: exDanger)),
+            if (required)
+              const TextSpan(
+                text: ' *',
+                style: TextStyle(color: exDanger),
+              ),
           ],
         ),
         style: exHeadingSm.copyWith(fontSize: 15),
