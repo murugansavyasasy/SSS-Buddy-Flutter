@@ -314,7 +314,7 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
   // MARK: Send
 
   Future<void> _send() async {
-    if (_sending) return;
+    if (_sending || _numbers.isEmpty) return;
     final repo = ref.read(exhibitionRepositoryProvider);
     final total = _numbers.length + _team.length;
     setState(() {
@@ -498,7 +498,7 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
             height: 56,
             loading: _sending,
             loadingLabel: _sendPhase,
-            onPressed: _send,
+            onPressed: _numbers.isEmpty ? null : _send,
           );
     final back = SizedBox(
       width: wide ? null : 56,
@@ -900,13 +900,19 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
                     _reviewRow(
                       'Visitor numbers (${_numbers.length})',
                       _numbers.isEmpty
-                          ? const Text('None added', style: exBodyMd)
+                          ? Text('None added. Go back to add a visitor number.',
+                              style: exBodyMd.copyWith(color: exDanger))
                           : Wrap(
                               spacing: 8,
                               runSpacing: 8,
                               children: [
                                 for (final n in _numbers)
-                                  _smallChip(formatIndianMobile(n), exPageBg),
+                                  _NumberChip(
+                                    number: n,
+                                    onRemove: _sending
+                                        ? null
+                                        : () => setState(() => _numbers.remove(n)),
+                                  ),
                               ],
                             ),
                     ),
@@ -1519,7 +1525,7 @@ class _DashedRRectPainter extends CustomPainter {
 /// "+91 98765 43210 ×" chip.
 class _NumberChip extends StatelessWidget {
   final String number;
-  final VoidCallback onRemove;
+  final VoidCallback? onRemove;
   const _NumberChip({required this.number, required this.onRemove});
 
   @override

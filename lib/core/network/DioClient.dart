@@ -43,6 +43,11 @@ class DioClient {
       ),
     );
 
+    // One clean request + response block per call (debug builds only).
+    // Added before the error handler: its reject() skips later interceptors,
+    // so failed calls (with the raw server response) would never be logged.
+    dio.interceptors.add(ApiLogInterceptor());
+
     dio.interceptors.add(
       InterceptorsWrapper(
         onError: (DioException error, ErrorInterceptorHandler handler) {
@@ -60,9 +65,6 @@ class DioClient {
         },
       ),
     );
-
-    // One clean request + response block per call (debug builds only).
-    dio.interceptors.add(ApiLogInterceptor());
 
     return dio;
   }

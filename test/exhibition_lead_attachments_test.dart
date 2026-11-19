@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sssbuddy/auth/model/ExhibitionModel.dart';
 import 'package:sssbuddy/core/aws/s3_upload_service.dart';
+import 'package:sssbuddy/view/exhibition/widget/exhibition_sheets.dart';
 
 void main() {
   test('lead attachments parse from strings or objects', () {
@@ -89,5 +90,11 @@ void main() {
     expect(m.audioUrl, 'https://x/a.wav');
     expect(m.recipients.map((r) => r.number), ['9811112222', '9876543210']);
     expect(m.firstVisitorNumber, '9811112222');
+  });
+
+  test('attachment file name for Download / Share comes from the link', () {
+    expect(attachmentFileName('https://b.s3.amazonaws.com/x/score_17.pdf?X-Amz=1'), 'score_17.pdf');
+    expect(attachmentFileName('https://b.s3.amazonaws.com/a%20b.jpg'), 'a b.jpg');
+    expect(attachmentFileName('https://b.s3.amazonaws.com/'), 'attachment');
   });
 }
