@@ -51,7 +51,7 @@ void main() {
       expect(uri.queryParameters['phone'], '919876543210');
       expect(
         uri.queryParameters['text'],
-        'Dear Ravi, Thank you for visiting us at Chennai Edu Expo.\n'
+        'Dear Ravi,Thank You for visiting us at Chennai Edu Expo.\n'
         'Watch our demo videos:\n'
         'Tamil: https://youtu.be/ta\n'
         'English: https://youtu.be/en',
@@ -66,7 +66,7 @@ void main() {
       expect(uri.queryParameters['phone'], '919876543210');
       expect(
         uri.queryParameters['text'],
-        'Dear Sir/Madam, Thank you for visiting us.\nWatch our demo video: https://youtu.be/abc',
+        'Dear Sir/Madam,Thank You for visiting us.\nWatch our demo video: https://youtu.be/abc',
       );
     });
 

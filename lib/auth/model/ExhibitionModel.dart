@@ -147,7 +147,7 @@ Uri demoVideoWhatsAppUri({
   final event = exhibitionName.trim();
   final links = videos.where((v) => v.url.trim().isNotEmpty).toList();
   final b = StringBuffer(name.isEmpty ? 'Dear Sir/Madam' : 'Dear $name')
-    ..write(', Thank you for visiting us')
+    ..write(',Thank You for visiting us')
     ..write(event.isEmpty ? '.' : ' at $event.');
   if (links.length == 1 && links.first.label.isEmpty) {
     b.write('\nWatch our demo video: ${links.first.url.trim()}');
