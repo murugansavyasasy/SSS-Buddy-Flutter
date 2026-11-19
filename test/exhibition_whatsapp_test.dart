@@ -7,7 +7,7 @@ Managementvideosmodel _v(String name, String url) =>
 
 void main() {
   group('pickDemoVideoLinks', () {
-    test('Tamil, English, Hindi, Kannada in that order, first match each', () {
+    test('English, Tamil, Hindi, Kannada in that order, first match each', () {
       final links = pickDemoVideoLinks([
         _v('Parent App Hindi', 'https://youtu.be/hi'),
         _v('SSS Score - English', 'https://youtu.be/en'),
@@ -16,10 +16,10 @@ void main() {
         _v('TAMIL demo', 'https://youtu.be/ta'),
         _v('Tamil demo 2', 'https://youtu.be/ta2'),
       ]);
-      expect(links.map((l) => l.label), ['Tamil', 'English', 'Hindi', 'Kannada']);
+      expect(links.map((l) => l.label), ['English', 'Tamil', 'Hindi', 'Kannada']);
       expect(links.map((l) => l.url), [
-        'https://youtu.be/ta',
         'https://youtu.be/en',
+        'https://youtu.be/ta',
         'https://youtu.be/hi',
         'https://youtu.be/kn',
       ]);

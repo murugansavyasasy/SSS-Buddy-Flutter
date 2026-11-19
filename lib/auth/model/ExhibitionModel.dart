@@ -113,8 +113,8 @@ typedef DemoVideoLink = ({String label, String url});
 /// Languages sent to visitors, in message order, with the spellings that
 /// may appear in a Management Videos name.
 const demoVideoLanguages = <String, List<String>>{
-  'Tamil': ['tamil'],
   'English': ['english'],
+  'Tamil': ['tamil'],
   'Hindi': ['hindi'],
   'Kannada': ['kannada', 'kanada'],
 };

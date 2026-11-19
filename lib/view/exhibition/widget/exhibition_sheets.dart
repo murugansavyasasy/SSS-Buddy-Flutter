@@ -54,7 +54,7 @@ Widget _handle() => Container(
 /// (`AppUrl.exhibitionDemoVideoUrl`).
 bool get exDemoVideoEnabled => AppUrl.exhibitionDemoVideoUrl.trim().isNotEmpty;
 
-/// Tamil, English, Hindi and Kannada videos from the Management Videos
+/// English, Tamil, Hindi and Kannada videos from the Management Videos
 /// module; the single `AppUrl.exhibitionDemoVideoUrl` link when none load.
 Future<List<DemoVideoLink>> _demoVideoLinks(BuildContext context) async {
   try {
