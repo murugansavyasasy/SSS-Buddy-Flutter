@@ -67,7 +67,26 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
 
   void _refresh() => refreshExhibition(ref, _id);
 
+  /// The demo list leaves out the numbers; load them from the demo detail
+  /// (already cached when the card is expanded) so Initiate Again has them.
+  Future<ExhibitionDemo> _withRecipients(ExhibitionDemo d) async {
+    if (d.id.isEmpty || d.recipients.any((r) => !r.isTeam && r.number.isNotEmpty)) return d;
+    try {
+      final detail = await ref
+          .read(exhibitionDemoDetailProvider(d.id).future)
+          .timeout(const Duration(seconds: 20));
+      return d.mergedWith(detail);
+    } catch (_) {
+      if (mounted) exToast(context, "Couldn't load the demo's numbers. Add them again.", error: true);
+      return d;
+    }
+  }
+
   Future<void> _giveDemo(Exhibition ex, {ExhibitionDemo? resendFrom}) async {
+    if (resendFrom != null) {
+      resendFrom = await _withRecipients(resendFrom);
+      if (!mounted) return;
+    }
     final res = await Navigator.push<GiveDemoResult>(
       context,
       MaterialPageRoute(

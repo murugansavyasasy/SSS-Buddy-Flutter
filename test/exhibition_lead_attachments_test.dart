@@ -73,4 +73,21 @@ void main() {
     expect(S3UploadService.contentTypeFor('x.jpeg'), 'image/jpeg');
     expect(S3UploadService.contentTypeFor('x.bin'), 'application/octet-stream');
   });
+
+  test('Initiate Again: list row takes the numbers from the demo detail', () {
+    const row = ExhibitionDemo(
+        id: '51', visitorName: 'Mr. Kumar', recipientCount: 2, audioUrl: 'https://x/a.wav');
+    final detail = ExhibitionDemo.fromJson({
+      'id': 51,
+      'recipients': [
+        {'mobile': '9811112222', 'recipientType': 'visitor'},
+        {'mobile': '9876543210', 'recipientType': 'team'},
+      ],
+    });
+    final m = row.mergedWith(detail);
+    expect(m.visitorName, 'Mr. Kumar');
+    expect(m.audioUrl, 'https://x/a.wav');
+    expect(m.recipients.map((r) => r.number), ['9811112222', '9876543210']);
+    expect(m.firstVisitorNumber, '9811112222');
+  });
 }
