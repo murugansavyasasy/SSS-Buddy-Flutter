@@ -50,7 +50,7 @@ Widget _handle() => Container(
 bool get exDemoVideoEnabled => AppUrl.exhibitionDemoVideoUrl.trim().isNotEmpty;
 
 /// Opens WhatsApp with [number]'s chat and the demo video link prefilled.
-/// Returns true when WhatsApp (or the browser fallback) opened.
+/// Returns true when WhatsApp opened.
 Future<bool> sendDemoVideoOnWhatsApp(
   BuildContext context, {
   required String number,
@@ -83,6 +83,9 @@ Future<bool> showDemoSentSheet(
   List<String> visitorNumbers = const [],
 }) async {
   HapticFeedback.mediumImpact();
+  final showWhatsApp =
+      exDemoVideoEnabled && visitorNumbers.isNotEmpty && await isWhatsAppInstalled();
+  if (!context.mounted) return false;
   final yes = await showModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
@@ -95,7 +98,7 @@ Future<bool> showDemoSentSheet(
         callCount: callCount,
         exhibitionName: exhibitionName,
         visitorName: visitorName,
-        visitorNumbers: visitorNumbers,
+        visitorNumbers: showWhatsApp ? visitorNumbers : const [],
       ),
     ),
   );
@@ -233,7 +236,7 @@ class _DemoSentSheetState extends State<_DemoSentSheet> {
                 children: [
                   Center(child: _handle()),
                   const SizedBox(height: 22),
-                  if (exDemoVideoEnabled && widget.visitorNumbers.isNotEmpty) ...[
+                  if (widget.visitorNumbers.isNotEmpty) ...[
                     _videoSection(),
                     const SizedBox(height: 18),
                   ],
@@ -1166,6 +1169,8 @@ class _DemoDetailPanelState extends ConsumerState<DemoDetailPanel> {
     final fetched = detail?.value?.recipients ?? const <DemoRecipient>[];
     final recipients = fetched.isNotEmpty ? fetched : d.recipients;
     final loadingDetail = detail != null && detail.isLoading && recipients.isEmpty;
+    final canWhatsApp =
+        exDemoVideoEnabled && (ref.watch(whatsAppInstalledProvider).value ?? false);
     final detailFailed = detail != null && detail.hasError && recipients.isEmpty;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1308,7 +1313,7 @@ class _DemoDetailPanelState extends ConsumerState<DemoDetailPanel> {
                   if (i > 0) const Divider(height: 1, color: exBorder),
                   _RecipientRow(
                     r: recipients[i],
-                    onWhatsApp: exDemoVideoEnabled && !recipients[i].isTeam && recipients[i].number.isNotEmpty
+                    onWhatsApp: canWhatsApp && !recipients[i].isTeam && recipients[i].number.isNotEmpty
                         ? () => sendDemoVideoOnWhatsApp(
                               context,
                               number: recipients[i].number,

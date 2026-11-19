@@ -27,6 +27,7 @@
         <string>https</string>
         <string>http</string>
         <string>itms-apps</string>
+        <string>whatsapp</string>
     </array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>

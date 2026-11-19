@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../auth/model/ExhibitionModel.dart';
 import '../provider/app_providers.dart';
@@ -7,6 +8,19 @@ import '../repository/exhibition_repository.dart';
 final exhibitionRepositoryProvider = Provider<ExhibitionRepository>(
   (ref) => ExhibitionRepository(ref.read(dioProvider)),
 );
+
+/// True when WhatsApp or WhatsApp Business is installed. Whether the user is
+/// signed in to it cannot be checked from another app.
+Future<bool> isWhatsAppInstalled() async {
+  try {
+    return await canLaunchUrl(Uri.parse('whatsapp://send?phone=910000000000'));
+  } catch (_) {
+    return false;
+  }
+}
+
+/// Re-checked each time a screen that shows the WhatsApp buttons opens.
+final whatsAppInstalledProvider = FutureProvider.autoDispose<bool>((ref) => isWhatsAppInstalled());
 
 /// All exhibitions, newest first. Search and the status chips filter this
 /// list on the device so they respond instantly at a busy stall.
