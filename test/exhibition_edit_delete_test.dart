@@ -281,7 +281,7 @@ void main() {
       expect(find.textContaining('2027'), findsWidgets);
     });
 
-    testWidgets('Update sends the same data back and keeps the status', (t) async {
+    testWidgets('Update Exhibition sends the same data back and keeps the status', (t) async {
       await _phone(t);
       final repo = _FakeRepo(_detail);
       bool? popped;
@@ -307,8 +307,8 @@ void main() {
       );
       await t.tap(find.text('open'));
       await t.pumpAndSettle();
-      await t.ensureVisible(find.text('Update'));
-      await t.tap(find.text('Update'));
+      await t.ensureVisible(find.text('Update Exhibition'));
+      await t.tap(find.text('Update Exhibition'));
       await t.pumpAndSettle();
 
       expect(repo.updates, hasLength(1));
@@ -335,12 +335,12 @@ void main() {
       await t.pumpWidget(_app(repo, ExhibitionCreateView(initial: _listRow)));
       await t.pumpAndSettle();
       expect(find.text("Couldn't load exhibition"), findsOneWidget);
-      expect(find.text('Update'), findsNothing);
+      expect(find.text('Update Exhibition'), findsNothing);
 
       repo.detailError = null;
       await t.tap(find.text('Retry'));
       await t.pumpAndSettle();
-      expect(find.text('Update'), findsOneWidget);
+      expect(find.text('Update Exhibition'), findsOneWidget);
       expect(_indexOf(t, 'Hall 3, Stall 42'), isNot(-1));
     });
   });

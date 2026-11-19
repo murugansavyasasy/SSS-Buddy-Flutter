@@ -812,7 +812,7 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
             child: SafeArea(
               top: false,
               child: ExPrimaryButton(
-                label: _editing ? 'Update' : 'Save Lead',
+                label: _editing ? 'Update Lead' : 'Save Lead',
                 loadingLabel: _savingLabel,
                 loading: _saving,
                 onPressed: _save,
