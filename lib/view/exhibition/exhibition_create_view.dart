@@ -370,7 +370,7 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
                               child: ExMaxWidth(
                                 maxWidth: exFormMaxWidth,
                                 child: ExPrimaryButton(
-                                  label: _editing ? 'Update' : 'Create Exhibition',
+                                  label: _editing ? 'Update Exhibition' : 'Create Exhibition',
                                   loadingLabel: _editing ? 'Updating…' : 'Creating…',
                                   loading: _saving,
                                   onPressed: _submit,
