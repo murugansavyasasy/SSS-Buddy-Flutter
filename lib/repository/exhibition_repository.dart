@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 
@@ -157,6 +158,20 @@ class ExhibitionRepository {
           options: await _options(),
         );
         _ensureOk(res);
+      });
+
+  // MARK: Attachments
+
+  /// Bytes of an uploaded attachment (public S3 link), for Download / Share.
+  Future<Uint8List> downloadAttachment(String url) => _guard(() async {
+        final res = await _client.s3Dio.get<List<int>>(
+          url,
+          options: Options(
+            responseType: ResponseType.bytes,
+            receiveTimeout: const Duration(minutes: 2),
+          ),
+        );
+        return Uint8List.fromList(res.data ?? const []);
       });
 
   // MARK: Voice templates

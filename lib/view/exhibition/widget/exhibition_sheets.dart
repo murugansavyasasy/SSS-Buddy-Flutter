@@ -7,9 +7,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../auth/model/ExhibitionModel.dart';
+import '../../../core/aws/s3_upload_service.dart';
 import '../../../repository/app_url.dart';
 import '../../../viewModel/exhibition_viewmodel.dart';
 import 'exhibition_common.dart';
@@ -862,7 +865,7 @@ class ExAttachmentTile extends StatelessWidget {
     final u = url;
     if (u == null) return;
     if (_isPdf) {
-      launchUrl(Uri.parse(u), mode: LaunchMode.externalApplication);
+      _showPdfActions(context, u);
       return;
     }
     final photos = gallery.where((g) => !isPdfUrl(g)).toList();
@@ -957,6 +960,97 @@ class ExAttachmentTile extends StatelessWidget {
 
 bool isPdfUrl(String url) => url.toLowerCase().split('?').first.endsWith('.pdf');
 
+// MARK: - Attachment download / share
+
+/// File name of an attachment link (last path segment).
+String attachmentFileName(String url) {
+  final segs = Uri.tryParse(url)?.pathSegments ?? const <String>[];
+  final last = segs.isEmpty ? '' : Uri.decodeComponent(segs.last).trim();
+  return last.isEmpty ? 'attachment' : last;
+}
+
+/// Downloads the attachment and opens the system "Save to…" dialog
+/// (Files / Downloads). Returns when saved, cancelled or failed.
+Future<void> downloadAttachment(BuildContext context, String url) async {
+  final repo = ProviderScope.containerOf(context, listen: false).read(exhibitionRepositoryProvider);
+  try {
+    final bytes = await repo.downloadAttachment(url);
+    final saved = await FilePicker.saveFile(
+      fileName: attachmentFileName(url),
+      bytes: bytes,
+      mimeType: S3UploadService.contentTypeFor(url.split('?').first),
+    );
+    if (saved != null && context.mounted) exToast(context, 'Downloaded');
+  } catch (e) {
+    if (context.mounted) exToast(context, e.toString(), error: true);
+  }
+}
+
+/// Downloads the attachment to a temp file and opens the share sheet.
+Future<void> shareAttachment(BuildContext context, String url) async {
+  final repo = ProviderScope.containerOf(context, listen: false).read(exhibitionRepositoryProvider);
+  final box = context.findRenderObject() as RenderBox?;
+  final origin = box == null ? null : box.localToGlobal(Offset.zero) & box.size;
+  try {
+    final bytes = await repo.downloadAttachment(url);
+    final dir = await getTemporaryDirectory();
+    final file = File('${dir.path}/${attachmentFileName(url)}');
+    await file.writeAsBytes(bytes, flush: true);
+    await SharePlus.instance.share(ShareParams(
+      files: [XFile(file.path, mimeType: S3UploadService.contentTypeFor(file.path))],
+      sharePositionOrigin: origin,
+    ));
+  } catch (e) {
+    if (context.mounted) exToast(context, e.toString(), error: true);
+  }
+}
+
+/// PDF tile: Open / Download / Share.
+Future<void> _showPdfActions(BuildContext context, String url) => _showSheet<void>(
+      context,
+      (ctx) => SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _handle(),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 16, 12, 8),
+                child: Text(attachmentFileName(url),
+                    maxLines: 2, overflow: TextOverflow.ellipsis, style: exHeadingSm),
+              ),
+              ListTile(
+                leading: const Icon(Icons.open_in_new_rounded, color: exInk),
+                title: const Text('Open', style: exHeadingSm),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.download_rounded, color: exInk),
+                title: const Text('Download', style: exHeadingSm),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  downloadAttachment(context, url);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.ios_share_rounded, color: exInk),
+                title: const Text('Share', style: exHeadingSm),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  shareAttachment(context, url);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
 /// Full-screen, swipeable, pinch-to-zoom photo viewer.
 Future<void> showExPhotoViewer(BuildContext context, List<String> urls, {int initial = 0}) =>
     Navigator.of(context).push(
@@ -980,6 +1074,35 @@ class _PhotoViewer extends StatefulWidget {
 class _PhotoViewerState extends State<_PhotoViewer> {
   late final _controller = PageController(initialPage: widget.initial);
   late int _index = widget.initial;
+
+  /// 'download' / 'share' while that action runs.
+  String? _busy;
+
+  Future<void> _run(String action, BuildContext anchor) async {
+    if (_busy != null) return;
+    setState(() => _busy = action);
+    final url = widget.urls[_index];
+    if (action == 'download') {
+      await downloadAttachment(anchor, url);
+    } else {
+      await shareAttachment(anchor, url);
+    }
+    if (mounted) setState(() => _busy = null);
+  }
+
+  Widget _action(String action, IconData icon, String tooltip) => Builder(
+        builder: (anchor) => IconButton(
+          tooltip: tooltip,
+          onPressed: _busy == null ? () => _run(action, anchor) : null,
+          icon: _busy == action
+              ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                )
+              : Icon(icon, color: Colors.white, size: 26),
+        ),
+      );
 
   @override
   void dispose() {
@@ -1032,6 +1155,8 @@ class _PhotoViewerState extends State<_PhotoViewer> {
                             style: const TextStyle(
                                 color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
                       ),
+                    _action('download', Icons.download_rounded, 'Download'),
+                    _action('share', Icons.ios_share_rounded, 'Share'),
                   ],
                 ),
               ),
