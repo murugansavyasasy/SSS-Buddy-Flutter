@@ -15,6 +15,7 @@ import '../../../auth/model/ExhibitionModel.dart';
 import '../../../core/aws/s3_upload_service.dart';
 import '../../../repository/app_url.dart';
 import '../../../viewModel/exhibition_viewmodel.dart';
+import '../../../viewModel/management_videos_viewmodel.dart';
 import 'exhibition_common.dart';
 import 'demo_audio.dart';
 import 'voice_recorder_panel.dart';
@@ -49,10 +50,24 @@ Widget _handle() => Container(
 
 // MARK: - Demo video on WhatsApp
 
-/// True when a demo video link is configured (`AppUrl.exhibitionDemoVideoUrl`).
+/// True when a fallback demo video link is configured
+/// (`AppUrl.exhibitionDemoVideoUrl`).
 bool get exDemoVideoEnabled => AppUrl.exhibitionDemoVideoUrl.trim().isNotEmpty;
 
-/// Opens WhatsApp with [number]'s chat and the demo video link prefilled.
+/// Tamil, English, Hindi and Kannada videos from the Management Videos
+/// module; the single `AppUrl.exhibitionDemoVideoUrl` link when none load.
+Future<List<DemoVideoLink>> _demoVideoLinks(BuildContext context) async {
+  try {
+    final all = await ProviderScope.containerOf(context, listen: false)
+        .read(managementVideosProvider.future)
+        .timeout(const Duration(seconds: 15));
+    final picked = pickDemoVideoLinks(all);
+    if (picked.isNotEmpty) return picked;
+  } catch (_) {}
+  return [(label: '', url: AppUrl.exhibitionDemoVideoUrl)];
+}
+
+/// Opens WhatsApp with [number]'s chat and the demo video links prefilled.
 /// Returns true when WhatsApp opened.
 Future<bool> sendDemoVideoOnWhatsApp(
   BuildContext context, {
@@ -60,9 +75,10 @@ Future<bool> sendDemoVideoOnWhatsApp(
   String visitorName = '',
   String exhibitionName = '',
 }) async {
+  final videos = await _demoVideoLinks(context);
   final uri = demoVideoWhatsAppUri(
     number: number,
-    videoUrl: AppUrl.exhibitionDemoVideoUrl,
+    videos: videos,
     visitorName: visitorName,
     exhibitionName: exhibitionName,
   );
