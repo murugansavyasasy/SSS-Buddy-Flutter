@@ -17,8 +17,12 @@ void main() {
         _v('Tamil demo 2', 'https://youtu.be/ta2'),
       ]);
       expect(links.map((l) => l.label), ['Tamil', 'English', 'Hindi', 'Kannada']);
-      expect(links.map((l) => l.url),
-          ['https://youtu.be/ta', 'https://youtu.be/en', 'https://youtu.be/hi', 'https://youtu.be/kn']);
+      expect(links.map((l) => l.url), [
+        'https://youtu.be/ta',
+        'https://youtu.be/en',
+        'https://youtu.be/hi',
+        'https://youtu.be/kn',
+      ]);
     });
 
     test('missing languages and empty URLs are skipped', () {
@@ -60,15 +64,32 @@ void main() {
         videos: const [(label: '', url: ' https://youtu.be/abc ')],
       );
       expect(uri.queryParameters['phone'], '919876543210');
-      expect(uri.queryParameters['text'],
-          'Dear Sir/Madam, thank you for visiting us.\nWatch our demo video: https://youtu.be/abc');
+      expect(
+        uri.queryParameters['text'],
+        'Dear Sir/Madam, thank you for visiting us.\nWatch our demo video: https://youtu.be/abc',
+      );
     });
 
     test('encodes spaces as %20, not +', () {
       final uri = demoVideoWhatsAppUri(
-          number: '9876543210', videos: const [(label: '', url: 'https://youtu.be/a')]);
+        number: '9876543210',
+        videos: const [(label: '', url: 'https://youtu.be/a')],
+      );
       expect(uri.toString(), isNot(contains('+')));
       expect(uri.toString(), contains('%20'));
+    });
+
+    test('WhatsApp Web link when the app is not installed', () {
+      final uri = demoVideoWhatsAppUri(
+        number: '9876543210',
+        videos: const [(label: '', url: 'https://youtu.be/a')],
+        web: true,
+      );
+      expect(uri.scheme, 'https');
+      expect(uri.host, 'web.whatsapp.com');
+      expect(uri.path, '/send');
+      expect(uri.queryParameters['phone'], '919876543210');
+      expect(uri.queryParameters['text'], contains('https://youtu.be/a'));
     });
   });
 }

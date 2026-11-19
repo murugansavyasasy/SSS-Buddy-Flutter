@@ -83,7 +83,6 @@ Widget _app() => ProviderScope(
       overrides: [
         exhibitionRepositoryProvider.overrideWithValue(_Repo()),
         userSessionProvider.overrideWith(() => _Session()),
-        whatsAppInstalledProvider.overrideWith((ref) async => true),
       ],
       child: MaterialApp(home: ExhibitionDetailView(exhibitionId: '7', initial: _ex)),
     );
