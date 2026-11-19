@@ -765,11 +765,6 @@ class _DemoRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final d = demo;
     final (bg, fg) = callStatusColors(d.status);
-    final meta = [
-      '${d.recipientCount} ${d.recipientCount == 1 ? 'recipient' : 'recipients'}',
-      if (d.createdBy.isNotEmpty) 'by ${d.createdBy}',
-      if (d.createdAt != null) exWhen(d.createdAt),
-    ].join(' · ');
     final voice = _voiceTitle;
     final active = isNew || expanded;
     return Container(
@@ -796,21 +791,32 @@ class _DemoRow extends StatelessWidget {
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
                     child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Visitor initial
                         Container(
-                          width: 48,
-                          height: 48,
+                          width: 46,
+                          height: 46,
+                          alignment: Alignment.center,
                           decoration: BoxDecoration(
-                              color: exPageBg, borderRadius: BorderRadius.circular(8)),
-                          child: const Icon(Icons.graphic_eq_rounded, color: exSubtle),
+                            color: d.hasLead ? exSuccessBg : exTint,
+                            shape: BoxShape.circle,
+                          ),
+                          child: d.visitorName.trim().isEmpty
+                              ? Icon(Icons.person_outline_rounded,
+                                  color: d.hasLead ? exSuccess : exBrandBold)
+                              : Text(d.visitorName.trim()[0].toUpperCase(),
+                                  style: TextStyle(
+                                      fontSize: 19,
+                                      fontWeight: FontWeight.w700,
+                                      color: d.hasLead ? exSuccess : exBrandBold)),
                         ),
-                        const SizedBox(width: 14),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Status sits beside the name, so the meta line
-                              // gets the full width instead of being squeezed.
+                              // Status sits beside the name.
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -818,17 +824,39 @@ class _DemoRow extends StatelessWidget {
                                     child: Text(d.displayName,
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
-                                        style: exHeadingSm),
+                                        style: exHeadingSm.copyWith(fontSize: 17)),
                                   ),
                                   const SizedBox(width: 8),
                                   ExPill(label: d.status.label, background: bg, foreground: fg),
                                 ],
                               ),
-                              const SizedBox(height: 4),
-                              Text(meta, style: exBodyMd),
+                              const SizedBox(height: 6),
+                              Wrap(
+                                spacing: 12,
+                                runSpacing: 4,
+                                children: [
+                                  _LeadMeta(
+                                    icon: Icons.call_outlined,
+                                    text: '${d.recipientCount} '
+                                        '${d.recipientCount == 1 ? 'number' : 'numbers'}',
+                                  ),
+                                  if (d.createdAt != null)
+                                    _LeadMeta(icon: Icons.schedule_rounded, text: exWhen(d.createdAt)),
+                                  if (d.createdBy.isNotEmpty)
+                                    _LeadMeta(icon: Icons.badge_outlined, text: d.createdBy),
+                                ],
+                              ),
                               if (d.audioUrl.isNotEmpty) ...[
-                                const SizedBox(height: 2),
+                                const SizedBox(height: 6),
                                 _VoiceLine(url: d.audioUrl, title: voice),
+                              ],
+                              if (d.hasLead) ...[
+                                const SizedBox(height: 8),
+                                const ExPill(
+                                  label: 'Lead captured',
+                                  background: exSuccessBg,
+                                  foreground: exSuccess,
+                                ),
                               ],
                             ],
                           ),
@@ -883,10 +911,12 @@ class _LeadCard extends StatelessWidget {
     final l = lead;
     final hasCall = l.contactNumber.isNotEmpty;
     final hasMail = l.contactEmail.isNotEmpty;
+    final hasContact = l.contactName.isNotEmpty || hasCall || hasMail;
     final initial = l.schoolName.trim().isEmpty ? '?' : l.schoolName.trim()[0].toUpperCase();
     final footer = [
       if (l.capturedBy.isNotEmpty) 'By ${l.capturedBy}',
       if (l.createdAt != null) exWhen(l.createdAt),
+      if (l.demoVisitorName.isNotEmpty) 'From demo: ${l.demoVisitorName}',
     ].join(' · ');
 
     return ExCard(
@@ -895,23 +925,23 @@ class _LeadCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // School, interest and city
           Padding(
-            padding: EdgeInsets.fromLTRB(14, 14, onEdit != null ? 4 : 14, 0),
+            padding: EdgeInsets.fromLTRB(16, 16, onEdit != null ? 6 : 16, 0),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // School initial
                 Container(
-                  width: 44,
-                  height: 44,
+                  width: 48,
+                  height: 48,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: exTint,
-                    borderRadius: BorderRadius.circular(12),
+                    gradient: exBrandGradient,
+                    borderRadius: BorderRadius.circular(14),
                   ),
                   child: Text(initial,
                       style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.w700, color: exBrandBold)),
+                          fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white)),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -924,7 +954,7 @@ class _LeadCard extends StatelessWidget {
                           style: exHeadingSm.copyWith(fontSize: 17, height: 1.25)),
                       const SizedBox(height: 6),
                       Wrap(
-                        spacing: 8,
+                        spacing: 10,
                         runSpacing: 6,
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
@@ -941,42 +971,55 @@ class _LeadCard extends StatelessWidget {
               ],
             ),
           ),
-          // Contact person + number
-          if (l.contactName.isNotEmpty || hasCall)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
-              child: Row(
+          // Contact person, number and email
+          if (hasContact)
+            Container(
+              margin: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+              decoration: BoxDecoration(
+                color: exPageBg,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.person_outline_rounded, size: 18, color: exSubtle),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text.rich(
-                      TextSpan(
-                        children: [
-                          if (l.contactName.isNotEmpty)
-                            TextSpan(
-                              text: l.contactName,
-                              style: const TextStyle(fontWeight: FontWeight.w600, color: exInk),
-                            ),
-                          if (l.contactName.isNotEmpty && hasCall) const TextSpan(text: '  ·  '),
-                          if (hasCall) TextSpan(text: l.contactNumber),
-                        ],
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 15, color: exSubtle),
+                  if (l.contactName.isNotEmpty)
+                    _ContactLine(
+                      icon: Icons.person_outline_rounded,
+                      text: l.contactName,
+                      strong: true,
                     ),
-                  ),
+                  if (hasCall)
+                    _ContactLine(
+                      icon: Icons.phone_outlined,
+                      text: formatIndianMobile(l.contactNumber),
+                      action: _LeadAction(
+                        icon: Icons.call_rounded,
+                        tooltip: 'Call',
+                        filled: true,
+                        onTap: () => launchUrl(Uri(scheme: 'tel', path: '+91${l.contactNumber}')),
+                      ),
+                    ),
+                  if (hasMail)
+                    _ContactLine(
+                      icon: Icons.mail_outline_rounded,
+                      text: l.contactEmail,
+                      action: _LeadAction(
+                        icon: Icons.mail_outline_rounded,
+                        tooltip: 'Email',
+                        onTap: () => launchUrl(Uri(scheme: 'mailto', path: l.contactEmail)),
+                      ),
+                    ),
                 ],
               ),
             ),
           if (l.notes.isNotEmpty)
             Container(
-              margin: const EdgeInsets.fromLTRB(14, 12, 14, 0),
+              margin: const EdgeInsets.fromLTRB(16, 10, 16, 0),
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
               decoration: BoxDecoration(
                 color: exNotes,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -995,15 +1038,15 @@ class _LeadCard extends StatelessWidget {
                 ],
               ),
             ),
-          // Uploaded photos / PDFs
+          // Uploaded photos
           if (l.attachments.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.only(top: 12),
+              padding: const EdgeInsets.only(top: 10),
               child: SizedBox(
                 height: 72,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                   itemCount: l.attachments.length,
                   separatorBuilder: (_, __) => const SizedBox(width: 8),
                   itemBuilder: (_, i) => ExAttachmentTile(
@@ -1014,61 +1057,65 @@ class _LeadCard extends StatelessWidget {
                 ),
               ),
             ),
-          const SizedBox(height: 12),
-          const Divider(height: 1, color: exBorder),
-          // Footer: who/when + quick actions
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 8, 8, 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (footer.isNotEmpty)
-                        Text(footer,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                                fontSize: 13, fontWeight: FontWeight.w500, color: exSubtle)),
-                      if (l.demoVisitorName.isNotEmpty)
-                        Text('From demo: ${l.demoVisitorName}',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 13, color: exSubtle)),
-                    ],
-                  ),
-                ),
-                if (hasMail)
-                  _LeadAction(
-                    icon: Icons.mail_outline_rounded,
-                    tooltip: 'Email',
-                    onTap: () => launchUrl(Uri(scheme: 'mailto', path: l.contactEmail)),
-                  ),
-                if (onWhatsApp != null) ...[
-                  if (hasMail) const SizedBox(width: 8),
-                  _LeadAction(
-                    icon: Icons.ondemand_video_rounded,
-                    tooltip: 'Send demo video on WhatsApp',
-                    onTap: onWhatsApp!,
-                  ),
-                ],
-                if (hasCall) ...[
-                  const SizedBox(width: 8),
-                  _LeadAction(
-                    icon: Icons.call_rounded,
-                    tooltip: 'Call',
-                    filled: true,
-                    onTap: () => launchUrl(Uri(scheme: 'tel', path: '+91${l.contactNumber}')),
-                  ),
-                ],
-              ],
+          // Demo video on WhatsApp, full width so the label stays readable.
+          if (onWhatsApp != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+              child: ExSecondaryButton(
+                label: 'Send demo video on WhatsApp',
+                icon: Icons.ondemand_video_rounded,
+                color: exSuccess,
+                height: 46,
+                onPressed: onWhatsApp,
+              ),
             ),
+          // Who captured it, when, and from which demo
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+            child: footer.isEmpty
+                ? const SizedBox.shrink()
+                : Text(footer,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: exBodySm.copyWith(fontSize: 13)),
           ),
         ],
       ),
     );
   }
+}
+
+/// One icon + text line in the lead's contact panel.
+class _ContactLine extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final bool strong;
+
+  /// Quick action at the end of the line (Call / Email).
+  final Widget? action;
+  const _ContactLine({required this.icon, required this.text, this.strong = false, this.action});
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 3),
+        child: Row(
+          children: [
+            Icon(icon, size: 17, color: exSubtle),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(text,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: strong ? FontWeight.w600 : FontWeight.w500,
+                    color: strong ? exInk : const Color(0xFF3F4A5A),
+                  )),
+            ),
+            if (action != null) ...[const SizedBox(width: 8), action!],
+          ],
+        ),
+      );
 }
 
 class _LeadMeta extends StatelessWidget {

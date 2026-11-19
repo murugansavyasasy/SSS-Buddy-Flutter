@@ -1515,7 +1515,7 @@ class _RecipientRow extends StatelessWidget {
                           fontFamily: exFont, fontSize: 14, fontWeight: FontWeight.w600),
                     ),
                     icon: const Icon(Icons.ondemand_video_rounded, size: 18),
-                    label: const Text('Send video on WhatsApp'),
+                    label: const Text('Send demo video on WhatsApp'),
                   ),
               ],
             ),
