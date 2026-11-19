@@ -1563,7 +1563,10 @@ class _AddTemplateSheetState extends ConsumerState<_AddTemplateSheet> {
   String? _path;
   Duration _length = Duration.zero;
 
+  /// Offer this template in every exhibition, not just this one.
+  bool _common = false;
   bool _tried = false;
+  String _savingLabel = 'Uploading voice…';
   bool _saving = false;
   String? _error;
 
@@ -1583,13 +1586,22 @@ class _AddTemplateSheetState extends ConsumerState<_AddTemplateSheet> {
       _error = null;
     });
     if (_title.text.trim().isEmpty || _path == null) return;
-    setState(() => _saving = true);
+    setState(() {
+      _saving = true;
+      _savingLabel = 'Uploading voice…';
+    });
     try {
       await ref.read(exhibitionRepositoryProvider).createTemplate(
             exhibitionId: widget.exhibitionId,
             name: _title.text.trim(),
             description: _description.text.trim(),
             audioPath: _path!,
+            common: _common,
+            onProgress: (f) {
+              if (!mounted) return;
+              setState(() => _savingLabel =
+                  f >= 0.99 ? 'Saving template…' : 'Uploading voice… ${(f * 100).round()}%');
+            },
           );
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
@@ -1654,7 +1666,17 @@ class _AddTemplateSheetState extends ConsumerState<_AddTemplateSheet> {
                   hint: 'Enter description',
                   textCapitalization: TextCapitalization.sentences,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
+                SwitchListTile.adaptive(
+                  contentPadding: EdgeInsets.zero,
+                  value: _common,
+                  activeTrackColor: exBrand,
+                  onChanged: _saving ? null : (v) => setState(() => _common = v),
+                  title: Text('Use this template in all exhibitions',
+                      style: exHeadingSm.copyWith(fontSize: 15)),
+                  subtitle: const Text('Off: only this exhibition offers it.', style: exBodySm),
+                ),
+                const SizedBox(height: 8),
                 Text('Voice', style: exHeadingSm.copyWith(fontSize: 15)),
                 const SizedBox(height: 8),
                 VoiceRecorderPanel(
@@ -1686,7 +1708,7 @@ class _AddTemplateSheetState extends ConsumerState<_AddTemplateSheet> {
               top: false,
               child: ExPrimaryButton(
                 label: 'Save Template',
-                loadingLabel: 'Uploading…',
+                loadingLabel: _savingLabel,
                 loading: _saving,
                 onPressed: _save,
               ),

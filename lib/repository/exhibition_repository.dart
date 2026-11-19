@@ -18,16 +18,17 @@ class ExhibitionRepository {
 
   ExhibitionRepository(this._client) : _s3 = S3UploadService(_client);
 
-  /// Uploads a recorded demo voice to S3 and returns its public URL.
-  /// Object name is `score_<timestamp>.<ext>` with the file's own type.
+  /// Uploads a recorded voice (demo or template) to S3 and returns its
+  /// public URL. Object name is `score_<timestamp>.<ext>` with the file's own type.
   Future<String> _uploadVoice(
     String path, {
+    String bucketPath = 'exhibitions/demos',
     void Function(double progress)? onProgress,
   }) =>
       _s3.uploadFile(
         file: File(path),
         fileName: S3UploadService.scoreFileName(path),
-        bucketPath: 'exhibitions/demos',
+        bucketPath: bucketPath,
         contentType: S3UploadService.contentTypeFor(path),
         onProgress: onProgress == null
             ? null
@@ -185,37 +186,33 @@ class ExhibitionRepository {
         return extractList(res.data, ['templates']).map(DemoTemplate.fromJson).toList();
       });
 
-  /// POST /exhibitions/:id/voice-templates as multipart: the voice as `file`
-  /// (sent as-is with its own extension and MIME type), plus name,
-  /// description and `common` ("true" = available in every exhibition).
+  /// Uploads the recorded voice to S3, then POST /exhibitions/:id/voice-templates
+  /// as JSON with its `audioUrl`, name, description and `common`
+  /// ("true" = available in every exhibition).
   Future<void> createTemplate({
     required String exhibitionId,
     required String name,
     required String description,
     required String audioPath,
     bool common = false,
+    void Function(double progress)? onProgress,
   }) =>
       _guard(() async {
-        final ext = S3UploadService.extensionOf(audioPath);
-        final mime = S3UploadService.contentTypeFor(audioPath).split('/');
-        final form = FormData.fromMap({
-          'file': await MultipartFile.fromFile(
-            audioPath,
-            filename: 'template_${DateTime.now().millisecondsSinceEpoch}'
-                '${ext.isEmpty ? '' : '.$ext'}',
-            contentType: mime.length == 2 ? DioMediaType(mime[0], mime[1]) : null,
-          ),
-          'name': name,
-          'description': description,
-          'common': common ? 'true' : 'false',
-        });
+        final audioUrl = await _uploadVoice(
+          audioPath,
+          bucketPath: 'exhibitions/templates',
+          onProgress: onProgress,
+        );
+        onProgress?.call(1);
         final res = await _dio.post(
           AppEndpoint.exhibitionVoiceTemplates(exhibitionId),
-          data: form,
-          options: (await _options()).copyWith(
-            sendTimeout: const Duration(minutes: 2),
-            receiveTimeout: const Duration(minutes: 1),
-          ),
+          data: {
+            'name': name,
+            'description': description,
+            'common': common ? 'true' : 'false',
+            'audioUrl': audioUrl,
+          },
+          options: await _options(contentType: Headers.jsonContentType),
         );
         _ensureOk(res);
       });
