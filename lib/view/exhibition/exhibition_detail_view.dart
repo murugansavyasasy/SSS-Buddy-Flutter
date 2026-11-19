@@ -319,7 +319,7 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
               if (_tab == 0)
                 ..._demoSlivers(demos, ex, pad)
               else
-                ..._leadSlivers(leads, pad, wide && !embedded),
+                ..._leadSlivers(leads, ex, pad, wide && !embedded),
               const SliverToBoxAdapter(child: SizedBox(height: 40)),
             ],
           ),
@@ -408,8 +408,11 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
     );
   }
 
-  List<Widget> _leadSlivers(AsyncValue<List<ExhibitionLead>> leads, double pad, bool twoCols) {
+  List<Widget> _leadSlivers(
+      AsyncValue<List<ExhibitionLead>> leads, Exhibition ex, double pad, bool twoCols) {
     final user = ref.watch(userSessionProvider).value;
+    final canWhatsApp =
+        exDemoVideoEnabled && (ref.watch(whatsAppInstalledProvider).value ?? false);
     final addButton = SliverToBoxAdapter(
       child: _padded(
         pad,
@@ -463,6 +466,15 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
               Widget card(int i) => _LeadCard(
                     lead: items[i],
                     isNew: _highlightNewestLead && i == 0,
+                    onWhatsApp: canWhatsApp &&
+                            isValidIndianMobile(normalizeIndianMobile(items[i].contactNumber))
+                        ? () => sendDemoVideoOnWhatsApp(
+                              context,
+                              number: items[i].contactNumber,
+                              visitorName: items[i].contactName,
+                              exhibitionName: ex.name,
+                            )
+                        : null,
                     // Only the person who captured the lead can edit it.
                     onEdit: user != null &&
                             items[i].isCreatedBy(userId: user.userId, userName: user.employeeName)
@@ -861,7 +873,10 @@ class _LeadCard extends StatelessWidget {
   final bool isNew;
   final VoidCallback? onEdit;
 
-  const _LeadCard({required this.lead, required this.isNew, this.onEdit});
+  /// Sends the demo video link to the lead's number on WhatsApp.
+  final VoidCallback? onWhatsApp;
+
+  const _LeadCard({required this.lead, required this.isNew, this.onEdit, this.onWhatsApp});
 
   @override
   Widget build(BuildContext context) {
@@ -1030,6 +1045,14 @@ class _LeadCard extends StatelessWidget {
                     tooltip: 'Email',
                     onTap: () => launchUrl(Uri(scheme: 'mailto', path: l.contactEmail)),
                   ),
+                if (onWhatsApp != null) ...[
+                  if (hasMail) const SizedBox(width: 8),
+                  _LeadAction(
+                    icon: Icons.ondemand_video_rounded,
+                    tooltip: 'Send demo video on WhatsApp',
+                    onTap: onWhatsApp!,
+                  ),
+                ],
                 if (hasCall) ...[
                   const SizedBox(width: 8),
                   _LeadAction(
