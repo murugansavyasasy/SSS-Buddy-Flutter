@@ -54,7 +54,7 @@ Widget _handle() => Container(
 /// (`AppUrl.exhibitionDemoVideoUrl`).
 bool get exDemoVideoEnabled => AppUrl.exhibitionDemoVideoUrl.trim().isNotEmpty;
 
-/// Tamil, English, Hindi and Kannada videos from the Management Videos
+/// English, Tamil, Hindi and Kannada videos from the Management Videos
 /// module; the single `AppUrl.exhibitionDemoVideoUrl` link when none load.
 Future<List<DemoVideoLink>> _demoVideoLinks(BuildContext context) async {
   try {
@@ -67,8 +67,9 @@ Future<List<DemoVideoLink>> _demoVideoLinks(BuildContext context) async {
   return [(label: '', url: AppUrl.exhibitionDemoVideoUrl)];
 }
 
-/// Opens WhatsApp with [number]'s chat and the demo video links prefilled.
-/// Returns true when WhatsApp opened.
+/// Opens [number]'s chat with the demo video links prefilled: in the
+/// WhatsApp app when installed, else in WhatsApp Web (browser; the user must
+/// be signed in there). Returns true when it opened.
 Future<bool> sendDemoVideoOnWhatsApp(
   BuildContext context, {
   required String number,
@@ -76,11 +77,13 @@ Future<bool> sendDemoVideoOnWhatsApp(
   String exhibitionName = '',
 }) async {
   final videos = await _demoVideoLinks(context);
+  final hasApp = await isWhatsAppInstalled();
   final uri = demoVideoWhatsAppUri(
     number: number,
     videos: videos,
     visitorName: visitorName,
     exhibitionName: exhibitionName,
+    web: !hasApp,
   );
   var ok = false;
   try {
@@ -102,9 +105,7 @@ Future<bool> showDemoSentSheet(
   List<String> visitorNumbers = const [],
 }) async {
   HapticFeedback.mediumImpact();
-  final showWhatsApp =
-      exDemoVideoEnabled && visitorNumbers.isNotEmpty && await isWhatsAppInstalled();
-  if (!context.mounted) return false;
+  final showWhatsApp = exDemoVideoEnabled && visitorNumbers.isNotEmpty;
   final yes = await showModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
@@ -1288,8 +1289,7 @@ class _DemoDetailPanelState extends ConsumerState<DemoDetailPanel> {
     final fetched = detail?.value?.recipients ?? const <DemoRecipient>[];
     final recipients = fetched.isNotEmpty ? fetched : d.recipients;
     final loadingDetail = detail != null && detail.isLoading && recipients.isEmpty;
-    final canWhatsApp =
-        exDemoVideoEnabled && (ref.watch(whatsAppInstalledProvider).value ?? false);
+    final canWhatsApp = exDemoVideoEnabled;
     final detailFailed = detail != null && detail.hasError && recipients.isEmpty;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

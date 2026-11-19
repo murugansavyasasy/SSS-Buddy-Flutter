@@ -411,8 +411,7 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
   List<Widget> _leadSlivers(
       AsyncValue<List<ExhibitionLead>> leads, Exhibition ex, double pad, bool twoCols) {
     final user = ref.watch(userSessionProvider).value;
-    final canWhatsApp =
-        exDemoVideoEnabled && (ref.watch(whatsAppInstalledProvider).value ?? false);
+    final canWhatsApp = exDemoVideoEnabled;
     final addButton = SliverToBoxAdapter(
       child: _padded(
         pad,

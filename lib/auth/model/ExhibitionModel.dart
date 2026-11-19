@@ -113,8 +113,8 @@ typedef DemoVideoLink = ({String label, String url});
 /// Languages sent to visitors, in message order, with the spellings that
 /// may appear in a Management Videos name.
 const demoVideoLanguages = <String, List<String>>{
-  'Tamil': ['tamil'],
   'English': ['english'],
+  'Tamil': ['tamil'],
   'Hindi': ['hindi'],
   'Kannada': ['kannada', 'kanada'],
 };
@@ -132,13 +132,15 @@ List<DemoVideoLink> pickDemoVideoLinks(List<Managementvideosmodel> videos) => [
           (label: lang.key, url: v.videoURL.trim()),
     ];
 
-/// WhatsApp app link that opens a chat with [number] and a prefilled
-/// message carrying the demo [videos]. The user still taps Send.
+/// Link that opens a chat with [number] and a prefilled message carrying
+/// the demo [videos]: the WhatsApp app, or WhatsApp Web in the browser when
+/// [web] is true (no app installed). The user still taps Send.
 Uri demoVideoWhatsAppUri({
   required String number,
   required List<DemoVideoLink> videos,
   String visitorName = '',
   String exhibitionName = '',
+  bool web = false,
 }) {
   final n = normalizeIndianMobile(number);
   final name = visitorName.trim();
@@ -155,8 +157,8 @@ Uri demoVideoWhatsAppUri({
       b.write('\n${v.label.isEmpty ? '' : '${v.label}: '}${v.url.trim()}');
     }
   }
-  return Uri.parse(
-      'whatsapp://send?phone=91$n&text=${Uri.encodeComponent(b.toString())}');
+  final query = 'phone=91$n&text=${Uri.encodeComponent(b.toString())}';
+  return Uri.parse(web ? 'https://web.whatsapp.com/send?$query' : 'whatsapp://send?$query');
 }
 
 enum ExhibitionStatus { active, completed }
