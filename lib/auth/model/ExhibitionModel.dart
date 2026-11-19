@@ -104,6 +104,26 @@ String formatIndianMobile(String digits) {
   return '+91 ${d.substring(0, 5)} ${d.substring(5)}';
 }
 
+/// WhatsApp app link that opens a chat with [number] and a prefilled
+/// message carrying [videoUrl]. The user still taps Send.
+Uri demoVideoWhatsAppUri({
+  required String number,
+  required String videoUrl,
+  String visitorName = '',
+  String exhibitionName = '',
+}) {
+  final n = normalizeIndianMobile(number);
+  final name = visitorName.trim();
+  final event = exhibitionName.trim();
+  final text = [
+    name.isEmpty ? 'Hi' : 'Hi $name',
+    ', thank you for visiting us',
+    if (event.isNotEmpty) ' at $event',
+    '. Watch our demo video: ${videoUrl.trim()}',
+  ].join();
+  return Uri.parse('whatsapp://send?phone=91$n&text=${Uri.encodeComponent(text)}');
+}
+
 enum ExhibitionStatus { active, completed }
 
 ExhibitionStatus _exStatus(String s) =>
@@ -368,6 +388,20 @@ class ExhibitionDemo {
     }
     return null;
   }
+
+  /// This list row filled in from GET /exhibitions/demos/:demoId, which has
+  /// the recipients the list leaves out. Empty detail fields keep this row's.
+  ExhibitionDemo mergedWith(ExhibitionDemo detail) => ExhibitionDemo(
+        id: id.isNotEmpty ? id : detail.id,
+        visitorName: detail.visitorName.trim().isNotEmpty ? detail.visitorName : visitorName,
+        recipientCount: detail.recipients.isNotEmpty ? detail.recipients.length : recipientCount,
+        status: status,
+        audioUrl: detail.audioUrl.isNotEmpty ? detail.audioUrl : audioUrl,
+        createdBy: createdBy.isNotEmpty ? createdBy : detail.createdBy,
+        createdAt: createdAt ?? detail.createdAt,
+        recipients: detail.recipients.isNotEmpty ? detail.recipients : recipients,
+        hasLead: hasLead || detail.hasLead,
+      );
 }
 
 /// How keen the school is, chosen when the lead is captured.

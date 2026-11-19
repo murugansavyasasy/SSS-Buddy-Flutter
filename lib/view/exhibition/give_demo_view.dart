@@ -19,12 +19,14 @@ class GiveDemoResult {
   final int callCount;
   final String visitorName;
   final String? firstVisitorNumber;
+  final List<String> visitorNumbers;
 
   const GiveDemoResult({
     required this.demoId,
     required this.callCount,
     required this.visitorName,
     this.firstVisitorNumber,
+    this.visitorNumbers = const [],
   });
 }
 
@@ -358,6 +360,7 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
           callCount: total,
           visitorName: _visitorName.text.trim(),
           firstVisitorNumber: _numbers.isEmpty ? null : _numbers.first,
+          visitorNumbers: List.of(_numbers),
         ),
       );
     } catch (e) {

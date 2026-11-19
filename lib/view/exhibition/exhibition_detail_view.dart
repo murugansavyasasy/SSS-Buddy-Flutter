@@ -67,7 +67,26 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
 
   void _refresh() => refreshExhibition(ref, _id);
 
+  /// The demo list leaves out the numbers; load them from the demo detail
+  /// (already cached when the card is expanded) so Initiate Again has them.
+  Future<ExhibitionDemo> _withRecipients(ExhibitionDemo d) async {
+    if (d.id.isEmpty || d.recipients.any((r) => !r.isTeam && r.number.isNotEmpty)) return d;
+    try {
+      final detail = await ref
+          .read(exhibitionDemoDetailProvider(d.id).future)
+          .timeout(const Duration(seconds: 20));
+      return d.mergedWith(detail);
+    } catch (_) {
+      if (mounted) exToast(context, "Couldn't load the demo's numbers. Add them again.", error: true);
+      return d;
+    }
+  }
+
   Future<void> _giveDemo(Exhibition ex, {ExhibitionDemo? resendFrom}) async {
+    if (resendFrom != null) {
+      resendFrom = await _withRecipients(resendFrom);
+      if (!mounted) return;
+    }
     final res = await Navigator.push<GiveDemoResult>(
       context,
       MaterialPageRoute(
@@ -86,6 +105,8 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
       context,
       callCount: res.callCount,
       exhibitionName: ex.name,
+      visitorName: res.visitorName,
+      visitorNumbers: res.visitorNumbers,
     );
     if (!capture || !mounted) return;
 
@@ -377,6 +398,7 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
                 onTap: () => _toggleDemo(items[i]),
                 onCaptureLead: () => _captureLead(demo: items[i]),
                 onSendAgain: () => _giveDemo(ex, resendFrom: items[i]),
+                exhibitionName: ex.name,
                 templates: templates,
               ),
             ),
@@ -710,7 +732,10 @@ class _DemoRow extends StatelessWidget {
     required this.onCaptureLead,
     required this.onSendAgain,
     required this.templates,
+    this.exhibitionName = '',
   });
+
+  final String exhibitionName;
 
   /// Voice templates from the API, to name the voice a demo used.
   final List<DemoTemplate> templates;
@@ -815,7 +840,12 @@ class _DemoRow extends StatelessWidget {
                   border: Border(top: BorderSide(color: exBorder)),
                 ),
                 padding: const EdgeInsets.all(16),
-                child: DemoDetailPanel(demo: d, onCaptureLead: onCaptureLead, onSendAgain: onSendAgain),
+                child: DemoDetailPanel(
+                  demo: d,
+                  onCaptureLead: onCaptureLead,
+                  onSendAgain: onSendAgain,
+                  exhibitionName: exhibitionName,
+                ),
               ),
           ],
         ),
