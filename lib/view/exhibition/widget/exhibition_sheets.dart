@@ -399,24 +399,6 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
     }
   }
 
-  Future<void> _addPdfs() async {
-    if (_fileCount >= _maxFiles) return _tooMany();
-    try {
-      final result = await FilePicker.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['pdf'],
-      );
-      if (result.isEmpty || !mounted) return;
-      setState(() {
-        for (final f in result.where((f) => f.path != null).take(_maxFiles - _fileCount)) {
-          _picked.add(_LocalFile(f.path!, f.name, isPdf: true));
-        }
-      });
-    } catch (e) {
-      if (mounted) setState(() => _error = 'Could not open files. $e');
-    }
-  }
-
   /// Uploads newly picked files to S3; returns all attachment URLs.
   Future<List<String>> _uploadFiles() async {
     final repo = ref.read(exhibitionRepositoryProvider);
@@ -436,7 +418,7 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
     return urls;
   }
 
-  /// Popup to choose the attachment type (camera, photos or PDF).
+  /// Popup to choose the attachment source (camera or photos).
   Future<void> _pickAttachment() async {
     if (_fileCount >= _maxFiles) return _tooMany();
     FocusScope.of(context).unfocus();
@@ -490,8 +472,6 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
                   'Capture with the camera'),
               option(1, Icons.photo_library_outlined, exSuccessBg, exSuccess, 'Choose photos',
                   'Pick one or more from the gallery'),
-              option(2, Icons.picture_as_pdf_outlined, exDangerBg, exDanger, 'PDF document',
-                  'Pick a PDF file'),
             ],
           ),
         ),
@@ -503,8 +483,6 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
         await _addFromCamera();
       case 1:
         await _addPhotos();
-      case 2:
-        await _addPdfs();
     }
   }
 
@@ -518,7 +496,7 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
             Text('Attachment', style: exHeadingSm.copyWith(fontSize: 15)),
             const SizedBox(width: 6),
             Expanded(
-              child: Text('(optional · photos or PDF)',
+              child: Text('(optional · photo)',
                   maxLines: 1, overflow: TextOverflow.ellipsis, style: exBodySm),
             ),
             if (_fileCount > 0) Text('$_fileCount/$_maxFiles', style: exBodySm),
