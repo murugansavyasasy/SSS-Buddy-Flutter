@@ -1,3 +1,5 @@
+import 'ManagementVideosModel.dart';
+
 /// Models for the Exhibitions module (trade-show voice demos and leads).
 ///
 /// The parsers accept both camelCase and PascalCase keys and a few common
@@ -104,24 +106,57 @@ String formatIndianMobile(String digits) {
   return '+91 ${d.substring(0, 5)} ${d.substring(5)}';
 }
 
+/// One demo video link sent on WhatsApp, e.g. (label: 'Tamil', url: …).
+/// An empty [label] means a single unlabeled link.
+typedef DemoVideoLink = ({String label, String url});
+
+/// Languages sent to visitors, in message order, with the spellings that
+/// may appear in a Management Videos name.
+const demoVideoLanguages = <String, List<String>>{
+  'Tamil': ['tamil'],
+  'English': ['english'],
+  'Hindi': ['hindi'],
+  'Kannada': ['kannada', 'kanada'],
+};
+
+/// From the Management Videos list (GET api/mobile/GetVideos), the first
+/// video whose name mentions each language, in [demoVideoLanguages] order.
+/// Languages with no matching video are left out.
+List<DemoVideoLink> pickDemoVideoLinks(List<Managementvideosmodel> videos) => [
+      for (final lang in demoVideoLanguages.entries)
+        for (final v in videos
+            .where((v) =>
+                v.videoURL.trim().isNotEmpty &&
+                lang.value.any((w) => v.videoName.toLowerCase().contains(w)))
+            .take(1))
+          (label: lang.key, url: v.videoURL.trim()),
+    ];
+
 /// WhatsApp app link that opens a chat with [number] and a prefilled
-/// message carrying [videoUrl]. The user still taps Send.
+/// message carrying the demo [videos]. The user still taps Send.
 Uri demoVideoWhatsAppUri({
   required String number,
-  required String videoUrl,
+  required List<DemoVideoLink> videos,
   String visitorName = '',
   String exhibitionName = '',
 }) {
   final n = normalizeIndianMobile(number);
   final name = visitorName.trim();
   final event = exhibitionName.trim();
-  final text = [
-    name.isEmpty ? 'Hi' : 'Hi $name',
-    ', thank you for visiting us',
-    if (event.isNotEmpty) ' at $event',
-    '. Watch our demo video: ${videoUrl.trim()}',
-  ].join();
-  return Uri.parse('whatsapp://send?phone=91$n&text=${Uri.encodeComponent(text)}');
+  final links = videos.where((v) => v.url.trim().isNotEmpty).toList();
+  final b = StringBuffer(name.isEmpty ? 'Dear Sir/Madam' : 'Dear $name')
+    ..write(', thank you for visiting us')
+    ..write(event.isEmpty ? '.' : ' at $event.');
+  if (links.length == 1 && links.first.label.isEmpty) {
+    b.write('\nWatch our demo video: ${links.first.url.trim()}');
+  } else if (links.isNotEmpty) {
+    b.write('\nWatch our demo videos:');
+    for (final v in links) {
+      b.write('\n${v.label.isEmpty ? '' : '${v.label}: '}${v.url.trim()}');
+    }
+  }
+  return Uri.parse(
+      'whatsapp://send?phone=91$n&text=${Uri.encodeComponent(b.toString())}');
 }
 
 enum ExhibitionStatus { active, completed }
