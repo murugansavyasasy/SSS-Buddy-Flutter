@@ -5,5 +5,5 @@ class AppUrl {
 
   /// YouTube link sent to exhibition visitors on WhatsApp after a demo.
   /// Leave empty to hide the WhatsApp buttons.
-  static String exhibitionDemoVideoUrl = "https://youtu.be/frYh3TLYoig";
+  static String exhibitionDemoVideoUrl = "https://youtu.be/EWGegeBltjw";
 }
