@@ -328,7 +328,7 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
   bool _tried = false;
   bool _saving = false;
   String? _error;
-  String _savingLabel = 'Saving…';
+  late String _savingLabel = _editing ? 'Updating…' : 'Saving…';
 
   /// Already-uploaded files (when editing) and newly picked local files.
   late final List<String> _existing = [...?widget.lead?.attachments];
@@ -426,7 +426,7 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
         fileName: f.name,
       ));
     }
-    if (mounted) setState(() => _savingLabel = 'Saving…');
+    if (mounted) setState(() => _savingLabel = _editing ? 'Updating…' : 'Saving…');
     return urls;
   }
 
@@ -592,7 +592,7 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
       if (mounted) {
         setState(() {
           _saving = false;
-          _savingLabel = 'Saving…';
+          _savingLabel = _editing ? 'Updating…' : 'Saving…';
           _error = e.toString();
         });
       }
@@ -809,7 +809,7 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
             child: SafeArea(
               top: false,
               child: ExPrimaryButton(
-                label: _editing ? 'Save Changes' : 'Save Lead',
+                label: _editing ? 'Update' : 'Save Lead',
                 loadingLabel: _savingLabel,
                 loading: _saving,
                 onPressed: _save,
