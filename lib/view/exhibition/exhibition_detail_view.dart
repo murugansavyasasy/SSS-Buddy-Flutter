@@ -86,6 +86,8 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
       context,
       callCount: res.callCount,
       exhibitionName: ex.name,
+      visitorName: res.visitorName,
+      visitorNumbers: res.visitorNumbers,
     );
     if (!capture || !mounted) return;
 
@@ -377,6 +379,7 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
                 onTap: () => _toggleDemo(items[i]),
                 onCaptureLead: () => _captureLead(demo: items[i]),
                 onSendAgain: () => _giveDemo(ex, resendFrom: items[i]),
+                exhibitionName: ex.name,
                 templates: templates,
               ),
             ),
@@ -710,7 +713,10 @@ class _DemoRow extends StatelessWidget {
     required this.onCaptureLead,
     required this.onSendAgain,
     required this.templates,
+    this.exhibitionName = '',
   });
+
+  final String exhibitionName;
 
   /// Voice templates from the API, to name the voice a demo used.
   final List<DemoTemplate> templates;
@@ -815,7 +821,12 @@ class _DemoRow extends StatelessWidget {
                   border: Border(top: BorderSide(color: exBorder)),
                 ),
                 padding: const EdgeInsets.all(16),
-                child: DemoDetailPanel(demo: d, onCaptureLead: onCaptureLead, onSendAgain: onSendAgain),
+                child: DemoDetailPanel(
+                  demo: d,
+                  onCaptureLead: onCaptureLead,
+                  onSendAgain: onSendAgain,
+                  exhibitionName: exhibitionName,
+                ),
               ),
           ],
         ),

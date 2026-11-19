@@ -10,6 +10,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../auth/model/ExhibitionModel.dart';
+import '../../../repository/app_url.dart';
 import '../../../viewModel/exhibition_viewmodel.dart';
 import 'exhibition_common.dart';
 import 'demo_audio.dart';
@@ -43,6 +44,33 @@ Widget _handle() => Container(
       ),
     );
 
+// MARK: - Demo video on WhatsApp
+
+/// True when a demo video link is configured (`AppUrl.exhibitionDemoVideoUrl`).
+bool get exDemoVideoEnabled => AppUrl.exhibitionDemoVideoUrl.trim().isNotEmpty;
+
+/// Opens WhatsApp with [number]'s chat and the demo video link prefilled.
+/// Returns true when WhatsApp (or the browser fallback) opened.
+Future<bool> sendDemoVideoOnWhatsApp(
+  BuildContext context, {
+  required String number,
+  String visitorName = '',
+  String exhibitionName = '',
+}) async {
+  final uri = demoVideoWhatsAppUri(
+    number: number,
+    videoUrl: AppUrl.exhibitionDemoVideoUrl,
+    visitorName: visitorName,
+    exhibitionName: exhibitionName,
+  );
+  var ok = false;
+  try {
+    ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+  } catch (_) {}
+  if (!ok && context.mounted) exToast(context, 'Could not open WhatsApp', error: true);
+  return ok;
+}
+
 // MARK: - Demo sent: success + "capture a lead?"
 
 /// Ink screen with the success tick, and a sheet asking whether to capture
@@ -51,6 +79,8 @@ Future<bool> showDemoSentSheet(
   BuildContext context, {
   required int callCount,
   String exhibitionName = '',
+  String visitorName = '',
+  List<String> visitorNumbers = const [],
 }) async {
   HapticFeedback.mediumImpact();
   final yes = await showModalBottomSheet<bool>(
@@ -61,23 +91,84 @@ Future<bool> showDemoSentSheet(
     barrierColor: exInk,
     elevation: 0,
     builder: (ctx) => ExTheme(
-      child: _DemoSentSheet(callCount: callCount, exhibitionName: exhibitionName),
+      child: _DemoSentSheet(
+        callCount: callCount,
+        exhibitionName: exhibitionName,
+        visitorName: visitorName,
+        visitorNumbers: visitorNumbers,
+      ),
     ),
   );
   return yes == true;
 }
 
-class _DemoSentSheet extends StatelessWidget {
+class _DemoSentSheet extends StatefulWidget {
   final int callCount;
   final String exhibitionName;
-  const _DemoSentSheet({required this.callCount, required this.exhibitionName});
+  final String visitorName;
+  final List<String> visitorNumbers;
+  const _DemoSentSheet({
+    required this.callCount,
+    required this.exhibitionName,
+    this.visitorName = '',
+    this.visitorNumbers = const [],
+  });
+
+  @override
+  State<_DemoSentSheet> createState() => _DemoSentSheetState();
+}
+
+class _DemoSentSheetState extends State<_DemoSentSheet> {
+  /// Numbers whose WhatsApp chat was opened from this sheet.
+  final Set<String> _shared = {};
+
+  Future<void> _whatsApp(String number) async {
+    final ok = await sendDemoVideoOnWhatsApp(
+      context,
+      number: number,
+      visitorName: widget.visitorName,
+      exhibitionName: widget.exhibitionName,
+    );
+    if (ok && mounted) setState(() => _shared.add(number));
+  }
+
+  Widget _videoSection() => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text('Send demo video on WhatsApp', style: exHeadingSm),
+          const SizedBox(height: 10),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 176),
+            child: ListView.separated(
+              shrinkWrap: true,
+              padding: EdgeInsets.zero,
+              itemCount: widget.visitorNumbers.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              itemBuilder: (_, i) {
+                final n = widget.visitorNumbers[i];
+                final done = _shared.contains(n);
+                return ExSecondaryButton(
+                  label: done ? '${formatIndianMobile(n)} · opened' : formatIndianMobile(n),
+                  icon: done ? Icons.check_rounded : Icons.ondemand_video_rounded,
+                  color: exSuccess,
+                  height: 48,
+                  onPressed: () => _whatsApp(n),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 18),
+          const Divider(height: 1, color: exBorder),
+        ],
+      );
 
   @override
   Widget build(BuildContext context) {
     final h = MediaQuery.sizeOf(context).height;
+    final callCount = widget.callCount;
     final sub = [
       '$callCount ${callCount == 1 ? 'call' : 'calls'} queued',
-      if (exhibitionName.isNotEmpty) exhibitionName,
+      if (widget.exhibitionName.isNotEmpty) widget.exhibitionName,
     ].join(' · ');
     return SizedBox(
       height: h,
@@ -142,6 +233,10 @@ class _DemoSentSheet extends StatelessWidget {
                 children: [
                   Center(child: _handle()),
                   const SizedBox(height: 22),
+                  if (exDemoVideoEnabled && widget.visitorNumbers.isNotEmpty) ...[
+                    _videoSection(),
+                    const SizedBox(height: 18),
+                  ],
                   const Text('Did the visitor like the demo?', style: exHeadingLg),
                   const SizedBox(height: 6),
                   const Text('Capture this school as a lead?',
@@ -952,11 +1047,15 @@ class DemoDetailPanel extends ConsumerStatefulWidget {
   final VoidCallback onCaptureLead;
   final VoidCallback? onSendAgain;
 
+  /// Named in the WhatsApp demo video message.
+  final String exhibitionName;
+
   const DemoDetailPanel({
     super.key,
     required this.demo,
     required this.onCaptureLead,
     this.onSendAgain,
+    this.exhibitionName = '',
   });
 
   @override
@@ -1207,7 +1306,17 @@ class _DemoDetailPanelState extends ConsumerState<DemoDetailPanel> {
               children: [
                 for (var i = 0; i < recipients.length; i++) ...[
                   if (i > 0) const Divider(height: 1, color: exBorder),
-                  _RecipientRow(r: recipients[i]),
+                  _RecipientRow(
+                    r: recipients[i],
+                    onWhatsApp: exDemoVideoEnabled && !recipients[i].isTeam && recipients[i].number.isNotEmpty
+                        ? () => sendDemoVideoOnWhatsApp(
+                              context,
+                              number: recipients[i].number,
+                              visitorName: d.visitorName,
+                              exhibitionName: widget.exhibitionName,
+                            )
+                        : null,
+                  ),
                 ],
               ],
             ),
@@ -1266,7 +1375,10 @@ class _DemoDetailPanelState extends ConsumerState<DemoDetailPanel> {
 
 class _RecipientRow extends StatelessWidget {
   final DemoRecipient r;
-  const _RecipientRow({required this.r});
+
+  /// Sends the demo video link to this number on WhatsApp (visitors only).
+  final VoidCallback? onWhatsApp;
+  const _RecipientRow({required this.r, this.onWhatsApp});
 
   @override
   Widget build(BuildContext context) {
@@ -1283,6 +1395,20 @@ class _RecipientRow extends StatelessWidget {
                 if (r.name.isNotEmpty) Text(r.name, style: exBodySm),
                 if (r.error.isNotEmpty)
                   Text(r.error, style: exBodySm.copyWith(color: exDanger)),
+                if (onWhatsApp != null)
+                  TextButton.icon(
+                    onPressed: onWhatsApp,
+                    style: TextButton.styleFrom(
+                      foregroundColor: exSuccess,
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      minimumSize: const Size(0, 36),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      textStyle: const TextStyle(
+                          fontFamily: exFont, fontSize: 14, fontWeight: FontWeight.w600),
+                    ),
+                    icon: const Icon(Icons.ondemand_video_rounded, size: 18),
+                    label: const Text('Send video on WhatsApp'),
+                  ),
               ],
             ),
           ),
