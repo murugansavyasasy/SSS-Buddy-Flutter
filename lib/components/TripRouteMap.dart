@@ -115,6 +115,16 @@ List<RouteStop> buildRouteStops(List<Overalltripdetailsmodel> trips) {
   return stops;
 }
 
+/// True when [s] is a trip END within [meters] of any trip START pin, e.g.
+/// a member who starts and ends the day at home. Such pins are nudged aside
+/// on the map so the home flag is not hidden under the END pin.
+bool endSitsOnStart(RouteStop s, List<RouteStop> stops, {double meters = 40}) {
+  if (s.kind != StopKind.end) return false;
+  const d = Distance();
+  return stops.any((o) =>
+      o.kind == StopKind.start && d.as(LengthUnit.Meter, o.point, s.point) <= meters);
+}
+
 /// For each stop (in order), the index of the nearest point on [line],
 /// searched forward from the previous stop's match so stops never snap
 /// backwards onto an earlier pass of the same road.
@@ -390,10 +400,13 @@ class TripRouteMapState extends State<TripRouteMap> {
             ),
         ]),
         MarkerLayer(markers: [
-          // Draw visits first so START/END pins sit on top.
+          // Visits first, then END, then START on top: a trip that starts
+          // and ends at home must still show the home flag.
           for (final s in _stops.where((s) => s.kind == StopKind.visit))
             _pinMarker(s),
-          for (final s in _stops.where((s) => s.kind != StopKind.visit))
+          for (final s in _stops.where((s) => s.kind == StopKind.end))
+            _pinMarker(s),
+          for (final s in _stops.where((s) => s.kind == StopKind.start))
             _pinMarker(s),
           if (widget.live && widget.track.isNotEmpty)
             Marker(
@@ -498,7 +511,11 @@ class TripRouteMapState extends State<TripRouteMap> {
       point: s.point,
       width: 34,
       height: 46,
-      alignment: Alignment.topCenter, // pin tip sits on the lat/long
+      // Pin tip sits on the lat/long; an END on top of the home flag leans
+      // right so both pins stay visible and tappable.
+      alignment: endSitsOnStart(s, _stops)
+          ? const Alignment(1.6, -1)
+          : Alignment.topCenter,
       child: GestureDetector(
         onTap: widget.compact ? widget.onTap : () => _showStop(s, color),
         child: _Pin(color: color, label: s.label, icon: _stopIcon(s)),

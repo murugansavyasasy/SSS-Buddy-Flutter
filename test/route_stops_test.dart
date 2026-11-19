@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:sssbuddy/auth/model/OverallTripDetailsModel.dart';
 import 'package:sssbuddy/auth/model/TrackPointModel.dart';
 import 'package:sssbuddy/components/TripRouteMap.dart';
@@ -97,5 +98,20 @@ void main() {
     expect(legs.last, closeTo(stats.km, 1e-9)); // pins == outer total
     expect(stats.km, closeTo(t.totalDistanceKm, 1e-9)); // == Status Report
     expect(stats.duration, '5h 13m'); // from trip start/end, not "--"
+  });
+
+  test('END at the home START is flagged so the map keeps the flag visible', () {
+    const home = LatLng(13.0827, 80.2707);
+    const school = LatLng(13.1000, 80.2900);
+    const start = RouteStop(point: home, kind: StopKind.start, label: 'S', title: 'Trip started');
+    const visit = RouteStop(point: school, kind: StopKind.visit, label: '1', title: 'School');
+    const endHome = RouteStop(
+        point: LatLng(13.08280, 80.27075), kind: StopKind.end, label: 'E', title: 'Trip ended');
+    const endAway = RouteStop(point: school, kind: StopKind.end, label: 'E', title: 'Trip ended');
+    final stops = [start, visit, endHome];
+    expect(endSitsOnStart(endHome, stops), isTrue);
+    expect(endSitsOnStart(endAway, [start, visit, endAway]), isFalse);
+    expect(endSitsOnStart(start, stops), isFalse);
+    expect(endSitsOnStart(visit, stops), isFalse);
   });
 }
