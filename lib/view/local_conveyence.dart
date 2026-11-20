@@ -1,4 +1,5 @@
 import 'package:sssbuddy/components/ResponsiveCardList.dart';
+import 'package:sssbuddy/components/app_states.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -74,7 +75,7 @@ class LocalConveyence extends ConsumerWidget {
                   child: localconveyenceAsync.when(
                     data: (list) {
                       if (list.isEmpty) {
-                        return const Center(child: Text("No Data Found"));
+                        return const AppEmptyView(title: 'No conveyance entries', message: 'Your local travel claims will show up here.', icon: Icons.directions_car_outlined);
                       }
                       return ResponsiveCardList(
                         spacing: 0,
@@ -111,9 +112,8 @@ class LocalConveyence extends ConsumerWidget {
                         },
                       );
                     },
-                    error: (e, _) => Center(child: Text("Error: $e")),
-                    loading: () =>
-                        const Center(child: CircularProgressIndicator()),
+                    error: (e, _) => AppErrorView(error: e, onRetry: () => ref.invalidate(localConvienceProvider)),
+                    loading: () => const AppListSkeleton(),
                   ),
                 ),
               ),

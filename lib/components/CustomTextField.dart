@@ -1,9 +1,29 @@
 import 'package:flutter/material.dart';
 
 import '../values/colors/app_colors.dart';
+
+/// Field title shown above a text field (e.g. "Employee ID").
+Widget _fieldTitle(String text) => Padding(
+      padding: const EdgeInsets.only(left: 2, bottom: 8),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: AppColors.ink,
+        ),
+      ),
+    );
+
 class CustomTextField extends StatelessWidget {
   final TextEditingController controller;
   final String labelText;
+
+  /// When set, shown as a title above the field and [hintText] becomes the
+  /// placeholder (no floating label).
+  final String? title;
+  final String? hintText;
+  final TextInputType? keyboardType;
   final String? Function(String?)? validator;
   final bool obscureText;
   final IconData? prefixIcon;
@@ -19,18 +39,24 @@ class CustomTextField extends StatelessWidget {
     this.prefixIcon,
     this.textInputAction,
     this.onFieldSubmitted,
+    this.title,
+    this.hintText,
+    this.keyboardType,
   });
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
+    final field = TextFormField(
       controller: controller,
       obscureText: obscureText,
+      keyboardType: keyboardType,
       validator: validator,
       textInputAction: textInputAction,
       onFieldSubmitted: onFieldSubmitted,
       decoration: InputDecoration(
-        labelText: labelText,
+        labelText: title == null ? labelText : null,
+        hintText: hintText,
+        hintStyle: const TextStyle(color: Color(0xFF9AA3B2), fontWeight: FontWeight.w400),
         prefixIcon: prefixIcon == null ? null : Icon(prefixIcon, size: 20),
         filled: true,
         fillColor: Colors.white,
@@ -57,6 +83,11 @@ class CustomTextField extends StatelessWidget {
           ),
         ),
       ),
+    );
+    if (title == null) return field;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [_fieldTitle(title!), field],
     );
   }
 }

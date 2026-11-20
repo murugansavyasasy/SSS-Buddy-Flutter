@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sssbuddy/components/app_states.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sssbuddy/auth/model/AdvanceTourExpenseModel.dart';
@@ -67,14 +68,13 @@ class _AdavanceTourExpenseDetailState
                 child: advancetourdetailProviderAsync.when(
                   data: (data) {
                     if (data.isEmpty) {
-                      return const Center(child: Text("No data found"));
+                      return const AppEmptyView(title: 'No expense details', message: 'Nothing has been added to this advance yet.', icon: Icons.receipt_long_outlined);
                     }
                     final detail = data.first;
                     return _buildDetailContent(detail);
                   },
-                  loading: () =>
-                  const Center(child: CircularProgressIndicator()),
-                  error: (e, st) => Center(child: Text('Error: $e')),
+                  loading: () => const AppListSkeleton(),
+                  error: (e, _) => AppErrorView(error: e, onRetry: () => ref.invalidate(advancetourdetailProvider)),
                 ),
               ),
             ),

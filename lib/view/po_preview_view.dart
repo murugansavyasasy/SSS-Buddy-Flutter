@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sssbuddy/components/app_states.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../Values/Colors/app_colors.dart';
 import '../auth/model/po_details_modal.dart';
@@ -49,11 +50,11 @@ class _POPreviewViewState extends ConsumerState<POPreviewView> {
                 borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
               ),
               child: state.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Center(child: Text("Error: $e")),
+                loading: () => const AppListSkeleton(),
+                error: (e, _) => AppErrorView(error: e, onRetry: () => ref.invalidate(poDetailsProvider)),
                 data: (data) {
                   if (data.isEmpty) {
-                    return const Center(child: Text("No PO data found"));
+                    return const AppEmptyView(title: 'No PO details', message: 'This purchase order has no line items yet.', icon: Icons.receipt_long_outlined);
                   }
                   return SingleChildScrollView(
                     padding: EdgeInsets.fromLTRB(

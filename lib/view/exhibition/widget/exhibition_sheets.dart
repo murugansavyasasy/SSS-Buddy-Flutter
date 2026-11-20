@@ -268,8 +268,14 @@ class _DemoSentSheetState extends State<_DemoSentSheet> {
       child: Column(
         children: [
           // ── Success on ink ──
+          // Scales down on short phones so the lead card below always fits.
           Expanded(
-            child: Center(
+            child: Padding(
+              padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top + 8, bottom: 8),
+              child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: SizedBox(
+              width: MediaQuery.sizeOf(context).width,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -345,6 +351,8 @@ class _DemoSentSheetState extends State<_DemoSentSheet> {
                     ),
                   ),
                 ],
+              ),
+              ),
               ),
             ),
           ),
@@ -727,6 +735,8 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
         notes: _notes.text.trim(),
         interestLevel: _level,
         attachments: attachments,
+        // Keep the demo link when editing too (the PUT replaces the lead).
+        demoId: widget.demo?.id ?? widget.lead?.demoId ?? '',
       );
       final repo = ref.read(exhibitionRepositoryProvider);
       if (_editing) {
@@ -1065,11 +1075,8 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
                         ? null
                         : Align(
                             alignment: Alignment.centerLeft,
-                            // Long visitor names shrink instead of overflowing.
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              alignment: Alignment.centerLeft,
-                              child: ExPill(
+                            // Long visitor names end in "…" (ExPill).
+                            child: ExPill(
                                 icon: demo == null
                                     ? Icons.storefront_outlined
                                     : Icons.person_outline_rounded,
@@ -1079,7 +1086,6 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
                                 background: demo == null ? exNotes : exTint,
                                 foreground: demo == null ? exInk : exBrandBold,
                               ),
-                            ),
                           ),
                   ),
                   Padding(

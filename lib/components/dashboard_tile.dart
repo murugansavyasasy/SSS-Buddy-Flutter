@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'app_motion.dart';
 import 'glass_card.dart';
 
 class DashboardTile extends StatefulWidget {
@@ -9,6 +10,9 @@ class DashboardTile extends StatefulWidget {
   final VoidCallback onTap;
   final int badgeCount;
 
+  /// When the opening light sweep crosses this tile.
+  final Duration shineDelay;
+
   const DashboardTile({
     super.key,
     required this.title,
@@ -16,6 +20,7 @@ class DashboardTile extends StatefulWidget {
     required this.color,
     required this.onTap,
     this.badgeCount = 0,
+    this.shineDelay = const Duration(milliseconds: 900),
   });
 
   @override
@@ -58,6 +63,17 @@ class _DashboardTileState extends State<DashboardTile>
       onTapCancel: () => _ctrl.reverse(),
       child: ScaleTransition(
         scale: _scale,
+        // Spotlight under the finger (tile colour) + one light sweep when
+        // the dashboard opens.
+        child: TouchGlow(
+        color: widget.color,
+        radius: 110,
+        borderRadius: BorderRadius.circular(20),
+        child: AppShine(
+        delay: widget.shineDelay,
+        color: widget.color,
+        opacity: 0.16,
+        borderRadius: BorderRadius.circular(20),
         child: SoftCard(
           radius: 20,
           padding: const EdgeInsets.all(12),
@@ -137,6 +153,8 @@ class _DashboardTileState extends State<DashboardTile>
               ),
             ],
           ),
+        ),
+        ),
         ),
       ),
     );

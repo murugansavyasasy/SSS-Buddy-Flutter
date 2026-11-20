@@ -1,4 +1,5 @@
 import 'package:sssbuddy/components/ResponsiveCardList.dart';
+import 'package:sssbuddy/components/app_states.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -56,16 +57,15 @@ class DemoListView extends ConsumerWidget {
                     ),
                   ),
                   child: demoAsync.when(
-                    loading: () =>
-                        const Center(child: CircularProgressIndicator()),
-                    error: (e, _) => Center(child: Text("Error: $e")),
+                    loading: () => const AppListSkeleton(),
+                    error: (e, _) => AppErrorView(error: e, onRetry: () => ref.invalidate(demoviewProvider)),
                     data: (list) {
                       if (list.isEmpty) {
-                        return const Center(child: Text("No Data Found"));
+                        return const AppEmptyView(title: 'No demos yet', message: 'Create a demo and it will appear here.', icon: Icons.record_voice_over_outlined);
                       }
                       return ResponsiveCardList(
-                        padding: const EdgeInsets.all(12),
-                        spacing: 0,
+                        padding: const EdgeInsets.fromLTRB(14, 16, 14, 16),
+                        spacing: 12,
                         itemCount: list.length,
                         itemBuilder: (context, index) {
                           final item = list[index];

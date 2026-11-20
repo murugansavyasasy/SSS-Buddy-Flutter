@@ -5,6 +5,8 @@ class Strings {
   static const String welcometoSSSBuddy = "Welcome to SSS Score";
   static const String logintocontinue = "Login to your account";
   static const String empIDMobileNumber = "Emp ID";
+  static const String employeeId = "Employee ID";
+  static const String enterEmployeeId = "Enter your employee ID";
   static const String enterIdMobileNumber = "Enter Id (or) Mobile Number";
   static const String password = "Password";
   static const String enteryourpassword = "Enter your password";

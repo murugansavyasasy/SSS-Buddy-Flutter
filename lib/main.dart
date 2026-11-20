@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sssbuddy/components/app_motion.dart';
 import 'package:sssbuddy/core/notifications/local_notifications.dart';
 import 'package:sssbuddy/utils/network_utils.dart';
 import 'package:sssbuddy/utils/routes/routes.dart';
@@ -54,6 +55,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
+      scrollBehavior: const AppScrollBehavior(),
       navigatorKey: appNavigatorKey,
       onGenerateRoute: Routes.generateRoutes,
       initialRoute: RoutesName.splashscreen,

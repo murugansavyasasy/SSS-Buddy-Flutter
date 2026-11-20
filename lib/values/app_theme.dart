@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../components/app_motion.dart';
 import 'colors/app_colors.dart';
 
 /// App-wide Material theme: DM Sans, brand blue, rounded soft components.
@@ -25,6 +26,7 @@ class AppTheme {
     return base.copyWith(
       scaffoldBackgroundColor: AppColors.pageBg,
       splashFactory: InkSparkle.splashFactory,
+      pageTransitionsTheme: appPageTransitionsTheme,
       textTheme: base.textTheme.apply(bodyColor: AppColors.ink, displayColor: AppColors.ink),
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.primary,

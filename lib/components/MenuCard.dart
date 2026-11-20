@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../auth/model/MenuItemData.dart';
+import 'app_motion.dart';
 
 class MenuCard extends StatelessWidget {
   final MenuItemData item;
@@ -10,7 +11,8 @@ class MenuCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
+    return PressableScale(
+      child: Material(
       color: Colors.white,
       borderRadius: BorderRadius.circular(18),
       elevation: 0,
@@ -93,6 +95,7 @@ class MenuCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }

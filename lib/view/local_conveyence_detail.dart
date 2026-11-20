@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:sssbuddy/components/app_states.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -61,7 +62,7 @@ class _LocalConveyenceDetailState extends ConsumerState<LocalConveyenceDetail> {
                 child: localconveyencedetailAsync.when(
                   data: (data) {
                     if (data.isEmpty) {
-                      return const Center(child: Text("No data found"));
+                      return const AppEmptyView(title: 'No entries for this day', icon: Icons.directions_car_outlined);
                     }
                     final detail = data.first;
                     return SingleChildScrollView(
@@ -111,8 +112,8 @@ class _LocalConveyenceDetailState extends ConsumerState<LocalConveyenceDetail> {
                       ),
                     );
                   },
-                  loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (e, st) => Center(child: Text('Error: $e')),
+                  loading: () => const AppListSkeleton(),
+                  error: (e, _) => AppErrorView(error: e, onRetry: () => ref.invalidate(localconviencedetailProvider)),
                 ),
               ),
             ),

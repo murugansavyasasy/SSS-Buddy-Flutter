@@ -1,4 +1,5 @@
 import 'package:sssbuddy/components/ResponsiveCardList.dart';
+import 'package:sssbuddy/components/app_states.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -63,10 +64,8 @@ class _CustomerPOViewState extends ConsumerState<CustomerPOView> {
                   ),
                 ),
                 child: poState.when(
-                  loading: () =>
-                  const Center(child: CircularProgressIndicator()),
-                  error: (e, s) =>
-                  const Center(child: Text("Failed to load data")),
+                  loading: () => const AppListSkeleton(),
+                  error: (e, _) => AppErrorView(error: e, onRetry: () => ref.invalidate(PoListviewProvider)),
                   data: (poData) {
                     final customer = poData.customer;
                     final pendingTotal = poData.pendingTotal;

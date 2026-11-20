@@ -8,6 +8,7 @@ import '../../auth/model/ExhibitionModel.dart';
 import '../../viewModel/exhibition_viewmodel.dart';
 import 'exhibition_create_view.dart';
 import 'exhibition_detail_view.dart';
+import 'widget/exhibition_overview.dart';
 import 'widget/exhibition_common.dart';
 
 enum _Filter { all, active, completed }
@@ -147,7 +148,7 @@ class _ExhibitionListViewState extends ConsumerState<ExhibitionListView> {
       ],
       headerBottom: _headerControls(async.value),
       floatingActionButton: ExFab(onPressed: _openCreate),
-      body: _listArea(async, grid: exIsWide(context)),
+      body: _listArea(async, grid: exIsWide(context), overview: true),
     );
   }
 
@@ -224,10 +225,20 @@ class _ExhibitionListViewState extends ConsumerState<ExhibitionListView> {
     required bool grid,
     String? selectedId,
     EdgeInsets? padding,
+    bool overview = false,
   }) {
     final items = async.value == null ? null : _apply(async.value!);
     final state = _listState(async, items);
     if (state != null) return state;
+    // Overview of the exhibitions shown (follows search + status filter),
+    // as the first, full-width row of the list.
+    final head = overview
+        ? ExAppear(
+            key: ValueKey('overview-${_filter.name}'),
+            child: ExhibitionsOverviewCard(items: items!, onOpen: _openDetail),
+          )
+        : null;
+    final h = head == null ? 0 : 1;
     final pad = padding ?? EdgeInsets.fromLTRB(grid ? 24 : 16, 16, grid ? 24 : 16, 112);
     return RefreshIndicator(
       color: exBrandBold,
@@ -241,9 +252,13 @@ class _ExhibitionListViewState extends ConsumerState<ExhibitionListView> {
               return ListView.separated(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: pad,
-                itemCount: rows,
+                itemCount: rows + h,
                 separatorBuilder: (_, __) => const SizedBox(height: 16),
-                itemBuilder: (_, r) => IntrinsicHeight(
+                itemBuilder: (_, rr) => rr < h
+                    ? head!
+                    : Builder(builder: (_) {
+                  final r = rr - h;
+                  return IntrinsicHeight(
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -264,24 +279,29 @@ class _ExhibitionListViewState extends ConsumerState<ExhibitionListView> {
                       ],
                     ],
                   ),
-                ),
+                );
+                }),
               );
             })
           : ListView.separated(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: pad,
-              itemCount: items!.length,
+              itemCount: items!.length + h,
               separatorBuilder: (_, __) => const SizedBox(height: 14),
-              itemBuilder: (_, i) => ExAppear(
-                // Replays when the filter changes.
-                key: ValueKey('${_filter.name}-${items[i].id}'),
-                index: i,
-                child: ExhibitionCard(
-                  exhibition: items[i],
-                  selected: items[i].id == selectedId,
-                  onTap: () => _openDetail(items[i]),
-                ),
-              ),
+              itemBuilder: (_, ii) {
+                if (ii < h) return head!;
+                final i = ii - h;
+                return ExAppear(
+                  // Replays when the filter changes.
+                  key: ValueKey('${_filter.name}-${items[i].id}'),
+                  index: i + h,
+                  child: ExhibitionCard(
+                    exhibition: items[i],
+                    selected: items[i].id == selectedId,
+                    onTap: () => _openDetail(items[i]),
+                  ),
+                );
+              },
             ),
     );
   }
@@ -656,7 +676,7 @@ class ExhibitionCard extends StatelessWidget {
                   _Counter(
                     icon: Icons.groups_rounded,
                     value: e.attendeeCount,
-                    label: e.attendeeCount == 1 ? 'Attendee' : 'Attendees',
+                    label: 'Team', // matches the detail screen; 'Attendees' crowded the divider
                     color: exAccentTeam,
                     background: exAccentTeamBg,
                   ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sssbuddy/components/app_states.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sssbuddy/view/demo_list.dart';
 import 'package:sssbuddy/components/custom_text_field.dart';
@@ -68,8 +69,8 @@ class _DemolistEditViewState extends ConsumerState<DemolistEditView> {
                 borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
               ),
               child: state.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Center(child: Text("Error: $e")),
+                loading: () => const AppListSkeleton(),
+                error: (e, _) => AppErrorView(error: e, onRetry: () => ref.invalidate(demolistEditProvider)),
                 data: (data) {
                   if (!_isBound) {
                     _isBound = true;

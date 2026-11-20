@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../Values/Colors/app_colors.dart';
+import 'app_motion.dart';
 
 class CustomButton extends StatelessWidget {
   final String text;
@@ -55,7 +56,10 @@ class CustomButton extends StatelessWidget {
       ),
     );
 
-    return SizedBox(
+    return PressableScale(
+      enabled: onPressed != null && !isLoading,
+      pressedScale: 0.96,
+      child: SizedBox(
       height: height,
       child: isOutlined
           ? OutlinedButton(
@@ -68,6 +72,7 @@ class CustomButton extends StatelessWidget {
               style: buttonStyle,
               child: child,
             ),
+      ),
     );
   }
 }

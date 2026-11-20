@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sssbuddy/components/app_states.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -62,12 +63,11 @@ class ImportantInfoScreen extends ConsumerWidget {
                   ),
                 ),
                 child: infoAsync.when(
-                  loading: () =>
-                  const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(child: Text("Error: $e")),
+                  loading: () => const AppListSkeleton(),
+                  error: (e, _) => AppErrorView(error: e, onRetry: () => ref.invalidate(importantinfoviewprovider)),
                   data: (info) {
                     if (info == null)
-                      return const Center(child: Text("No data found"));
+                      return const AppEmptyView(title: 'No information yet', message: 'Support contacts and app links will appear here.', icon: Icons.info_outline_rounded);
                     return _buildContent(context, info);
                   },
                 ),

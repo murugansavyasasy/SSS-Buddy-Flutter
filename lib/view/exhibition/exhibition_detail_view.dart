@@ -9,6 +9,7 @@ import 'exhibition_create_view.dart';
 import 'give_demo_view.dart';
 import 'widget/demo_audio.dart';
 import 'widget/exhibition_common.dart';
+import 'widget/exhibition_insights_view.dart';
 import 'widget/exhibition_sheets.dart';
 
 /// Phone route: "‹ Exhibitions" back row over the detail pane.
@@ -46,7 +47,7 @@ class ExhibitionDetailPane extends ConsumerStatefulWidget {
 }
 
 class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
-  int _tab = 0; // 0 = demos, 1 = leads
+  int _tab = 0; // 0 = demos, 1 = leads, 2 = insights
 
   /// From the iPad split: show this exhibition on its own full page.
   void _openFullView(Exhibition ex) {
@@ -259,7 +260,7 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
                       child: TextButton.icon(
                         onPressed: () => _openFullView(ex),
                         icon: const Icon(Icons.open_in_full_rounded, size: 18),
-                        label: const Text('Full view'),
+                        label: const Text('Open full screen'),
                         style: TextButton.styleFrom(
                           foregroundColor: exBrandBold,
                           textStyle: const TextStyle(
@@ -303,8 +304,21 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
               if (_tab == 0)
                 ..._demoSlivers(demos, ex, pad)
+              else if (_tab == 1)
+                ..._leadSlivers(leads, ex, pad, wide && !embedded)
               else
-                ..._leadSlivers(leads, ex, pad, wide && !embedded),
+                SliverToBoxAdapter(
+                  child: _padded(
+                    pad,
+                    demos.isLoading || leads.isLoading
+                        ? const ExSkeletonList(count: 2)
+                        : ExhibitionInsightsView(
+                            exhibition: ex,
+                            demos: demos.value ?? const [],
+                            leads: leads.value ?? const [],
+                          ),
+                  ),
+                ),
               const SliverToBoxAdapter(child: SizedBox(height: 40)),
             ],
           ),
@@ -333,7 +347,10 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
           ),
         ),
       ],
-      data: (items) {
+      data: (raw) {
+        // Show "Lead captured" for demos whose lead the server didn't link.
+        final items =
+            demosWithLeads(raw, ref.watch(exhibitionLeadsProvider(_id)).value ?? const []);
         // Download every demo voice now, so expanding a demo plays at once.
         for (final d in items) {
           if (d.audioUrl.isNotEmpty) ref.read(localAudioProvider(d.audioUrl));
@@ -377,7 +394,7 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
             itemBuilder: (_, i) => _padded(
               pad,
               ExAppear(
-                key: ValueKey('demo-${items[i].id}-$i'),
+                key: ValueKey('demo-${items[i].id}'),
                 index: i,
                 child: _DemoRow(
                 demo: items[i],
@@ -452,7 +469,7 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
             separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (_, r) {
               Widget card(int i) => ExAppear(
-                    key: ValueKey('lead-${items[i].id}-$i'),
+                    key: ValueKey('lead-${items[i].id}'),
                     index: i,
                     child: _LeadCard(
                     lead: items[i],
@@ -549,6 +566,8 @@ class _Header extends StatelessWidget {
                   size: 26, color: active ? Colors.white : exInk),
             ),
             const SizedBox(width: 14),
+            // Title gets the full width (Edit / Delete sit on the status
+            // row) so long names wrap between words, not inside them.
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -557,24 +576,27 @@ class _Header extends StatelessWidget {
                       style: exHeadingLg.copyWith(
                           fontSize: 22, height: 1.25, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 8),
-                  ExStatusBadge(status: ex.status),
+                  Row(
+                    children: [
+                      ExStatusBadge(status: ex.status),
+                      const Spacer(),
+                      if (onEdit != null)
+                        _EditButton(tooltip: 'Edit exhibition', onPressed: onEdit!),
+                      if (onDelete != null) ...[
+                        const SizedBox(width: 8),
+                        _EditButton(
+                          tooltip: 'Delete exhibition',
+                          icon: Icons.delete_outline_rounded,
+                          color: exDanger,
+                          background: exDangerBg,
+                          onPressed: onDelete!,
+                        ),
+                      ],
+                    ],
+                  ),
                 ],
               ),
             ),
-            if (onEdit != null) ...[
-              const SizedBox(width: 8),
-              _EditButton(tooltip: 'Edit exhibition', onPressed: onEdit!),
-            ],
-            if (onDelete != null) ...[
-              const SizedBox(width: 8),
-              _EditButton(
-                tooltip: 'Delete exhibition',
-                icon: Icons.delete_outline_rounded,
-                color: exDanger,
-                background: exDangerBg,
-                onPressed: onDelete!,
-              ),
-            ],
           ],
         ),
         const SizedBox(height: 16),
@@ -669,18 +691,18 @@ class _Header extends StatelessWidget {
             ),
           )
         else
-          SizedBox(
-            height: 62,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              clipBehavior: Clip.none,
-              padding: const EdgeInsets.only(bottom: 4),
-              itemCount: ex.attendees.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 10),
-              itemBuilder: (_, i) {
-                final m = ex.attendees[i];
-                return ExPersonChip(name: m.name, number: formatIndianMobile(m.mobile));
-              },
+          // Wrap inside the card (a sideways list ran past its edge).
+          LayoutBuilder(
+            builder: (context, box) => Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                for (final m in ex.attendees)
+                  ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: box.maxWidth),
+                    child: ExPersonChip(name: m.name, number: formatIndianMobile(m.mobile)),
+                  ),
+              ],
             ),
           ),
         if (showGiveDemo) ...[
@@ -789,11 +811,11 @@ class _Tabs extends StatelessWidget {
         children: [
           // White thumb slides under the selected tab.
           AnimatedAlign(
-            alignment: Alignment(selected == 0 ? -1 : 1, 0),
+            alignment: Alignment(selected - 1.0, 0),
             duration: const Duration(milliseconds: 260),
             curve: Curves.easeOutCubic,
             child: FractionallySizedBox(
-              widthFactor: 0.5,
+              widthFactor: 1 / 3,
               heightFactor: 1,
               child: Container(
                 decoration: BoxDecoration(
@@ -808,6 +830,7 @@ class _Tabs extends StatelessWidget {
             children: [
               Expanded(child: _tab(0, 'Demos', Icons.graphic_eq_rounded, demoCount)),
               Expanded(child: _tab(1, 'Leads', Icons.star_rounded, leadCount)),
+              Expanded(child: _tab(2, 'Insights', Icons.insights_rounded, null)),
             ],
           ),
         ],
@@ -816,11 +839,11 @@ class _Tabs extends StatelessWidget {
     if (!compact) return track;
     return Align(
       alignment: Alignment.centerLeft,
-      child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 360), child: track),
+      child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 480), child: track),
     );
   }
 
-  Widget _tab(int i, String label, IconData icon, int count) {
+  Widget _tab(int i, String label, IconData icon, int? count) {
     final on = selected == i;
     return Semantics(
       selected: on,
@@ -830,7 +853,12 @@ class _Tabs extends StatelessWidget {
         onTap: () => onChanged(i),
         child: Container(
           alignment: Alignment.center,
-          child: Row(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          // Three tabs share a phone row: shrink rather than overflow.
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+            mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(icon, size: 18, color: on ? exBrandBold : exSubtle),
@@ -841,6 +869,7 @@ class _Tabs extends StatelessWidget {
                     fontWeight: on ? FontWeight.w700 : FontWeight.w600,
                     color: on ? exInk : exSubtle,
                   )),
+              if (count != null) ...[
               const SizedBox(width: 8),
               Container(
                 constraints: const BoxConstraints(minWidth: 24),
@@ -857,7 +886,9 @@ class _Tabs extends StatelessWidget {
                       color: on ? Colors.white : exSubtle,
                     )),
               ),
+              ],
             ],
+          ),
           ),
         ),
       ),

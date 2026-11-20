@@ -1,4 +1,5 @@
 import 'package:sssbuddy/components/ResponsiveCardList.dart';
+import 'package:sssbuddy/components/app_states.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -87,8 +88,7 @@ class _CustomerListViewState extends ConsumerState<CustomerListView> {
                     ),
                   ),
                   child: customerlistAsync.when(
-                    loading: () =>
-                        const Center(child: CircularProgressIndicator()),
+                    loading: () => const AppListSkeleton(),
                     error: (e, _) => Center(
                       child: Padding(
                         padding: const EdgeInsets.all(24),
@@ -113,7 +113,7 @@ class _CustomerListViewState extends ConsumerState<CustomerListView> {
                     ),
                     data: (list) {
                       if (list.isEmpty) {
-                        return const Center(child: Text("No customers found"));
+                        return const AppEmptyView(title: 'No customers found', message: 'Try a different search.', icon: Icons.business_outlined);
                       }
                       return RefreshIndicator(
                         onRefresh: () => ref

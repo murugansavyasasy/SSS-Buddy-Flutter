@@ -6,6 +6,7 @@ import 'package:sssbuddy/Components/CustomButton.dart';
 import 'package:sssbuddy/auth/model/Demolist.dart';
 import 'package:sssbuddy/viewModel/createdemo_view_model.dart';
 import '../Values/Colors/app_colors.dart';
+import '../components/app_motion.dart';
 import '../components/common_dialog.dart';
 import '../components/toolbar_layout.dart';
 import '../viewModel/login_view_model.dart';
@@ -276,7 +277,24 @@ class _CreateDemoState extends ConsumerState<CreateDemo> {
 
   // ─── Pieces ──────────────────────────────────────────────
 
+  /// Sections rise in one after another when the form opens.
+  static const _sectionOrder = ['School', 'Principal', 'Parent Numbers'];
+
   Widget _sectionCard({
+    required IconData icon,
+    required String title,
+    Widget? trailing,
+    required List<Widget> children,
+  }) =>
+      AppEntrance(
+        index: _sectionOrder.indexOf(title).clamp(0, 8),
+        step: const Duration(milliseconds: 90),
+        delay: const Duration(milliseconds: 80),
+        offsetY: 24,
+        child: _sectionBody(icon: icon, title: title, trailing: trailing, children: children),
+      );
+
+  Widget _sectionBody({
     required IconData icon,
     required String title,
     Widget? trailing,

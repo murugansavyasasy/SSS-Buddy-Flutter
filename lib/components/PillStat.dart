@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'ShimmerBox.dart';
+import 'app_motion.dart';
 
 class PillStat extends StatelessWidget {
   final IconData icon;
@@ -51,8 +52,8 @@ class PillStat extends StatelessWidget {
                       ? ShimmerBox(width: 28, height: 12)
                       : FadeTransition(
                     opacity: fadeAnim,
-                    child: Text(
-                      value,
+                    child: AppCountUp(
+                      value: value,
                       style: const TextStyle(
                         color: Color(0xFF111827),
                         fontSize: 12,

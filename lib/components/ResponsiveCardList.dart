@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'app_motion.dart';
+
 /// Number of card columns for the available [width].
 ///
 /// Phones (< 600 dp) keep a single column. Tablets / iPad get as many
@@ -54,6 +56,12 @@ class ResponsiveCardList extends StatelessWidget {
     this.footer,
   });
 
+  /// Every card fades / slides in and shrinks a little while touched.
+  Widget _animated(BuildContext context, int index) => AppEntrance(
+        index: index,
+        child: PressableScale(pressedScale: 0.98, child: itemBuilder(context, index)),
+      );
+
   @override
   Widget build(BuildContext context) {
     // Keep the last card above the Android navigation bar / iOS home
@@ -80,7 +88,7 @@ class ResponsiveCardList extends StatelessWidget {
             itemCount: itemCount + (hasFooter ? 1 : 0),
             separatorBuilder: (_, __) => SizedBox(height: spacing),
             itemBuilder: (context, index) =>
-                index >= itemCount ? footer! : itemBuilder(context, index),
+                index >= itemCount ? footer! : _animated(context, index),
           );
         }
 
@@ -101,7 +109,7 @@ class ResponsiveCardList extends StatelessWidget {
               children.add(
                 Expanded(
                   child: index < itemCount
-                      ? itemBuilder(context, index)
+                      ? _animated(context, index)
                       : const SizedBox.shrink(),
                 ),
               );

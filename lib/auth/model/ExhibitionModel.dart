@@ -448,6 +448,51 @@ class ExhibitionDemo {
         recipients: detail.recipients.isNotEmpty ? detail.recipients : recipients,
         hasLead: hasLead || detail.hasLead,
       );
+
+  ExhibitionDemo withLead() => hasLead
+      ? this
+      : ExhibitionDemo(
+          id: id,
+          visitorName: visitorName,
+          recipientCount: recipientCount,
+          status: status,
+          audioUrl: audioUrl,
+          createdBy: createdBy,
+          createdAt: createdAt,
+          recipients: recipients,
+          hasLead: true,
+        );
+}
+
+String _nameKey(String s) => s.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+
+/// Marks demos that have a lead. The API's `hasLead` is not enough: leads
+/// are saved against the exhibition (not the demo), so the server may not
+/// link them. A lead belongs to a demo when its `demoId` matches, else when
+/// its contact number is one of the demo's visitor numbers, else when its
+/// contact / visitor name equals the demo's visitor name.
+List<ExhibitionDemo> demosWithLeads(List<ExhibitionDemo> demos, List<ExhibitionLead> leads) {
+  if (leads.isEmpty) return demos;
+  final byId = {for (final l in leads) if (l.demoId.isNotEmpty) l.demoId};
+  final numbers = {
+    for (final l in leads)
+      if (normalizeIndianMobile(l.contactNumber).length == 10) normalizeIndianMobile(l.contactNumber),
+  };
+  final names = {
+    for (final l in leads) ...[
+      if (l.contactName.trim().isNotEmpty) _nameKey(l.contactName),
+      if (l.demoVisitorName.trim().isNotEmpty) _nameKey(l.demoVisitorName),
+    ],
+  };
+  return [
+    for (final d in demos)
+      d.hasLead ||
+              byId.contains(d.id) ||
+              d.recipients.any((r) => !r.isTeam && numbers.contains(normalizeIndianMobile(r.number))) ||
+              (d.visitorName.trim().isNotEmpty && names.contains(_nameKey(d.visitorName)))
+          ? d.withLead()
+          : d,
+  ];
 }
 
 /// How keen the school is, chosen when the lead is captured.
@@ -583,6 +628,9 @@ class CaptureLeadRequest {
   /// S3 URLs of attached photos / PDFs.
   final List<String> attachments;
 
+  /// Demo the lead came from (sent so the server can link them).
+  final String demoId;
+
   const CaptureLeadRequest({
     required this.schoolName,
     this.city = '',
@@ -592,6 +640,7 @@ class CaptureLeadRequest {
     this.notes = '',
     this.interestLevel = InterestLevel.good,
     this.attachments = const [],
+    this.demoId = '',
   });
 
   Map<String, dynamic> toJson() => {
@@ -603,6 +652,7 @@ class CaptureLeadRequest {
         'notes': notes,
         'interestLevel': interestLevel.apiValue,
         'mediaUrl': attachments.isEmpty ? '' : attachments.first,
+        if (demoId.isNotEmpty) 'demoId': demoId,
       };
 }
 

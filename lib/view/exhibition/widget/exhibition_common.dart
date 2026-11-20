@@ -796,12 +796,17 @@ class ExPill extends StatelessWidget {
               Icon(icon, size: 14, color: foreground),
               const SizedBox(width: 4),
             ],
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: large ? 14 : 13,
-                fontWeight: FontWeight.w700,
-                color: foreground,
+            // Long labels end in "…" at full size instead of overflowing.
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: large ? 14 : 13,
+                  fontWeight: FontWeight.w700,
+                  color: foreground,
+                ),
               ),
             ),
           ],
@@ -879,39 +884,47 @@ class ExMetricTile extends StatelessWidget {
           borderRadius: BorderRadius.circular(exRadiusControl + 2),
           boxShadow: exCardShadow,
         ),
-        child: Row(
-          children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(color: background, borderRadius: BorderRadius.circular(12)),
-              child: Icon(icon, size: 20, color: color),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: int.tryParse(value) == null
-                        ? Text(value, maxLines: 1, style: _metricStyle)
-                        : ExCountUp(int.parse(value), style: _metricStyle),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: exBodySm.copyWith(fontWeight: FontWeight.w600)),
-                ],
-              ),
-            ),
-          ],
-        ),
+        // Wide tile (iPad): icon beside the number. Narrow tile (three in a
+        // phone row): icon above, or the label had no room ("De…").
+        child: LayoutBuilder(builder: (context, box) {
+          final iconBox = Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(color: background, borderRadius: BorderRadius.circular(11)),
+            child: Icon(icon, size: 18, color: color),
+          );
+          final texts = _texts();
+          return box.maxWidth >= 150
+              ? Row(children: [iconBox, const SizedBox(width: 12), Expanded(child: texts)])
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [iconBox, const SizedBox(height: 10), texts],
+                );
+        }),
         ),
       );
+
+  Widget _texts() => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: int.tryParse(value) == null
+                  ? Text(value, maxLines: 1, style: _metricStyle)
+                  : ExCountUp(int.parse(value), style: _metricStyle),
+            ),
+            const SizedBox(height: 2),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(label,
+                  maxLines: 1, style: exBodySm.copyWith(fontWeight: FontWeight.w600)),
+            ),
+          ],
+        );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -923,25 +936,68 @@ bool exReduceMotion(BuildContext context) => MediaQuery.maybeDisableAnimationsOf
 
 /// Fades and slides its child up into place once, staggered by [index]
 /// (capped so long lists don't wait). Give it a new key to replay.
-class ExAppear extends StatelessWidget {
+///
+/// With a [key], each item plays only the first time it is shown: cards
+/// scrolled out of a lazy list and back, or rebuilt after a refresh, stay
+/// put instead of flickering in again.
+class ExAppear extends StatefulWidget {
   final int index;
   final Widget child;
   final double offset;
   const ExAppear({super.key, this.index = 0, this.offset = 16, required this.child});
 
+  static const _step = Duration(milliseconds: 55);
+  static const _run = Duration(milliseconds: 380);
+
+  /// Keys that already played (lives for the app session; bounded below).
+  static final Set<Key> _played = <Key>{};
+
+  /// Tests: let every item play again.
+  @visibleForTesting
+  static void resetPlayed() => _played.clear();
+
+  @override
+  State<ExAppear> createState() => _ExAppearState();
+}
+
+class _ExAppearState extends State<ExAppear> with SingleTickerProviderStateMixin {
+  AnimationController? _c;
+  late Animation<double> _t;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_c != null || exReduceMotion(context)) return;
+    final key = widget.key;
+    if (key != null && !ExAppear._played.add(key)) return; // seen before
+    if (ExAppear._played.length > 500) ExAppear._played.clear();
+    final delay = ExAppear._step * widget.index.clamp(0, 6);
+    final total = delay + ExAppear._run;
+    // Delay inside the animation (an Interval), so nothing waits on a Timer
+    // and the item is fully hidden until its turn.
+    _c = AnimationController(vsync: this, duration: total)..forward();
+    _t = CurvedAnimation(
+      parent: _c!,
+      curve: Interval(delay.inMicroseconds / total.inMicroseconds, 1, curve: Curves.easeOutCubic),
+    );
+  }
+
+  @override
+  void dispose() {
+    _c?.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (exReduceMotion(context)) return child;
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
-      duration: Duration(milliseconds: 300 + 60 * index.clamp(0, 6)),
-      curve: Curves.easeOutCubic,
-      builder: (_, t, child) => Opacity(
-        // Each item starts a little later than the one before it.
-        opacity: (t * (1 + 0.15 * index.clamp(0, 6)) - 0.15 * index.clamp(0, 6)).clamp(0.0, 1.0),
-        child: Transform.translate(offset: Offset(0, offset * (1 - t)), child: child),
+    if (_c == null) return widget.child;
+    return AnimatedBuilder(
+      animation: _t,
+      child: widget.child,
+      builder: (_, child) => Opacity(
+        opacity: _t.value,
+        child: Transform.translate(offset: Offset(0, widget.offset * (1 - _t.value)), child: child),
       ),
-      child: child,
     );
   }
 }
@@ -1425,7 +1481,12 @@ class ExFab extends StatelessWidget {
         button: true,
         label: tooltip,
         excludeSemantics: true,
-        child: Material(
+        // Shadow on its own box outside the Material: Material clips its
+        // ink layer (where an Ink decoration paints) to the button's
+        // rectangle, which cut the glow off with hard edges.
+        child: DecoratedBox(
+          decoration: const ShapeDecoration(shape: StadiumBorder(), shadows: exBrandGlow),
+          child: Material(
           color: Colors.transparent,
           shape: const StadiumBorder(),
           child: Ink(
@@ -1433,7 +1494,6 @@ class ExFab extends StatelessWidget {
             decoration: const ShapeDecoration(
               shape: StadiumBorder(),
               gradient: exHeroGradient,
-              shadows: exBrandGlow,
             ),
             child: InkWell(
               customBorder: const StadiumBorder(),
@@ -1470,6 +1530,7 @@ class ExFab extends StatelessWidget {
               ),
             ),
           ),
+        ),
         ),
         ),
       );

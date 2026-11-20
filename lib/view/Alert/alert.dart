@@ -1,4 +1,5 @@
 import 'package:sssbuddy/components/ResponsiveCardList.dart';
+import 'package:sssbuddy/components/app_states.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -62,8 +63,7 @@ class AlertScreen extends ConsumerWidget {
                     ),
                   ),
                   child: alertAsync.when(
-                    loading: () =>
-                    const Center(child: CircularProgressIndicator()),
+                    loading: () => const AppListSkeleton(),
                     error: (e, _) => Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,

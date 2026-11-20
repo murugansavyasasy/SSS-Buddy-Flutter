@@ -71,7 +71,7 @@ class AppEndpoint {
   /// Capture lead. Called with the EXHIBITION id (leads belong to the
   /// exhibition, not a demo) although the path says demos.
   static String exhibitionDemoInterest(String exhibitionId) =>
-      "api/mobile/exhibitions/demos/$exhibitionId/interest";
+      "api/mobile/exhibitions/$exhibitionId/leads";
 
   // Ticket Raising (see docs/TICKET_API.md)
   static const tickets = "api/mobile/tickets";

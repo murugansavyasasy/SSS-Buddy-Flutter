@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'ShimmerBox.dart';
+import 'app_motion.dart';
 
 class StatCell extends StatelessWidget {
   final String label;
@@ -41,8 +42,8 @@ class StatCell extends StatelessWidget {
           position: slideAnim,
           child: FadeTransition(
             opacity: fadeAnim,
-            child: Text(
-              value,
+            child: AppCountUp(
+              value: value,
               style: TextStyle(
                 color: valueColor,
                 fontSize: 28,

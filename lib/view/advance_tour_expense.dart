@@ -1,4 +1,5 @@
 import 'package:sssbuddy/components/ResponsiveCardList.dart';
+import 'package:sssbuddy/components/app_states.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -67,12 +68,11 @@ class AdvanceTourExpense extends ConsumerWidget {
                     ),
                   ),
                   child: tourAsync.when(
-                    loading: () =>
-                        const Center(child: CircularProgressIndicator()),
-                    error: (e, _) => Center(child: Text("Error: $e")),
+                    loading: () => const AppListSkeleton(),
+                    error: (e, _) => AppErrorView(error: e, onRetry: () => ref.invalidate(tourexpenseprovider)),
                     data: (list) {
                       if (list.isEmpty) {
-                        return const Center(child: Text("No Data Found"));
+                        return const AppEmptyView(title: 'No advance requests', message: 'Your tour advances will appear here.', icon: Icons.account_balance_wallet_outlined);
                       }
                       return ResponsiveCardList(
                         // Bottom: clear the add button (ResponsiveCardList

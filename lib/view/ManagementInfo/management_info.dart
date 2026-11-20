@@ -1,4 +1,5 @@
 import 'package:sssbuddy/components/ResponsiveCardList.dart';
+import 'package:sssbuddy/components/app_states.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -71,9 +72,7 @@ class _ManagementInfoScreenState extends ConsumerState<ManagementInfo> {
 
                     Expanded(
                       child: state.when(  // 👈 Use state.when() instead of manual _isLoading
-                        loading: () => const Center(
-                          child: CircularProgressIndicator(),
-                        ),
+                        loading: () => const AppListSkeleton(),
                         error: (e, s) => Center(
                           child: Column(
                             mainAxisSize: MainAxisSize.min,

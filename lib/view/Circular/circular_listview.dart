@@ -1,4 +1,5 @@
 import 'package:sssbuddy/components/ResponsiveCardList.dart';
+import 'package:sssbuddy/components/app_states.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -49,16 +50,11 @@ class CircularListview extends ConsumerWidget {
                       top: Radius.circular(25)),
                 ),
                 child: circularAsync.when(
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                  error: (e, _) => Center(
-                    child: Text("Error: $e"),
-                  ),
+                  loading: () => const AppListSkeleton(),
+                  error: (e, _) => AppErrorView(error: e, onRetry: () => ref.invalidate(circularviewProvider)),
                   data: (list) {
                     if (list.isEmpty) {
-                      return const Center(
-                          child: Text("No Data Found"));
+                      return const AppEmptyView(title: 'No circulars', message: 'New circulars will appear here.', icon: Icons.campaign_outlined);
                     }
                     return ResponsiveCardList(
                       spacing: 0,

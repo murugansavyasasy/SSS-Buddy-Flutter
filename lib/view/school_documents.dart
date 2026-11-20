@@ -1,4 +1,5 @@
 import 'package:sssbuddy/components/ResponsiveCardList.dart';
+import 'package:sssbuddy/components/app_states.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -55,12 +56,11 @@ class SchoolDocuments extends ConsumerWidget {
                     ),
                   ),
                   child: schooldocumentsAsync.when(
-                    loading: () =>
-                        const Center(child: CircularProgressIndicator()),
-                    error: (e, _) => Center(child: Text("Error: $e")),
+                    loading: () => const AppListSkeleton(),
+                    error: (e, _) => AppErrorView(error: e, onRetry: () => ref.invalidate(schooldocumentsviewProvider)),
                     data: (list) {
                       if (list.isEmpty) {
-                        return const Center(child: Text("No Data Found"));
+                        return const AppEmptyView(title: 'No documents', message: 'School documents will appear here.', icon: Icons.folder_open_outlined);
                       }
 
                       final Map<String, List<Schooldocuments>> grouped = {};

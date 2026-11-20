@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'app_motion.dart';
 import 'glass_card.dart';
 
 class UpcomingDemoCard extends StatelessWidget {
@@ -18,7 +19,8 @@ class UpcomingDemoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return PressableScale(
+      child: SizedBox(
       width: 248,
       height: 80,
       child: SoftCard(
@@ -99,6 +101,7 @@ class UpcomingDemoCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }

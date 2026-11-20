@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sssbuddy/components/app_states.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../Values/Colors/app_colors.dart';
@@ -405,9 +406,8 @@ class _MoveToToursettlementState extends ConsumerState<MoveToToursettlement> {
                 ),
                 child: asyncDetail.when(
                   data: (_) => _buildForm(),
-                  loading: () =>
-                  const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(child: Text('Error: $e')),
+                  loading: () => const AppListSkeleton(),
+                  error: (e, _) => AppErrorView(error: e, onRetry: () => ref.invalidate(advancetourdetailProvider)),
                 ),
               ),
             ),

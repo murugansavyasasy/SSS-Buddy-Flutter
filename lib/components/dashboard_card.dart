@@ -4,6 +4,10 @@ import 'PillStat.dart';
 import 'StatCell.dart';
 import 'glass_card.dart';
 
+/// Width of a school stat card on a phone (also the carousel page size).
+double dashboardCardWidth(BuildContext context) =>
+    (MediaQuery.sizeOf(context).width * 0.82).clamp(260.0, 340.0);
+
 class DashboardCard extends StatefulWidget {
   final String title;
   final String activeLabel;
@@ -15,6 +19,10 @@ class DashboardCard extends StatefulWidget {
   final Color color;
   final bool isLoading;
   final IconData? icon;
+
+  /// Carousel scroll offset (-1 … 1): the background bubbles drift
+  /// against the swipe for a parallax feel.
+  final double parallax;
 
   const DashboardCard({
     super.key,
@@ -28,6 +36,7 @@ class DashboardCard extends StatefulWidget {
     this.totalStaff,
     this.isLoading = false,
     this.icon,
+    this.parallax = 0,
   });
 
   @override
@@ -69,7 +78,7 @@ class _DashboardCardState extends State<DashboardCard> with SingleTickerProvider
   @override
   Widget build(BuildContext context) {
     // Fixed width so the card doesn't shrink while loading or with short values.
-    final cardWidth = (MediaQuery.of(context).size.width * 0.72).clamp(240.0, 290.0);
+    final cardWidth = dashboardCardWidth(context);
     final hasCounts = widget.activeLabel.isNotEmpty || widget.inactiveLabel.isNotEmpty;
     return SizedBox(
       width: cardWidth,
@@ -183,10 +192,11 @@ class _DashboardCardState extends State<DashboardCard> with SingleTickerProvider
   /// Soft translucent circles in the card colour, mostly off the top-right
   /// and bottom-right edges.
   List<Widget> _bubbles(Color c) {
+    // Bigger bubbles move more: depth.
     Widget bubble(double size, double alpha, {double? top, double? right, double? bottom}) =>
         Positioned(
           top: top,
-          right: right,
+          right: right == null ? null : right + widget.parallax * size * 0.45,
           bottom: bottom,
           child: IgnorePointer(
             child: Container(

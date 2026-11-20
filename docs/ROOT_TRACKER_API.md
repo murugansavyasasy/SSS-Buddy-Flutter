@@ -5,6 +5,10 @@ until **END DAY**. It uploads them in batches (every 20 points or 2 minutes,
 plus once on END). Until these two APIs exist, points stay queued on the phone
 and are resent automatically, so nothing is lost.
 
+> **Accurate road distance:** see `docs/TRIP_DISTANCE_API.md`. It adds
+> `trip_id` / accuracy fields to `SaveTripLocations`, server-side map
+> matching on trip end, and `GetTripRoute`.
+
 Both live on the VIMS base URL (`http://score.savyasasy.com/`) with the usual
 `Authorization: Bearer <token>` header.
 

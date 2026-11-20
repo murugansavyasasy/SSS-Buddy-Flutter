@@ -1,4 +1,5 @@
 import 'package:sssbuddy/components/ResponsiveCardList.dart';
+import 'package:sssbuddy/components/app_states.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -59,9 +60,8 @@ class ManagementVideos extends ConsumerWidget {
                   ),
                 ),
                 child: videosAsync.when(
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(child: Text("Error: $e")),
+                  loading: () => const AppListSkeleton(),
+                  error: (e, _) => AppErrorView(error: e, onRetry: () => ref.invalidate(managementVideosProvider)),
                   data: (videos) => ResponsiveCardList(
                     padding: const EdgeInsets.all(16),
                     itemCount: videos.length,

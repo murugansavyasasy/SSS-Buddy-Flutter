@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 import '../auth/model/Demolist.dart';
+import '../auth/model/ExhibitionModel.dart' show formatIndianMobile;
 import '../auth/model/FollowUpModel.dart';
 import '../utils/routes/routes_name.dart';
+import 'app_motion.dart';
 import 'demo_video_whatsapp.dart';
+import 'glass_card.dart';
 
+/// One demo in the Demo List: school, principal number (tap to call) and a
+/// compact action row — Record voice, WhatsApp demo video, Edit.
 class DemoCard extends StatelessWidget {
   /// Follow-ups are hidden app-wide for now; flip to bring the button back.
   static const bool _showFollowUp = false;
@@ -11,248 +19,240 @@ class DemoCard extends StatelessWidget {
   final Demolist item;
   const DemoCard({super.key, required this.item});
 
+  static const _palette = [
+    Color(0xFF2563EB),
+    Color(0xFF7C3AED),
+    Color(0xFF0D9488),
+    Color(0xFFEA580C),
+    Color(0xFFDB2777),
+    Color(0xFF16A34A),
+  ];
+
+  /// Same school, same colour.
+  Color get _tone => _palette[item.schoolName.hashCode.abs() % _palette.length];
+
+  String get _initials {
+    final words = item.schoolName
+        .replaceAll(RegExp(r"[^A-Za-z0-9 ]"), ' ')
+        .split(RegExp(r'\s+'))
+        .where((w) => w.isNotEmpty)
+        .toList();
+    if (words.isEmpty) return '?';
+    if (words.length == 1) return words.first.substring(0, 1).toUpperCase();
+    return (words[0][0] + words[1][0]).toUpperCase();
+  }
+
+  String get _number => item.principalNumber == 0 ? '' : item.principalNumber.toString();
+
+  Future<void> _call() async {
+    if (_number.isEmpty) return;
+    HapticFeedback.selectionClick();
+    await launchUrl(Uri(scheme: 'tel', path: _number));
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
-      ),
+    final tone = _tone;
+    return SoftCard(
+      radius: 18,
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildHeader(),
-          _buildBody(context),
-          if (canSendDemoVideoTo(item.principalNumber.toString()))
-            _buildWhatsApp(context),
-        ],
-      ),
-    );
-  }
-
-  /// Full-width so the label stays readable.
-  Widget _buildWhatsApp(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
-      child: SizedBox(
-        width: double.infinity,
-        child: OutlinedButton.icon(
-          onPressed: () => sendSchoolDemoVideoOnWhatsApp(
-            context,
-            number: item.principalNumber.toString(),
-            schoolName: item.schoolName,
-          ),
-          icon: const Icon(Icons.ondemand_video_rounded, size: 16),
-          label: const Text(
-            'Send demo video on WhatsApp',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-          ),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: const Color(0xFF15803D),
-            side: const BorderSide(color: Color(0xFFBBF7D0)),
-            backgroundColor: const Color(0xFFF0FDF4),
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
-      decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Color(0xFFF1F5F9), width: 1),
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: const Color(0xFFEFF6FF),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(
-              Icons.account_balance,
-              color: Color(0xFF2563EB),
-              size: 17,
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.schoolName,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF1E293B),
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    'Demo #${item.demoId}',
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF64748B),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBody(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
-      child: Row(
-        children: [
-          // Principal Number (Clickable)
-          Expanded(
-            child: GestureDetector(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+          // ── School ──
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF0FDF4),
-                  borderRadius: BorderRadius.circular(8),
+                  gradient: homePastelGradient(tone),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: tone.withValues(alpha: 0.15)),
                 ),
-                child: Row(
+                child: Text(_initials,
+                    style: TextStyle(
+                        fontSize: 15, fontWeight: FontWeight.w800, color: homeDeep(tone))),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.phone, size: 13, color: Color(0xFF15803D)),
-                    const SizedBox(width: 6),
                     Text(
-                      item.principalNumber.toString(),
+                      item.schoolName,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFF15803D),
+                        fontSize: 14.5,
+                        height: 1.3,
+                        fontWeight: FontWeight.w700,
+                        color: HomeGlass.ink,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'DEMO #${item.demoId}',
+                      style: const TextStyle(
+                        fontSize: 10.5,
+                        letterSpacing: 0.6,
+                        fontWeight: FontWeight.w700,
+                        color: HomeGlass.muted,
                       ),
                     ),
                   ],
                 ),
               ),
-            ),
+            ],
           ),
-          const SizedBox(width: 12),
+          const SizedBox(height: 12),
 
-          // Record Voice Button
-          GestureDetector(
-            onTap: () => Navigator.pushNamed(
-              context,
-              RoutesName.recordvoice,
-              arguments: item,
-            ),
-            child: Column(
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1E40AF),
-                    borderRadius: BorderRadius.circular(10),
+          // ── Principal (tap to call) ──
+          if (_number.isNotEmpty)
+            Material(
+              color: homePastel(HomeGlass.green),
+              borderRadius: BorderRadius.circular(12),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: _call,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  child: Row(
+                    children: [
+                      Icon(Icons.call_rounded, size: 16, color: homeDeep(HomeGlass.green)),
+                      const SizedBox(width: 8),
+                      Text('Principal',
+                          style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: homeDeep(HomeGlass.green).withValues(alpha: 0.8))),
+                      const Spacer(),
+                      Text(
+                        formatIndianMobile(_number),
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w700,
+                          color: homeDeep(HomeGlass.green),
+                        ),
+                      ),
+                    ],
                   ),
-                  child: const Icon(Icons.mic, color: Colors.white, size: 16),
                 ),
-                const SizedBox(height: 3),
-                const Text(
-                  'Record',
-                  style: TextStyle(fontSize: 9, color: Color(0xFF94A3B8)),
-                ),
-              ],
-            ),
-          ),
-
-          // Follow-up Button (hidden for now; see _showFollowUp)
-          if (_showFollowUp) ...[
-          const SizedBox(width: 12),
-          GestureDetector(
-            onTap: () => Navigator.pushNamed(
-              context,
-              RoutesName.followupform,
-              arguments: FollowUpFormArgs(
-                schoolName: item.schoolName,
-                contactPhone:
-                    item.principalNumber == 0 ? '' : item.principalNumber.toString(),
-                demoId: item.demoId.toString(),
-                type: FollowUpType.call,
               ),
             ),
-            child: Column(
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: Colors.deepOrangeAccent,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(Icons.event_note_rounded,
-                      color: Colors.white, size: 16),
+          const SizedBox(height: 10),
+
+          // ── Actions ──
+          Row(
+            children: [
+              Expanded(
+                child: _ActionButton(
+                  icon: Icons.mic_rounded,
+                  label: 'Record',
+                  filled: true,
+                  color: HomeGlass.navy,
+                  onTap: () => Navigator.pushNamed(context, RoutesName.recordvoice, arguments: item),
                 ),
-                const SizedBox(height: 3),
-                const Text(
-                  'Follow-up',
-                  style: TextStyle(fontSize: 9, color: Color(0xFF94A3B8)),
+              ),
+              if (canSendDemoVideoTo(_number)) ...[
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _ActionButton(
+                    icon: Icons.ondemand_video_rounded,
+                    label: 'Video',
+                    color: HomeGlass.green,
+                    onTap: () => sendSchoolDemoVideoOnWhatsApp(
+                      context,
+                      number: _number,
+                      schoolName: item.schoolName,
+                    ),
+                  ),
                 ),
               ],
-            ),
-          ),
-          ],
-
-          const SizedBox(width: 12),
-
-          // Edit Button (NEW - Clean & Consistent)
-          GestureDetector(
-            onTap: () {
-              Navigator.pushNamed(
-                context,
-                RoutesName.demoedit,
-                arguments: item,
-              );
-            },
-            child: Column(
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: Colors.blue,
-                    borderRadius: BorderRadius.circular(10),
+              if (_showFollowUp) ...[
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _ActionButton(
+                    icon: Icons.event_note_rounded,
+                    label: 'Follow-up',
+                    color: HomeGlass.orange,
+                    onTap: () => Navigator.pushNamed(
+                      context,
+                      RoutesName.followupform,
+                      arguments: FollowUpFormArgs(
+                        schoolName: item.schoolName,
+                        contactPhone: _number,
+                        demoId: item.demoId.toString(),
+                        type: FollowUpType.call,
+                      ),
+                    ),
                   ),
-                  child: const Icon(Icons.edit, color: Colors.white, size: 16),
-                ),
-                const SizedBox(height: 3),
-                const Text(
-                  'Edit',
-                  style: TextStyle(fontSize: 9, color: Color(0xFF94A3B8)),
                 ),
               ],
-            ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _ActionButton(
+                  icon: Icons.edit_rounded,
+                  label: 'Edit',
+                  color: HomeGlass.blue,
+                  onTap: () => Navigator.pushNamed(context, RoutesName.demoedit, arguments: item),
+                ),
+              ),
+            ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final bool filled;
+  final VoidCallback onTap;
+
+  const _ActionButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+    this.filled = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final fg = filled ? Colors.white : homeDeep(color);
+    return PressableScale(
+      pressedScale: 0.94,
+      child: Material(
+        color: filled ? color : homePastel(color),
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () {
+            HapticFeedback.selectionClick();
+            onTap();
+          },
+          child: SizedBox(
+            height: 40,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 17, color: fg),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: fg)),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

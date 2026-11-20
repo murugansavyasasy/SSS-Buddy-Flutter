@@ -7,13 +7,14 @@ import 'package:sssbuddy/auth/Menulists.dart';
 import 'package:sssbuddy/components/header_toolbar.dart';
 import '../auth/model/Menuitem.dart';
 import '../components/dashboard_card.dart';
+import '../components/app_motion.dart';
 import '../components/dashboard_tile.dart';
 import '../components/glass_card.dart';
 import '../components/upcoming_demo_card.dart';
 import 'leaderboard/widget/dashboard_leaderboard.dart';
 import '../utils/routes/routes_name.dart';
 import '../core/notifications/local_notifications.dart';
-import '../viewModel/chat_viewmodel.dart';
+import '../viewModel/ticket_viewmodel.dart';
 import '../viewModel/followup_viewmodel.dart';
 import '../viewModel/demolist_view_model.dart';
 import '../viewModel/login_view_model.dart';
@@ -28,20 +29,39 @@ class Dashboard extends ConsumerWidget {
   /// School stat cards: a horizontal scroll on phones; on tablets the cards
   /// share the full width equally. [children] holds the cards and their
   /// spacers.
-  Widget _statsRow(BuildContext context, List<Widget> children) {
-    if (MediaQuery.sizeOf(context).width < 600) {
-      return ListView(
-        scrollDirection: Axis.horizontal,
-        // Let card shadows show instead of being cut off.
-        clipBehavior: Clip.none,
-        children: children,
+  Widget _statsRow(BuildContext context, List<Widget Function(double parallax)> cards) {
+    // Cards slide in from the right one after another.
+    Widget enter(int i, Widget child) => AppEntrance(
+          index: i,
+          step: const Duration(milliseconds: 90),
+          delay: const Duration(milliseconds: 120),
+          offsetX: 48,
+          offsetY: 0,
+          child: child,
+        );
+    final width = MediaQuery.sizeOf(context).width;
+    if (width < 600) {
+      // Phone: snapping carousel; the centred card is full size, the
+      // others shrink / fade, bubbles drift (parallax), dots follow.
+      return AppCarousel(
+        itemCount: cards.length,
+        itemWidth: dashboardCardWidth(context),
+        height: 172,
+        dotColor: HomeGlass.navy,
+        builder: (context, i, offset) => enter(i, cards[i](offset)),
       );
     }
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        for (final c in children) c is SizedBox ? c : Expanded(child: c),
-      ],
+    return SizedBox(
+      height: 172,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var i = 0; i < cards.length; i++) ...[
+            if (i > 0) const SizedBox(width: 12),
+            Expanded(child: enter(i, cards[i](0))),
+          ],
+        ],
+      ),
     );
   }
 
@@ -50,7 +70,10 @@ class Dashboard extends ConsumerWidget {
     final demoState = ref.watch(demoviewProvider);
     final schoolStats = ref.watch(schoolStatsProvider);
     final loginData = ref.watch(loginProvider);
-    final chatUnread = ref.watch(chatUnreadTotalProvider);
+    final openTickets = ref.watch(openTicketCountProvider);
+    // Notifies the user when a ticket they raised is completed (on open
+    // and every app resume).
+    ref.watch(ticketCompletionWatchProvider);
     final followUpsDue = ref.watch(followUpDueCountProvider);
 
     // Open the screen of a notification tapped while the app was closed.
@@ -99,11 +122,13 @@ class Dashboard extends ConsumerWidget {
         children: [
           Column(
         children: [
-          const HeaderToolbar(),
+          const AppEntrance(offsetY: -14, child: HeaderToolbar()),
 
           /// MAIN CONTENT
           Expanded(
-            child: Container(
+            child: AppEntrance(
+              offsetY: 60,
+              child: Container(
               width: double.infinity,
               clipBehavior: Clip.antiAlias,
               decoration: const BoxDecoration(
@@ -113,7 +138,18 @@ class Dashboard extends ConsumerWidget {
                   topRight: Radius.circular(25),
                 ),
               ),
-              child: SingleChildScrollView(
+              child: RefreshIndicator(
+                color: AppColors.primary,
+                onRefresh: () async {
+                  HapticFeedback.mediumImpact();
+                  ref.invalidate(ticketsProvider);
+                  await Future.wait([
+                    ref.refresh(schoolStatsProvider.future),
+                    ref.refresh(demoviewProvider.future),
+                  ]).catchError((_) => <Object>[]);
+                },
+                child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
                 // Keep the last menu row above the Android navigation bar.
                 padding: EdgeInsets.fromLTRB(
                     16, 20, 16, 16 + MediaQuery.paddingOf(context).bottom),
@@ -122,10 +158,10 @@ class Dashboard extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SizedBox(
-                      height: 172,
                       child: schoolStats.when(
                         loading: () => _statsRow(context, [
-                            DashboardCard(
+                            (p) => DashboardCard(
+                              parallax: p,
                               title: "Live Schools",
                               activeLabel: "Active",
                               inactiveLabel: "Inactive",
@@ -133,8 +169,8 @@ class Dashboard extends ConsumerWidget {
                               icon: Icons.school_rounded,
                               isLoading: true,
                             ),
-                            const SizedBox(width: 12),
-                            DashboardCard(
+                            (p) => DashboardCard(
+                              parallax: p,
                               title: "POC Schools",
                               activeLabel: "Active",
                               inactiveLabel: "Inactive",
@@ -142,8 +178,8 @@ class Dashboard extends ConsumerWidget {
                               icon: Icons.science_rounded,
                               isLoading: true,
                             ),
-                            const SizedBox(width: 12),
-                            DashboardCard(
+                            (p) => DashboardCard(
+                              parallax: p,
                               title: "Stopped Schools",
                               activeLabel: "",
                               inactiveLabel: "",
@@ -153,9 +189,12 @@ class Dashboard extends ConsumerWidget {
                             ),
                           ]),
 
-                        error: (e, _) => Center(
+                        error: (e, _) => SizedBox(
+                          height: 172,
+                          child: Center(
                             child: Text(e.toString(),
                                 style: TextStyle(color: HomeGlass.muted))),
+                        ),
 
                         data: (stats) {
                           final schoolList = stats.rawList;
@@ -241,7 +280,8 @@ class Dashboard extends ConsumerWidget {
                           });
 
                           return _statsRow(context, [
-                              DashboardCard(
+                              (p) => DashboardCard(
+                              parallax: p,
                                 title: "Live Schools",
                                 activeLabel: "Active",
                                 inactiveLabel: "Inactive",
@@ -253,9 +293,8 @@ class Dashboard extends ConsumerWidget {
                                 icon: Icons.school_rounded,
                               ),
 
-                              const SizedBox(width: 12),
-
-                              DashboardCard(
+                              (p) => DashboardCard(
+                              parallax: p,
                                 title: "POC Schools",
                                 activeLabel: "Active",
                                 inactiveLabel: "Inactive",
@@ -267,9 +306,8 @@ class Dashboard extends ConsumerWidget {
                                 icon: Icons.science_rounded,
                               ),
 
-                              const SizedBox(width: 12),
-
-                              DashboardCard(
+                              (p) => DashboardCard(
+                              parallax: p,
                                 title: "Stopped Schools",
                                 activeLabel: "Stopped",
                                 inactiveLabel: "",
@@ -286,7 +324,10 @@ class Dashboard extends ConsumerWidget {
 
                     const SizedBox(height: 20),
 
-                    Row(
+                    AppEntrance(
+                      index: 3,
+                      delay: const Duration(milliseconds: 120),
+                      child: Row(
                       children: [
                         const Text(
                           "Recent Demo",
@@ -325,6 +366,7 @@ class Dashboard extends ConsumerWidget {
                         ),
                       ],
                     ),
+                    ),
 
                     const SizedBox(height: 12),
                     SizedBox(
@@ -357,7 +399,13 @@ class Dashboard extends ConsumerWidget {
                             itemBuilder: (context, index) {
                               final demo = limitedList[index];
 
-                              return UpcomingDemoCard(
+                              return AppEntrance(
+                                index: index,
+                                step: const Duration(milliseconds: 80),
+                                delay: const Duration(milliseconds: 250),
+                                offsetX: 56,
+                                offsetY: 0,
+                                child: UpcomingDemoCard(
                                 demoId: demo.demoId.toString(),
                                 schoolName: demo.schoolName,
                                 principalNumber: demo.principalNumber,
@@ -367,6 +415,7 @@ class Dashboard extends ConsumerWidget {
                                       RoutesName.recordvoice,arguments: demo
                                   );
                                 },
+                              ),
                               );
                             },
                           );
@@ -383,12 +432,16 @@ class Dashboard extends ConsumerWidget {
                     ],
 
                     /// 🔥 MENU HEADER
-                    const Text(
-                      "Quick Actions",
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w600,
-                        color: HomeGlass.ink,
+                    const AppEntrance(
+                      index: 4,
+                      delay: Duration(milliseconds: 160),
+                      child: Text(
+                        "Quick Actions",
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                          color: HomeGlass.ink,
+                        ),
                       ),
                     ),
 
@@ -416,15 +469,27 @@ class Dashboard extends ConsumerWidget {
                       children: List.generate(menus.length, (index) {
                         final item = menus[index];
 
-                        return SizedBox(
+                        return AppEntrance(
+                          index: index,
+                          step: const Duration(milliseconds: 40),
+                          delay: const Duration(milliseconds: 380),
+                          fromScale: 0.86,
+                          offsetY: 12,
+                          child: SizedBox(
                           width: tileWidth,
                           height: tileHeight, // same size for every tile, even with 2-line titles
                           child: DashboardTile(
+                            // Light sweeps the grid row by row after the
+                            // tiles have popped in.
+                            shineDelay: Duration(
+                                milliseconds: 950 +
+                                    (index ~/ columns) * 110 +
+                                    (index % columns) * 70),
                             title: item.title,
                             icon: item.icon,
                             color: item.color,
-                            badgeCount: item.id == 20
-                                ? chatUnread
+                            badgeCount: item.id == 24
+                                ? openTickets
                                 : item.id == 21
                                     ? followUpsDue
                                     : 0,
@@ -490,6 +555,9 @@ class Dashboard extends ConsumerWidget {
                                 case 20:
                                   Navigator.pushNamed(context, RoutesName.chat);
                                   break;
+                                case 24:
+                                  Navigator.pushNamed(context, RoutesName.tickets);
+                                  break;
                                 case 21:
                                   Navigator.pushNamed(context, RoutesName.followups);
                                   break;
@@ -503,6 +571,7 @@ class Dashboard extends ConsumerWidget {
                               }
                             },
                           ),
+                        ),
                         );
                       }),
                     );
@@ -511,6 +580,8 @@ class Dashboard extends ConsumerWidget {
                   ],
                 ),
               ),
+              ),
+            ),
             ),
           ),
         ],
