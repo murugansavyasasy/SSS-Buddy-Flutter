@@ -9,6 +9,7 @@ import '../auth/model/Menuitem.dart';
 import '../components/dashboard_card.dart';
 import '../components/app_motion.dart';
 import '../components/dashboard_tile.dart';
+import '../components/menu_icon_style.dart';
 import '../components/glass_card.dart';
 import '../components/upcoming_demo_card.dart';
 import 'leaderboard/widget/dashboard_leaderboard.dart';
@@ -461,7 +462,7 @@ class Dashboard extends ConsumerWidget {
                       // title (2 × 12.5 × 1.35 ≈ 34 px at scale 1) still fits.
                       final textScale =
                           MediaQuery.textScalerOf(context).scale(12.5) / 12.5;
-                      final tileHeight = (columns > 2 ? 108.0 : 98.0) +
+                      final tileHeight = (columns > 2 ? 112.0 : 104.0) +
                           (textScale > 1 ? (textScale - 1) * 34 : 0);
                       return Wrap(
                       spacing: spacing,
@@ -486,8 +487,8 @@ class Dashboard extends ConsumerWidget {
                                     (index ~/ columns) * 110 +
                                     (index % columns) * 70),
                             title: item.title,
-                            icon: item.icon,
-                            color: item.color,
+                            icon: menuIcon(item),
+                            color: menuColor(item),
                             badgeCount: item.id == 24
                                 ? openTickets
                                 : item.id == 21

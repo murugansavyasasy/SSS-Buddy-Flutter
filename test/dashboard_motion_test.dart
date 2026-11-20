@@ -82,6 +82,14 @@ Future<void> _loadFonts() async {
   await loader.load();
 }
 
+/// Real icon glyphs in screenshots (optional; skipped if the SDK font moves).
+Future<void> _loadIconFont() async {
+  final f = File('/Users/admin/Desktop/flutter/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf');
+  if (!f.existsSync()) return;
+  final l = FontLoader('MaterialIcons')..addFont(Future.value(ByteData.sublistView(f.readAsBytesSync())));
+  await l.load();
+}
+
 Widget _app() => ProviderScope(
       overrides: [
         loginProvider.overrideWith(() => _Login()),
@@ -95,7 +103,10 @@ Widget _app() => ProviderScope(
     );
 
 void main() {
-  setUpAll(_loadFonts);
+  setUpAll(() async {
+    await _loadFonts();
+    await _loadIconFont();
+  });
 
   testWidgets('dashboard opening animation settles on a 390 pt phone', (t) async {
     t.view.physicalSize = const Size(390 * 3, 844 * 3);

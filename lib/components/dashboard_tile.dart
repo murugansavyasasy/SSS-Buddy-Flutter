@@ -50,7 +50,49 @@ class _DashboardTileState extends State<DashboardTile>
     super.dispose();
   }
 
-  Color get _iconBg => widget.color.withValues(alpha: 0.12);
+  /// Gradient squircle: lighter top-left → deeper bottom-right, a soft
+  /// highlight on the upper half and a coloured glow underneath.
+  Widget _iconBadge() {
+    final c = widget.color;
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color.lerp(c, Colors.white, 0.18)!, c, Color.lerp(c, Colors.black, 0.14)!],
+          stops: const [0, 0.55, 1],
+        ),
+        boxShadow: [
+          BoxShadow(color: c.withValues(alpha: 0.32), blurRadius: 12, offset: const Offset(0, 5)),
+        ],
+      ),
+      child: Stack(
+        children: [
+          // Glassy top highlight.
+          Positioned(
+            left: 0,
+            right: 0,
+            top: 0,
+            height: 20,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.white.withValues(alpha: 0.26), Colors.white.withValues(alpha: 0)],
+                ),
+              ),
+            ),
+          ),
+          Center(child: Icon(widget.icon, color: Colors.white, size: 20)),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -85,15 +127,7 @@ class _DashboardTileState extends State<DashboardTile>
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    height: 36,
-                    width: 36,
-                    decoration: BoxDecoration(
-                      color: _iconBg,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(widget.icon, color: widget.color, size: 18),
-                  ),
+                  _iconBadge(),
                   const Spacer(),
                   if (widget.badgeCount > 0)
                     Container(
