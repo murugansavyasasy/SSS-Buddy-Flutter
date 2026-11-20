@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../auth/model/Demolist.dart';
 import '../auth/model/FollowUpModel.dart';
 import '../utils/routes/routes_name.dart';
+import 'demo_video_whatsapp.dart';
 
 class DemoCard extends StatelessWidget {
   /// Follow-ups are hidden app-wide for now; flip to bring the button back.
@@ -23,7 +24,40 @@ class DemoCard extends StatelessWidget {
         children: [
           _buildHeader(),
           _buildBody(context),
+          if (canSendDemoVideoTo(item.principalNumber.toString()))
+            _buildWhatsApp(context),
         ],
+      ),
+    );
+  }
+
+  /// Full-width so the label stays readable.
+  Widget _buildWhatsApp(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+      child: SizedBox(
+        width: double.infinity,
+        child: OutlinedButton.icon(
+          onPressed: () => sendSchoolDemoVideoOnWhatsApp(
+            context,
+            number: item.principalNumber.toString(),
+            schoolName: item.schoolName,
+          ),
+          icon: const Icon(Icons.ondemand_video_rounded, size: 16),
+          label: const Text(
+            'Send demo video on WhatsApp',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+          ),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: const Color(0xFF15803D),
+            side: const BorderSide(color: Color(0xFFBBF7D0)),
+            backgroundColor: const Color(0xFFF0FDF4),
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
       ),
     );
   }

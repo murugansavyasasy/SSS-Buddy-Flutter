@@ -12,10 +12,9 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../auth/model/ExhibitionModel.dart';
+import '../../../components/demo_video_whatsapp.dart';
 import '../../../core/aws/s3_upload_service.dart';
-import '../../../repository/app_url.dart';
 import '../../../viewModel/exhibition_viewmodel.dart';
-import '../../../viewModel/management_videos_viewmodel.dart';
 import 'exhibition_common.dart';
 import 'demo_audio.dart';
 import 'voice_recorder_panel.dart';
@@ -52,20 +51,7 @@ Widget _handle() => Container(
 
 /// True when a fallback demo video link is configured
 /// (`AppUrl.exhibitionDemoVideoUrl`).
-bool get exDemoVideoEnabled => AppUrl.exhibitionDemoVideoUrl.trim().isNotEmpty;
-
-/// English, Tamil, Hindi and Kannada videos from the Management Videos
-/// module; the single `AppUrl.exhibitionDemoVideoUrl` link when none load.
-Future<List<DemoVideoLink>> _demoVideoLinks(BuildContext context) async {
-  try {
-    final all = await ProviderScope.containerOf(context, listen: false)
-        .read(managementVideosProvider.future)
-        .timeout(const Duration(seconds: 15));
-    final picked = pickDemoVideoLinks(all);
-    if (picked.isNotEmpty) return picked;
-  } catch (_) {}
-  return [(label: '', url: AppUrl.exhibitionDemoVideoUrl)];
-}
+bool get exDemoVideoEnabled => demoVideoEnabled;
 
 /// Opens [number]'s chat with the demo video links prefilled: in the
 /// WhatsApp app when installed, else in WhatsApp Web (browser; the user must
@@ -76,19 +62,12 @@ Future<bool> sendDemoVideoOnWhatsApp(
   String visitorName = '',
   String exhibitionName = '',
 }) async {
-  final videos = await _demoVideoLinks(context);
-  final hasApp = await isWhatsAppInstalled();
-  final uri = demoVideoWhatsAppUri(
+  final ok = await launchDemoVideoWhatsApp(
+    context,
     number: number,
-    videos: videos,
     visitorName: visitorName,
     exhibitionName: exhibitionName,
-    web: !hasApp,
   );
-  var ok = false;
-  try {
-    ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
-  } catch (_) {}
   if (!ok && context.mounted) exToast(context, 'Could not open WhatsApp', error: true);
   return ok;
 }

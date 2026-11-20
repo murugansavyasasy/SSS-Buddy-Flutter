@@ -15,6 +15,7 @@ import '../../Values/Colors/app_colors.dart';
 import '../../auth/model/Demolist.dart';
 import '../../auth/model/UploadState.dart';
 import '../../components/CustomRecordingButton.dart';
+import '../../components/demo_video_whatsapp.dart';
 import '../../components/CustomRecordingWaveWidget.dart';
 import '../../components/toolbar_layout.dart';
 import '../../core/audio/voice_audio.dart';
@@ -373,6 +374,14 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> with Widg
                     ref.invalidate(demoviewProvider);
                     Navigator.pop(context);
                   }
+                : null,
+            onWhatsApp: uploadState.step == UploadStep.success &&
+                    canSendDemoVideoTo(widget.item.principalNumber.toString())
+                ? () => sendSchoolDemoVideoOnWhatsApp(
+                      context,
+                      number: widget.item.principalNumber.toString(),
+                      schoolName: widget.item.schoolName,
+                    )
                 : null,
           )
         : null;

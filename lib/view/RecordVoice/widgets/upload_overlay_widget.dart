@@ -6,10 +6,15 @@ class UploadOverlayWidget extends StatelessWidget {
   final UploadStep step;
   final VoidCallback? onSuccessOkay;
 
+  /// Shown on success: sends the demo video to the principal on WhatsApp.
+  /// Null hides the button (no valid principal number).
+  final VoidCallback? onWhatsApp;
+
   const UploadOverlayWidget({
     super.key,
     required this.step,
     this.onSuccessOkay,
+    this.onWhatsApp,
   });
 
   String get _label {
@@ -87,6 +92,28 @@ class UploadOverlayWidget extends StatelessWidget {
 
               if (isSuccess) ...[
                 const SizedBox(height: 12),
+                if (onWhatsApp != null) ...[
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: onWhatsApp,
+                      icon: const Icon(Icons.ondemand_video_rounded, size: 18),
+                      label: const Text(
+                        "Send demo video on WhatsApp",
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF15803D),
+                        side: const BorderSide(color: Color(0xFF15803D)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                ],
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
