@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sssbuddy/components/phone_call.dart';
 import 'package:sssbuddy/components/app_states.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -286,7 +287,11 @@ class ImportantInfoScreen extends ConsumerWidget {
         .replaceAll('\r', '')
         .replaceAll(' ', '');
 
-    print("Cleaned URL: [$cleanedUrl]");
+    // Phone numbers: one dialer popup at a time.
+    if (cleanedUrl.startsWith('tel:')) {
+      await PhoneCall.dial(cleanedUrl.substring(4));
+      return;
+    }
 
     final uri = Uri.tryParse(cleanedUrl);
 

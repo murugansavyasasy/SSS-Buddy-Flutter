@@ -10,6 +10,10 @@ import 'package:sssbuddy/auth/model/Validatelogin.dart';
 import 'package:sssbuddy/values/app_theme.dart';
 import 'package:sssbuddy/view/create_demo.dart';
 import 'package:sssbuddy/view/demo_list.dart';
+import 'package:sssbuddy/view/demolist_edit_view.dart';
+import 'package:sssbuddy/auth/model/DemolistEditModel.dart';
+import 'package:sssbuddy/repository/clientrepository.dart';
+import 'package:sssbuddy/viewModel/demolist_edit_viewmodel.dart';
 import 'package:sssbuddy/view/login.dart';
 import 'package:sssbuddy/viewModel/demolist_view_model.dart';
 import 'package:sssbuddy/viewModel/login_view_model.dart';
@@ -36,6 +40,21 @@ class _Demos extends DemolistViewModel {
       ];
 }
 
+class _EditRepo implements ClientRepository {
+  @override
+  Future<List<Demolisteditmodel>> getdemolisteditdetail(String demoId) async => [
+        Demolisteditmodel.fromJson({
+          'SchoolName': 'Sri Venkateswara Matriculation Higher Secondary School',
+          'PrincipalNumber': '9876500000',
+          'PrincipalEmail': '',
+          'PrincipalId': '1',
+          'ParentNos': '9811112222,9833334444',
+        }),
+      ];
+  @override
+  dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
+}
+
 Future<void> _loadFonts() async {
   final loader = FontLoader('DMSans');
   for (final w in ['Regular', 'Medium', 'SemiBold', 'Bold']) {
@@ -49,6 +68,7 @@ Widget _app(Widget home) => ProviderScope(
       overrides: [
         loginProvider.overrideWith(() => _Login()),
         demoviewProvider.overrideWith(() => _Demos()),
+        demolistEditProvider.overrideWith((ref) => DemolistEditViewmodel(_EditRepo())),
       ],
       child: MaterialApp(theme: AppTheme.light, home: home),
     );
@@ -61,6 +81,8 @@ void main() {
     ('login', const LoginScreen()),
     ('create_demo', const CreateDemo()),
     ('demo_list', const DemoListView()),
+    ('demo_edit', DemolistEditView(
+        item: Demolist(schoolName: 'Sri Venkateswara Matriculation Higher Secondary School', principalNumber: 9876500000, demoId: 120, DemoID: 120))),
   ]) {
     testWidgets('$name renders at 390 pt', (t) async {
       t.view.physicalSize = const Size(390 * 3, 844 * 3);

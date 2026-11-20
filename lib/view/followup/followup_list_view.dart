@@ -2,10 +2,10 @@ import 'package:sssbuddy/components/ResponsiveCardList.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../Values/Colors/app_colors.dart';
 import '../../auth/model/FollowUpModel.dart';
+import '../../components/phone_call.dart';
 import '../../components/toolbar_layout.dart';
 import '../../core/notifications/local_notifications.dart';
 import '../../utils/routes/routes_name.dart';
@@ -69,8 +69,7 @@ class _FollowUpListViewState extends ConsumerState<FollowUpListView> {
   }
 
   Future<void> _call(FollowUp f) async {
-    final uri = Uri(scheme: 'tel', path: f.contactPhone.trim());
-    await launchUrl(uri);
+    await PhoneCall.dial(f.contactPhone);
   }
 
   void _openForm([FollowUp? f]) => Navigator.pushNamed(
