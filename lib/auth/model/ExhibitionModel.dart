@@ -135,20 +135,29 @@ List<DemoVideoLink> pickDemoVideoLinks(List<Managementvideosmodel> videos) => [
 /// Link that opens a chat with [number] and a prefilled message carrying
 /// the demo [videos]: the WhatsApp app, or WhatsApp Web in the browser when
 /// [web] is true (no app installed). The user still taps Send.
+/// [greeting], when given, replaces the exhibition "Thank You for visiting
+/// us" opening line (e.g. for a school demo sent to the principal).
 Uri demoVideoWhatsAppUri({
   required String number,
   required List<DemoVideoLink> videos,
   String visitorName = '',
   String exhibitionName = '',
+  String? greeting,
   bool web = false,
 }) {
   final n = normalizeIndianMobile(number);
   final name = visitorName.trim();
   final event = exhibitionName.trim();
   final links = videos.where((v) => v.url.trim().isNotEmpty).toList();
-  final b = StringBuffer(name.isEmpty ? 'Dear Sir/Madam' : 'Dear $name')
-    ..write(',Thank You for visiting us')
-    ..write(event.isEmpty ? '.' : ' at $event.');
+  final b = StringBuffer();
+  if (greeting != null && greeting.trim().isNotEmpty) {
+    b.write(greeting.trim());
+  } else {
+    b
+      ..write(name.isEmpty ? 'Dear Sir/Madam' : 'Dear $name')
+      ..write(',Thank You for visiting us')
+      ..write(event.isEmpty ? '.' : ' at $event.');
+  }
   if (links.length == 1 && links.first.label.isEmpty) {
     b.write('\nWatch our demo video: ${links.first.url.trim()}');
   } else if (links.isNotEmpty) {
