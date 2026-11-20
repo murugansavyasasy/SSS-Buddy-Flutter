@@ -158,20 +158,6 @@ Future<void> _phone(WidgetTester t) async {
   addTearDown(t.view.reset);
 }
 
-String _field(WidgetTester t, String text) => t
-    .widget<EditableText>(
-      find
-          .descendant(of: find.byType(Scaffold), matching: find.byType(EditableText))
-          .at(_indexOf(t, text)),
-    )
-    .controller
-    .text;
-
-int _indexOf(WidgetTester t, String text) {
-  final all = t.widgetList<EditableText>(find.byType(EditableText)).toList();
-  return all.indexWhere((e) => e.controller.text == text);
-}
-
 void main() {
   // ── Repository: what goes over the wire ──────────────────────────────
 
@@ -271,8 +257,8 @@ void main() {
         'Mumbai',
         'Hall 3, Stall 42',
       ]) {
-        expect(_indexOf(t, v), isNot(-1), reason: 'field "$v" not prefilled');
-        expect(_field(t, v), v);
+        // Edit opens on the summary step, which shows every value.
+        expect(find.textContaining(v), findsWidgets, reason: '"$v" not prefilled');
       }
       // Attendee chips (names and numbers).
       expect(find.textContaining('Ravi'), findsWidgets);
@@ -341,7 +327,7 @@ void main() {
       await t.tap(find.text('Retry'));
       await t.pumpAndSettle();
       expect(find.text('Update Exhibition'), findsOneWidget);
-      expect(_indexOf(t, 'Hall 3, Stall 42'), isNot(-1));
+      expect(find.textContaining('Hall 3, Stall 42'), findsWidgets);
     });
   });
 
@@ -417,7 +403,7 @@ void main() {
       await t.tap(find.byTooltip('Edit exhibition'));
       await t.pumpAndSettle();
       expect(find.text('Edit exhibition'), findsOneWidget);
-      expect(_indexOf(t, 'Hall 3, Stall 42'), isNot(-1));
+      expect(find.textContaining('Hall 3, Stall 42'), findsWidgets);
       expect(find.textContaining('Priya'), findsWidgets);
       expect(repo.detailCalls, greaterThanOrEqualTo(2));
     });

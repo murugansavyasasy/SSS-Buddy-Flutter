@@ -29,9 +29,6 @@ class _ExhibitionListViewState extends ConsumerState<ExhibitionListView> {
   final _searchCtrl = TextEditingController();
   final _searchFocus = FocusNode();
 
-  /// Search bar is hidden until the search button is tapped.
-  bool _searchOpen = false;
-
   /// iPad split only: the exhibition shown on the right.
   String? _selectedId;
 
@@ -84,48 +81,22 @@ class _ExhibitionListViewState extends ConsumerState<ExhibitionListView> {
         _searchCtrl.clear();
       });
 
-  void _openSearch() {
-    HapticFeedback.selectionClick();
-    setState(() => _searchOpen = true);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _searchFocus.requestFocus();
-    });
-  }
-
-  void _closeSearch() {
-    _searchFocus.unfocus();
-    setState(() {
-      _searchOpen = false;
-      _query = '';
-      _searchCtrl.clear();
-    });
-  }
-
-  /// Search action on the sky header.
-  Widget _searchButton() => ExHeaderIconButton(
-        icon: Icons.search_rounded,
-        tooltip: 'Search',
-        onTap: _openSearch,
-      );
-
-  /// Search bar (when open) above the category tabs.
-  Widget _headerControls() => Column(
+  /// Search field above the filter tabs (counts come from the full list).
+  Widget _headerControls(List<Exhibition>? all) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AnimatedSize(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOut,
-            alignment: Alignment.topCenter,
-            child: _searchOpen
-                ? Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _searchBox(),
-                  )
-                : const SizedBox(width: double.infinity),
-          ),
-          _filterRow(),
+          _searchBox(),
+          const SizedBox(height: 12),
+          _filterRow(all),
         ],
       );
+
+  /// "2 active · 5 total" under the page title.
+  String? _subtitle(List<Exhibition>? all) {
+    if (all == null || all.isEmpty) return null;
+    final active = all.where((e) => e.status == ExhibitionStatus.active).length;
+    return '$active active · ${all.length} total';
+  }
 
   Future<void> _openCreate() async {
     final created = await Navigator.push<Exhibition>(
@@ -169,11 +140,12 @@ class _ExhibitionListViewState extends ConsumerState<ExhibitionListView> {
 
     return ExPage(
       title: 'Exhibitions',
+      subtitle: _subtitle(async.value),
+      headerDivider: false,
       actions: [
-        if (!_searchOpen) _searchButton(),
         if (toggle != null) toggle,
       ],
-      headerBottom: _headerControls(),
+      headerBottom: _headerControls(async.value),
       floatingActionButton: ExFab(onPressed: _openCreate),
       body: _listArea(async, grid: exIsWide(context)),
     );
@@ -185,10 +157,9 @@ class _ExhibitionListViewState extends ConsumerState<ExhibitionListView> {
         controller: _searchCtrl,
         focusNode: _searchFocus,
         onChanged: (q) => setState(() => _query = q.trim().toLowerCase()),
-        onCancel: _closeSearch,
       );
 
-  Widget _filterRow() => _CategoryTabs(
+  Widget _filterRow(List<Exhibition>? all) => _CategoryTabs(
         tabs: [
           for (final f in _Filter.values)
             switch (f) {
@@ -197,6 +168,13 @@ class _ExhibitionListViewState extends ConsumerState<ExhibitionListView> {
               _Filter.completed => 'Completed',
             },
         ],
+        counts: all == null
+            ? null
+            : [
+                all.length,
+                all.where((e) => e.status == ExhibitionStatus.active).length,
+                all.where((e) => e.status == ExhibitionStatus.completed).length,
+              ],
         selected: _filter.index,
         onSelect: (i) {
           HapticFeedback.selectionClick();
@@ -273,9 +251,13 @@ class _ExhibitionListViewState extends ConsumerState<ExhibitionListView> {
                         if (c > 0) const SizedBox(width: 16),
                         Expanded(
                           child: r * cols + c < items.length
-                              ? ExhibitionCard(
-                                  exhibition: items[r * cols + c],
-                                  onTap: () => _openDetail(items[r * cols + c]),
+                              ? ExAppear(
+                                  key: ValueKey('${_filter.name}-${items[r * cols + c].id}'),
+                                  index: r * cols + c,
+                                  child: ExhibitionCard(
+                                    exhibition: items[r * cols + c],
+                                    onTap: () => _openDetail(items[r * cols + c]),
+                                  ),
                                 )
                               : const SizedBox(),
                         ),
@@ -289,11 +271,16 @@ class _ExhibitionListViewState extends ConsumerState<ExhibitionListView> {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: pad,
               itemCount: items!.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (_, i) => ExhibitionCard(
-                exhibition: items[i],
-                selected: items[i].id == selectedId,
-                onTap: () => _openDetail(items[i]),
+              separatorBuilder: (_, __) => const SizedBox(height: 14),
+              itemBuilder: (_, i) => ExAppear(
+                // Replays when the filter changes.
+                key: ValueKey('${_filter.name}-${items[i].id}'),
+                index: i,
+                child: ExhibitionCard(
+                  exhibition: items[i],
+                  selected: items[i].id == selectedId,
+                  onTap: () => _openDetail(items[i]),
+                ),
               ),
             ),
     );
@@ -326,9 +313,21 @@ class _ExhibitionListViewState extends ConsumerState<ExhibitionListView> {
               ExBackButton(onPressed: () => Navigator.maybePop(context)),
               const SizedBox(width: 8),
               Expanded(
-                child: Text('Exhibitions', style: exHeadingLg),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('Exhibitions',
+                        style: exHeadingLg.copyWith(fontWeight: FontWeight.w700, color: Colors.white)),
+                    if (_subtitle(all) != null)
+                      Text(_subtitle(all)!,
+                          style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white.withValues(alpha: 0.8))),
+                  ],
+                ),
               ),
-              if (!_searchOpen) _searchButton(),
               toggle,
             ],
           ),
@@ -342,7 +341,7 @@ class _ExhibitionListViewState extends ConsumerState<ExhibitionListView> {
                 Container(
                   width: listWidth,
                   decoration: const BoxDecoration(
-                    color: Colors.white,
+                    color: exPageBg,
                     border: Border(right: BorderSide(color: exBorder)),
                   ),
                   child: Stack(
@@ -352,7 +351,7 @@ class _ExhibitionListViewState extends ConsumerState<ExhibitionListView> {
                         children: [
                           Padding(
                             padding: const EdgeInsets.fromLTRB(28, 20, 24, 8),
-                            child: _headerControls(),
+                            child: _headerControls(all),
                           ),
                           Expanded(
                             child: _listArea(
@@ -414,121 +413,164 @@ class _SplitScaffold extends StatelessWidget {
       );
 }
 
-/// Filled, rounded search field with a Cancel action that hides it.
+/// White search field with a soft shadow and a clear button.
 class _SearchBox extends StatelessWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
   final ValueChanged<String> onChanged;
-  final VoidCallback onCancel;
 
   const _SearchBox({
     required this.controller,
     required this.focusNode,
     required this.onChanged,
-    required this.onCancel,
   });
 
   @override
-  Widget build(BuildContext context) => Row(
-        children: [
-          Expanded(
-            child: ValueListenableBuilder<TextEditingValue>(
-              valueListenable: controller,
-              builder: (_, v, __) => TextField(
-                controller: controller,
-                focusNode: focusNode,
-                onChanged: onChanged,
-                textInputAction: TextInputAction.search,
-                onSubmitted: (_) => focusNode.unfocus(),
-                style: const TextStyle(fontSize: 16, color: exInk),
-                cursorColor: exBrandBold,
-                decoration: InputDecoration(
-                  isDense: true,
-                  filled: true,
-                  fillColor: const Color(0xFFEEF4FA),
-                  hintText: 'Search name, city or venue',
-                  hintStyle: const TextStyle(fontSize: 16, color: exSubtle),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 13),
-                  prefixIcon: const Icon(Icons.search_rounded, size: 22, color: exSubtle),
-                  prefixIconConstraints: const BoxConstraints(minWidth: 44, minHeight: 46),
-                  suffixIcon: v.text.isEmpty
-                      ? null
-                      : IconButton(
-                          tooltip: 'Clear search',
-                          icon: const Icon(Icons.cancel_rounded, size: 20, color: exSubtle),
-                          onPressed: () {
-                            controller.clear();
-                            onChanged('');
-                          },
-                        ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: const BorderSide(color: exBrand, width: 1.5),
+  Widget build(BuildContext context) => Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(exRadiusControl + 2),
+          boxShadow: exCardShadow,
+        ),
+        child: ValueListenableBuilder<TextEditingValue>(
+          valueListenable: controller,
+          builder: (_, v, __) => TextField(
+            controller: controller,
+            focusNode: focusNode,
+            onChanged: onChanged,
+            textInputAction: TextInputAction.search,
+            onSubmitted: (_) => focusNode.unfocus(),
+            onTapOutside: (_) => focusNode.unfocus(),
+            style: const TextStyle(fontSize: 16, color: exInk),
+            cursorColor: exBrandBold,
+            decoration: InputDecoration(
+              isDense: true,
+              filled: true,
+              fillColor: Colors.white,
+              hintText: 'Search name, city or venue',
+              hintStyle: const TextStyle(fontSize: 16, color: Color(0xFF9A9AA3)),
+              contentPadding: const EdgeInsets.symmetric(vertical: 15),
+              prefixIcon: const Icon(Icons.search_rounded, size: 22, color: exBrandBold),
+              prefixIconConstraints: const BoxConstraints(minWidth: 48, minHeight: 50),
+              suffixIcon: v.text.isEmpty
+                  ? null
+                  : IconButton(
+                      tooltip: 'Clear search',
+                      icon: const Icon(Icons.cancel_rounded, size: 20, color: exSubtle),
+                      onPressed: () {
+                        controller.clear();
+                        onChanged('');
+                      },
+                    ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(exRadiusControl + 2),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(exRadiusControl + 2),
+                borderSide: const BorderSide(color: exBrand, width: 1.5),
+              ),
+            ),
+          ),
+        ),
+      );
+}
+
+/// Segmented control: All / Active / Completed with counts; the selected
+/// segment is a white raised capsule on a tinted track.
+class _CategoryTabs extends StatelessWidget {
+  final List<String> tabs;
+  final List<int>? counts;
+  final int selected;
+  final ValueChanged<int> onSelect;
+
+  const _CategoryTabs({
+    required this.tabs,
+    required this.selected,
+    required this.onSelect,
+    this.counts,
+  });
+
+  @override
+  Widget build(BuildContext context) => Container(
+        height: 50,
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: const Color(0xFFE3EAF8),
+          borderRadius: BorderRadius.circular(exRadiusControl + 2),
+        ),
+        child: Stack(
+          children: [
+            // White thumb slides under the selected segment.
+            AnimatedAlign(
+              alignment: Alignment(tabs.length == 1 ? 0 : -1 + 2 * selected / (tabs.length - 1), 0),
+              duration: const Duration(milliseconds: 260),
+              curve: Curves.easeOutCubic,
+              child: FractionallySizedBox(
+                widthFactor: 1 / tabs.length,
+                heightFactor: 1,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(exRadiusControl - 2),
+                    boxShadow: exCardShadow,
                   ),
                 ),
               ),
             ),
-          ),
-          TextButton(
-            onPressed: onCancel,
-            style: TextButton.styleFrom(
-              foregroundColor: exBrandBold,
-              minimumSize: const Size(48, 46),
-              padding: const EdgeInsets.only(left: 12, right: 4),
+            Row(
+              children: [for (var i = 0; i < tabs.length; i++) Expanded(child: _segment(i))],
             ),
-            child: const Text('Cancel', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-          ),
-        ],
-      );
-}
-
-/// Horizontally scrolling capsule chips (more categories can be added).
-/// Same look as the original chips, only capsule-shaped.
-class _CategoryTabs extends StatelessWidget {
-  final List<String> tabs;
-  final int selected;
-  final ValueChanged<int> onSelect;
-
-  const _CategoryTabs({required this.tabs, required this.selected, required this.onSelect});
-
-  @override
-  Widget build(BuildContext context) => SizedBox(
-        height: 44,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          clipBehavior: Clip.none,
-          itemCount: tabs.length,
-          separatorBuilder: (_, __) => const SizedBox(width: 8),
-          itemBuilder: (_, i) => _chip(i),
+          ],
         ),
       );
 
-  Widget _chip(int i) {
+  Widget _segment(int i) {
     final on = i == selected;
+    final count = counts?[i];
     return Semantics(
       button: true,
       selected: on,
-      child: Material(
-        color: on ? exInk : Colors.white,
-        shape: StadiumBorder(side: BorderSide(color: on ? exInk : exStrongBorder)),
-        child: InkWell(
-          customBorder: const StadiumBorder(),
-          onTap: () => onSelect(i),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Center(
-              widthFactor: 1,
-              child: Text(
-                tabs[i],
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: on ? Colors.white : exInk,
-                ),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => onSelect(i),
+        child: Container(
+          alignment: Alignment.center,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    tabs[i],
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: on ? FontWeight.w700 : FontWeight.w600,
+                      color: on ? exInk : exSubtle,
+                    ),
+                  ),
+                  if (count != null) ...[
+                    const SizedBox(width: 6),
+                    Container(
+                      constraints: const BoxConstraints(minWidth: 22),
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: on ? exBrandBold : Colors.white.withValues(alpha: 0.7),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        '$count',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: on ? Colors.white : exSubtle,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
           ),
@@ -538,6 +580,8 @@ class _CategoryTabs extends StatelessWidget {
   }
 }
 
+/// Exhibition card: calendar tile (month + day) beside the name, place,
+/// dates and status, then a three-part counter strip (team, demos, leads).
 class ExhibitionCard extends StatelessWidget {
   final Exhibition exhibition;
   final VoidCallback onTap;
@@ -553,56 +597,187 @@ class ExhibitionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final e = exhibition;
+    final active = e.status == ExhibitionStatus.active;
     return ExCard(
       onTap: onTap,
       highlighted: selected,
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      padding: EdgeInsets.zero,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Text(e.name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: exHeadingMd),
-              ),
-              const SizedBox(width: 8),
-              ExStatusBadge(status: e.status),
-              const SizedBox(width: 4),
-              const Icon(Icons.chevron_right_rounded, color: exSubtle, size: 24),
-            ],
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 14, 10, 12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _DateTile(date: e.startDate, active: active),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(e.name,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: exHeadingMd.copyWith(fontWeight: FontWeight.w700, height: 1.25)),
+                      const SizedBox(height: 6),
+                      _Meta(
+                        icon: Icons.location_on_rounded,
+                        text: e.place.isEmpty ? 'Venue not set' : e.place,
+                      ),
+                      const SizedBox(height: 3),
+                      _Meta(
+                        icon: Icons.event_rounded,
+                        text: exDateRange(e.startDate, e.endDate),
+                      ),
+                      const SizedBox(height: 10),
+                      ExStatusBadge(status: e.status),
+                    ],
+                  ),
+                ),
+                const Padding(
+                  padding: EdgeInsets.only(top: 2),
+                  child: Icon(Icons.chevron_right_rounded, color: exSubtle, size: 24),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 8),
-          _Meta(icon: Icons.location_on_outlined, text: e.place.isEmpty ? 'Venue not set' : e.place),
-          const SizedBox(height: 4),
-          _Meta(icon: Icons.calendar_today_outlined, text: exDateRange(e.startDate, e.endDate)),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              ExStatChip(
-                icon: Icons.people_outline_rounded,
-                text: '${e.attendeeCount} ${e.attendeeCount == 1 ? 'attendee' : 'attendees'}',
+          Container(
+            margin: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            decoration: BoxDecoration(
+              color: exPageBg,
+              borderRadius: BorderRadius.circular(exRadiusControl),
+            ),
+            child: IntrinsicHeight(
+              child: Row(
+                children: [
+                  _Counter(
+                    icon: Icons.groups_rounded,
+                    value: e.attendeeCount,
+                    label: e.attendeeCount == 1 ? 'Attendee' : 'Attendees',
+                    color: exAccentTeam,
+                    background: exAccentTeamBg,
+                  ),
+                  const VerticalDivider(width: 1, thickness: 1, color: exBorder),
+                  _Counter(
+                    icon: Icons.graphic_eq_rounded,
+                    value: e.demoCount,
+                    label: e.demoCount == 1 ? 'Demo' : 'Demos',
+                    color: exAccentDemo,
+                    background: exAccentDemoBg,
+                  ),
+                  const VerticalDivider(width: 1, thickness: 1, color: exBorder),
+                  _Counter(
+                    icon: Icons.star_rounded,
+                    value: e.leadCount,
+                    label: e.leadCount == 1 ? 'Lead' : 'Leads',
+                    color: exAccentLead,
+                    background: exAccentLeadBg,
+                  ),
+                ],
               ),
-              ExStatChip(
-                icon: Icons.phone_outlined,
-                text: '${e.demoCount} ${e.demoCount == 1 ? 'demo' : 'demos'}',
-              ),
-              ExStatChip(
-                icon: Icons.star_outline_rounded,
-                text: '${e.leadCount} ${e.leadCount == 1 ? 'lead' : 'leads'}',
-              ),
-            ],
+            ),
           ),
         ],
       ),
     );
   }
+}
+
+/// Calendar-style tile: brand gradient while active, grey once completed.
+class _DateTile extends StatelessWidget {
+  final DateTime? date;
+  final bool active;
+  const _DateTile({required this.date, required this.active});
+
+  static const _months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+
+  @override
+  Widget build(BuildContext context) {
+    final fg = active ? Colors.white : exInk;
+    final d = date;
+    return Container(
+      width: 56,
+      height: 62,
+      decoration: BoxDecoration(
+        gradient: active ? exHeroGradient : null,
+        color: active ? null : exNeutralBg,
+        borderRadius: BorderRadius.circular(exRadiusControl),
+        boxShadow: active ? exBrandGlow : null,
+      ),
+      child: d == null
+          ? Icon(Icons.storefront_rounded, color: fg, size: 26)
+          : Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(_months[d.month - 1],
+                    style: TextStyle(
+                        fontSize: 11,
+                        letterSpacing: 1,
+                        fontWeight: FontWeight.w700,
+                        color: fg.withValues(alpha: 0.8))),
+                Text('${d.day}',
+                    style: TextStyle(
+                        fontSize: 24, height: 1.1, fontWeight: FontWeight.w700, color: fg)),
+              ],
+            ),
+    );
+  }
+}
+
+/// One cell of the card's counter strip.
+class _Counter extends StatelessWidget {
+  final IconData icon;
+  final int value;
+  final String label;
+  final Color color;
+  final Color background;
+
+  const _Counter({
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.color,
+    required this.background,
+  });
+
+  @override
+  Widget build(BuildContext context) => Expanded(
+        child: Semantics(
+          label: '$value $label',
+          excludeSemantics: true,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(color: background, shape: BoxShape.circle),
+                child: Icon(icon, size: 16, color: color),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ExCountUp(value,
+                        style: const TextStyle(
+                            fontSize: 16, height: 1.1, fontWeight: FontWeight.w700, color: exInk)),
+                    Text(label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 11, fontWeight: FontWeight.w600, color: exSubtle)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
 }
 
 class _Meta extends StatelessWidget {
@@ -613,11 +788,12 @@ class _Meta extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Row(
         children: [
-          Icon(icon, size: 17, color: exSubtle),
-          const SizedBox(width: 8),
+          Icon(icon, size: 16, color: exBrand),
+          const SizedBox(width: 6),
           Expanded(
             child: Text(text,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: exSubtle),
+                maxLines: 1,
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: exSubtle),
                 overflow: TextOverflow.ellipsis),
           ),
         ],

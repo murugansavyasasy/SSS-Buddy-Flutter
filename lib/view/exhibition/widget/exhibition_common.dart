@@ -14,28 +14,28 @@ import '../../../auth/model/ExhibitionModel.dart';
 const exInk = Color(0xFF14243B);
 
 /// background.brand
-const exBrand = Color(0xFF3B8FD9);
+const exBrand = Color(0xFF06B6D4);
 
 /// background.brand.bold
-const exBrandBold = Color(0xFF1F6FB8);
+const exBrandBold = Color(0xFF1D4ED8);
 
 /// selected.bold — tab underline, stepper line, toast tick
-const exIndicator = Color(0xFFA9D0F2);
+const exIndicator = Color(0xFF9CC9FF);
 
 /// background.selected — blue tint
-const exTint = Color(0xFFE8F3FC);
+const exTint = Color(0xFFE8F1FF);
 
 /// text.subtle
 const exSubtle = Color(0xFF71717A);
 
 /// background.neutral — page
-const exPageBg = Color(0xFFF3F7FB);
+const exPageBg = Color(0xFFF2F6FD);
 
 /// border.default
-const exBorder = Color(0xFFE1E8F0);
+const exBorder = Color(0xFFE1E7F2);
 
 /// Inputs and outlined buttons.
-const exStrongBorder = Color(0xFFC9D5E3);
+const exStrongBorder = Color(0xFFC8D3E6);
 
 /// accent.orange.subtle — calling / ringing / warm
 const exCalling = Color(0xFFFFEBDC);
@@ -56,7 +56,7 @@ const exSuccessBg = Color(0xFFE5F5EA);
 const exNeutralBg = Color(0xFFEFF1F5);
 
 /// Completed (exhibition, demo) and answered call: blue tint, brand bold text.
-const exCompletedBg = Color(0xFFE3EEF9);
+const exCompletedBg = Color(0xFFE3ECFD);
 const exCompletedInk = exBrandBold;
 
 /// Recipient "Visitor" badge.
@@ -72,30 +72,57 @@ const exFont = 'DMSans';
 
 /// Screen header: deep navy fading into [exHeaderBase] (same as the app's
 /// other screens); the page body curves up over it.
-const exHeaderBase = Color(0xFFBCDDF6);
+const exHeaderBase = Color(0xFF0891B2);
 const exHeaderGradient = LinearGradient(
   begin: Alignment.topCenter,
   end: Alignment.bottomCenter,
-  colors: [Color(0xFF59A9E6), Color(0xFF8FC6F0), exHeaderBase],
-  stops: [0.0, 0.55, 1.0],
+  colors: [Color(0xFF1E40AF), Color(0xFF1D4ED8), exHeaderBase],
+  stops: [0.0, 0.45, 1.0],
 );
 
 /// Status bar over the light sky header: dark icons.
 const exHeaderOverlay = SystemUiOverlayStyle(
   statusBarColor: Colors.transparent,
-  statusBarIconBrightness: Brightness.dark,
-  statusBarBrightness: Brightness.light,
+  statusBarIconBrightness: Brightness.light,
+  statusBarBrightness: Brightness.dark,
   systemNavigationBarColor: Colors.white,
   systemNavigationBarIconBrightness: Brightness.dark,
 );
 
-/// Kept for older call sites; the spec uses border, no shadow, on cards.
-const exCardShadow = <BoxShadow>[];
+/// Soft, layered card shadow (cards float on the page instead of a hard border).
+const exCardShadow = [
+  BoxShadow(color: Color(0x0F14243B), blurRadius: 18, offset: Offset(0, 6)),
+  BoxShadow(color: Color(0x0A14243B), blurRadius: 3, offset: Offset(0, 1)),
+];
 
 /// Toast / FAB overlay elevation.
 const exOverlayShadow = [
-  BoxShadow(color: Color(0x2E1F6FB8), blurRadius: 14, offset: Offset(0, 4)),
+  BoxShadow(color: Color(0x2E1D4ED8), blurRadius: 14, offset: Offset(0, 4)),
 ];
+
+/// Brand glow under primary buttons and the FAB.
+const exBrandGlow = [
+  BoxShadow(color: Color(0x401D4ED8), blurRadius: 16, offset: Offset(0, 6)),
+];
+
+/// Corner radii.
+const double exRadiusCard = 18;
+const double exRadiusControl = 14;
+
+/// Diagonal brand gradient for hero tiles, avatars and the FAB.
+const exHeroGradient = LinearGradient(
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+  colors: [exBrandBold, exBrand],
+);
+
+/// Accent colours for the three counters (attendees, demos, leads).
+const exAccentTeam = Color(0xFF7A5AF8);
+const exAccentTeamBg = Color(0xFFF1EDFF);
+const exAccentDemo = exBrandBold;
+const exAccentDemoBg = exTint;
+const exAccentLead = Color(0xFFE08A00);
+const exAccentLeadBg = Color(0xFFFFF4DE);
 
 /// Content never stretches wider than this on an iPad / tablet.
 const double exMaxContentWidth = 820;
@@ -233,19 +260,23 @@ class ExInterestTag extends StatelessWidget {
   Widget build(BuildContext context) {
     final (bg, fg) = interestLevelColors(level);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 7,
-            height: 7,
-            decoration: BoxDecoration(color: fg, shape: BoxShape.circle),
+          Icon(
+            switch (level) {
+              InterestLevel.excellent => Icons.local_fire_department_rounded,
+              InterestLevel.good => Icons.thumb_up_alt_rounded,
+              InterestLevel.average => Icons.trending_flat_rounded,
+            },
+            size: 14,
+            color: fg,
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 5),
           Text(level.label,
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: fg)),
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: fg)),
         ],
       ),
     );
@@ -262,7 +293,14 @@ class ExStatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (bg, fg) = exhibitionStatusColors(status);
-    return ExPill(label: status.label, background: bg, foreground: fg, large: large);
+    return ExPill(
+      label: status.label,
+      background: bg,
+      foreground: fg,
+      large: large,
+      dot: status == ExhibitionStatus.active,
+      icon: status == ExhibitionStatus.active ? null : Icons.check_circle_rounded,
+    );
   }
 }
 
@@ -343,6 +381,9 @@ class ExPage extends StatelessWidget {
   final VoidCallback? onBackPressed;
   final bool headerDivider;
 
+  /// Small line under the title ("3 active shows").
+  final String? subtitle;
+
   const ExPage({
     super.key,
     required this.title,
@@ -353,6 +394,7 @@ class ExPage extends StatelessWidget {
     this.floatingActionButton,
     this.onBackPressed,
     this.headerDivider = true,
+    this.subtitle,
   });
 
   @override
@@ -375,17 +417,35 @@ class ExPage extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: largeTitle
-                            ? exHeadingLg
-                            : TextStyle(
-                                fontSize: 16,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: largeTitle
+                                ? exHeadingLg.copyWith(
+                                    fontWeight: FontWeight.w700, color: Colors.white)
+                                : TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.white.withValues(alpha: 0.8),
+                                  ),
+                          ),
+                          if (subtitle != null && subtitle!.isNotEmpty)
+                            Text(
+                              subtitle!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 14,
                                 fontWeight: FontWeight.w500,
-                                color: exInk.withValues(alpha: 0.7),
+                                color: Colors.white.withValues(alpha: 0.8),
                               ),
+                            ),
+                        ],
                       ),
                     ),
                     ...actions,
@@ -400,12 +460,12 @@ class ExPage extends StatelessWidget {
                       if (headerBottom != null)
                         Container(
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: exPageBg,
                             border: headerDivider
                                 ? const Border(bottom: BorderSide(color: exBorder))
                                 : null,
                           ),
-                          padding: EdgeInsets.fromLTRB(pad, 16, pad, 14),
+                          padding: EdgeInsets.fromLTRB(pad, 18, pad, 12),
                           child: headerBottom!,
                         ),
                       // Keep the last rows above the Android navigation bar /
@@ -441,19 +501,46 @@ class ExGradientHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) => DecoratedBox(
         decoration: const BoxDecoration(gradient: exHeaderGradient),
-        child: SafeArea(
-          bottom: false,
-          child: Padding(
-            padding: padding,
-            child: _ExOnHeader(
-              child: DefaultTextStyle.merge(
-                style: const TextStyle(color: exInk),
-                child: IconTheme.merge(
-                  data: const IconThemeData(color: exInk),
-                  child: child,
+        child: Stack(
+          clipBehavior: Clip.hardEdge,
+          children: [
+            // Soft light bubbles for depth.
+            const Positioned(top: -60, right: -40, child: _HeaderBubble(size: 180, alpha: 0.18)),
+            const Positioned(top: 30, right: 90, child: _HeaderBubble(size: 70, alpha: 0.14)),
+            const Positioned(bottom: -50, left: -30, child: _HeaderBubble(size: 120, alpha: 0.12)),
+            SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: padding,
+                child: _ExOnHeader(
+                  child: DefaultTextStyle.merge(
+                    style: const TextStyle(color: Colors.white),
+                    child: IconTheme.merge(
+                      data: const IconThemeData(color: Colors.white),
+                      child: child,
+                    ),
+                  ),
                 ),
               ),
             ),
+          ],
+        ),
+      );
+}
+
+class _HeaderBubble extends StatelessWidget {
+  final double size;
+  final double alpha;
+  const _HeaderBubble({required this.size, required this.alpha});
+
+  @override
+  Widget build(BuildContext context) => IgnorePointer(
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white.withValues(alpha: alpha),
           ),
         ),
       );
@@ -473,7 +560,7 @@ class ExCurvedBody extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           color: color,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         ),
         child: child,
       );
@@ -522,7 +609,7 @@ class _ExHeaderButton extends StatelessWidget {
     // Back: frosted glass circle. Actions: solid white circle.
     final shape = CircleBorder(
       side: BorderSide(
-        color: solid ? Colors.white : Colors.white.withValues(alpha: 0.85),
+        color: solid ? Colors.white : Colors.white.withValues(alpha: 0.45),
         width: 1.2,
       ),
     );
@@ -533,10 +620,10 @@ class _ExHeaderButton extends StatelessWidget {
         child: Tooltip(
           message: tooltip,
           child: Material(
-            color: solid ? Colors.white : Colors.white.withValues(alpha: 0.35),
+            color: solid ? Colors.white : Colors.white.withValues(alpha: 0.18),
             shape: shape,
             elevation: solid ? 0.5 : 0,
-            shadowColor: const Color(0x331F6FB8),
+            shadowColor: const Color(0x331D4ED8),
             child: InkWell(
               onTap: onTap,
               customBorder: const CircleBorder(),
@@ -546,7 +633,9 @@ class _ExHeaderButton extends StatelessWidget {
                 child: Icon(
                   icon,
                   size: size,
-                  color: onTap == null ? exInk.withValues(alpha: 0.35) : exInk,
+                  color: solid
+                      ? (onTap == null ? exInk.withValues(alpha: 0.35) : exInk)
+                      : (onTap == null ? Colors.white.withValues(alpha: 0.4) : Colors.white),
                 ),
               ),
             ),
@@ -606,7 +695,7 @@ class ExSplitToggle extends StatelessWidget {
         color: Colors.white,
         shape: const StadiumBorder(side: BorderSide(color: Colors.white, width: 1.2)),
         elevation: 0.5,
-        shadowColor: const Color(0x331F6FB8),
+        shadowColor: const Color(0x331D4ED8),
         child: InkWell(
           customBorder: const StadiumBorder(),
           onTap: onTap,
@@ -663,13 +752,14 @@ class ExMaxWidth extends StatelessWidget {
 // Badges, chips, cards
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Status badge: 6 px corners, 600 weight.
+/// Status badge: capsule, 600 weight. [dot] shows a live dot before the label.
 class ExPill extends StatelessWidget {
   final String label;
   final Color background;
   final Color foreground;
   final IconData? icon;
   final bool large;
+  final bool dot;
 
   const ExPill({
     super.key,
@@ -678,19 +768,31 @@ class ExPill extends StatelessWidget {
     required this.foreground,
     this.icon,
     this.large = false,
+    this.dot = false,
   });
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: EdgeInsets.symmetric(horizontal: large ? 10 : 8, vertical: large ? 5 : 4),
+        padding: EdgeInsets.symmetric(horizontal: large ? 12 : 10, vertical: large ? 5 : 4),
         decoration: BoxDecoration(
           color: background,
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(20),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (icon != null) ...[
+            if (dot) ...[
+              Container(
+                width: 7,
+                height: 7,
+                decoration: BoxDecoration(
+                  color: foreground,
+                  shape: BoxShape.circle,
+                  boxShadow: [BoxShadow(color: foreground.withValues(alpha: 0.45), blurRadius: 4)],
+                ),
+              ),
+              const SizedBox(width: 6),
+            ] else if (icon != null) ...[
               Icon(icon, size: 14, color: foreground),
               const SizedBox(width: 4),
             ],
@@ -698,7 +800,7 @@ class ExPill extends StatelessWidget {
               label,
               style: TextStyle(
                 fontSize: large ? 14 : 13,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
                 color: foreground,
               ),
             ),
@@ -707,28 +809,227 @@ class ExPill extends StatelessWidget {
       );
 }
 
-/// Grey count chip on cards: "3 attendees", "4 demos".
+/// Tinted count chip: "3 attendees", "4 demos". [color] tints icon and text.
 class ExStatChip extends StatelessWidget {
   final IconData icon;
   final String text;
-  const ExStatChip({super.key, required this.icon, required this.text});
+  final Color color;
+  final Color background;
+  const ExStatChip({
+    super.key,
+    required this.icon,
+    required this.text,
+    this.color = exInk,
+    this.background = exPageBg,
+  });
 
   @override
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: exPageBg,
-          borderRadius: BorderRadius.circular(6),
+          color: background,
+          borderRadius: BorderRadius.circular(20),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 15, color: exInk),
+            Icon(icon, size: 15, color: color),
             const SizedBox(width: 6),
-            Text(text,
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: exInk)),
+            Flexible(
+              child: Text(text,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: color)),
+            ),
           ],
         ),
+      );
+}
+
+/// Big number tile: tinted icon bubble, value and label ("12 Demos").
+const _metricStyle =
+    TextStyle(fontSize: 20, height: 1.1, fontWeight: FontWeight.w700, color: exInk);
+
+class ExMetricTile extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final String label;
+  final Color color;
+  final Color background;
+  final VoidCallback? onTap;
+
+  const ExMetricTile({
+    super.key,
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.color,
+    required this.background,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Container(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(exRadiusControl + 2),
+          boxShadow: exCardShadow,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(color: background, borderRadius: BorderRadius.circular(12)),
+              child: Icon(icon, size: 20, color: color),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: int.tryParse(value) == null
+                        ? Text(value, maxLines: 1, style: _metricStyle)
+                        : ExCountUp(int.parse(value), style: _metricStyle),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: exBodySm.copyWith(fontWeight: FontWeight.w600)),
+                ],
+              ),
+            ),
+          ],
+        ),
+        ),
+      );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Motion
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// True when the user asked the system to reduce motion.
+bool exReduceMotion(BuildContext context) => MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+
+/// Fades and slides its child up into place once, staggered by [index]
+/// (capped so long lists don't wait). Give it a new key to replay.
+class ExAppear extends StatelessWidget {
+  final int index;
+  final Widget child;
+  final double offset;
+  const ExAppear({super.key, this.index = 0, this.offset = 16, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    if (exReduceMotion(context)) return child;
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: Duration(milliseconds: 300 + 60 * index.clamp(0, 6)),
+      curve: Curves.easeOutCubic,
+      builder: (_, t, child) => Opacity(
+        // Each item starts a little later than the one before it.
+        opacity: (t * (1 + 0.15 * index.clamp(0, 6)) - 0.15 * index.clamp(0, 6)).clamp(0.0, 1.0),
+        child: Transform.translate(offset: Offset(0, offset * (1 - t)), child: child),
+      ),
+      child: child,
+    );
+  }
+}
+
+/// Number that counts up to [value] (and animates between later values).
+class ExCountUp extends StatelessWidget {
+  final int value;
+  final TextStyle? style;
+  const ExCountUp(this.value, {super.key, this.style});
+
+  @override
+  Widget build(BuildContext context) {
+    if (exReduceMotion(context)) return Text('$value', style: style);
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: value.toDouble()),
+      duration: const Duration(milliseconds: 700),
+      curve: Curves.easeOutCubic,
+      builder: (_, v, __) => Text('${v.round()}', style: style),
+    );
+  }
+}
+
+/// Scales its child in with a small overshoot (icons, ticks, FAB).
+class ExPopIn extends StatelessWidget {
+  final Widget child;
+  final Duration delay;
+  const ExPopIn({super.key, required this.child, this.delay = Duration.zero});
+
+  @override
+  Widget build(BuildContext context) {
+    if (exReduceMotion(context)) return child;
+    final total = 450 + delay.inMilliseconds;
+    final start = delay.inMilliseconds / total;
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: Duration(milliseconds: total),
+      curve: Interval(start, 1, curve: Curves.easeOutBack),
+      builder: (_, t, child) => Transform.scale(
+        scale: 0.6 + 0.4 * t,
+        child: Opacity(opacity: t.clamp(0.0, 1.0), child: child),
+      ),
+      child: child,
+    );
+  }
+}
+
+/// Section heading with an optional trailing widget ("Team · 3").
+class ExSectionTitle extends StatelessWidget {
+  final String title;
+  final String? caption;
+  final Widget? trailing;
+  const ExSectionTitle({super.key, required this.title, this.caption, this.trailing});
+
+  @override
+  Widget build(BuildContext context) => Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 4,
+            height: 18,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [exBrand, exBrandBold],
+              ),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text.rich(
+              TextSpan(
+                text: title,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: exInk),
+                children: [
+                  if (caption != null && caption!.isNotEmpty)
+                    TextSpan(
+                      text: '  $caption',
+                      style: const TextStyle(
+                          fontSize: 13, fontWeight: FontWeight.w500, color: exSubtle),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          if (trailing != null) trailing!,
+        ],
       );
 }
 
@@ -751,16 +1052,16 @@ class ExFilterChip extends StatelessWidget {
         selected: selected,
         child: Material(
           color: selected ? exInk : Colors.white,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(24),
           child: InkWell(
             onTap: onTap,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(24),
             child: Container(
               height: 48,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 18),
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(24),
                 border: Border.all(color: selected ? exInk : exStrongBorder),
               ),
               child: Text(
@@ -777,8 +1078,9 @@ class ExFilterChip extends StatelessWidget {
       );
 }
 
-/// Card: white, 12 px corners, border, no shadow. Selected = tint + brand border.
-class ExCard extends StatelessWidget {
+/// Card: white, 18 px corners, soft shadow and a hairline border; shrinks
+/// a little while pressed. Selected = tint + brand border.
+class ExCard extends StatefulWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
   final VoidCallback? onTap;
@@ -793,25 +1095,52 @@ class ExCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => Material(
-        color: highlighted ? exTint : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            padding: padding,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: highlighted ? exBrand : exBorder,
-                width: highlighted ? 1.5 : 1,
+  State<ExCard> createState() => _ExCardState();
+}
+
+class _ExCardState extends State<ExCard> {
+  bool _down = false;
+
+  void _press(bool v) {
+    if (widget.onTap != null && _down != v) setState(() => _down = v);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(exRadiusCard);
+    return AnimatedScale(
+      scale: _down ? 0.98 : 1,
+      duration: const Duration(milliseconds: 120),
+      curve: Curves.easeOut,
+      child: Container(
+        decoration: BoxDecoration(borderRadius: radius, boxShadow: exCardShadow),
+        child: Material(
+          color: widget.highlighted ? exTint : Colors.white,
+          borderRadius: radius,
+          child: InkWell(
+            onTap: widget.onTap,
+            onTapDown: (_) => _press(true),
+            onTapUp: (_) => _press(false),
+            onTapCancel: () => _press(false),
+            borderRadius: radius,
+            splashColor: exTint,
+            highlightColor: exTint.withValues(alpha: 0.5),
+            child: Container(
+              padding: widget.padding,
+              decoration: BoxDecoration(
+                borderRadius: radius,
+                border: Border.all(
+                  color: widget.highlighted ? exBrand : const Color(0xFFEDF1F6),
+                  width: widget.highlighted ? 1.5 : 1,
+                ),
               ),
+              child: widget.child,
             ),
-            child: child,
           ),
         ),
-      );
+      ),
+    );
+  }
 }
 
 /// Cream notes box.
@@ -823,10 +1152,11 @@ class ExNoteBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: exNotes,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(exRadiusControl),
+          border: Border.all(color: const Color(0xFFEDE8C8)),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -860,8 +1190,9 @@ class ExPersonChip extends StatelessWidget {
         padding: EdgeInsets.fromLTRB(8, 0, onRemove == null ? 14 : 2, 0),
         decoration: BoxDecoration(
           color: onRemove == null ? Colors.white : exTint,
-          borderRadius: BorderRadius.circular(onRemove == null ? 8 : 28),
+          borderRadius: BorderRadius.circular(28),
           border: Border.all(color: onRemove == null ? exBorder : exIndicator),
+          boxShadow: onRemove == null ? exCardShadow : null,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -871,11 +1202,15 @@ class ExPersonChip extends StatelessWidget {
               height: 36,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: onRemove == null ? exTint : Colors.white,
+                gradient: onRemove == null ? exHeroGradient : null,
+                color: onRemove == null ? null : Colors.white,
                 shape: BoxShape.circle,
               ),
               child: Text(exInitials(name),
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: exInk)),
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: onRemove == null ? Colors.white : exInk)),
             ),
             const SizedBox(width: 10),
             Flexible(
@@ -953,7 +1288,7 @@ class _ExPrimaryButtonState extends State<ExPrimaryButton> {
                 exBrand.withValues(alpha: 0.7),
               ])
             : _down
-                ? const LinearGradient(colors: [Color(0xFF185E9E), exBrandBold])
+                ? const LinearGradient(colors: [Color(0xFF1E3A8A), exBrandBold])
                 : exBrandGradient;
     final fg = disabled ? exSubtle : Colors.white;
     return Semantics(
@@ -969,7 +1304,10 @@ class _ExPrimaryButtonState extends State<ExPrimaryButton> {
                 widget.onPressed!();
               }
             : null,
-        child: AnimatedContainer(
+        child: AnimatedScale(
+          scale: _down ? 0.97 : 1,
+          duration: const Duration(milliseconds: 120),
+          child: AnimatedContainer(
           duration: const Duration(milliseconds: 120),
           height: widget.height,
           width: widget.expand ? double.infinity : null,
@@ -977,7 +1315,8 @@ class _ExPrimaryButtonState extends State<ExPrimaryButton> {
           decoration: BoxDecoration(
             color: disabled ? exBorder : null,
             gradient: gradient,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(exRadiusControl),
+            boxShadow: enabled && !_down ? exBrandGlow : null,
           ),
           child: Row(
             mainAxisSize: widget.expand ? MainAxisSize.max : MainAxisSize.min,
@@ -999,7 +1338,8 @@ class _ExPrimaryButtonState extends State<ExPrimaryButton> {
                   widget.loading ? (widget.loadingLabel ?? widget.label) : widget.label,
                   style: TextStyle(
                       fontSize: widget.height >= 56 ? 18 : 17,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.2,
                       color: fg),
                 ),
               ),
@@ -1009,6 +1349,7 @@ class _ExPrimaryButtonState extends State<ExPrimaryButton> {
               ],
             ],
           ),
+        ),
         ),
       ),
     );
@@ -1042,9 +1383,9 @@ class ExSecondaryButton extends StatelessWidget {
           style: OutlinedButton.styleFrom(
             foregroundColor: color ?? exInk,
             disabledForegroundColor: loading ? (color ?? exInk) : exStrongBorder,
-            side: const BorderSide(color: exStrongBorder),
+            side: BorderSide(color: color?.withValues(alpha: 0.35) ?? exStrongBorder, width: 1.2),
             backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(exRadiusControl)),
             textStyle: const TextStyle(fontFamily: exFont, fontSize: 16, fontWeight: FontWeight.w600),
             padding: const EdgeInsets.symmetric(horizontal: 12),
           ).copyWith(
@@ -1071,35 +1412,65 @@ class ExSecondaryButton extends StatelessWidget {
       );
 }
 
-/// Round 64 px brand FAB with a plus.
+/// Extended brand FAB: plus and a label ("New exhibition").
 class ExFab extends StatelessWidget {
   final VoidCallback onPressed;
   final String tooltip;
   const ExFab({super.key, required this.onPressed, this.tooltip = 'New exhibition'});
 
   @override
-  Widget build(BuildContext context) => Semantics(
+  Widget build(BuildContext context) => ExPopIn(
+        delay: const Duration(milliseconds: 250),
+        child: Semantics(
         button: true,
         label: tooltip,
-        child: Tooltip(
-          message: tooltip,
-          child: GestureDetector(
-            onTap: onPressed,
-            child: Container(
-              width: 60,
-              height: 60,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [exBrandBold, exBrand],
+        excludeSemantics: true,
+        child: Material(
+          color: Colors.transparent,
+          shape: const StadiumBorder(),
+          child: Ink(
+            height: 56,
+            decoration: const ShapeDecoration(
+              shape: StadiumBorder(),
+              gradient: exHeroGradient,
+              shadows: exBrandGlow,
+            ),
+            child: InkWell(
+              customBorder: const StadiumBorder(),
+              onTap: () {
+                HapticFeedback.lightImpact();
+                onPressed();
+              },
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 22, 0),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 30,
+                      height: 30,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.22),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.add_rounded, color: Colors.white, size: 22),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      tooltip,
+                      style: const TextStyle(
+                        fontFamily: exFont,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
                 ),
-                boxShadow: exOverlayShadow,
               ),
-              child: const Icon(Icons.add_rounded, color: Colors.white, size: 32),
             ),
           ),
+        ),
         ),
       );
 }
@@ -1168,20 +1539,49 @@ class ExStateView extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
-                child: Icon(icon, size: 26, color: fg),
+              // Icon inside two soft rings.
+              ExPopIn(
+                child: Container(
+                width: 112,
+                height: 112,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(color: bg.withValues(alpha: 0.45), shape: BoxShape.circle),
+                child: Container(
+                  width: 80,
+                  height: 80,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
+                  child: Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: exCardShadow,
+                    ),
+                    child: Icon(icon, size: 26, color: fg),
+                  ),
+                ),
               ),
-              const SizedBox(height: 14),
-              Text(title, textAlign: TextAlign.center, style: exHeadingSm),
+              ),
+              const SizedBox(height: 18),
+              ExAppear(
+                index: 1,
+                offset: 10,
+                child: Text(title,
+                    textAlign: TextAlign.center,
+                    style: exHeadingMd.copyWith(fontWeight: FontWeight.w700)),
+              ),
               if (message.isNotEmpty) ...[
                 const SizedBox(height: 8),
-                Text(message,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w500, color: exSubtle)),
+                ExAppear(
+                  index: 2,
+                  offset: 10,
+                  child: Text(message,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.w500, color: exSubtle)),
+                ),
               ],
               if (actionLabel != null && onAction != null) ...[
                 const SizedBox(height: 16),
@@ -1202,11 +1602,27 @@ class ExStateView extends StatelessWidget {
   }
 }
 
-/// Grey placeholder rows while a list loads, with a caption.
-class ExSkeletonList extends StatelessWidget {
+/// Pulsing placeholder cards while a list loads, with a caption.
+class ExSkeletonList extends StatefulWidget {
   final int count;
   final String? caption;
   const ExSkeletonList({super.key, this.count = 3, this.caption});
+
+  @override
+  State<ExSkeletonList> createState() => _ExSkeletonListState();
+}
+
+class _ExSkeletonListState extends State<ExSkeletonList> with SingleTickerProviderStateMixin {
+  late final AnimationController _pulse = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 900),
+  )..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) => ListView(
@@ -1214,31 +1630,50 @@ class ExSkeletonList extends StatelessWidget {
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         children: [
-          for (var i = 0; i < count; i++) ...[
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: exBorder),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _bar(0.55, 18),
-                  const SizedBox(height: 12),
-                  _bar(0.85, 12),
-                  const SizedBox(height: 10),
-                  _bar(0.4, 12),
-                ],
+          for (var i = 0; i < widget.count; i++) ...[
+            FadeTransition(
+              opacity: Tween(begin: 0.55, end: 1.0).animate(_pulse),
+              child: Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(exRadiusCard),
+                  boxShadow: exCardShadow,
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEDF0F5),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _bar(0.6, 18),
+                          const SizedBox(height: 12),
+                          _bar(0.9, 12),
+                          const SizedBox(height: 10),
+                          _bar(0.45, 12),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
           ],
-          if (caption != null)
+          if (widget.caption != null)
             Padding(
               padding: const EdgeInsets.only(top: 4),
-              child: Text(caption!, textAlign: TextAlign.center, style: exBodyMd),
+              child: Text(widget.caption!, textAlign: TextAlign.center, style: exBodyMd),
             ),
         ],
       );
@@ -1249,7 +1684,7 @@ class ExSkeletonList extends StatelessWidget {
           height: h,
           decoration: BoxDecoration(
             color: const Color(0xFFEDF0F5),
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(6),
           ),
         ),
       );
@@ -1270,7 +1705,7 @@ class ExInlineNote extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: error ? exDangerBg : const Color(0xFFFFF5EE),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(exRadiusControl),
         border: Border.all(color: fg.withValues(alpha: 0.18)),
       ),
       child: Row(
@@ -1342,7 +1777,7 @@ class ExField extends StatelessWidget {
                 if (required) const TextSpan(text: ' *', style: TextStyle(color: exDanger)),
               ],
             ),
-            style: exHeadingSm.copyWith(fontSize: 15),
+            style: exHeadingSm.copyWith(fontSize: 14, color: const Color(0xFF3A4A60)),
           ),
           const SizedBox(height: 8),
           TextField(
@@ -1391,7 +1826,7 @@ InputDecoration exInputDecoration({
   bool enabled = true,
 }) {
   OutlineInputBorder b(Color c, [double w = 1]) => OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(color: c, width: w),
       );
   final phone = prefixText != null && prefixText.trim().startsWith('+');
@@ -1410,7 +1845,7 @@ InputDecoration exInputDecoration({
             alignment: Alignment.center,
             decoration: const BoxDecoration(
               color: exPageBg,
-              borderRadius: BorderRadius.horizontal(left: Radius.circular(6.5)),
+              borderRadius: BorderRadius.horizontal(left: Radius.circular(10.5)),
               border: Border(right: BorderSide(color: exStrongBorder)),
             ),
             child: Text(prefixText.trim(),
@@ -1426,13 +1861,13 @@ InputDecoration exInputDecoration({
     hintStyle: const TextStyle(
         fontFamily: exFont, fontSize: 16, fontWeight: FontWeight.w500, color: Color(0xFF9A9AA3)),
     filled: true,
-    fillColor: enabled ? Colors.white : exPageBg,
+    fillColor: enabled ? const Color(0xFFFBFCFE) : exPageBg,
     isDense: false,
     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
     border: b(exStrongBorder),
-    enabledBorder: b(exStrongBorder),
+    enabledBorder: b(const Color(0xFFD7E0EA)),
     disabledBorder: b(exBorder),
-    focusedBorder: b(exBrandBold, 1.5),
+    focusedBorder: b(exBrand, 2),
     errorBorder: b(exDanger, 1.5),
     focusedErrorBorder: b(exDanger, 1.5),
   );
@@ -1451,7 +1886,7 @@ void exToast(BuildContext context, String message, {bool error = false}) {
         behavior: SnackBarBehavior.floating,
         backgroundColor: error ? exDanger : exInk,
         elevation: 8,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         content: Row(
           children: [
@@ -1496,7 +1931,7 @@ Future<bool> showExConfirmDialog(
       backgroundColor: Colors.white,
       surfaceTintColor: Colors.white,
       insetPadding: const EdgeInsets.symmetric(horizontal: 24),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 400),
         child: Padding(
@@ -1532,7 +1967,8 @@ Future<bool> showExConfirmDialog(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           backgroundColor: destructive ? exDanger : exBrandBold,
                           foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(exRadiusControl)),
                           textStyle:
                               const TextStyle(fontFamily: exFont, fontSize: 16, fontWeight: FontWeight.w600),
                         ),
@@ -1564,5 +2000,564 @@ class _FitLabel extends StatelessWidget {
   Widget build(BuildContext context) => FittedBox(
         fit: BoxFit.scaleDown,
         child: Text(text, maxLines: 1, softWrap: false, style: style),
+      );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Step-by-step flows (Create Exhibition, Give Demo, Capture Lead)
+// One friendly question per screen instead of a long form.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Segmented progress bar: "●●○○○  Step 2 of 5". Filled segments animate.
+class ExStepProgress extends StatelessWidget {
+  final int current; // 0-based
+  final int total;
+  final String? label;
+  const ExStepProgress({super.key, required this.current, required this.total, this.label});
+
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              for (var i = 0; i < total; i++) ...[
+                if (i > 0) const SizedBox(width: 6),
+                Expanded(
+                  child: Container(
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: exBorder,
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                    alignment: Alignment.centerLeft,
+                    child: AnimatedFractionallySizedBox(
+                      duration: const Duration(milliseconds: 350),
+                      curve: Curves.easeOutCubic,
+                      widthFactor: i <= current ? 1 : 0,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: exHeroGradient,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(label ?? 'Step ${current + 1} of $total',
+              style: exLabelSm.copyWith(color: exBrandBold, letterSpacing: 0.3)),
+        ],
+      );
+}
+
+/// Big friendly question: icon bubble, title and helper line, animated in.
+class ExQuestion extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final Color color;
+  final Color background;
+  final bool optional;
+
+  const ExQuestion({
+    super.key,
+    required this.icon,
+    required this.title,
+    this.subtitle,
+    this.color = exBrandBold,
+    this.background = exTint,
+    this.optional = false,
+  });
+
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ExPopIn(
+            child: Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                color: background,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Icon(icon, size: 30, color: color),
+            ),
+          ),
+          const SizedBox(height: 18),
+          ExAppear(
+            index: 1,
+            offset: 10,
+            child: Text.rich(
+              TextSpan(
+                text: title,
+                children: [
+                  if (optional)
+                    const TextSpan(
+                      text: '  optional',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: exSubtle),
+                    ),
+                ],
+              ),
+              style: const TextStyle(
+                  fontSize: 26, height: 1.2, fontWeight: FontWeight.w700, color: exInk),
+            ),
+          ),
+          if (subtitle != null && subtitle!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            ExAppear(
+              index: 2,
+              offset: 10,
+              child: Text(subtitle!,
+                  style: const TextStyle(
+                      fontSize: 16, height: 1.35, fontWeight: FontWeight.w500, color: exSubtle)),
+            ),
+          ],
+        ],
+      );
+}
+
+/// Large, airy text input for one-question steps (no form-box look):
+/// white rounded surface with a soft shadow; brand ring when focused.
+class ExBigInput extends StatelessWidget {
+  final TextEditingController controller;
+  final String? hint;
+  final String? errorText;
+  final IconData? icon;
+  final TextInputType? keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
+  final TextInputAction? textInputAction;
+  final ValueChanged<String>? onChanged;
+  final ValueChanged<String>? onSubmitted;
+  final TextCapitalization textCapitalization;
+  final bool autofocus;
+  final int maxLines;
+  final String? prefixText;
+  final FocusNode? focusNode;
+
+  const ExBigInput({
+    super.key,
+    required this.controller,
+    this.hint,
+    this.errorText,
+    this.icon,
+    this.keyboardType,
+    this.inputFormatters,
+    this.textInputAction,
+    this.onChanged,
+    this.onSubmitted,
+    this.textCapitalization = TextCapitalization.sentences,
+    this.autofocus = false,
+    this.maxLines = 1,
+    this.prefixText,
+    this.focusNode,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    OutlineInputBorder b(Color c, [double w = 0]) => OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: w == 0 ? BorderSide.none : BorderSide(color: c, width: w),
+        );
+    return ExAppear(
+      index: 3,
+      offset: 10,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: exCardShadow,
+        ),
+        child: TextField(
+          controller: controller,
+          focusNode: focusNode,
+          autofocus: autofocus,
+          keyboardType: keyboardType,
+          inputFormatters: inputFormatters,
+          textInputAction: textInputAction,
+          onChanged: onChanged,
+          onSubmitted: onSubmitted,
+          textCapitalization: textCapitalization,
+          maxLines: maxLines,
+          minLines: 1,
+          cursorColor: exBrandBold,
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: exInk),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: const TextStyle(
+                fontSize: 20, fontWeight: FontWeight.w500, color: Color(0xFFA6ADBA)),
+            errorText: errorText,
+            errorMaxLines: 3,
+            errorStyle: const TextStyle(
+                fontFamily: exFont, fontSize: 14, fontWeight: FontWeight.w600, color: exDanger),
+            prefixIcon: icon == null
+                ? null
+                : Padding(
+                    padding: const EdgeInsets.only(left: 6),
+                    child: Icon(icon, size: 24, color: exBrand),
+                  ),
+            prefixText: prefixText,
+            prefixStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: exInk),
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
+            border: b(exBorder),
+            enabledBorder: b(exBorder),
+            focusedBorder: b(exBrand, 2),
+            errorBorder: b(exDanger, 1.5),
+            focusedErrorBorder: b(exDanger, 2),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Tap-to-pick suggestion / choice chip ("Recent: [Chennai] [Kochi]").
+class ExPickChip extends StatelessWidget {
+  final String label;
+  final IconData? icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const ExPickChip({
+    super.key,
+    required this.label,
+    required this.onTap,
+    this.icon,
+    this.selected = false,
+  });
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+        button: true,
+        selected: selected,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          decoration: BoxDecoration(
+            gradient: selected ? exHeroGradient : null,
+            color: selected ? null : Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: selected ? Colors.transparent : exStrongBorder),
+            boxShadow: selected ? exBrandGlow : null,
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(24),
+              onTap: () {
+                HapticFeedback.selectionClick();
+                onTap();
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (selected || icon != null) ...[
+                      Icon(selected ? Icons.check_rounded : icon,
+                          size: 18, color: selected ? Colors.white : exBrandBold),
+                      const SizedBox(width: 6),
+                    ],
+                    Flexible(
+                      child: Text(label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: selected ? Colors.white : exInk)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+}
+
+/// Big tappable choice card (e.g. interest level, template). Tints and
+/// shows a popping tick when selected.
+class ExChoiceCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final bool selected;
+  final VoidCallback onTap;
+  final Color color;
+  final Color background;
+
+  const ExChoiceCard({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.selected,
+    required this.onTap,
+    this.subtitle,
+    this.color = exBrandBold,
+    this.background = exTint,
+  });
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+        button: true,
+        selected: selected,
+        child: GestureDetector(
+          onTap: () {
+            HapticFeedback.selectionClick();
+            onTap();
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOut,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: selected ? background : Colors.white,
+              borderRadius: BorderRadius.circular(exRadiusCard),
+              border: Border.all(color: selected ? color : exBorder, width: selected ? 2 : 1),
+              boxShadow: selected
+                  ? [BoxShadow(color: color.withValues(alpha: 0.18), blurRadius: 16, offset: const Offset(0, 6))]
+                  : exCardShadow,
+            ),
+            child: Row(
+              children: [
+                AnimatedScale(
+                  scale: selected ? 1.1 : 1,
+                  duration: const Duration(milliseconds: 260),
+                  curve: Curves.easeOutBack,
+                  child: Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: selected ? Colors.white : background,
+                      borderRadius: BorderRadius.circular(exRadiusControl),
+                    ),
+                    child: Icon(icon, size: 24, color: color),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title,
+                          style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                              color: selected ? color : exInk)),
+                      if (subtitle != null && subtitle!.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(subtitle!, style: exBodyMd),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  transitionBuilder: (c, a) => ScaleTransition(scale: a, child: c),
+                  child: selected
+                      ? Container(
+                          key: const ValueKey('on'),
+                          width: 26,
+                          height: 26,
+                          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                          child: const Icon(Icons.check_rounded, size: 18, color: Colors.white),
+                        )
+                      : Container(
+                          key: const ValueKey('off'),
+                          width: 26,
+                          height: 26,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: exStrongBorder, width: 2),
+                          ),
+                        ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+}
+
+/// One line of the final summary card: icon, label, value and an Edit link
+/// that jumps back to that step.
+class ExSummaryRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final VoidCallback? onEdit;
+  final Color color;
+  final Color background;
+
+  const ExSummaryRow({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.onEdit,
+    this.color = exBrandBold,
+    this.background = exTint,
+  });
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+        onTap: onEdit,
+        borderRadius: BorderRadius.circular(exRadiusControl),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(color: background, borderRadius: BorderRadius.circular(12)),
+                child: Icon(icon, size: 20, color: color),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(label.toUpperCase(), style: exLabelSm.copyWith(fontSize: 11)),
+                    const SizedBox(height: 2),
+                    Text(value.isEmpty ? '—' : value,
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w600, color: exInk)),
+                  ],
+                ),
+              ),
+              if (onEdit != null)
+                const Padding(
+                  padding: EdgeInsets.only(top: 8, left: 8),
+                  child: Text('Edit',
+                      style: TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.w700, color: exBrandBold)),
+                ),
+            ],
+          ),
+        ),
+      );
+}
+
+/// Switches step content with a slide in the direction of travel.
+/// [step] is the current index; going to a higher index slides from the right.
+class ExStepSwitcher extends StatefulWidget {
+  final int step;
+  final Widget child;
+  const ExStepSwitcher({super.key, required this.step, required this.child});
+
+  @override
+  State<ExStepSwitcher> createState() => _ExStepSwitcherState();
+}
+
+class _ExStepSwitcherState extends State<ExStepSwitcher> {
+  bool _forward = true;
+
+  @override
+  void didUpdateWidget(ExStepSwitcher old) {
+    super.didUpdateWidget(old);
+    if (old.step != widget.step) _forward = widget.step > old.step;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (exReduceMotion(context)) return widget.child;
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 320),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      layoutBuilder: (current, previous) => Stack(
+        alignment: Alignment.topCenter,
+        children: [...previous, ?current],
+      ),
+      transitionBuilder: (child, anim) {
+        final incoming = child.key == ValueKey(widget.step);
+        final dx = (incoming ? 1 : -1) * (_forward ? 0.12 : -0.12);
+        return FadeTransition(
+          opacity: anim,
+          child: SlideTransition(
+            position: Tween(begin: Offset(dx, 0), end: Offset.zero).animate(anim),
+            child: child,
+          ),
+        );
+      },
+      child: KeyedSubtree(key: ValueKey(widget.step), child: widget.child),
+    );
+  }
+}
+
+/// Bottom bar for step flows: optional round Back, and a wide Next / Save.
+class ExStepBar extends StatelessWidget {
+  final VoidCallback? onBack;
+  final String nextLabel;
+  final IconData? nextIcon;
+  final VoidCallback? onNext;
+  final bool loading;
+  final String? loadingLabel;
+  final Widget? leading; // e.g. "Skip" text button
+
+  const ExStepBar({
+    super.key,
+    this.onBack,
+    required this.nextLabel,
+    this.nextIcon = Icons.arrow_forward_rounded,
+    this.onNext,
+    this.loading = false,
+    this.loadingLabel,
+    this.leading,
+  });
+
+  @override
+  Widget build(BuildContext context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          boxShadow: [BoxShadow(color: Color(0x1414243B), blurRadius: 24, offset: Offset(0, -6))],
+        ),
+        padding: EdgeInsets.fromLTRB(16, 14, 16, 14 + MediaQuery.paddingOf(context).bottom),
+        child: ExMaxWidth(
+          maxWidth: exFormMaxWidth,
+          child: Row(
+            children: [
+              if (onBack != null) ...[
+                SizedBox(
+                  width: 56,
+                  height: 56,
+                  child: IconButton(
+                    tooltip: 'Back',
+                    onPressed: loading ? null : onBack,
+                    style: IconButton.styleFrom(
+                      backgroundColor: exPageBg,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(exRadiusControl)),
+                    ),
+                    icon: const Icon(Icons.arrow_back_rounded, color: exInk),
+                  ),
+                ),
+                const SizedBox(width: 12),
+              ],
+              if (leading != null) ...[leading!, const SizedBox(width: 8)],
+              Expanded(
+                child: ExPrimaryButton(
+                  label: nextLabel,
+                  trailingIcon: nextIcon,
+                  height: 56,
+                  loading: loading,
+                  loadingLabel: loadingLabel,
+                  onPressed: onNext,
+                ),
+              ),
+            ],
+          ),
+        ),
       );
 }

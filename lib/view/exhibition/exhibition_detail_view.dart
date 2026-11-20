@@ -228,6 +228,9 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
           showGiveDemo:
               ex.status == ExhibitionStatus.active && (demos.value?.isNotEmpty ?? ex.demoCount > 0),
           loadingTeam: detail.isLoading && widget.initial != null && ex.attendees.isEmpty,
+          demoCount: demos.value?.length ?? ex.demoCount,
+          leadCount: leads.value?.length ?? ex.leadCount,
+          onShowTab: (i) => setState(() => _tab = i),
         );
         final tabs = _Tabs(
           selected: _tab,
@@ -269,52 +272,34 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
                     ),
                   ),
                 ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(pad, 4, pad, 0),
-                    child: Container(
-                      padding: const EdgeInsets.all(24),
+              ],
+              // Header card, then the Demos / Leads switch.
+              SliverToBoxAdapter(
+                child: _padded(
+                  pad,
+                  Padding(
+                    // Room below the curved top edge of the page.
+                    padding: EdgeInsets.only(top: embedded ? 4 : 20),
+                    child: ExAppear(
+                      child: Container(
+                      padding: EdgeInsets.all(embedded || wide ? 22 : 16),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: exBorder),
+                        borderRadius: BorderRadius.circular(exRadiusCard + 4),
+                        boxShadow: exCardShadow,
                       ),
                       child: header,
                     ),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(pad, 24, pad, 0),
-                    child: tabs,
-                  ),
-                ),
-              ] else
-                SliverToBoxAdapter(
-                  child: Container(
-                    color: Colors.white,
-                    child: Column(
-                      children: [
-                        ExMaxWidth(
-                          child: Padding(
-                            // Room below the curved top edge of the page.
-                            padding: EdgeInsets.fromLTRB(pad, 24, pad, 16),
-                            child: header,
-                          ),
-                        ),
-                        Container(
-                          decoration: const BoxDecoration(
-                            border: Border(
-                              top: BorderSide(color: exBorder),
-                              bottom: BorderSide(color: exBorder),
-                            ),
-                          ),
-                          child: ExMaxWidth(child: tabs),
-                        ),
-                      ],
                     ),
                   ),
                 ),
+              ),
+              SliverToBoxAdapter(
+                child: _padded(
+                  pad,
+                  Padding(padding: const EdgeInsets.only(top: 20), child: tabs),
+                ),
+              ),
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
               if (_tab == 0)
                 ..._demoSlivers(demos, ex, pad)
@@ -391,7 +376,10 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
             separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (_, i) => _padded(
               pad,
-              _DemoRow(
+              ExAppear(
+                key: ValueKey('demo-${items[i].id}-$i'),
+                index: i,
+                child: _DemoRow(
                 demo: items[i],
                 isNew: _newDemoId != null && items[i].id == _newDemoId,
                 expanded: _expandedDemoId == items[i].id,
@@ -400,6 +388,7 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
                 onSendAgain: () => _giveDemo(ex, resendFrom: items[i]),
                 exhibitionName: ex.name,
                 templates: templates,
+              ),
               ),
             ),
           ),
@@ -462,7 +451,10 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
             itemCount: rows,
             separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (_, r) {
-              Widget card(int i) => _LeadCard(
+              Widget card(int i) => ExAppear(
+                    key: ValueKey('lead-${items[i].id}-$i'),
+                    index: i,
+                    child: _LeadCard(
                     lead: items[i],
                     isNew: _highlightNewestLead && i == 0,
                     onWhatsApp: canWhatsApp &&
@@ -479,6 +471,7 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
                             items[i].isCreatedBy(userId: user.userId, userName: user.employeeName)
                         ? () => _editLead(items[i])
                         : null,
+                  ),
                   );
               return _padded(
                 pad,
@@ -514,6 +507,11 @@ class _Header extends StatelessWidget {
   final VoidCallback? onDelete;
   final bool loadingTeam;
   final bool showGiveDemo;
+  final int demoCount;
+  final int leadCount;
+
+  /// Tapping the Demos / Leads counter opens that tab.
+  final ValueChanged<int> onShowTab;
 
   const _Header({
     required this.ex,
@@ -522,19 +520,47 @@ class _Header extends StatelessWidget {
     this.onDelete,
     required this.loadingTeam,
     required this.showGiveDemo,
+    required this.demoCount,
+    required this.leadCount,
+    required this.onShowTab,
   });
 
   @override
   Widget build(BuildContext context) {
-    final dates = exShortDateRange(ex.startDate, ex.endDate);
-    final where = [if (ex.place.isNotEmpty) ex.place, if (dates.isNotEmpty) dates].join(' · ');
+    final dates = exDateRange(ex.startDate, ex.endDate);
+    final active = ex.status == ExhibitionStatus.active;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(child: Text(ex.name, style: exHeadingLg)),
+            // Brand tile with the show icon.
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                gradient: active ? exHeroGradient : null,
+                color: active ? null : exNeutralBg,
+                borderRadius: BorderRadius.circular(exRadiusControl + 2),
+                boxShadow: active ? exBrandGlow : null,
+              ),
+              child: Icon(Icons.storefront_rounded,
+                  size: 26, color: active ? Colors.white : exInk),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(ex.name,
+                      style: exHeadingLg.copyWith(
+                          fontSize: 22, height: 1.25, fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 8),
+                  ExStatusBadge(status: ex.status),
+                ],
+              ),
+            ),
             if (onEdit != null) ...[
               const SizedBox(width: 8),
               _EditButton(tooltip: 'Edit exhibition', onPressed: onEdit!),
@@ -545,63 +571,112 @@ class _Header extends StatelessWidget {
                 tooltip: 'Delete exhibition',
                 icon: Icons.delete_outline_rounded,
                 color: exDanger,
+                background: exDangerBg,
                 onPressed: onDelete!,
               ),
             ],
           ],
         ),
-        const SizedBox(height: 8),
-        // Status and where/when; the venue wraps so long names stay visible.
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ExStatusBadge(status: ex.status),
-            if (where.isNotEmpty) ...[
-              const SizedBox(width: 10),
-              // Calendar when only the dates are known (no venue / city).
-              Icon(ex.place.isNotEmpty ? Icons.location_on_outlined : Icons.calendar_today_outlined,
-                  size: 17, color: exSubtle),
-              const SizedBox(width: 4),
-              Expanded(
-                child: Text(where,
-                    style: const TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.w500, color: exSubtle)),
-              ),
-            ],
-          ],
-        ),
-        if (ex.notes.trim().isNotEmpty) ...[
-          const SizedBox(height: 12),
-          ExNoteBox(text: ex.notes.trim()),
-        ],
         const SizedBox(height: 16),
-        const Text.rich(
-          TextSpan(
-            text: 'Attendees',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: exInk),
+        // Where and when; long venues wrap so nothing is cut off.
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: exPageBg,
+            borderRadius: BorderRadius.circular(exRadiusControl),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextSpan(
-                text: ' · Also called on every demo',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: exSubtle),
+              _InfoLine(
+                icon: Icons.location_on_rounded,
+                text: ex.place.isEmpty ? 'Venue not set' : ex.place,
               ),
+              const SizedBox(height: 8),
+              _InfoLine(icon: Icons.event_rounded, text: dates),
             ],
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 14),
+        // Counters
+        Row(
+          children: [
+            Expanded(
+              child: ExMetricTile(
+                icon: Icons.graphic_eq_rounded,
+                value: '$demoCount',
+                label: demoCount == 1 ? 'Demo' : 'Demos',
+                color: exAccentDemo,
+                background: exAccentDemoBg,
+                onTap: () => onShowTab(0),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: ExMetricTile(
+                icon: Icons.star_rounded,
+                value: '$leadCount',
+                label: leadCount == 1 ? 'Lead' : 'Leads',
+                color: exAccentLead,
+                background: exAccentLeadBg,
+                onTap: () => onShowTab(1),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: ExMetricTile(
+                icon: Icons.groups_rounded,
+                value: '${ex.attendees.isNotEmpty ? ex.attendees.length : ex.attendeeCount}',
+                label: 'Team',
+                color: exAccentTeam,
+                background: exAccentTeamBg,
+              ),
+            ),
+          ],
+        ),
+        if (ex.notes.trim().isNotEmpty) ...[
+          const SizedBox(height: 14),
+          ExNoteBox(text: ex.notes.trim(), icon: true),
+        ],
+        const SizedBox(height: 18),
+        const ExSectionTitle(title: 'Attendees', caption: 'Also called on every demo'),
+        const SizedBox(height: 10),
         if (loadingTeam)
-          const LinearProgressIndicator(minHeight: 2, color: exBrandBold, backgroundColor: exBorder)
+          const ClipRRect(
+            borderRadius: BorderRadius.all(Radius.circular(2)),
+            child: LinearProgressIndicator(minHeight: 3, color: exBrandBold, backgroundColor: exBorder),
+          )
         else if (ex.attendees.isEmpty)
-          const Text(
-            'No attendees added. Only visitors will be called.',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: exSubtle),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: exPageBg,
+              borderRadius: BorderRadius.circular(exRadiusControl),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.person_off_outlined, size: 20, color: exSubtle),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'No attendees added. Only visitors will be called.',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: exSubtle),
+                  ),
+                ),
+              ],
+            ),
           )
         else
           SizedBox(
-            height: 56,
+            height: 62,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
+              clipBehavior: Clip.none,
+              padding: const EdgeInsets.only(bottom: 4),
               itemCount: ex.attendees.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
               itemBuilder: (_, i) {
                 final m = ex.attendees[i];
                 return ExPersonChip(name: m.name, number: formatIndianMobile(m.mobile));
@@ -609,28 +684,33 @@ class _Header extends StatelessWidget {
             ),
           ),
         if (showGiveDemo) ...[
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
           ExPrimaryButton(
             label: 'Give New Demo',
-            icon: Icons.mic_none_rounded,
+            icon: Icons.mic_rounded,
             height: 56,
             onPressed: onGiveDemo,
           ),
         ],
         if (ex.status == ExhibitionStatus.completed) ...[
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
               color: exCompletedBg,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(exRadiusControl),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.check_rounded, color: exCompletedInk, size: 20),
-                SizedBox(width: 10),
-                Expanded(
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                  child: const Icon(Icons.flag_rounded, color: exCompletedInk, size: 18),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
                   child: Text(
                     'This exhibition is completed. New demos are closed.',
                     style: TextStyle(
@@ -646,10 +726,41 @@ class _Header extends StatelessWidget {
   }
 }
 
+/// Icon + text line in the header's where/when panel.
+class _InfoLine extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  const _InfoLine({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) => Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 16, color: exBrandBold),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(text,
+                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: exInk)),
+            ),
+          ),
+        ],
+      );
+}
+
 // MARK: - Tabs
 
-/// Underline tabs: "Demos 4" / "Leads 3". Selected tab gets an ink count
-/// badge and an indicator-blue underline. [compact] = left-aligned (iPad pane).
+/// Segmented switch: "Demos 4" / "Leads 3". The selected side is a raised
+/// white capsule with a brand count badge.
 class _Tabs extends StatelessWidget {
   final int selected;
   final int demoCount;
@@ -667,38 +778,67 @@ class _Tabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tabs = [_tab(0, 'Demos', demoCount), _tab(1, 'Leads', leadCount)];
-    if (compact) {
-      return Container(
-        decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: exBorder))),
-        child: Row(children: [for (final t in tabs) SizedBox(width: 150, child: t)]),
-      );
-    }
-    return Row(children: [for (final t in tabs) Expanded(child: t)]);
+    final track = Container(
+      height: 54,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE3EAF8),
+        borderRadius: BorderRadius.circular(exRadiusControl + 2),
+      ),
+      child: Stack(
+        children: [
+          // White thumb slides under the selected tab.
+          AnimatedAlign(
+            alignment: Alignment(selected == 0 ? -1 : 1, 0),
+            duration: const Duration(milliseconds: 260),
+            curve: Curves.easeOutCubic,
+            child: FractionallySizedBox(
+              widthFactor: 0.5,
+              heightFactor: 1,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(exRadiusControl - 2),
+                  boxShadow: exCardShadow,
+                ),
+              ),
+            ),
+          ),
+          Row(
+            children: [
+              Expanded(child: _tab(0, 'Demos', Icons.graphic_eq_rounded, demoCount)),
+              Expanded(child: _tab(1, 'Leads', Icons.star_rounded, leadCount)),
+            ],
+          ),
+        ],
+      ),
+    );
+    if (!compact) return track;
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 360), child: track),
+    );
   }
 
-  Widget _tab(int i, String label, int count) {
+  Widget _tab(int i, String label, IconData icon, int count) {
     final on = selected == i;
     return Semantics(
       selected: on,
       button: true,
-      child: InkWell(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: () => onChanged(i),
         child: Container(
-          height: 56,
           alignment: Alignment.center,
-          decoration: BoxDecoration(
-            border: Border(
-              bottom: BorderSide(color: on ? exIndicator : Colors.transparent, width: 3),
-            ),
-          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              Icon(icon, size: 18, color: on ? exBrandBold : exSubtle),
+              const SizedBox(width: 6),
               Text(label,
                   style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    fontWeight: on ? FontWeight.w700 : FontWeight.w600,
                     color: on ? exInk : exSubtle,
                   )),
               const SizedBox(width: 8),
@@ -706,15 +846,15 @@ class _Tabs extends StatelessWidget {
                 constraints: const BoxConstraints(minWidth: 24),
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                 decoration: BoxDecoration(
-                  color: on ? exInk : exBorder,
-                  borderRadius: BorderRadius.circular(6),
+                  color: on ? exBrandBold : Colors.white.withValues(alpha: 0.7),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text('$count',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: on ? Colors.white : exInk,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: on ? Colors.white : exSubtle,
                     )),
               ),
             ],
@@ -727,6 +867,9 @@ class _Tabs extends StatelessWidget {
 
 // MARK: - Demo row
 
+/// Demo card: visitor tile, name, time and call status; the voice used; a
+/// strip with numbers called, who gave it and the lead state; and a
+/// "View calls" footer that expands the call details.
 class _DemoRow extends StatelessWidget {
   final ExhibitionDemo demo;
   final bool isNew;
@@ -766,11 +909,14 @@ class _DemoRow extends StatelessWidget {
     final (bg, fg) = callStatusColors(d.status);
     final voice = _voiceTitle;
     final active = isNew || expanded;
+    final numbers = '${d.recipientCount} ${d.recipientCount == 1 ? 'number' : 'numbers'}';
     return Container(
       decoration: BoxDecoration(
         color: isNew ? exTint : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: active ? exBrand : exBorder, width: active ? 1.5 : 1),
+        borderRadius: BorderRadius.circular(exRadiusCard),
+        border: Border.all(
+            color: active ? exBrand : const Color(0xFFEDF1F6), width: active ? 1.5 : 1),
+        boxShadow: exCardShadow,
       ),
       clipBehavior: Clip.antiAlias,
       child: AnimatedSize(
@@ -787,87 +933,167 @@ class _DemoRow extends StatelessWidget {
                 child: Semantics(
                   button: true,
                   expanded: expanded,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Visitor initial
-                        Container(
-                          width: 46,
-                          height: 46,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: d.hasLead ? exSuccessBg : exTint,
-                            shape: BoxShape.circle,
-                          ),
-                          child: d.visitorName.trim().isEmpty
-                              ? Icon(Icons.person_outline_rounded,
-                                  color: d.hasLead ? exSuccess : exBrandBold)
-                              : Text(d.visitorName.trim()[0].toUpperCase(),
-                                  style: TextStyle(
-                                      fontSize: 19,
-                                      fontWeight: FontWeight.w700,
-                                      color: d.hasLead ? exSuccess : exBrandBold)),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Status sits beside the name.
-                              Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Visitor, time and status
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: 52,
+                              height: 52,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                gradient: d.hasLead
+                                    ? const LinearGradient(
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                        colors: [exSuccess, Color(0xFF34A853)],
+                                      )
+                                    : exHeroGradient,
+                                borderRadius: BorderRadius.circular(exRadiusControl + 2),
+                                boxShadow: d.hasLead ? null : exBrandGlow,
+                              ),
+                              child: d.visitorName.trim().isEmpty
+                                  ? const Icon(Icons.person_rounded, color: Colors.white, size: 26)
+                                  : Text(exInitials(d.visitorName),
+                                      style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.white)),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Expanded(
-                                    child: Text(d.displayName,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: exHeadingSm.copyWith(fontSize: 17)),
+                                  Text(d.displayName,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: exHeadingSm.copyWith(
+                                          fontSize: 17, fontWeight: FontWeight.w700)),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.schedule_rounded, size: 14, color: exSubtle),
+                                      const SizedBox(width: 4),
+                                      Flexible(
+                                        child: Text(
+                                            d.createdAt == null ? 'Time not known' : exWhen(d.createdAt),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w500,
+                                                color: exSubtle)),
+                                      ),
+                                      if (isNew) ...[
+                                        const SizedBox(width: 8),
+                                        const ExPill(
+                                          label: 'New',
+                                          background: exBrandBold,
+                                          foreground: Colors.white,
+                                        ),
+                                      ],
+                                    ],
                                   ),
-                                  const SizedBox(width: 8),
-                                  ExPill(label: d.status.label, background: bg, foreground: fg),
                                 ],
                               ),
-                              const SizedBox(height: 6),
-                              Wrap(
-                                spacing: 12,
-                                runSpacing: 4,
-                                children: [
-                                  _LeadMeta(
-                                    icon: Icons.call_outlined,
-                                    text: '${d.recipientCount} '
-                                        '${d.recipientCount == 1 ? 'number' : 'numbers'}',
-                                  ),
-                                  if (d.createdAt != null)
-                                    _LeadMeta(icon: Icons.schedule_rounded, text: exWhen(d.createdAt)),
-                                  if (d.createdBy.isNotEmpty)
-                                    _LeadMeta(icon: Icons.badge_outlined, text: d.createdBy),
-                                ],
-                              ),
-                              if (d.audioUrl.isNotEmpty) ...[
-                                const SizedBox(height: 6),
-                                _VoiceLine(url: d.audioUrl, title: voice),
-                              ],
-                              if (d.hasLead) ...[
-                                const SizedBox(height: 8),
-                                const ExPill(
-                                  label: 'Lead captured',
-                                  background: exSuccessBg,
-                                  foreground: exSuccess,
+                            ),
+                            const SizedBox(width: 8),
+                            ExPill(label: d.status.label, background: bg, foreground: fg, dot: true),
+                          ],
+                        ),
+                      ),
+                      // Voice used
+                      if (d.audioUrl.isNotEmpty)
+                        Container(
+                          margin: const EdgeInsets.fromLTRB(14, 12, 14, 0),
+                          padding: const EdgeInsets.fromLTRB(8, 8, 12, 8),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(colors: [exTint, Color(0xFFF3F8FF)]),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 28,
+                                height: 28,
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
                                 ),
-                              ],
+                                child: const Icon(Icons.headphones_rounded,
+                                    size: 15, color: exBrandBold),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(child: _VoiceLine(url: d.audioUrl, title: voice)),
                             ],
                           ),
                         ),
-                        const SizedBox(width: 4),
-                        AnimatedRotation(
-                          turns: expanded ? 0.25 : 0,
-                          duration: const Duration(milliseconds: 220),
-                          child: const Icon(Icons.chevron_right_rounded, color: exSubtle, size: 24),
+                      // Numbers called, given by, lead state
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            ExStatChip(
+                              icon: Icons.call_rounded,
+                              text: numbers,
+                              color: exAccentTeam,
+                              background: exAccentTeamBg,
+                            ),
+                            if (d.createdBy.isNotEmpty)
+                              ExStatChip(
+                                icon: Icons.badge_rounded,
+                                text: d.createdBy,
+                                color: exInk,
+                                background: exNeutralBg,
+                              ),
+                            d.hasLead
+                                ? const ExStatChip(
+                                    icon: Icons.verified_rounded,
+                                    text: 'Lead captured',
+                                    color: exSuccess,
+                                    background: exSuccessBg,
+                                  )
+                                : const ExStatChip(
+                                    icon: Icons.star_outline_rounded,
+                                    text: 'No lead yet',
+                                    color: exAccentLead,
+                                    background: exAccentLeadBg,
+                                  ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                      // Expand / collapse
+                      Container(
+                        margin: const EdgeInsets.only(top: 12),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        decoration: const BoxDecoration(
+                          border: Border(top: BorderSide(color: exBorder)),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(expanded ? 'Hide calls' : 'View calls',
+                                style: const TextStyle(
+                                    fontSize: 14, fontWeight: FontWeight.w700, color: exBrandBold)),
+                            const SizedBox(width: 4),
+                            AnimatedRotation(
+                              turns: expanded ? 0.5 : 0,
+                              duration: const Duration(milliseconds: 220),
+                              child: const Icon(Icons.keyboard_arrow_down_rounded,
+                                  size: 20, color: exBrandBold),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -875,7 +1101,7 @@ class _DemoRow extends StatelessWidget {
             if (expanded)
               Container(
                 decoration: const BoxDecoration(
-                  color: Colors.white,
+                  color: Color(0xFFFAFCFE),
                   border: Border(top: BorderSide(color: exBorder)),
                 ),
                 padding: const EdgeInsets.all(16),
@@ -895,6 +1121,8 @@ class _DemoRow extends StatelessWidget {
 
 // MARK: - Lead card
 
+/// Lead card: school header with interest level, a contact panel with Call /
+/// Email buttons, notes, photos, WhatsApp video and a "captured by" footer.
 class _LeadCard extends StatelessWidget {
   final ExhibitionLead lead;
   final bool isNew;
@@ -912,11 +1140,8 @@ class _LeadCard extends StatelessWidget {
     final hasMail = l.contactEmail.isNotEmpty;
     final hasContact = l.contactName.isNotEmpty || hasCall || hasMail;
     final initial = l.schoolName.trim().isEmpty ? '?' : l.schoolName.trim()[0].toUpperCase();
-    final footer = [
-      if (l.capturedBy.isNotEmpty) 'By ${l.capturedBy}',
-      if (l.createdAt != null) exWhen(l.createdAt),
-      if (l.demoVisitorName.isNotEmpty) 'From demo: ${l.demoVisitorName}',
-    ].join(' · ');
+    final level = l.interestLevel;
+    final accent = level == null ? exBrandBold : interestLevelColors(level).$2;
 
     return ExCard(
       highlighted: isNew,
@@ -924,23 +1149,24 @@ class _LeadCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // School, interest and city
+          // School, city, interest level
           Padding(
-            padding: EdgeInsets.fromLTRB(16, 16, onEdit != null ? 6 : 16, 0),
+            padding: EdgeInsets.fromLTRB(16, 16, onEdit != null ? 10 : 16, 0),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: 48,
-                  height: 48,
+                  width: 52,
+                  height: 52,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    gradient: exBrandGradient,
-                    borderRadius: BorderRadius.circular(14),
+                    gradient: exHeroGradient,
+                    borderRadius: BorderRadius.circular(exRadiusControl + 2),
+                    boxShadow: exBrandGlow,
                   ),
                   child: Text(initial,
                       style: const TextStyle(
-                          fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white)),
+                          fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white)),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -950,84 +1176,153 @@ class _LeadCard extends StatelessWidget {
                       Text(l.schoolName,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: exHeadingSm.copyWith(fontSize: 17, height: 1.25)),
-                      const SizedBox(height: 6),
-                      Wrap(
-                        spacing: 10,
-                        runSpacing: 6,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          if (l.interestLevel != null) ExInterestTag(level: l.interestLevel!),
-                          if (l.city.isNotEmpty)
-                            _LeadMeta(icon: Icons.location_on_outlined, text: l.city),
-                        ],
-                      ),
+                          style: exHeadingSm.copyWith(
+                              fontSize: 17, height: 1.25, fontWeight: FontWeight.w700)),
+                      if (l.city.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            const Icon(Icons.location_on_rounded, size: 15, color: exBrand),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(l.city,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                      fontSize: 14, fontWeight: FontWeight.w500, color: exSubtle)),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),
-                if (onEdit != null)
+                if (onEdit != null) ...[
+                  const SizedBox(width: 6),
                   _EditButton(tooltip: 'Edit lead', onPressed: onEdit!),
+                ],
               ],
             ),
           ),
-          // Contact person, number and email
-          if (hasContact)
-            Container(
-              margin: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-              decoration: BoxDecoration(
-                color: exPageBg,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          if (level != null || l.demoVisitorName.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
                 children: [
-                  if (l.contactName.isNotEmpty)
-                    _ContactLine(
-                      icon: Icons.person_outline_rounded,
-                      text: l.contactName,
-                      strong: true,
-                    ),
-                  if (hasCall)
-                    _ContactLine(
-                      icon: Icons.phone_outlined,
-                      text: formatIndianMobile(l.contactNumber),
-                      action: _LeadAction(
-                        icon: Icons.call_rounded,
-                        tooltip: 'Call',
-                        filled: true,
-                        onTap: () => launchUrl(Uri(scheme: 'tel', path: '+91${l.contactNumber}')),
-                      ),
-                    ),
-                  if (hasMail)
-                    _ContactLine(
-                      icon: Icons.mail_outline_rounded,
-                      text: l.contactEmail,
-                      action: _LeadAction(
-                        icon: Icons.mail_outline_rounded,
-                        tooltip: 'Email',
-                        onTap: () => launchUrl(Uri(scheme: 'mailto', path: l.contactEmail)),
-                      ),
+                  if (level != null) ExInterestTag(level: level),
+                  if (l.demoVisitorName.isNotEmpty)
+                    ExStatChip(
+                      icon: Icons.graphic_eq_rounded,
+                      text: 'Demo: ${l.demoVisitorName}',
+                      color: exBrandBold,
+                      background: exTint,
                     ),
                 ],
               ),
             ),
+          // Contact person with quick actions
+          if (hasContact)
+            Container(
+              margin: const EdgeInsets.fromLTRB(12, 14, 12, 0),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: exPageBg,
+                borderRadius: BorderRadius.circular(exRadiusControl),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: accent.withValues(alpha: 0.35), width: 1.5),
+                        ),
+                        child: l.contactName.isEmpty
+                            ? Icon(Icons.person_rounded, size: 20, color: accent)
+                            : Text(exInitials(l.contactName),
+                                style: TextStyle(
+                                    fontSize: 13, fontWeight: FontWeight.w700, color: accent)),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(l.contactName.isEmpty ? 'Contact' : l.contactName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                    fontSize: 15, fontWeight: FontWeight.w700, color: exInk)),
+                            if (hasCall)
+                              Text(formatIndianMobile(l.contactNumber),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: Color(0xFF3F4A5A))),
+                            if (hasMail)
+                              Text(l.contactEmail,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                      fontSize: 13, fontWeight: FontWeight.w500, color: exSubtle)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (hasCall || hasMail) ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        if (hasCall)
+                          Expanded(
+                            child: _LeadAction(
+                              icon: Icons.call_rounded,
+                              label: 'Call',
+                              filled: true,
+                              onTap: () => launchUrl(Uri(scheme: 'tel', path: '+91${l.contactNumber}')),
+                            ),
+                          ),
+                        if (hasCall && hasMail) const SizedBox(width: 10),
+                        if (hasMail)
+                          Expanded(
+                            child: _LeadAction(
+                              icon: Icons.mail_rounded,
+                              label: 'Email',
+                              onTap: () => launchUrl(Uri(scheme: 'mailto', path: l.contactEmail)),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          // Notes as a quote
           if (l.notes.isNotEmpty)
             Container(
-              margin: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+              margin: const EdgeInsets.fromLTRB(12, 10, 12, 0),
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
               decoration: BoxDecoration(
                 color: exNotes,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(exRadiusControl),
+                border: const Border(left: BorderSide(color: exAccentLead, width: 3)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.only(top: 2),
-                    child: Icon(Icons.sticky_note_2_outlined, size: 16, color: exSubtle),
-                  ),
-                  const SizedBox(width: 8),
+                  const Icon(Icons.format_quote_rounded, size: 18, color: exAccentLead),
+                  const SizedBox(width: 6),
                   Expanded(
                     child: Text(l.notes,
                         maxLines: 3,
@@ -1045,7 +1340,7 @@ class _LeadCard extends StatelessWidget {
                 height: 72,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   itemCount: l.attachments.length,
                   separatorBuilder: (_, __) => const SizedBox(width: 8),
                   itemBuilder: (_, i) => ExAttachmentTile(
@@ -1059,7 +1354,7 @@ class _LeadCard extends StatelessWidget {
           // Demo video on WhatsApp, full width so the label stays readable.
           if (onWhatsApp != null)
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
               child: ExSecondaryButton(
                 label: 'Send demo video on WhatsApp',
                 icon: Icons.ondemand_video_rounded,
@@ -1068,108 +1363,100 @@ class _LeadCard extends StatelessWidget {
                 onPressed: onWhatsApp,
               ),
             ),
-          // Who captured it, when, and from which demo
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
-            child: footer.isEmpty
-                ? const SizedBox.shrink()
-                : Text(footer,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: exBodySm.copyWith(fontSize: 13)),
-          ),
+          // Who captured it and when
+          if (l.capturedBy.isNotEmpty || l.createdAt != null) ...[
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 14, 16, 0),
+              child: Divider(height: 1, color: exBorder),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+              child: Row(
+                children: [
+                  if (l.capturedBy.isNotEmpty) ...[
+                    Container(
+                      width: 24,
+                      height: 24,
+                      alignment: Alignment.center,
+                      decoration: const BoxDecoration(color: exAccentTeamBg, shape: BoxShape.circle),
+                      child: Text(exInitials(l.capturedBy),
+                          style: const TextStyle(
+                              fontSize: 9, fontWeight: FontWeight.w700, color: exAccentTeam)),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text('By ${l.capturedBy}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: exBodySm.copyWith(fontSize: 13, fontWeight: FontWeight.w600)),
+                    ),
+                  ] else
+                    const Spacer(),
+                  if (l.createdAt != null) ...[
+                    const SizedBox(width: 8),
+                    const Icon(Icons.schedule_rounded, size: 14, color: exSubtle),
+                    const SizedBox(width: 4),
+                    Text(exWhen(l.createdAt), style: exBodySm.copyWith(fontSize: 13)),
+                  ],
+                ],
+              ),
+            ),
+          ] else
+            const SizedBox(height: 14),
         ],
       ),
     );
   }
 }
 
-/// One icon + text line in the lead's contact panel.
-class _ContactLine extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  final bool strong;
-
-  /// Quick action at the end of the line (Call / Email).
-  final Widget? action;
-  const _ContactLine({required this.icon, required this.text, this.strong = false, this.action});
-
-  @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 3),
-        child: Row(
-          children: [
-            Icon(icon, size: 17, color: exSubtle),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(text,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: strong ? FontWeight.w600 : FontWeight.w500,
-                    color: strong ? exInk : const Color(0xFF3F4A5A),
-                  )),
-            ),
-            if (action != null) ...[const SizedBox(width: 8), action!],
-          ],
-        ),
-      );
-}
-
-class _LeadMeta extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  const _LeadMeta({required this.icon, required this.text});
-
-  @override
-  Widget build(BuildContext context) => Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 15, color: exSubtle),
-          const SizedBox(width: 3),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 180),
-            child: Text(text,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: exSubtle)),
-          ),
-        ],
-      );
-}
-
-/// Round quick action (Call is filled, Email is tonal).
+/// Labelled quick action: Call is filled green, Email is tonal blue.
 class _LeadAction extends StatelessWidget {
   final IconData icon;
-  final String tooltip;
+  final String label;
   final VoidCallback onTap;
   final bool filled;
 
   const _LeadAction({
     required this.icon,
-    required this.tooltip,
+    required this.label,
     required this.onTap,
     this.filled = false,
   });
 
   @override
-  Widget build(BuildContext context) => Tooltip(
-        message: tooltip,
-        child: Material(
-          color: filled ? exSuccess : exTint,
-          shape: const CircleBorder(),
-          child: InkWell(
-            customBorder: const CircleBorder(),
-            onTap: onTap,
-            child: SizedBox(
-              width: 44,
-              height: 44,
-              child: Icon(icon, size: 21, color: filled ? Colors.white : exBrandBold),
-            ),
+  Widget build(BuildContext context) {
+    final fg = filled ? Colors.white : exBrandBold;
+    return Material(
+      color: filled ? exSuccess : Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          height: 44,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: filled ? null : Border.all(color: exIndicator),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 18, color: fg),
+              const SizedBox(width: 6),
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(label,
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: fg)),
+                ),
+              ),
+            ],
           ),
         ),
-      );
+      ),
+    );
+  }
 }
 
 // MARK: - Dashed "Capture Lead" button
@@ -1184,22 +1471,31 @@ class _DashedButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Semantics(
         button: true,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(8),
-          child: CustomPaint(
-            painter: _DashedBorderPainter(),
-            child: SizedBox(
-              height: 52,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(icon, size: 22, color: exBrandBold),
-                  const SizedBox(width: 10),
-                  Text(label,
-                      style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w600, color: exBrandBold)),
-                ],
+        child: Material(
+          color: exTint.withValues(alpha: 0.6),
+          borderRadius: BorderRadius.circular(exRadiusControl),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(exRadiusControl),
+            child: CustomPaint(
+              painter: _DashedBorderPainter(),
+              child: SizedBox(
+                height: 54,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: const BoxDecoration(color: exBrandBold, shape: BoxShape.circle),
+                      child: Icon(icon, size: 20, color: Colors.white),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(label,
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w700, color: exBrandBold)),
+                  ],
+                ),
               ),
             ),
           ),
@@ -1211,12 +1507,12 @@ class _DashedBorderPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = exStrongBorder
+      ..color = exIndicator
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
     final rrect = RRect.fromRectAndRadius(
       Offset.zero & size,
-      const Radius.circular(8),
+      const Radius.circular(exRadiusControl),
     ).deflate(0.75);
     final path = Path()..addRRect(rrect);
     for (final metric in path.computeMetrics()) {
@@ -1238,24 +1534,26 @@ class _EditButton extends StatelessWidget {
   final VoidCallback onPressed;
   final IconData icon;
   final Color color;
+  final Color background;
   const _EditButton({
     required this.tooltip,
     required this.onPressed,
     this.icon = Icons.edit_outlined,
     this.color = exBrandBold,
+    this.background = exTint,
   });
 
   @override
   Widget build(BuildContext context) => SizedBox(
-        width: 40,
-        height: 40,
+        width: 42,
+        height: 42,
         child: IconButton(
           tooltip: tooltip,
           onPressed: onPressed,
           padding: EdgeInsets.zero,
           style: IconButton.styleFrom(
-            side: const BorderSide(color: exBorder),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            backgroundColor: background,
+            shape: const CircleBorder(),
           ),
           icon: Icon(icon, size: 20, color: color),
         ),
@@ -1277,14 +1575,9 @@ class _VoiceLine extends ConsumerWidget {
       error: (_, __) => null,
     );
     final text = [title ?? 'Demo voice', if (length != null) length].join(' · ');
-    return Row(
-      children: [
-        const Icon(Icons.headphones_rounded, size: 14, color: exSubtle),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis, style: exBodySm),
-        ),
-      ],
-    );
+    return Text(text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: exBrandBold));
   }
 }

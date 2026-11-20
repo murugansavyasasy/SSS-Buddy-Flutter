@@ -206,30 +206,109 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
     }
   }
 
+
+  // MARK: Steps
+  // One question per screen: Name → Place → Dates → Team → Notes → Review.
+
+  static const _review = 5;
+  static const _stepNames = ['Name', 'Place', 'Dates', 'Team', 'Notes', 'Review'];
+
+  /// Edit opens on the summary (everything is filled in already).
+  late int _step = _editing ? _review : 0;
+
+  /// Steps where Next was tapped while something was missing; their
+  /// errors show from then on.
+  final Set<int> _triedSteps = {};
+
+  /// Once the summary was reached, Next from an edited step returns there.
+  late bool _reachedReview = _editing;
+
+  bool _showErrors(int step) => _tried || _triedSteps.contains(step);
+
+  bool _stepValid(int step) => switch (step) {
+        0 => _name.text.trim().isNotEmpty,
+        1 => _venue.text.trim().isNotEmpty,
+        2 => _start != null && _end != null && !_endBeforeStart,
+        3 => _attendees.isNotEmpty,
+        _ => true,
+      };
+
+  void _goTo(int step) {
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _step = step;
+      if (step == _review) _reachedReview = true;
+    });
+  }
+
+  void _next() {
+    FocusScope.of(context).unfocus();
+    if (_step == 3) {
+      // A number still in the fields (Add not tapped) is added now.
+      final pending = _attMobile.text.trim().isNotEmpty || _attName.text.trim().isNotEmpty;
+      if (pending && !_addAttendee()) {
+        setState(() => _triedSteps.add(3));
+        return;
+      }
+    }
+    if (!_stepValid(_step)) {
+      HapticFeedback.mediumImpact();
+      setState(() => _triedSteps.add(_step));
+      return;
+    }
+    _goTo(_reachedReview ? _review : _step + 1);
+  }
+
+  void _back() {
+    if (_saving) return;
+    if (_editing && _step != _review) {
+      _goTo(_review);
+    } else if (_step > 0) {
+      _goTo(_step - 1);
+    }
+  }
+
+  /// Save from the summary; a missing value jumps back to its step.
+  void _save() {
+    for (var i = 0; i < _review; i++) {
+      if (!_stepValid(i)) {
+        setState(() => _triedSteps.add(i));
+        _goTo(i);
+        return;
+      }
+    }
+    _submit();
+  }
+
+  int get _home => _editing ? _review : 0;
+
+  /// Cities from exhibitions already loaded (no extra API call).
+  List<String> get _recentCities {
+    if (!ref.exists(exhibitionListProvider)) return const [];
+    final all = ref.read(exhibitionListProvider).value ?? const <Exhibition>[];
+    final seen = <String>{};
+    return [
+      for (final e in all)
+        if (e.city.trim().isNotEmpty && seen.add(e.city.trim().toLowerCase())) e.city.trim(),
+    ].take(6).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     final wide = exIsWide(context);
-    final nameError = _tried && _name.text.trim().isEmpty ? 'Exhibition name is required' : null;
-    final venueError = _tried && _venue.text.trim().isEmpty ? 'Venue is required' : null;
-    final startError = _tried && _start == null ? 'Start date is required' : null;
-    final endError = !_tried
-        ? null
-        : _end == null
-        ? 'End date is required'
-        : _endBeforeStart
-        ? "End date can't be before the start date"
-        : null;
-    final attendeesError = _tried && _attendees.isEmpty ? 'Add at least one attendee' : null;
+    final ready = !_loading && _loadError == null;
 
-    return ExTheme(
-      child: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: exHeaderOverlay,
-        child: Scaffold(
-          backgroundColor: exHeaderBase,
-          body: SafeArea(
-            top: false,
-            bottom: false, // the white footer draws under the home indicator
-            child: Column(
+    return PopScope(
+      canPop: _step == _home && !_saving,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _back();
+      },
+      child: ExTheme(
+        child: AnnotatedRegion<SystemUiOverlayStyle>(
+          value: exHeaderOverlay,
+          child: Scaffold(
+            backgroundColor: exHeaderBase,
+            body: Column(
               children: [
                 ExGradientHeader(
                   child: Row(
@@ -243,7 +322,8 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
                       Expanded(
                         child: Text(
                           _editing ? 'Edit exhibition' : 'New exhibition',
-                          style: exHeadingMd.copyWith(fontSize: 19),
+                          style: exHeadingMd.copyWith(
+                              fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white),
                         ),
                       ),
                     ],
@@ -268,113 +348,24 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
                             ),
                           )
                         else ...[
-                          Expanded(
-                            child: SingleChildScrollView(
-                              padding: EdgeInsets.all(wide ? 24 : 16),
-                              child: ExMaxWidth(
-                                maxWidth: exFormMaxWidth,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                                  children: [
-                                    _section(
-                                      title: 'Details',
-                                      children: [
-                                        ExField(
-                                          label: 'Name',
-                                          required: true,
-                                          controller: _name,
-                                          hint: 'Enter exhibition name',
-                                          errorText: nameError,
-                                          textCapitalization: TextCapitalization.words,
-                                          onChanged: (_) {
-                                            if (_tried) setState(() {});
-                                          },
-                                        ),
-                                        _pair(
-                                          wide,
-                                          ExField(
-                                            label: 'Venue',
-                                            required: true,
-                                            controller: _venue,
-                                            errorText: venueError,
-                                            onChanged: (_) {
-                                              if (_tried) setState(() {});
-                                            },
-                                            hint: 'Enter venue',
-                                            textCapitalization: TextCapitalization.words,
-                                          ),
-                                          ExField(
-                                            label: 'City',
-                                            controller: _city,
-                                            hint: 'Enter city',
-                                            textCapitalization: TextCapitalization.words,
-                                          ),
-                                        ),
-                                        _pair(
-                                          true,
-                                          _DateField(
-                                            label: 'Start date',
-                                            required: true,
-                                            value: _start,
-                                            error: startError,
-                                            onTap: () => _pickDate(true),
-                                          ),
-                                          _DateField(
-                                            label: 'End date',
-                                            value: _end,
-                                            required: true,
-                                            onTap: () => _pickDate(false),
-                                            error: endError,
-                                          ),
-                                        ),
-                                        ExField(
-                                          label: 'Notes',
-                                          controller: _notes,
-                                          hint: 'Enter notes',
-                                          maxLines: 3,
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 16),
-                                    _section(
-                                      title: 'Attendees',
-                                      required: true,
-                                      subtitle: 'These people will receive a call on every demo.',
-                                      children: [
-                                        _attendeeInput(wide),
-                                        _attendeeChips(),
-                                        if (attendeesError != null)
-                                          Text(
-                                            attendeesError,
-                                            style: exBodySm.copyWith(color: exDanger),
-                                          ),
-                                      ],
-                                    ),
-                                    if (_serverError != null) ...[
-                                      const SizedBox(height: 16),
-                                      ExInlineNote(message: _serverError!),
-                                    ],
-                                  ],
-                                ),
+                          Padding(
+                            padding: EdgeInsets.fromLTRB(wide ? 24 : 20, 20, wide ? 24 : 20, 0),
+                            child: ExMaxWidth(
+                              maxWidth: exFormMaxWidth,
+                              child: ExStepProgress(
+                                current: _step,
+                                total: _stepNames.length,
+                                label: 'Step ${_step + 1} of ${_stepNames.length} · ${_stepNames[_step]}',
                               ),
                             ),
                           ),
-                          Container(
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              border: Border(top: BorderSide(color: exBorder)),
-                            ),
-                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                            child: SafeArea(
-                              top: false,
+                          Expanded(
+                            child: SingleChildScrollView(
+                              padding: EdgeInsets.fromLTRB(wide ? 24 : 20, 24, wide ? 24 : 20, 24),
+                              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                               child: ExMaxWidth(
                                 maxWidth: exFormMaxWidth,
-                                child: ExPrimaryButton(
-                                  label: _editing ? 'Update Exhibition' : 'Create Exhibition',
-                                  loadingLabel: _editing ? 'Updating…' : 'Creating…',
-                                  loading: _saving,
-                                  onPressed: _submit,
-                                ),
+                                child: ExStepSwitcher(step: _step, child: _stepBody()),
                               ),
                             ),
                           ),
@@ -383,6 +374,15 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
                     ),
                   ),
                 ),
+                if (ready)
+                  ExStepBar(
+                    onBack: _step == _home ? null : _back,
+                    nextLabel: _nextLabel,
+                    nextIcon: _step == _review ? Icons.check_rounded : Icons.arrow_forward_rounded,
+                    loading: _saving,
+                    loadingLabel: _editing ? 'Updating…' : 'Creating…',
+                    onNext: _step == _review ? _save : _next,
+                  ),
               ],
             ),
           ),
@@ -391,204 +391,521 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
     );
   }
 
-  Widget _section({
-    required String title,
-    String? subtitle,
-    bool required = false,
-    required List<Widget> children,
-  }) => Container(
-    padding: const EdgeInsets.all(20),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: exBorder),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text.rich(
-          TextSpan(
-            text: title,
-            children: [
-              if (required)
-                const TextSpan(
-                  text: ' *',
-                  style: TextStyle(color: exDanger),
-                ),
-            ],
+  String get _nextLabel {
+    if (_step == _review) return _editing ? 'Update Exhibition' : 'Create Exhibition';
+    if (_reachedReview) return 'Done';
+    if (_step == 4 && _notes.text.trim().isEmpty) return 'Skip';
+    return 'Next';
+  }
+
+  Widget _stepBody() => switch (_step) {
+        0 => _nameStep(),
+        1 => _placeStep(),
+        2 => _datesStep(),
+        3 => _teamStep(),
+        4 => _notesStep(),
+        _ => _reviewStep(),
+      };
+
+  Widget _gap([double h = 24]) => SizedBox(height: h);
+
+  Widget _label(String text) => Padding(
+        padding: const EdgeInsets.only(bottom: 10, left: 4),
+        child: Text(text, style: exLabelSm.copyWith(fontSize: 13, color: const Color(0xFF3A4A60))),
+      );
+
+  // 1 · Name
+  Widget _nameStep() => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const ExQuestion(
+            icon: Icons.storefront_rounded,
+            title: "What's the exhibition called?",
+            subtitle: 'Use the name people know it by.',
           ),
-          style: exHeadingMd,
-        ),
-        if (subtitle != null) ...[const SizedBox(height: 2), Text(subtitle, style: exBodyMd)],
-        const SizedBox(height: 16),
-        for (final c in children) ...[c, const SizedBox(height: 16)],
-      ],
-    ),
-  );
+          _gap(28),
+          ExBigInput(
+            controller: _name,
+            autofocus: true,
+            hint: 'e.g. DIDAC India 2026',
+            textCapitalization: TextCapitalization.words,
+            textInputAction: TextInputAction.next,
+            errorText: _showErrors(0) && !_stepValid(0) ? 'Exhibition name is required' : null,
+            onChanged: (_) => setState(() {}),
+            onSubmitted: (_) => _next(),
+          ),
+        ],
+      );
 
-  Widget _pair(bool wide, Widget a, Widget b) => wide
-      ? Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(child: a),
-            const SizedBox(width: 12),
-            Expanded(child: b),
-          ],
-        )
-      : Column(children: [a, const SizedBox(height: 16), b]);
-
-  /// Name + number fields with an Add button.
-  Widget _attendeeInput(bool wide) {
-    final name = TextField(
-      controller: _attName,
-      textCapitalization: TextCapitalization.words,
-      textInputAction: TextInputAction.next,
-      style: exBodyTouch,
-      decoration: exInputDecoration(hint: 'Enter name'),
-    );
-    final mobile = TextField(
-      controller: _attMobile,
-      keyboardType: TextInputType.phone,
-      textInputAction: TextInputAction.done,
-      onSubmitted: (_) => _addAttendee(),
-      inputFormatters: [
-        const ExAsciiDigitsFormatter(),
-        FilteringTextInputFormatter.digitsOnly,
-        LengthLimitingTextInputFormatter(10),
-      ],
-      onChanged: (_) {
-        if (_attError != null) setState(() => _attError = null);
-      },
-      style: exBodyTouch,
-      decoration: exInputDecoration(
-        hint: 'Enter 10-digit mobile number',
-        prefixText: '+91',
-        errorText: _attError,
-      ),
-    );
-    final add = SizedBox(
-      height: 52,
-      child: FilledButton.icon(
-        onPressed: _saving ? null : _addAttendee,
-        style: FilledButton.styleFrom(
-          backgroundColor: exBrandBold,
-          padding: const EdgeInsets.symmetric(horizontal: 18),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          textStyle: const TextStyle(fontFamily: exFont, fontSize: 16, fontWeight: FontWeight.w600),
-        ),
-        icon: const Icon(Icons.add_rounded, size: 20),
-        label: const Text('Add'),
-      ),
-    );
-    // Add sits below the number field (full width on phones).
+  // 2 · Place
+  Widget _placeStep() {
+    final cities = _recentCities;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (wide)
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: name),
-              const SizedBox(width: 10),
-              Expanded(child: mobile),
-            ],
-          )
-        else ...[
-          name,
-          const SizedBox(height: 8),
-          mobile,
+        const ExQuestion(
+          icon: Icons.location_on_rounded,
+          title: 'Where is the show?',
+          subtitle: 'The venue helps the team find the stall.',
+        ),
+        _gap(28),
+        _label('VENUE'),
+        ExBigInput(
+          controller: _venue,
+          autofocus: true,
+          icon: Icons.place_outlined,
+          hint: 'e.g. Bombay Exhibition Centre',
+          textCapitalization: TextCapitalization.words,
+          textInputAction: TextInputAction.next,
+          errorText: _showErrors(1) && !_stepValid(1) ? 'Venue is required' : null,
+          onChanged: (_) => setState(() {}),
+        ),
+        _gap(20),
+        _label('CITY  ·  OPTIONAL'),
+        ExBigInput(
+          controller: _city,
+          icon: Icons.location_city_rounded,
+          hint: 'e.g. Mumbai',
+          textCapitalization: TextCapitalization.words,
+          textInputAction: TextInputAction.done,
+          onChanged: (_) => setState(() {}),
+          onSubmitted: (_) => _next(),
+        ),
+        if (cities.isNotEmpty) ...[
+          _gap(14),
+          ExAppear(
+            index: 4,
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                const Text('Recent:', style: exBodyMd),
+                for (final c in cities)
+                  ExPickChip(
+                    label: c,
+                    icon: Icons.history_rounded,
+                    selected: _city.text.trim().toLowerCase() == c.toLowerCase(),
+                    onTap: () => setState(() => _city.text = c),
+                  ),
+              ],
+            ),
+          ),
         ],
-        const SizedBox(height: 10),
-        if (wide) Align(alignment: Alignment.centerRight, child: add) else add,
       ],
     );
   }
 
-  /// Added attendees as removable chips.
-  Widget _attendeeChips() {
-    if (_attendees.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(color: exPageBg, borderRadius: BorderRadius.circular(8)),
-        child: const Text('No attendees added yet.', textAlign: TextAlign.center, style: exBodyMd),
-      );
-    }
+  // 3 · Dates
+  Widget _datesStep() {
+    final show = _showErrors(2);
+    final startError = show && _start == null ? 'Start date is required' : null;
+    final endError = !show
+        ? null
+        : _end == null
+            ? 'End date is required'
+            : _endBeforeStart
+                ? "End date can't be before the start date"
+                : null;
+    final days = _start != null && _end != null && !_endBeforeStart
+        ? _end!.difference(_start!).inDays + 1
+        : null;
+    final start = _DateCard(
+      label: 'STARTS',
+      value: _start,
+      error: startError,
+      onTap: () => _pickDate(true),
+    );
+    final end = _DateCard(
+      label: 'ENDS',
+      value: _end,
+      error: endError,
+      onTap: () => _pickDate(false),
+    );
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('Added (${_attendees.length})', style: exBodySm),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final a in _attendees)
-              ExPersonChip(
-                key: ValueKey(a.mobile),
-                name: a.name,
-                number: formatIndianMobile(a.mobile),
-                onRemove: () {
-                  if (!_saving) setState(() => _attendees.remove(a));
-                },
-              ),
-          ],
+        const ExQuestion(
+          icon: Icons.event_rounded,
+          title: 'When is it on?',
+          subtitle: 'Tap a card to pick the date.',
         ),
+        _gap(28),
+        ExAppear(
+          index: 3,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: start),
+              const SizedBox(width: 12),
+              Expanded(child: end),
+            ],
+          ),
+        ),
+        if (days != null) ...[
+          _gap(16),
+          Center(
+            child: ExPopIn(
+              key: ValueKey(days),
+              child: ExPill(
+                label: '$days ${days == 1 ? 'day' : 'days'}',
+                icon: Icons.schedule_rounded,
+                background: exTint,
+                foreground: exBrandBold,
+                large: true,
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  // 4 · Team
+  Widget _teamStep() {
+    final error = _showErrors(3) && _attendees.isEmpty ? 'Add at least one attendee' : null;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const ExQuestion(
+          icon: Icons.groups_rounded,
+          color: exAccentTeam,
+          background: exAccentTeamBg,
+          title: "Who's at the stall?",
+          subtitle: 'They get a call on every demo, so they hear what visitors hear.',
+        ),
+        _gap(28),
+        ExBigInput(
+          controller: _attName,
+          icon: Icons.person_outline_rounded,
+          hint: 'Name',
+          textCapitalization: TextCapitalization.words,
+          textInputAction: TextInputAction.next,
+        ),
+        _gap(12),
+        ExBigInput(
+          controller: _attMobile,
+          icon: Icons.phone_iphone_rounded,
+          prefixText: '+91  ',
+          hint: '10-digit mobile',
+          keyboardType: TextInputType.phone,
+          textInputAction: TextInputAction.done,
+          inputFormatters: [
+            const ExAsciiDigitsFormatter(),
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(10),
+          ],
+          errorText: _attError,
+          onChanged: (_) {
+            if (_attError != null) setState(() => _attError = null);
+          },
+          onSubmitted: (_) => _addAttendee(),
+        ),
+        _gap(12),
+        ExAppear(
+          index: 4,
+          child: SizedBox(
+            height: 52,
+            child: FilledButton.icon(
+              onPressed: _saving ? null : _addAttendee,
+              style: FilledButton.styleFrom(
+                backgroundColor: exAccentTeamBg,
+                foregroundColor: exAccentTeam,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(exRadiusControl)),
+                textStyle:
+                    const TextStyle(fontFamily: exFont, fontSize: 16, fontWeight: FontWeight.w700),
+              ),
+              icon: const Icon(Icons.person_add_alt_1_rounded, size: 20),
+              label: const Text('Add to team'),
+            ),
+          ),
+        ),
+        _gap(20),
+        if (_attendees.isEmpty)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+            decoration: BoxDecoration(
+              color: error != null ? exDangerBg : exPageBg,
+              borderRadius: BorderRadius.circular(exRadiusControl),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.group_add_outlined, size: 24, color: error != null ? exDanger : exSubtle),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(error ?? 'No one added yet.',
+                      style: exBodyMd.copyWith(
+                          color: error != null ? exDanger : exSubtle,
+                          fontWeight: FontWeight.w600)),
+                ),
+              ],
+            ),
+          )
+        else ...[
+          ExPill(
+            label: 'On the team · ${_attendees.length}',
+            icon: Icons.check_circle_rounded,
+            background: exSuccessBg,
+            foreground: exSuccess,
+          ),
+          _gap(12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final a in _attendees)
+                ExPopIn(
+                  key: ValueKey(a.mobile),
+                  child: ExPersonChip(
+                    name: a.name,
+                    number: formatIndianMobile(a.mobile),
+                    onRemove: () {
+                      if (!_saving) setState(() => _attendees.remove(a));
+                    },
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  // 5 · Notes
+  Widget _notesStep() => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const ExQuestion(
+            icon: Icons.sticky_note_2_rounded,
+            color: exAccentLead,
+            background: exAccentLeadBg,
+            title: 'Anything to remember?',
+            subtitle: 'Hall, stall number, timings… Skip if there is nothing.',
+            optional: true,
+          ),
+          _gap(28),
+          ExBigInput(
+            controller: _notes,
+            hint: 'e.g. Hall 3, Stall 42',
+            maxLines: 5,
+            onChanged: (_) => setState(() {}),
+          ),
+        ],
+      );
+
+  // 6 · Review
+  Widget _reviewStep() {
+    final where = [_venue.text.trim(), _city.text.trim()].where((s) => s.isNotEmpty).join(', ');
+    final team = _attendees.isEmpty
+        ? ''
+        : '${_attendees.length} ${_attendees.length == 1 ? 'person' : 'people'} · '
+            '${_attendees.map((a) => a.name).join(', ')}';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ExQuestion(
+          icon: Icons.fact_check_rounded,
+          color: exSuccess,
+          background: exSuccessBg,
+          title: _editing ? 'Check your changes' : 'All set?',
+          subtitle: 'Tap any line to change it.',
+        ),
+        _gap(24),
+        ExAppear(
+          index: 3,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(exRadiusCard + 4),
+              boxShadow: exCardShadow,
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Name banner
+                Container(
+                  padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+                  decoration: const BoxDecoration(gradient: exHeroGradient),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(exRadiusControl),
+                        ),
+                        child: const Icon(Icons.storefront_rounded, color: Colors.white, size: 26),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Text(
+                          _name.text.trim().isEmpty ? 'Untitled exhibition' : _name.text.trim(),
+                          style: const TextStyle(
+                              fontSize: 20, height: 1.25, fontWeight: FontWeight.w700, color: Colors.white),
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Edit name',
+                        onPressed: _saving ? null : () => _goTo(0),
+                        icon: const Icon(Icons.edit_rounded, color: Colors.white, size: 20),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                  child: Column(
+                    children: [
+                      ExSummaryRow(
+                        icon: Icons.location_on_rounded,
+                        label: 'Place',
+                        value: where,
+                        onEdit: _saving ? null : () => _goTo(1),
+                      ),
+                      ExSummaryRow(
+                        icon: Icons.event_rounded,
+                        label: 'Dates',
+                        value: _start == null && _end == null ? '' : exDateRange(_start, _end),
+                        onEdit: _saving ? null : () => _goTo(2),
+                      ),
+                      ExSummaryRow(
+                        icon: Icons.groups_rounded,
+                        color: exAccentTeam,
+                        background: exAccentTeamBg,
+                        label: 'Team',
+                        value: team,
+                        onEdit: _saving ? null : () => _goTo(3),
+                      ),
+                      ExSummaryRow(
+                        icon: Icons.sticky_note_2_rounded,
+                        color: exAccentLead,
+                        background: exAccentLeadBg,
+                        label: 'Notes',
+                        value: _notes.text.trim(),
+                        onEdit: _saving ? null : () => _goTo(4),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (_serverError != null) ...[
+          _gap(16),
+          ExInlineNote(message: _serverError!),
+        ],
       ],
     );
   }
 }
 
-class _DateField extends StatelessWidget {
+/// Big tappable date card: label, day number, month and year, weekday.
+class _DateCard extends StatelessWidget {
   final String label;
   final DateTime? value;
   final VoidCallback onTap;
   final String? error;
-  final bool required;
 
-  const _DateField({
-    required this.label,
-    required this.value,
-    required this.onTap,
-    this.error,
-    this.required = false,
-  });
+  const _DateCard({required this.label, required this.value, required this.onTap, this.error});
+
+  static const _months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  static const _days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text.rich(
-        TextSpan(
-          text: label,
-          children: [
-            if (required)
-              const TextSpan(
-                text: ' *',
-                style: TextStyle(color: exDanger),
+  Widget build(BuildContext context) {
+    final v = value;
+    final hasError = error != null;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Semantics(
+          button: true,
+          label: v == null ? '$label, not set' : '$label ${exDateRange(v, v)}',
+          excludeSemantics: true,
+          child: Material(
+            color: v == null ? Colors.white : exTint,
+            borderRadius: BorderRadius.circular(exRadiusCard),
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(exRadiusCard),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                height: 132,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(exRadiusCard),
+                  border: Border.all(
+                    color: hasError ? exDanger : (v == null ? exBorder : exBrand),
+                    width: hasError || v != null ? 2 : 1,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(label,
+                              style: exLabelSm.copyWith(color: v == null ? exSubtle : exBrandBold)),
+                        ),
+                        Icon(Icons.event_rounded, size: 18, color: v == null ? exSubtle : exBrandBold),
+                      ],
+                    ),
+                    const Spacer(),
+                    if (v == null)
+                      const Row(
+                        children: [
+                          Icon(Icons.add_circle_rounded, size: 22, color: exBrand),
+                          SizedBox(width: 6),
+                          Flexible(
+                            child: Text('Pick date',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.w700, color: exBrandBold)),
+                          ),
+                        ],
+                      )
+                    else ...[
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text.rich(
+                          TextSpan(
+                            text: '${v.day} ',
+                            style: const TextStyle(
+                                fontSize: 32, height: 1, fontWeight: FontWeight.w800, color: exInk),
+                            children: [
+                              TextSpan(
+                                text: '${_months[v.month - 1]} ${v.year}',
+                                style: const TextStyle(
+                                    fontSize: 15, fontWeight: FontWeight.w700, color: exInk),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(_days[v.weekday - 1],
+                          maxLines: 1, overflow: TextOverflow.ellipsis, style: exBodySm),
+                    ],
+                  ],
+                ),
               ),
-          ],
-        ),
-        style: exHeadingSm.copyWith(fontSize: 15),
-      ),
-      const SizedBox(height: 8),
-      InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: InputDecorator(
-          decoration: exInputDecoration(errorText: error).copyWith(
-            suffixIcon: const Icon(Icons.calendar_today_outlined, size: 20, color: exSubtle),
-            suffixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
-          ),
-          child: Text(
-            value == null ? 'Select date' : exDateRange(value, value),
-            maxLines: 1,
-            softWrap: false,
-            overflow: TextOverflow.fade,
-            style: exBodyTouch.copyWith(color: value == null ? const Color(0xFF9A9AA3) : exInk),
+            ),
           ),
         ),
-      ),
-    ],
-  );
+        if (hasError) ...[
+          const SizedBox(height: 6),
+          Text(error!,
+              style: const TextStyle(
+                  fontFamily: exFont, fontSize: 13, fontWeight: FontWeight.w600, color: exDanger)),
+        ],
+      ],
+    );
+  }
 }

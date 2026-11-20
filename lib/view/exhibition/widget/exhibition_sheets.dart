@@ -29,7 +29,7 @@ Future<T?> _showSheet<T>(BuildContext context, WidgetBuilder builder, {bool full
       barrierColor: exInk.withValues(alpha: 0.45),
       constraints: const BoxConstraints(maxWidth: 680),
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (ctx) => ExTheme(
         child: full
@@ -39,13 +39,83 @@ Future<T?> _showSheet<T>(BuildContext context, WidgetBuilder builder, {bool full
     );
 
 Widget _handle() => Container(
-      width: 40,
+      width: 44,
       height: 5,
       decoration: BoxDecoration(
         color: exStrongBorder,
         borderRadius: BorderRadius.circular(3),
       ),
     );
+
+/// Sheet header: grab handle, gradient icon bubble, title, optional
+/// subtitle / extra line and a round close button.
+class _SheetHeader extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final Widget? extra;
+  final VoidCallback? onClose;
+
+  const _SheetHeader({
+    required this.icon,
+    required this.title,
+    this.subtitle,
+    this.extra,
+    this.onClose,
+  });
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 10, 12, 14),
+        child: Column(
+          children: [
+            _handle(),
+            const SizedBox(height: 14),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    gradient: exHeroGradient,
+                    borderRadius: BorderRadius.circular(exRadiusControl + 2),
+                    boxShadow: exBrandGlow,
+                  ),
+                  child: Icon(icon, color: Colors.white, size: 24),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title,
+                          style: exHeadingLg.copyWith(
+                              fontSize: 22, height: 1.25, fontWeight: FontWeight.w700)),
+                      if (subtitle != null) ...[
+                        const SizedBox(height: 2),
+                        Text(subtitle!, style: exBodyMd),
+                      ],
+                      if (extra != null) ...[const SizedBox(height: 8), extra!],
+                    ],
+                  ),
+                ),
+                SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: IconButton(
+                    tooltip: 'Close',
+                    onPressed: onClose,
+                    style: IconButton.styleFrom(backgroundColor: exPageBg),
+                    icon: const Icon(Icons.close_rounded, color: exInk, size: 22),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+}
 
 // MARK: - Demo video on WhatsApp
 
@@ -137,8 +207,8 @@ class _DemoSentSheetState extends State<_DemoSentSheet> {
   Widget _videoSection() => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('Send demo video on WhatsApp', style: exHeadingSm),
-          const SizedBox(height: 10),
+          const ExSectionTitle(title: 'Send demo video on WhatsApp'),
+          const SizedBox(height: 12),
           ConstrainedBox(
             constraints: const BoxConstraints(maxHeight: 176),
             child: ListView.separated(
@@ -164,14 +234,35 @@ class _DemoSentSheetState extends State<_DemoSentSheet> {
         ],
       );
 
+  /// Frosted chip on the ink backdrop ("2 calls queued").
+  Widget _successChip(IconData icon, String text) => Container(
+        constraints: const BoxConstraints(maxWidth: 280),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: exIndicator),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(text,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white)),
+            ),
+          ],
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
     final h = MediaQuery.sizeOf(context).height;
     final callCount = widget.callCount;
-    final sub = [
-      '$callCount ${callCount == 1 ? 'call' : 'calls'} queued',
-      if (widget.exhibitionName.isNotEmpty) widget.exhibitionName,
-    ].join(' · ');
     return SizedBox(
       height: h,
       child: Column(
@@ -187,33 +278,72 @@ class _DemoSentSheetState extends State<_DemoSentSheet> {
                     duration: const Duration(milliseconds: 500),
                     curve: Curves.elasticOut,
                     builder: (_, v, child) => Transform.scale(scale: v, child: child),
+                    // Tick inside layered success rings.
                     child: Container(
-                      width: 96,
-                      height: 96,
+                      width: 168,
+                      height: 168,
+                      alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: exBrand,
+                        color: exBrand.withValues(alpha: 0.10),
                         shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.18),
-                          width: 10,
-                          strokeAlign: BorderSide.strokeAlignOutside,
+                      ),
+                      child: Container(
+                        width: 132,
+                        height: 132,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: exBrand.withValues(alpha: 0.20),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Container(
+                          width: 96,
+                          height: 96,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [exBrand, Color(0xFF22D3EE)],
+                            ),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.9), width: 3),
+                            boxShadow: [
+                              BoxShadow(
+                                  color: exBrand.withValues(alpha: 0.5),
+                                  blurRadius: 30,
+                                  spreadRadius: 2),
+                            ],
+                          ),
+                          child: const Icon(Icons.check_rounded, color: Colors.white, size: 52),
                         ),
                       ),
-                      child: const Icon(Icons.check_rounded, color: Colors.white, size: 48),
                     ),
                   ),
-                  const SizedBox(height: 28),
-                  const Text('Demo call initiated',
-                      style: TextStyle(
-                          fontSize: 28, fontWeight: FontWeight.w600, color: Colors.white)),
-                  const SizedBox(height: 10),
-                  Text(sub,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white.withValues(alpha: 0.85),
-                      )),
+                  const SizedBox(height: 24),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24),
+                    child: Text('Demo call initiated',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            fontSize: 28, fontWeight: FontWeight.w700, color: Colors.white)),
+                  ),
+                  const SizedBox(height: 14),
+                  // Summary chips
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _successChip(Icons.phone_in_talk_rounded,
+                            '$callCount ${callCount == 1 ? 'call' : 'calls'} queued'),
+                        if (widget.visitorName.trim().isNotEmpty)
+                          _successChip(Icons.person_rounded, widget.visitorName.trim()),
+                        if (widget.exhibitionName.isNotEmpty)
+                          _successChip(Icons.storefront_rounded, widget.exhibitionName),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -225,7 +355,7 @@ class _DemoSentSheetState extends State<_DemoSentSheet> {
               width: double.infinity,
               decoration: const BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
               ),
               padding: EdgeInsets.fromLTRB(
                   24, 12, 24, 16 + MediaQuery.paddingOf(context).bottom),
@@ -239,14 +369,41 @@ class _DemoSentSheetState extends State<_DemoSentSheet> {
                     _videoSection(),
                     const SizedBox(height: 18),
                   ],
-                  const Text('Did the visitor like the demo?', style: exHeadingLg),
-                  const SizedBox(height: 6),
-                  const Text('Capture this school as a lead?',
-                      style: TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w500, color: exSubtle)),
-                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: exAccentLeadBg,
+                          borderRadius: BorderRadius.circular(exRadiusControl + 2),
+                        ),
+                        child: const Icon(Icons.star_rounded, color: exAccentLead, size: 26),
+                      ),
+                      const SizedBox(width: 14),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Did the visitor like the demo?',
+                                style: TextStyle(
+                                    fontSize: 21,
+                                    height: 1.25,
+                                    fontWeight: FontWeight.w700,
+                                    color: exInk)),
+                            SizedBox(height: 4),
+                            Text('Capture this school as a lead?',
+                                style: TextStyle(
+                                    fontSize: 15, fontWeight: FontWeight.w500, color: exSubtle)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 22),
                   ExPrimaryButton(
                     label: 'Yes, capture lead',
+                    icon: Icons.star_rounded,
                     height: 56,
                     onPressed: () => Navigator.pop(context, true),
                   ),
@@ -420,18 +577,21 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
     FocusScope.of(context).unfocus();
     final choice = await _showSheet<int>(context, (ctx) {
       Widget option(int value, IconData icon, Color bg, Color fg, String title, String sub) =>
-          InkWell(
+          Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: ExCard(
             onTap: () => Navigator.pop(ctx, value),
-            borderRadius: BorderRadius.circular(12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+              padding: EdgeInsets.zero,
               child: Row(
                 children: [
                   Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
-                    child: Icon(icon, color: fg, size: 22),
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                        color: bg, borderRadius: BorderRadius.circular(exRadiusControl)),
+                    child: Icon(icon, color: fg, size: 24),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -448,6 +608,7 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
                 ],
               ),
             ),
+            ),
           );
       return SafeArea(
         top: false,
@@ -460,10 +621,11 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
               Center(child: _handle()),
               const SizedBox(height: 14),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Text('Add attachment', style: exHeadingMd),
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Text('Add attachment',
+                    style: exHeadingMd.copyWith(fontWeight: FontWeight.w700)),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
               option(0, Icons.photo_camera_outlined, exTint, exBrandBold, 'Take photo',
                   'Capture with the camera'),
               option(1, Icons.photo_library_outlined, exSuccessBg, exSuccess, 'Choose photos',
@@ -489,13 +651,18 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
       children: [
         Row(
           children: [
-            Text('Attachment', style: exHeadingSm.copyWith(fontSize: 15)),
+            Text('Attachment', style: exHeadingSm.copyWith(fontSize: 14, color: const Color(0xFF3A4A60))),
             const SizedBox(width: 6),
             Expanded(
               child: Text('(optional · photo)',
                   maxLines: 1, overflow: TextOverflow.ellipsis, style: exBodySm),
             ),
-            if (_fileCount > 0) Text('$_fileCount/$_maxFiles', style: exBodySm),
+            if (_fileCount > 0)
+              ExPill(
+                label: '$_fileCount/$_maxFiles',
+                background: exTint,
+                foreground: exBrandBold,
+              ),
           ],
         ),
         const SizedBox(height: 8),
@@ -503,7 +670,8 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
           width: double.infinity,
           child: ExSecondaryButton(
             label: 'Add attachment',
-            icon: Icons.attach_file_rounded,
+            icon: Icons.add_photo_alternate_outlined,
+            color: exBrandBold,
             height: 48,
             onPressed: _saving || full ? null : _pickAttachment,
           ),
@@ -538,10 +706,13 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
       _tried = true;
       _error = null;
     });
-    if (_school.text.trim().isEmpty ||
-        _city.text.trim().isEmpty ||
-        _numberError != null ||
-        _emailError != null) {
+    // Jump back to the step that needs fixing.
+    if (_school.text.trim().isEmpty || _city.text.trim().isEmpty) {
+      setState(() => _step = 0);
+      return;
+    }
+    if (_numberError != null || _emailError != null) {
+      setState(() => _step = 2);
       return;
     }
     setState(() => _saving = true);
@@ -575,224 +746,382 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
     }
   }
 
-  Widget _levelButton(InterestLevel l) {
-    final on = _level == l;
-    final (bg, fg) = interestLevelColors(l);
-    return Semantics(
-      selected: on,
-      button: true,
-      child: Material(
-        color: on ? bg : Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(8),
-          onTap: () {
-            HapticFeedback.selectionClick();
-            setState(() => _level = l);
-          },
-          child: Container(
-            height: 52,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: on ? fg : exStrongBorder, width: on ? 1.5 : 1),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(color: fg, shape: BoxShape.circle),
+  // ── Step flow: School → Interest → Contact → Notes & photo → Review ──
+
+  static const _reviewStep = 4;
+
+  /// New leads start at the first question; edits open on the summary.
+  late int _step = _editing ? _reviewStep : 0;
+
+  void _goTo(int step) {
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _error = null;
+      _step = step;
+    });
+  }
+
+  /// Validates the current step (same rules as before) and moves on.
+  void _next() {
+    switch (_step) {
+      case 0:
+        if (_school.text.trim().isEmpty || _city.text.trim().isEmpty) {
+          setState(() => _tried = true);
+          return;
+        }
+      case 2:
+        final wasTried = _tried;
+        _tried = true;
+        if (_numberError != null || _emailError != null) {
+          setState(() {});
+          return;
+        }
+        _tried = wasTried;
+      case _reviewStep:
+        _save();
+        return;
+    }
+    _goTo(_step + 1);
+  }
+
+  bool get _contactEmpty =>
+      _contact.text.trim().isEmpty && _number.text.trim().isEmpty && _email.text.trim().isEmpty;
+
+  String get _nextLabel => switch (_step) {
+        _reviewStep => _editing ? 'Update Lead' : 'Save Lead',
+        3 => _notes.text.trim().isEmpty && _fileCount == 0 ? 'Skip to review' : 'Review',
+        2 => _contactEmpty ? 'Skip' : 'Next',
+        _ => 'Next',
+      };
+
+  ({String sub, IconData icon}) _levelInfo(InterestLevel l) => switch (l) {
+        InterestLevel.excellent => (
+            sub: 'Ready to move forward',
+            icon: Icons.local_fire_department_rounded
+          ),
+        InterestLevel.good => (sub: 'Interested, needs a follow-up', icon: Icons.thumb_up_alt_rounded),
+        InterestLevel.average => (sub: 'Just exploring for now', icon: Icons.trending_flat_rounded),
+      };
+
+  void _rebuildIfTried(String _) {
+    if (_tried) setState(() {});
+  }
+
+  Widget _schoolStep() {
+    final schoolError = _tried && _school.text.trim().isEmpty ? 'School name is required' : null;
+    final cityError = _tried && _city.text.trim().isEmpty ? 'City is required' : null;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const ExQuestion(
+          icon: Icons.school_rounded,
+          title: 'Which school is interested?',
+          subtitle: 'Tell us the school and the city it is in.',
+        ),
+        const SizedBox(height: 24),
+        ExBigInput(
+          controller: _school,
+          hint: 'School name',
+          icon: Icons.apartment_rounded,
+          errorText: schoolError,
+          autofocus: !_editing && _school.text.isEmpty,
+          textCapitalization: TextCapitalization.words,
+          textInputAction: TextInputAction.next,
+          onChanged: _rebuildIfTried,
+        ),
+        const SizedBox(height: 14),
+        ExBigInput(
+          controller: _city,
+          hint: 'City',
+          icon: Icons.location_on_rounded,
+          errorText: cityError,
+          textCapitalization: TextCapitalization.words,
+          textInputAction: TextInputAction.done,
+          onChanged: _rebuildIfTried,
+          onSubmitted: (_) => _next(),
+        ),
+      ],
+    );
+  }
+
+  Widget _interestStep() => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ExQuestion(
+            icon: Icons.favorite_rounded,
+            title: 'How interested are they?',
+            subtitle: _school.text.trim().isEmpty
+                ? 'Pick the one that fits best.'
+                : 'Pick the one that fits ${_school.text.trim()} best.',
+            color: exAccentLead,
+            background: exAccentLeadBg,
+          ),
+          const SizedBox(height: 24),
+          for (final (i, l) in InterestLevel.values.indexed) ...[
+            if (i > 0) const SizedBox(height: 12),
+            Builder(builder: (_) {
+              final (bg, fg) = interestLevelColors(l);
+              final info = _levelInfo(l);
+              return ExAppear(
+                index: 3 + i,
+                child: ExChoiceCard(
+                  icon: info.icon,
+                  title: l.label,
+                  subtitle: info.sub,
+                  color: fg,
+                  background: bg,
+                  selected: _level == l,
+                  onTap: () => setState(() => _level = l),
                 ),
-                const SizedBox(width: 8),
-                Text(l.label,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: on ? fg : exInk,
-                    )),
+              );
+            }),
+          ],
+        ],
+      );
+
+  Widget _contactStep() => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const ExQuestion(
+            icon: Icons.person_rounded,
+            title: 'Who should we talk to?',
+            subtitle: 'The person to follow up with. You can skip this.',
+            optional: true,
+            color: exAccentTeam,
+            background: exAccentTeamBg,
+          ),
+          const SizedBox(height: 24),
+          ExBigInput(
+            controller: _contact,
+            hint: 'Contact name',
+            icon: Icons.badge_rounded,
+            textCapitalization: TextCapitalization.words,
+            textInputAction: TextInputAction.next,
+            onChanged: (_) => setState(() {}),
+          ),
+          const SizedBox(height: 14),
+          ExBigInput(
+            controller: _number,
+            hint: '10-digit mobile',
+            prefixText: '+91  ',
+            keyboardType: TextInputType.phone,
+            errorText: _numberError,
+            textInputAction: TextInputAction.next,
+            onChanged: (_) => setState(() {}),
+            inputFormatters: [
+              const ExAsciiDigitsFormatter(),
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(10),
+            ],
+          ),
+          const SizedBox(height: 14),
+          ExBigInput(
+            controller: _email,
+            hint: 'Email address',
+            icon: Icons.alternate_email_rounded,
+            keyboardType: TextInputType.emailAddress,
+            errorText: _emailError,
+            textCapitalization: TextCapitalization.none,
+            textInputAction: TextInputAction.done,
+            onChanged: (_) => setState(() {}),
+            onSubmitted: (_) => _next(),
+          ),
+        ],
+      );
+
+  Widget _notesStep() => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const ExQuestion(
+            icon: Icons.edit_note_rounded,
+            title: 'Anything to remember?',
+            subtitle: 'Add a note or a photo (e.g. a visiting card). Optional.',
+            optional: true,
+          ),
+          const SizedBox(height: 24),
+          ExBigInput(
+            controller: _notes,
+            hint: 'What did they ask about?',
+            maxLines: 4,
+            onChanged: (_) => setState(() {}),
+          ),
+          const SizedBox(height: 18),
+          ExAppear(
+            index: 4,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(exRadiusCard),
+                boxShadow: exCardShadow,
+              ),
+              child: _attachmentsSection(),
+            ),
+          ),
+        ],
+      );
+
+  Widget _reviewStepView() {
+    final (bg, fg) = interestLevelColors(_level);
+    final contact = [
+      _contact.text.trim(),
+      if (_number.text.trim().isNotEmpty) formatIndianMobile(_number.text.trim()),
+      _email.text.trim(),
+    ].where((s) => s.isNotEmpty).join(' · ');
+    final school = [_school.text.trim(), _city.text.trim()].where((s) => s.isNotEmpty).join(', ');
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ExQuestion(
+          icon: Icons.fact_check_rounded,
+          title: _editing ? 'Review and update' : 'Looks good?',
+          subtitle: 'Tap any line to change it.',
+          color: exSuccess,
+          background: exSuccessBg,
+        ),
+        const SizedBox(height: 20),
+        ExAppear(
+          index: 3,
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(exRadiusCard),
+              boxShadow: exCardShadow,
+            ),
+            child: Column(
+              children: [
+                ExSummaryRow(
+                  icon: Icons.school_rounded,
+                  label: 'School',
+                  value: school,
+                  onEdit: _saving ? null : () => _goTo(0),
+                ),
+                const Divider(height: 1, color: exBorder),
+                ExSummaryRow(
+                  icon: _levelInfo(_level).icon,
+                  label: 'Interest',
+                  value: _level.label,
+                  color: fg,
+                  background: bg,
+                  onEdit: _saving ? null : () => _goTo(1),
+                ),
+                const Divider(height: 1, color: exBorder),
+                ExSummaryRow(
+                  icon: Icons.person_rounded,
+                  label: 'Contact',
+                  value: contact.isEmpty ? 'Not added' : contact,
+                  color: exAccentTeam,
+                  background: exAccentTeamBg,
+                  onEdit: _saving ? null : () => _goTo(2),
+                ),
+                const Divider(height: 1, color: exBorder),
+                ExSummaryRow(
+                  icon: Icons.edit_note_rounded,
+                  label: 'Notes & photo',
+                  value: [
+                    _notes.text.trim().isEmpty ? 'No notes' : _notes.text.trim(),
+                    if (_fileCount > 0) '$_fileCount photo',
+                  ].join(' · '),
+                  color: exAccentLead,
+                  background: exAccentLeadBg,
+                  onEdit: _saving ? null : () => _goTo(3),
+                ),
               ],
             ),
           ),
         ),
-      ),
+      ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final demo = widget.demo;
-    final schoolError = _tried && _school.text.trim().isEmpty ? 'School name is required' : null;
-    final cityError = _tried && _city.text.trim().isEmpty ? 'City is required' : null;
-    final wide = MediaQuery.sizeOf(context).width >= 600;
-
-    Widget pair(Widget a, Widget b) => wide
-        ? Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [Expanded(child: a), const SizedBox(width: 16), Expanded(child: b)],
-          )
-        : Column(children: [a, const SizedBox(height: 16), b]);
+    final body = switch (_step) {
+      0 => _schoolStep(),
+      1 => _interestStep(),
+      2 => _contactStep(),
+      3 => _notesStep(),
+      _ => _reviewStepView(),
+    };
 
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-      child: Column(
-        children: [
-          // ── Header ──
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 10, 12, 12),
-            child: Column(
-              children: [
-                _handle(),
-                const SizedBox(height: 12),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(_editing ? 'Edit lead' : 'Capture lead', style: exHeadingLg),
-                          if (!_editing) ...[
-                          const SizedBox(height: 8),
-                          ExPill(
-                            icon: demo == null ? Icons.storefront_outlined : Icons.person_outline_rounded,
-                            label: demo == null
-                                ? 'Exhibition lead'
-                                : 'From demo · ${demo.displayName}',
-                            background: demo == null ? exNotes : exTint,
-                            foreground: demo == null ? exInk : exBrandBold,
-                          ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    SizedBox(
-                      width: 48,
-                      height: 48,
-                      child: IconButton(
-                        tooltip: 'Close',
-                        onPressed: _saving ? null : () => Navigator.pop(context, false),
-                        icon: const Icon(Icons.close_rounded, color: exInk),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1, color: exBorder),
-          // ── Form ──
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
-              children: [
-                pair(
-                  ExField(
-                    label: 'School name',
-                    required: true,
-                    controller: _school,
-                    hint: 'Enter school name',
-                    errorText: schoolError,
-                    textCapitalization: TextCapitalization.words,
-                    onChanged: (_) {
-                      if (_tried) setState(() {});
-                    },
-                  ),
-                  ExField(
-                    label: 'City',
-                    required: true,
-                    controller: _city,
-                    hint: 'Enter city',
-                    errorText: cityError,
-                    textCapitalization: TextCapitalization.words,
-                    onChanged: (_) {
-                      if (_tried) setState(() {});
-                    },
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text('Interest level', style: exHeadingSm.copyWith(fontSize: 15)),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    for (final l in InterestLevel.values) ...[
-                      if (l != InterestLevel.values.first) const SizedBox(width: 8),
-                      Expanded(child: _levelButton(l)),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 16),
-                ExField(
-                  label: 'Contact name',
-                  controller: _contact,
-                  hint: 'Enter name',
-                  textCapitalization: TextCapitalization.words,
-                ),
-                const SizedBox(height: 16),
-                pair(
-                  ExField(
-                    label: 'Contact number',
-                    controller: _number,
-                    hint: 'Enter 10-digit mobile number',
-                    prefixText: '+91',
-                    keyboardType: TextInputType.phone,
-                    errorText: _numberError,
-                    onChanged: (_) {
-                      if (_tried) setState(() {});
-                    },
-                    inputFormatters: [
-                      const ExAsciiDigitsFormatter(),
-                      FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(10),
-                    ],
-                  ),
-                  ExField(
-                    label: 'Contact email',
-                    controller: _email,
-                    hint: 'Enter email address',
-                    keyboardType: TextInputType.emailAddress,
-                    errorText: _emailError,
-                    onChanged: (_) {
-                      if (_tried) setState(() {});
-                    },
-                    textCapitalization: TextCapitalization.none,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ExField(
-                  label: 'Notes',
-                  controller: _notes,
-                  hint: 'Enter notes',
-                  maxLines: 3,
-                ),
-                const SizedBox(height: 16),
-                _attachmentsSection(),
-                if (_error != null) ...[
-                  const SizedBox(height: 16),
-                  ExInlineNote(message: _error!),
-                ],
-              ],
-            ),
-          ),
-          // ── Footer ──
-          Container(
-            decoration: const BoxDecoration(
+      child: ColoredBox(
+        color: exPageBg,
+        child: Column(
+          children: [
+            // ── Header: title, source pill, progress ──
+            ColoredBox(
               color: Colors.white,
-              border: Border(top: BorderSide(color: exBorder)),
-            ),
-            padding: const EdgeInsets.fromLTRB(24, 12, 24, 12),
-            child: SafeArea(
-              top: false,
-              child: ExPrimaryButton(
-                label: _editing ? 'Update Lead' : 'Save Lead',
-                loadingLabel: _savingLabel,
-                loading: _saving,
-                onPressed: _save,
+              child: Column(
+                children: [
+                  _SheetHeader(
+                    icon: _editing ? Icons.edit_note_rounded : Icons.star_rounded,
+                    title: _editing ? 'Edit lead' : 'Capture lead',
+                    onClose: _saving ? null : () => Navigator.pop(context, false),
+                    extra: _editing
+                        ? null
+                        : Align(
+                            alignment: Alignment.centerLeft,
+                            // Long visitor names shrink instead of overflowing.
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: ExPill(
+                                icon: demo == null
+                                    ? Icons.storefront_outlined
+                                    : Icons.person_outline_rounded,
+                                label: demo == null
+                                    ? 'Exhibition lead'
+                                    : 'From demo · ${demo.displayName}',
+                                background: demo == null ? exNotes : exTint,
+                                foreground: demo == null ? exInk : exBrandBold,
+                              ),
+                            ),
+                          ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
+                    child: ExStepProgress(
+                      current: _step,
+                      total: _reviewStep + 1,
+                      label: _step == _reviewStep
+                          ? 'Review'
+                          : 'Step ${_step + 1} of $_reviewStep',
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-        ],
+            // ── One question at a time ──
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ExStepSwitcher(step: _step, child: body),
+                    if (_error != null) ...[
+                      const SizedBox(height: 16),
+                      ExInlineNote(message: _error!),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            ExStepBar(
+              onBack: _step == 0 ? null : () => _goTo(_step - 1),
+              nextLabel: _nextLabel,
+              nextIcon: _step == _reviewStep ? Icons.check_rounded : Icons.arrow_forward_rounded,
+              loading: _saving,
+              loadingLabel: _savingLabel,
+              onNext: _next,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -895,9 +1224,11 @@ class ExAttachmentTile extends StatelessWidget {
                 color: Colors.white,
                 clipBehavior: Clip.antiAlias,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(exRadiusControl),
                   side: const BorderSide(color: exBorder),
                 ),
+                elevation: 1,
+                shadowColor: const Color(0x2214243B),
                 child: InkWell(
                   onTap: url == null ? null : () => _open(context),
                   child: content,
@@ -909,8 +1240,9 @@ class ExAttachmentTile extends StatelessWidget {
                 top: -8,
                 right: -8,
                 child: Material(
-                  color: exInk,
-                  shape: const CircleBorder(),
+                  color: exDanger,
+                  elevation: 2,
+                  shape: const CircleBorder(side: BorderSide(color: Colors.white, width: 2)),
                   child: InkWell(
                     customBorder: const CircleBorder(),
                     onTap: onRemove,
@@ -988,11 +1320,32 @@ Future<void> _showPdfActions(BuildContext context, String url) => _showSheet<voi
               _handle(),
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 16, 12, 8),
-                child: Text(attachmentFileName(url),
-                    maxLines: 2, overflow: TextOverflow.ellipsis, style: exHeadingSm),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                          color: exDangerBg, borderRadius: BorderRadius.circular(exRadiusControl)),
+                      child: const Icon(Icons.picture_as_pdf_rounded, color: exDanger),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(attachmentFileName(url),
+                          maxLines: 2, overflow: TextOverflow.ellipsis, style: exHeadingSm),
+                    ),
+                  ],
+                ),
               ),
               ListTile(
-                leading: const Icon(Icons.open_in_new_rounded, color: exInk),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(exRadiusControl)),
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                      color: exTint, borderRadius: BorderRadius.circular(12)),
+                  child: const Icon(Icons.open_in_new_rounded, color: exBrandBold, size: 22),
+                ),
                 title: const Text('Open', style: exHeadingSm),
                 onTap: () {
                   Navigator.pop(ctx);
@@ -1000,7 +1353,14 @@ Future<void> _showPdfActions(BuildContext context, String url) => _showSheet<voi
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.download_rounded, color: exInk),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(exRadiusControl)),
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                      color: exTint, borderRadius: BorderRadius.circular(12)),
+                  child: const Icon(Icons.download_rounded, color: exBrandBold, size: 22),
+                ),
                 title: const Text('Download', style: exHeadingSm),
                 onTap: () {
                   Navigator.pop(ctx);
@@ -1008,7 +1368,14 @@ Future<void> _showPdfActions(BuildContext context, String url) => _showSheet<voi
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.ios_share_rounded, color: exInk),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(exRadiusControl)),
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                      color: exTint, borderRadius: BorderRadius.circular(12)),
+                  child: const Icon(Icons.ios_share_rounded, color: exBrandBold, size: 22),
+                ),
                 title: const Text('Share', style: exHeadingSm),
                 onTap: () {
                   Navigator.pop(ctx);
@@ -1272,8 +1639,13 @@ class _DemoDetailPanelState extends ConsumerState<DemoDetailPanel> {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: exPageBg,
-            borderRadius: BorderRadius.circular(8),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [exTint, Color(0xFFF3F8FF)],
+            ),
+            borderRadius: BorderRadius.circular(exRadiusControl + 2),
+            border: Border.all(color: exIndicator.withValues(alpha: 0.5)),
           ),
           child: StreamBuilder<PlayerState>(
             stream: _player.playerStateStream,
@@ -1287,11 +1659,15 @@ class _DemoDetailPanelState extends ConsumerState<DemoDetailPanel> {
                       (playing && state?.processingState == ProcessingState.buffering));
               return Row(
                 children: [
-                  SizedBox(
+                  Container(
                     width: 48,
                     height: 48,
-                    child: IconButton.filled(
-                      style: IconButton.styleFrom(backgroundColor: exInk),
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: exHeroGradient,
+                      boxShadow: exBrandGlow,
+                    ),
+                    child: IconButton(
                       tooltip: playing ? 'Pause' : 'Play voice',
                       onPressed: _toggle,
                       icon: buffering
@@ -1338,11 +1714,11 @@ class _DemoDetailPanelState extends ConsumerState<DemoDetailPanel> {
                               const Text('Demo voice', style: exHeadingSm),
                               const SizedBox(height: 8),
                               ClipRRect(
-                                borderRadius: BorderRadius.circular(2),
+                                borderRadius: BorderRadius.circular(4),
                                 child: LinearProgressIndicator(
                                   value: f,
-                                  minHeight: 4,
-                                  backgroundColor: exBorder,
+                                  minHeight: 6,
+                                  backgroundColor: Colors.white,
                                   color: exBrand,
                                 ),
                               ),
@@ -1366,9 +1742,10 @@ class _DemoDetailPanelState extends ConsumerState<DemoDetailPanel> {
         Row(
           children: [
             Expanded(
-              child: Text(
-                  'Recipients (${recipients.isEmpty ? d.recipientCount : recipients.length})',
-                  style: exHeadingSm),
+              child: ExSectionTitle(
+                title: 'Recipients',
+                caption: '${recipients.isEmpty ? d.recipientCount : recipients.length}',
+              ),
             ),
             if (detail != null)
               SizedBox(
@@ -1382,7 +1759,8 @@ class _DemoDetailPanelState extends ConsumerState<DemoDetailPanel> {
                     : IconButton(
                         tooltip: 'Refresh call status',
                         onPressed: () => ref.invalidate(exhibitionDemoDetailProvider(d.id)),
-                        icon: const Icon(Icons.refresh_rounded, color: exBrandBold),
+                        style: IconButton.styleFrom(backgroundColor: exTint),
+                        icon: const Icon(Icons.refresh_rounded, color: exBrandBold, size: 20),
                       ),
               ),
           ],
@@ -1398,14 +1776,19 @@ class _DemoDetailPanelState extends ConsumerState<DemoDetailPanel> {
         else
           Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(exRadiusControl + 2),
               border: Border.all(color: exBorder),
             ),
             child: Column(
               children: [
                 for (var i = 0; i < recipients.length; i++) ...[
-                  if (i > 0) const Divider(height: 1, color: exBorder),
-                  _RecipientRow(
+                  ExAppear(
+                    index: i,
+                    offset: 8,
+                    child: _RecipientRow(
+                    first: i == 0,
+                    last: i == recipients.length - 1,
                     r: recipients[i],
                     onWhatsApp: canWhatsApp && !recipients[i].isTeam && recipients[i].number.isNotEmpty
                         ? () => sendDemoVideoOnWhatsApp(
@@ -1415,6 +1798,7 @@ class _DemoDetailPanelState extends ConsumerState<DemoDetailPanel> {
                               exhibitionName: widget.exhibitionName,
                             )
                         : null,
+                  ),
                   ),
                 ],
               ],
@@ -1426,11 +1810,11 @@ class _DemoDetailPanelState extends ConsumerState<DemoDetailPanel> {
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: exSuccessBg,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(exRadiusControl),
             ),
             child: const Row(
               children: [
-                Icon(Icons.check_circle_outline_rounded, color: exSuccess),
+                Icon(Icons.verified_rounded, color: exSuccess),
                 SizedBox(width: 10),
                 Expanded(
                   child: Text('Lead captured',
@@ -1448,6 +1832,7 @@ class _DemoDetailPanelState extends ConsumerState<DemoDetailPanel> {
               Expanded(
                 child: ExPrimaryButton(
                   label: 'Capture Lead',
+                  icon: Icons.star_rounded,
                   height: 48,
                   onPressed: widget.onCaptureLead,
                 ),
@@ -1457,6 +1842,7 @@ class _DemoDetailPanelState extends ConsumerState<DemoDetailPanel> {
               Expanded(
                 child: ExSecondaryButton(
                   label: 'Initiate Again',
+                  icon: Icons.replay_rounded,
                   color: exBrandBold,
                   height: 48,
                   onPressed: () {
@@ -1474,52 +1860,103 @@ class _DemoDetailPanelState extends ConsumerState<DemoDetailPanel> {
 
 class _RecipientRow extends StatelessWidget {
   final DemoRecipient r;
+  final bool first;
+  final bool last;
 
   /// Sends the demo video link to this number on WhatsApp (visitors only).
   final VoidCallback? onWhatsApp;
-  const _RecipientRow({required this.r, this.onWhatsApp});
+  const _RecipientRow({required this.r, this.onWhatsApp, this.first = false, this.last = false});
 
   @override
   Widget build(BuildContext context) {
     final (bg, fg) = callStatusColors(r.status);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+    return IntrinsicHeight(
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
+          // Timeline rail with a status-coloured node.
+          SizedBox(
+            width: 36,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(formatIndianMobile(r.number), style: exHeadingSm.copyWith(fontSize: 15)),
-                if (r.name.isNotEmpty) Text(r.name, style: exBodySm),
-                if (r.error.isNotEmpty)
-                  Text(r.error, style: exBodySm.copyWith(color: exDanger)),
-                if (onWhatsApp != null)
-                  TextButton.icon(
-                    onPressed: onWhatsApp,
-                    style: TextButton.styleFrom(
-                      foregroundColor: exSuccess,
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      minimumSize: const Size(0, 36),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      textStyle: const TextStyle(
-                          fontFamily: exFont, fontSize: 14, fontWeight: FontWeight.w600),
-                    ),
-                    icon: const Icon(Icons.ondemand_video_rounded, size: 18),
-                    label: const Text('Send demo video on WhatsApp'),
+                Container(
+                  width: 2,
+                  height: 16,
+                  color: first ? Colors.transparent : exBorder,
+                ),
+                Container(
+                  width: 14,
+                  height: 14,
+                  decoration: BoxDecoration(
+                    color: fg,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: bg, width: 3),
                   ),
+                ),
+                Expanded(
+                  child: Container(width: 2, color: last ? Colors.transparent : exBorder),
+                ),
               ],
             ),
           ),
-          ExPill(
-            label: r.isTeam ? 'Attendee' : 'Visitor',
-            background: r.isTeam ? exTint : exVisitorBg,
-            foreground: exInk,
-          ),
-          const SizedBox(width: 8),
-          SizedBox(
-            width: 92,
-            child: Center(child: ExPill(label: r.status.label, background: bg, foreground: fg)),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(0, 10, 12, 10),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(formatIndianMobile(r.number),
+                            style: exHeadingSm.copyWith(fontSize: 15)),
+                        const SizedBox(height: 4),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            ExPill(
+                              label: r.isTeam ? 'Attendee' : 'Visitor',
+                              icon: r.isTeam ? Icons.badge_rounded : Icons.person_rounded,
+                              background: r.isTeam ? exTint : exVisitorBg,
+                              foreground: exInk,
+                            ),
+                            if (r.name.isNotEmpty)
+                              ConstrainedBox(
+                                constraints: const BoxConstraints(maxWidth: 160),
+                                child: Text(r.name,
+                                    maxLines: 1, overflow: TextOverflow.ellipsis, style: exBodySm),
+                              ),
+                          ],
+                        ),
+                        if (r.error.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(r.error, style: exBodySm.copyWith(color: exDanger)),
+                        ],
+                        if (onWhatsApp != null)
+                          TextButton.icon(
+                            onPressed: onWhatsApp,
+                            style: TextButton.styleFrom(
+                              foregroundColor: exSuccess,
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              minimumSize: const Size(0, 36),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              textStyle: const TextStyle(
+                                  fontFamily: exFont, fontSize: 14, fontWeight: FontWeight.w600),
+                            ),
+                            icon: const Icon(Icons.ondemand_video_rounded, size: 18),
+                            label: const Text('Send demo video on WhatsApp'),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ExPill(label: r.status.label, background: bg, foreground: fg, dot: true),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -1611,28 +2048,11 @@ class _AddTemplateSheetState extends ConsumerState<_AddTemplateSheet> {
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 10, 12, 12),
-            child: Column(
-              children: [
-                _handle(),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    const Expanded(child: Text('Add voice template', style: exHeadingLg)),
-                    SizedBox(
-                      width: 48,
-                      height: 48,
-                      child: IconButton(
-                        tooltip: 'Close',
-                        onPressed: _saving ? null : () => Navigator.pop(context, false),
-                        icon: const Icon(Icons.close_rounded, color: exInk),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+          _SheetHeader(
+            icon: Icons.graphic_eq_rounded,
+            title: 'Add voice template',
+            subtitle: 'Record once, play at every demo',
+            onClose: _saving ? null : () => Navigator.pop(context, false),
           ),
           const Divider(height: 1, color: exBorder),
           Expanded(
@@ -1659,7 +2079,10 @@ class _AddTemplateSheetState extends ConsumerState<_AddTemplateSheet> {
                 ),
                 const SizedBox(height: 12),
                 SwitchListTile.adaptive(
-                  contentPadding: EdgeInsets.zero,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                  tileColor: exPageBg,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(exRadiusControl)),
                   value: _common,
                   activeTrackColor: exBrand,
                   onChanged: _saving ? null : (v) => setState(() => _common = v),
@@ -1667,9 +2090,9 @@ class _AddTemplateSheetState extends ConsumerState<_AddTemplateSheet> {
                       style: exHeadingSm.copyWith(fontSize: 15)),
                   subtitle: const Text('Off: only this exhibition offers it.', style: exBodySm),
                 ),
-                const SizedBox(height: 8),
-                Text('Voice', style: exHeadingSm.copyWith(fontSize: 15)),
-                const SizedBox(height: 8),
+                const SizedBox(height: 18),
+                const ExSectionTitle(title: 'Voice'),
+                const SizedBox(height: 10),
                 VoiceRecorderPanel(
                   initialPath: _path,
                   initialDuration: _length,
@@ -1692,9 +2115,9 @@ class _AddTemplateSheetState extends ConsumerState<_AddTemplateSheet> {
           Container(
             decoration: const BoxDecoration(
               color: Colors.white,
-              border: Border(top: BorderSide(color: exBorder)),
+              boxShadow: [BoxShadow(color: Color(0x1414243B), blurRadius: 16, offset: Offset(0, -4))],
             ),
-            padding: const EdgeInsets.fromLTRB(24, 12, 24, 12),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
             child: SafeArea(
               top: false,
               child: ExPrimaryButton(
