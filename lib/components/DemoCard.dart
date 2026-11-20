@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../auth/model/Demolist.dart';
 import '../auth/model/ExhibitionModel.dart' show formatIndianMobile;
@@ -9,6 +8,7 @@ import '../utils/routes/routes_name.dart';
 import 'app_motion.dart';
 import 'demo_video_whatsapp.dart';
 import 'glass_card.dart';
+import 'phone_call.dart';
 
 /// One demo in the Demo List: school, principal number (tap to call) and a
 /// compact action row — Record voice, WhatsApp demo video, Edit.
@@ -45,9 +45,8 @@ class DemoCard extends StatelessWidget {
   String get _number => item.principalNumber == 0 ? '' : item.principalNumber.toString();
 
   Future<void> _call() async {
-    if (_number.isEmpty) return;
-    HapticFeedback.selectionClick();
-    await launchUrl(Uri(scheme: 'tel', path: _number));
+    // One dialer popup at a time, however often the number is tapped.
+    await PhoneCall.dial(_number);
   }
 
   @override

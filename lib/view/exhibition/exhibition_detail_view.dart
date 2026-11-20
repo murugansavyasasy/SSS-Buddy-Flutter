@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../auth/model/ExhibitionModel.dart';
+import '../../components/phone_call.dart';
 import '../../provider/user_session_provider.dart';
 import '../../viewModel/exhibition_viewmodel.dart';
 import 'exhibition_create_view.dart';
@@ -1321,7 +1322,7 @@ class _LeadCard extends StatelessWidget {
                               icon: Icons.call_rounded,
                               label: 'Call',
                               filled: true,
-                              onTap: () => launchUrl(Uri(scheme: 'tel', path: '+91${l.contactNumber}')),
+                              onTap: () => PhoneCall.dial('+91${l.contactNumber}'),
                             ),
                           ),
                         if (hasCall && hasMail) const SizedBox(width: 10),
