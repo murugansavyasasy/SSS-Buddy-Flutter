@@ -270,8 +270,8 @@ class _DemoSentSheetState extends State<_DemoSentSheet> {
 
 // MARK: - Capture lead
 
-/// Capture Lead form. With [demo] the lead is linked to that demo; without it
-/// the lead is standalone for the exhibition. Returns true when saved.
+/// Capture Lead form. The lead is saved against the exhibition
+/// ([exhibitionId]); [demo] only prefills the visitor. Returns true when saved.
 Future<bool> showCaptureLeadSheet(
   BuildContext context, {
   required String exhibitionId,
@@ -324,7 +324,7 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
       TextEditingController(text: widget.lead?.contactNumber ?? widget.prefillNumber ?? '');
   late final _email = TextEditingController(text: widget.lead?.contactEmail ?? '');
   late final _notes = TextEditingController(text: widget.lead?.notes ?? '');
-  late InterestLevel _level = widget.lead?.interestLevel ?? InterestLevel.warm;
+  late InterestLevel _level = widget.lead?.interestLevel ?? InterestLevel.good;
 
   bool get _editing => widget.lead != null;
   bool _tried = false;
@@ -561,11 +561,7 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
       if (_editing) {
         await repo.updateLead(widget.lead!.id, req);
       } else {
-        await repo.captureLead(
-          exhibitionId: widget.exhibitionId,
-          demoId: widget.demo?.id,
-          req: req,
-        );
+        await repo.captureLead(exhibitionId: widget.exhibitionId, req: req);
       }
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
@@ -660,10 +656,10 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
                           if (!_editing) ...[
                           const SizedBox(height: 8),
                           ExPill(
-                            icon: demo == null ? Icons.storefront_outlined : Icons.link_rounded,
+                            icon: demo == null ? Icons.storefront_outlined : Icons.person_outline_rounded,
                             label: demo == null
-                                ? 'Standalone lead'
-                                : 'Linked to demo · ${demo.displayName}',
+                                ? 'Exhibition lead'
+                                : 'From demo · ${demo.displayName}',
                             background: demo == null ? exNotes : exTint,
                             foreground: demo == null ? exInk : exBrandBold,
                           ),

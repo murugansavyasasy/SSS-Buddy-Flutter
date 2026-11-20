@@ -329,21 +329,15 @@ class ExhibitionRepository {
         return extractList(res.data, ['leads', 'interests']).map(ExhibitionLead.fromJson).toList();
       });
 
-  /// Lead linked to a demo. Without [demoId] it is a standalone lead for the
-  /// exhibition, posted to `/exhibitions/:id/leads`.
-  /// NOTE: that standalone endpoint is not in the current API list; the
-  /// backend needs to add it (or accept a null demoId) for this to work.
+  /// Leads are saved against the exhibition: the exhibition id goes in the
+  /// `:demoId` slot of POST /exhibitions/demos/:demoId/interest.
   Future<void> captureLead({
     required String exhibitionId,
-    String? demoId,
     required CaptureLeadRequest req,
   }) =>
       _guard(() async {
-        final path = (demoId != null && demoId.isNotEmpty)
-            ? AppEndpoint.exhibitionDemoInterest(demoId)
-            : AppEndpoint.exhibitionLeads(exhibitionId);
         final res = await _dio.post(
-          path,
+          AppEndpoint.exhibitionDemoInterest(exhibitionId),
           data: req.toJson(),
           options: await _options(contentType: Headers.jsonContentType),
         );

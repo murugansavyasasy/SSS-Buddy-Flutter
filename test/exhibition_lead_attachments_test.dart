@@ -97,4 +97,26 @@ void main() {
     expect(attachmentFileName('https://b.s3.amazonaws.com/a%20b.jpg'), 'a b.jpg');
     expect(attachmentFileName('https://b.s3.amazonaws.com/'), 'attachment');
   });
+
+  test('interest level is sent as the on-screen label; default is Good', () {
+    expect(const CaptureLeadRequest(schoolName: 'X').toJson()['interestLevel'], 'Good');
+    expect(
+      const CaptureLeadRequest(schoolName: 'X', interestLevel: InterestLevel.excellent)
+          .toJson()['interestLevel'],
+      'Excellent',
+    );
+    expect(
+      const CaptureLeadRequest(schoolName: 'X', interestLevel: InterestLevel.average)
+          .toJson()['interestLevel'],
+      'Average',
+    );
+    // Labels read back from the API map to the same level.
+    for (final l in InterestLevel.values) {
+      expect(parseInterestLevel(l.apiValue), l);
+    }
+    // Only Excellent / Good / Average are accepted.
+    for (final v in ['hot', 'warm', 'cold', 'high', 'medium', 'low', '']) {
+      expect(parseInterestLevel(v), isNull);
+    }
+  });
 }
