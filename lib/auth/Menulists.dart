@@ -1,15 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sssbuddy/auth/model/Menuitem.dart';
 
-/// Menus hidden from the home screen for now (screens and routes are kept).
-/// Remove an id here to show that menu again.
-const Set<int> _hiddenMenuIds = {
-  20, // Chat
-  21, // Follow-ups
-  22, // Leaderboard
-  19, // Root Tracker
-};
-
 List<MenuItem> getMenuItems({
   required String vimsUserType,
   required String schoolUserType,
@@ -186,15 +177,16 @@ List<MenuItem> getMenuItems({
     ]);
   }
 
-  // Chat: available to every user type
+  // Tickets (replaces Chat, id 20): every user type can raise app issues;
+  // Admin / Support also change the status.
   menus.add(
     MenuItem(
-      id: 20,
-      title: "Chat",
-      icon: Icons.chat_bubble_outline_rounded,
+      id: 24,
+      title: "Tickets",
+      icon: Icons.confirmation_number_outlined,
       color: Colors.green,
     ),
   );
 
-  return menus.where((m) => !_hiddenMenuIds.contains(m.id)).toList();
+  return menus;
 }
