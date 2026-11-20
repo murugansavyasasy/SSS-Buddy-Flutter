@@ -26,9 +26,6 @@ class RoutesName {
   static const String newchat = "new_chat";
   static const String followups = "followups";
   static const String followupform = "followup_form";
-  static const String tickets = "tickets";
-  static const String ticketform = "ticket_form";
-  static const String ticketdetail = "ticket_detail";
   static const String leaderboard = "leaderboard";
   static const String exhibitions = "exhibitions";
   static const String alert = "alert";

@@ -38,9 +38,6 @@ import '../../view/reset_password_screen.dart';
 import '../../view/root_tracker.dart';
 import '../../view/server_status.dart';
 import '../../view/zero_activity.dart';
-import '../../view/ticket/ticket_detail_view.dart';
-import '../../view/ticket/ticket_form_view.dart';
-import '../../view/ticket/ticket_list_view.dart';
 
 class Routes {
   /// True on iPad-sized screens (shortest side ≥ 600 pt).
@@ -141,17 +138,6 @@ class Routes {
 
       case RoutesName.leaderboard:
         return MaterialPageRoute(builder: (context) => const LeaderboardView());
-
-      case RoutesName.tickets:
-        return MaterialPageRoute(builder: (context) => const TicketListView());
-
-      case RoutesName.ticketform:
-        return MaterialPageRoute<bool>(builder: (context) => const TicketFormView());
-
-      case RoutesName.ticketdetail:
-        return MaterialPageRoute(
-          builder: (context) => TicketDetailView(ticketId: '${settings.arguments ?? ''}'),
-        );
 
       case RoutesName.exhibitions:
         return MaterialPageRoute(builder: (context) => const ExhibitionListView());

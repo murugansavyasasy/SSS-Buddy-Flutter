@@ -9,14 +9,13 @@ import 'package:sssbuddy/auth/model/Demolist.dart';
 import 'package:sssbuddy/auth/model/SchoolStats.dart';
 import 'package:sssbuddy/auth/model/Validatelogin.dart';
 import 'package:sssbuddy/provider/user_session_provider.dart';
-import 'package:sssbuddy/repository/ticket_repository.dart';
 import 'package:sssbuddy/values/app_theme.dart';
 import 'package:sssbuddy/view/dashboard.dart';
 import 'package:sssbuddy/viewModel/demolist_view_model.dart';
 import 'package:sssbuddy/viewModel/followup_viewmodel.dart';
 import 'package:sssbuddy/viewModel/login_view_model.dart';
 import 'package:sssbuddy/viewModel/schoollist_view_model.dart';
-import 'package:sssbuddy/viewModel/ticket_viewmodel.dart';
+import 'package:sssbuddy/viewModel/chat_viewmodel.dart';
 
 /// Dashboard with sample data: the entrance animations finish without
 /// errors or overflow. With `--dart-define=SHOTS=true --update-goldens` it
@@ -89,7 +88,7 @@ Widget _app() => ProviderScope(
         schoolStatsProvider.overrideWith(() => _Stats()),
         demoviewProvider.overrideWith(() => _Demos()),
         followUpDueCountProvider.overrideWithValue(0),
-        ticketRepositoryProvider.overrideWithValue(LocalTicketRepository()),
+        chatUnreadTotalProvider.overrideWithValue(0),
       ],
       child: MaterialApp(theme: AppTheme.light, home: const Dashboard()),
     );

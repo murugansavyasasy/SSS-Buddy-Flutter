@@ -72,12 +72,4 @@ class AppEndpoint {
   /// exhibition, not a demo) although the path says demos.
   static String exhibitionDemoInterest(String exhibitionId) =>
       "api/mobile/exhibitions/$exhibitionId/leads";
-
-  // Ticket Raising (see docs/TICKET_API.md)
-  static const tickets = "api/mobile/tickets";
-  static String ticketById(String id) => "api/mobile/tickets/$id";
-  static String ticketStatus(String id) => "api/mobile/tickets/$id/status";
-  static String ticketAssign(String id) => "api/mobile/tickets/$id/assign";
-  static const ticketAssignees = "api/mobile/tickets/assignees";
-  static const ticketDeviceToken = "api/mobile/tickets/device-token";
 }

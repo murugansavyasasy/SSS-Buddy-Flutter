@@ -14,7 +14,7 @@ import '../components/upcoming_demo_card.dart';
 import 'leaderboard/widget/dashboard_leaderboard.dart';
 import '../utils/routes/routes_name.dart';
 import '../core/notifications/local_notifications.dart';
-import '../viewModel/ticket_viewmodel.dart';
+import '../viewModel/chat_viewmodel.dart';
 import '../viewModel/followup_viewmodel.dart';
 import '../viewModel/demolist_view_model.dart';
 import '../viewModel/login_view_model.dart';
@@ -70,10 +70,7 @@ class Dashboard extends ConsumerWidget {
     final demoState = ref.watch(demoviewProvider);
     final schoolStats = ref.watch(schoolStatsProvider);
     final loginData = ref.watch(loginProvider);
-    final openTickets = ref.watch(openTicketCountProvider);
-    // Notifies the user when a ticket they raised is completed (on open
-    // and every app resume).
-    ref.watch(ticketCompletionWatchProvider);
+    final chatUnread = ref.watch(chatUnreadTotalProvider);
     final followUpsDue = ref.watch(followUpDueCountProvider);
 
     // Open the screen of a notification tapped while the app was closed.
@@ -142,7 +139,6 @@ class Dashboard extends ConsumerWidget {
                 color: AppColors.primary,
                 onRefresh: () async {
                   HapticFeedback.mediumImpact();
-                  ref.invalidate(ticketsProvider);
                   await Future.wait([
                     ref.refresh(schoolStatsProvider.future),
                     ref.refresh(demoviewProvider.future),
@@ -488,8 +484,8 @@ class Dashboard extends ConsumerWidget {
                             title: item.title,
                             icon: item.icon,
                             color: item.color,
-                            badgeCount: item.id == 24
-                                ? openTickets
+                            badgeCount: item.id == 20
+                                ? chatUnread
                                 : item.id == 21
                                     ? followUpsDue
                                     : 0,
@@ -554,9 +550,6 @@ class Dashboard extends ConsumerWidget {
                                   break;
                                 case 20:
                                   Navigator.pushNamed(context, RoutesName.chat);
-                                  break;
-                                case 24:
-                                  Navigator.pushNamed(context, RoutesName.tickets);
                                   break;
                                 case 21:
                                   Navigator.pushNamed(context, RoutesName.followups);
