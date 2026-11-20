@@ -451,23 +451,26 @@ class ExhibitionDemo {
 }
 
 /// How keen the school is, chosen when the lead is captured.
-enum InterestLevel { hot, warm, cold }
+/// The API takes and returns exactly 'Excellent', 'Good' or 'Average'.
+enum InterestLevel { excellent, good, average }
 
-InterestLevel? parseInterestLevel(String s) {
-  final v = s.trim().toLowerCase();
-  if (v.startsWith('hot') || v == 'high' || v == 'excellent') return InterestLevel.hot;
-  if (v.startsWith('warm') || v == 'medium' || v == 'good') return InterestLevel.warm;
-  if (v.startsWith('cold') || v == 'low' || v == 'average') return InterestLevel.cold;
-  return null;
-}
+/// Only Excellent / Good / Average (any case); anything else is no level.
+InterestLevel? parseInterestLevel(String s) => switch (s.trim().toLowerCase()) {
+      'excellent' => InterestLevel.excellent,
+      'good' => InterestLevel.good,
+      'average' => InterestLevel.average,
+      _ => null,
+    };
 
 extension InterestLevelX on InterestLevel {
   String get label => switch (this) {
-        InterestLevel.hot => 'Excellent',
-        InterestLevel.warm => 'Good',
-        InterestLevel.cold => 'Average',
+        InterestLevel.excellent => 'Excellent',
+        InterestLevel.good => 'Good',
+        InterestLevel.average => 'Average',
       };
-  String get apiValue => name;
+
+  /// Sent as shown on screen: Excellent / Good / Average.
+  String get apiValue => label;
 }
 
 /// Matches the signed-in user against a record's creator: by user id when
@@ -587,7 +590,7 @@ class CaptureLeadRequest {
     this.contactNumber = '',
     this.contactEmail = '',
     this.notes = '',
-    this.interestLevel = InterestLevel.warm,
+    this.interestLevel = InterestLevel.good,
     this.attachments = const [],
   });
 

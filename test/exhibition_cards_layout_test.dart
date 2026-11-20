@@ -62,7 +62,7 @@ final _leads = [
     'contactNumber': '9876543210',
     'contactEmail': 'principal.svmhss.kanchipuram@example.com',
     'notes': 'Wants a follow-up demo for the management next week.',
-    'interestLevel': 'hot',
+    'interestLevel': 'Excellent',
     'createdByName': 'Venkataravi C R',
     'createdAt': DateTime.now().subtract(const Duration(hours: 3)).toIso8601String(),
     'visitorName': 'Mrs. Lakshmi',

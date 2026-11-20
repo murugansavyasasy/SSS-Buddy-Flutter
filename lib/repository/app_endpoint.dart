@@ -68,6 +68,8 @@ class AppEndpoint {
       "api/mobile/exhibitions/voice-templates/$templateId";
   static String exhibitionDemoById(String demoId) => "api/mobile/exhibitions/demos/$demoId";
   static String exhibitionLeadById(String leadId) => "api/mobile/exhibitions/leads/$leadId";
-  static String exhibitionDemoInterest(String demoId) =>
-      "api/mobile/exhibitions/demos/$demoId/interest";
+  /// Capture lead. Called with the EXHIBITION id (leads belong to the
+  /// exhibition, not a demo) although the path says demos.
+  static String exhibitionDemoInterest(String exhibitionId) =>
+      "api/mobile/exhibitions/demos/$exhibitionId/interest";
 }
