@@ -99,15 +99,27 @@ void main() {
       await t.pumpWidget(_app());
       await t.pumpAndSettle();
       expect(t.takeException(), isNull);
+      // The header (with the School Chimes showcase button) is tall: scroll
+      // down to the demo cards.
+      for (var k = 0; k < 8 && find.text('Lead captured').evaluate().isEmpty; k++) {
+        await t.drag(find.byType(Scrollable).first, const Offset(0, -300));
+        await t.pumpAndSettle();
+      }
       expect(find.text('Lead captured'), findsWidgets);
       if (const bool.fromEnvironment('SHOTS')) {
         await expectLater(find.byType(MaterialApp),
             matchesGoldenFile('shots/demos_${width.toInt()}.png'));
       }
 
+      await t.drag(find.byType(Scrollable).first, const Offset(0, 3000)); // back to the top
+      await t.pumpAndSettle();
       await t.tap(find.textContaining('Leads').first);
       await t.pumpAndSettle();
       expect(t.takeException(), isNull);
+      for (var k = 0; k < 8 && find.text('Send demo video on WhatsApp').evaluate().isEmpty; k++) {
+        await t.drag(find.byType(Scrollable).first, const Offset(0, -300));
+        await t.pumpAndSettle();
+      }
       expect(find.text('Send demo video on WhatsApp'), findsOneWidget);
       if (const bool.fromEnvironment('SHOTS')) {
         await expectLater(find.byType(MaterialApp),

@@ -9,6 +9,7 @@ import '../../provider/user_session_provider.dart';
 import '../../viewModel/exhibition_viewmodel.dart';
 import 'exhibition_create_view.dart';
 import 'give_demo_view.dart';
+import 'showcase/school_chimes_showcase.dart';
 import 'widget/demo_audio.dart';
 import 'widget/exhibition_common.dart';
 import 'widget/exhibition_charts.dart';
@@ -30,7 +31,7 @@ class ExhibitionDetailView extends StatelessWidget {
       );
 }
 
-/// The hub of one exhibition: info, attendees, Give New Demo, and the
+/// The hub of one exhibition: info, attendees, the School Chimes showcase, and the
 /// Demos / Leads tabs. Leads belong to the exhibition and are one list.
 /// Phone: full-bleed white header. iPad split ([embedded]): header card.
 class ExhibitionDetailPane extends ConsumerStatefulWidget {
@@ -84,6 +85,25 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
       if (mounted) exToast(context, "Couldn't load the demo's numbers. Add them again.", error: true);
       return d;
     }
+  }
+
+  /// Full-screen School Chimes presentation for visitors; its buttons open
+  /// Give Demo / Capture Lead on top of it. Give Demo is only ever reached
+  /// through here, so every visitor sees School Chimes first. [resendFrom]
+  /// ("Send again" on a demo) pre-fills the demo the visitor then starts.
+  void _openShowcase(Exhibition ex, {ExhibitionDemo? resendFrom}) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => SchoolChimesShowcase(
+          onGiveDemo: ex.status == ExhibitionStatus.active
+              ? () => _giveDemo(ex, resendFrom: resendFrom)
+              : null,
+          onCaptureLead: () => _captureLead(),
+        ),
+      ),
+    );
   }
 
   Future<void> _giveDemo(Exhibition ex, {ExhibitionDemo? resendFrom}) async {
@@ -224,14 +244,12 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
         final header = _Header(
           ex: ex,
           inset: embedded || wide ? 22 : 16,
-          onGiveDemo: () => _giveDemo(ex),
+          onShowcase: () => _openShowcase(ex),
+          // Active shows only: a "Give a voice demo" line inside the card.
+          onGiveDemo: ex.status == ExhibitionStatus.active ? () => _openShowcase(ex) : null,
           // Only the creator can edit or delete the exhibition.
           onEdit: isOwner ? () => _editExhibition(ex) : null,
           onDelete: isOwner ? () => _deleteExhibition(ex) : null,
-          // Hidden for completed shows, and until the first demo
-          // (the empty Demos tab offers "Give first demo").
-          showGiveDemo:
-              ex.status == ExhibitionStatus.active && (demos.value?.isNotEmpty ?? ex.demoCount > 0),
           loadingTeam: detail.isLoading && widget.initial != null && ex.attendees.isEmpty,
           demoCount: demos.value?.length ?? ex.demoCount,
           leadCount: leads.value?.length ?? ex.leadCount,
@@ -368,7 +386,9 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
                       title: 'No demos yet',
                       message: 'Play a voice demo and it will appear here.',
                       actionLabel: 'Give first demo',
-                      onAction: () => _giveDemo(ex),
+                      // Starts with the School Chimes showcase; the visitor
+                      // takes the demo from its "Hear a voice demo" button.
+                      onAction: () => _openShowcase(ex),
                     )
                   : const ExStateView(
                       icon: Icons.graphic_eq_rounded,
@@ -406,7 +426,7 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
                 expanded: _expandedDemoId == items[i].id,
                 onTap: () => _toggleDemo(items[i]),
                 onCaptureLead: () => _captureLead(demo: items[i]),
-                onSendAgain: () => _giveDemo(ex, resendFrom: items[i]),
+                onSendAgain: () => _openShowcase(ex, resendFrom: items[i]),
                 exhibitionName: ex.name,
                 templates: templates,
               ),
@@ -526,11 +546,17 @@ class _Header extends StatelessWidget {
 
   /// Inner padding of the header card.
   final double inset;
-  final VoidCallback onGiveDemo;
+  /// Opens the School Chimes showcase for visitors (demos are given from
+  /// its "Hear a voice demo" button; the empty Demos tab's "Give first
+  /// demo" opens it too).
+  final VoidCallback onShowcase;
+
+  /// Small "Give demo" pill inside the showcase card (null hides it); it
+  /// opens the showcase too.
+  final VoidCallback? onGiveDemo;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
   final bool loadingTeam;
-  final bool showGiveDemo;
   final int demoCount;
   final int leadCount;
 
@@ -540,11 +566,11 @@ class _Header extends StatelessWidget {
   const _Header({
     required this.ex,
     required this.inset,
-    required this.onGiveDemo,
+    required this.onShowcase,
+    this.onGiveDemo,
     this.onEdit,
     this.onDelete,
     required this.loadingTeam,
-    required this.showGiveDemo,
     required this.demoCount,
     required this.leadCount,
     required this.onShowTab,
@@ -731,15 +757,8 @@ class _Header extends StatelessWidget {
               ],
             ),
           ),
-        if (showGiveDemo) ...[
-          const SizedBox(height: 18),
-          ExPrimaryButton(
-            label: 'Give New Demo',
-            icon: Icons.mic_rounded,
-            height: 56,
-            onPressed: onGiveDemo,
-          ),
-        ],
+        const SizedBox(height: 18),
+        _ShowcaseButton(onTap: onShowcase, onGiveDemo: onGiveDemo),
         if (ex.status == ExhibitionStatus.completed) ...[
           const SizedBox(height: 18),
           Container(
@@ -770,6 +789,98 @@ class _Header extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+/// "Show School Chimes to visitors" button with the brand logo.
+class _ShowcaseButton extends StatelessWidget {
+  final VoidCallback onTap;
+
+  /// Shown as a text line inside the card, not as a separate button.
+  final VoidCallback? onGiveDemo;
+  const _ShowcaseButton({required this.onTap, this.onGiveDemo});
+
+  static const _indigo = Color(0xFF372A8A);
+  static const _deep = Color(0xFF231A5E);
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(exRadiusControl + 2);
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF6F4FF),
+        borderRadius: radius,
+        border: Border.all(color: const Color(0x33372A8A), width: 1.4),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Material(
+        color: Colors.transparent,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            InkWell(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                onTap();
+              },
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10)),
+                      child: Image.asset('assets/images/schoolchimes_logo.png', height: 28, width: 79), // 600×214
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Show School Chimes',
+                              style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w700, color: _deep)),
+                          const Text('Present the ERP to visitors at the stall',
+                              style: TextStyle(fontSize: 12.5, color: exSubtle)),
+                          // Small "Give demo" hint inside the card.
+                          if (onGiveDemo != null) ...[
+                            const SizedBox(height: 6),
+                            GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () {
+                                HapticFeedback.selectionClick();
+                                onGiveDemo!();
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.fromLTRB(7, 3, 9, 3),
+                                decoration: BoxDecoration(
+                                  color: const Color(0x14F2474F),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.phone_in_talk_rounded, size: 13, color: Color(0xFFF2474F)),
+                                    SizedBox(width: 4),
+                                    Text('Give demo',
+                                        style: TextStyle(
+                                            fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFFF2474F))),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.slideshow_rounded, color: _indigo),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
