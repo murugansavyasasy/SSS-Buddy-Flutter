@@ -202,6 +202,20 @@ void main() {
     expect(opacityOf(second), 1.0);
   });
 
+  testWidgets('list overview · phone shows a strip, tap opens the charts', (t) async {
+    _size(t, const Size(390, 844));
+    await t.pumpWidget(_app(const ExhibitionListView()));
+    await _settle(t);
+    expect(find.text('Charts'), findsOneWidget);
+    expect(find.text('Trend'), findsNothing);
+    await _shot(t, 'ex_list_phone_strip');
+    await t.tap(find.text('Charts'));
+    await _settle(t);
+    expect(find.text('Trend'), findsOneWidget);
+    expect(find.text('Overview'), findsOneWidget);
+    await _shot(t, 'ex_list_phone_sheet');
+  });
+
   testWidgets('list overview · iPad full view', (t) async {
     _size(t, const Size(1024, 900));
     SharedPreferences.setMockInitialValues({'exhibition_ipad_split_view': false});
