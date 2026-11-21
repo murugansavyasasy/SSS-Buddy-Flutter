@@ -974,13 +974,122 @@ class ExRankRow extends StatelessWidget {
   }
 }
 
-/// "4 of every 10 demos became a lead" — conversion in plain words.
+/// "16 leads from 42 demos": the two counts in plain words. Leads are
+/// captured for the exhibition (not always for a demo), so this states the
+/// numbers instead of claiming that demos turned into leads.
 String exConversionWords(int demos, int leads) {
-  if (demos == 0) return 'No demos yet';
-  if (leads == 0) return 'No demo has turned into a lead yet';
-  final per10 = (leads * 10 / demos);
-  if (leads >= demos) return 'Every demo turned into a lead';
-  if (per10 < 1) return 'About 1 in every ${(demos / leads).round()} demos became a lead';
-  final r = per10.round();
-  return '$r out of every 10 demos became a lead';
+  String n(int v, String one) => '$v ${v == 1 ? one : '${one}s'}';
+  if (demos == 0 && leads == 0) return 'No demos or leads yet';
+  if (demos == 0) return '${n(leads, 'lead')}, no demos yet';
+  if (leads == 0) return 'No leads yet from ${n(demos, 'demo')}';
+  return '${n(leads, 'lead')} from ${n(demos, 'demo')}';
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Demos vs leads: two bars side by side
+// ─────────────────────────────────────────────────────────────────────────
+
+/// Two columns, demos and leads, scaled to the larger one. Leads are not a
+/// part of demos (they are captured for the exhibition), so they are shown
+/// side by side rather than as a slice of a pie or a filled ring.
+class ExDemoLeadBars extends StatelessWidget {
+  final int demos;
+  final int leads;
+  final double height;
+
+  /// White / light-orange bars and white text, for gradient cards.
+  final bool onDark;
+
+  /// Values above and labels below the bars (off for the small icon size).
+  final bool labels;
+  final double barWidth;
+
+  const ExDemoLeadBars({
+    super.key,
+    required this.demos,
+    required this.leads,
+    this.height = 110,
+    this.onDark = false,
+    this.labels = true,
+    this.barWidth = 34,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final top = math.max(1, math.max(demos, leads));
+    final demoC = onDark ? Colors.white : exChartDemo;
+    final leadC = onDark ? const Color(0xFFFFB27A) : exChartLead;
+    final text = onDark ? Colors.white : exInk;
+    final sub = onDark ? Colors.white.withValues(alpha: 0.75) : exSubtle;
+    final track = onDark ? Colors.white.withValues(alpha: 0.14) : exChartTrack;
+    const valueH = 22.0, labelH = 18.0;
+    final barMax = height - (labels ? valueH + labelH : 0);
+
+    Widget column(int v, Color c, String label) => SizedBox(
+          width: barWidth + (labels ? 18 : 0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              if (labels)
+                SizedBox(
+                  height: valueH,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: ExCountUp(v,
+                        style: TextStyle(fontFamily: exFont, fontSize: 17, fontWeight: FontWeight.w800, color: text)),
+                  ),
+                ),
+              SizedBox(
+                width: barWidth,
+                height: barMax,
+                child: Stack(
+                  alignment: Alignment.bottomCenter,
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(color: track, borderRadius: BorderRadius.circular(barWidth / 4)),
+                    ),
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(begin: exReduceMotion(context) ? v / top : 0, end: v / top),
+                      duration: const Duration(milliseconds: 900),
+                      curve: Curves.easeOutCubic,
+                      builder: (_, f, __) => Container(
+                        height: math.max(v > 0 ? 3.0 : 0.0, barMax * f),
+                        decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(barWidth / 4)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (labels)
+                SizedBox(
+                  height: labelH,
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(label, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: sub)),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+
+    return Semantics(
+      label: '$demos demos, $leads leads',
+      excludeSemantics: true,
+      child: SizedBox(
+        height: height,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            column(demos, demoC, 'Demos'),
+            SizedBox(width: labels ? 6 : barWidth / 3),
+            column(leads, leadC, 'Leads'),
+          ],
+        ),
+      ),
+    );
+  }
 }
