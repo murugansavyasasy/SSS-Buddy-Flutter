@@ -13,11 +13,22 @@ import 'exhibition_common.dart';
 /// the exhibitions shown (follows search / status filter), then one chart at
 /// a time: show-by-show trend, top shows, or lead quality. Each chart says
 /// in words what it shows and has an ⓘ sheet on how to read it.
+///
+/// On phones the list shows only a slim strip; tapping it opens the full
+/// overview in a bottom sheet so the exhibition cards stay in view.
 class ExhibitionsOverviewCard extends StatefulWidget {
   final List<Exhibition> items;
   final ValueChanged<Exhibition> onOpen;
 
-  const ExhibitionsOverviewCard({super.key, required this.items, required this.onOpen});
+  /// Always the full card (inside the phone bottom sheet, and on iPad).
+  final bool expanded;
+
+  const ExhibitionsOverviewCard({
+    super.key,
+    required this.items,
+    required this.onOpen,
+    this.expanded = false,
+  });
 
   @override
   State<ExhibitionsOverviewCard> createState() => _ExhibitionsOverviewCardState();
@@ -27,9 +38,49 @@ class _ExhibitionsOverviewCardState extends State<ExhibitionsOverviewCard> {
   bool _open = true;
   int _view = 0; // 0 = trend, 1 = top shows, 2 = lead quality
 
+  void _openSheet() {
+    HapticFeedback.selectionClick();
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: exPageBg,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (sheet) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.88,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (_, scroll) => ListView(
+          controller: scroll,
+          padding: EdgeInsets.fromLTRB(16, 10, 16, 24 + MediaQuery.paddingOf(sheet).bottom),
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(color: exStrongBorder, borderRadius: BorderRadius.circular(2)),
+              ),
+            ),
+            const SizedBox(height: 14),
+            ExhibitionsOverviewCard(
+              items: widget.items,
+              expanded: true,
+              onOpen: (e) {
+                Navigator.pop(sheet);
+                widget.onOpen(e);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final o = computeExhibitionsOverview(widget.items);
+    if (!widget.expanded && exIsPhone(context)) return _CompactOverview(o: o, onTap: _openSheet);
     final hasCharts = o.top.isNotEmpty;
     final white70 = Colors.white.withValues(alpha: 0.8);
     return Container(
@@ -51,7 +102,7 @@ class _ExhibitionsOverviewCardState extends State<ExhibitionsOverviewCard> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 InkWell(
-                  onTap: !hasCharts
+                  onTap: !hasCharts || widget.expanded
                       ? null
                       : () {
                           HapticFeedback.selectionClick();
@@ -87,7 +138,7 @@ class _ExhibitionsOverviewCardState extends State<ExhibitionsOverviewCard> {
                             ],
                           ),
                         ),
-                        if (hasCharts)
+                        if (hasCharts && !widget.expanded)
                           AnimatedRotation(
                             turns: _open ? 0 : -0.25,
                             duration: const Duration(milliseconds: 200),
@@ -178,6 +229,102 @@ class _ExhibitionsOverviewCardState extends State<ExhibitionsOverviewCard> {
 
   static const _kpiStyle =
       TextStyle(fontFamily: exFont, fontSize: 20, height: 1.1, fontWeight: FontWeight.w800, color: Colors.white);
+}
+
+/// Phone list: one slim gradient strip with the totals; tap for the full
+/// overview.
+class _CompactOverview extends StatelessWidget {
+  final ExhibitionsOverview o;
+  final VoidCallback onTap;
+  const _CompactOverview({required this.o, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final white80 = Colors.white.withValues(alpha: 0.85);
+    Widget figure(String value, String label) => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(value,
+                style: const TextStyle(
+                    fontFamily: exFont, fontSize: 17, height: 1.1, fontWeight: FontWeight.w800, color: Colors.white)),
+            Text(label, style: TextStyle(fontSize: 11, color: white80)),
+          ],
+        );
+    Widget gap() => Container(
+          width: 1,
+          height: 26,
+          margin: const EdgeInsets.symmetric(horizontal: 12),
+          color: Colors.white.withValues(alpha: 0.22),
+        );
+    return Semantics(
+      button: true,
+      label: 'Overview: ${o.exhibitions} exhibitions, ${o.demos} demos, ${o.leads} leads. Open charts',
+      excludeSemantics: true,
+      child: Material(
+        color: Colors.transparent,
+        child: Ink(
+          decoration: BoxDecoration(
+            gradient: exDeepGradient,
+            borderRadius: BorderRadius.circular(exRadiusCard),
+            boxShadow: exCardShadow,
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(exRadiusCard),
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.16),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.insights_rounded, color: Colors.white, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        children: [
+                          figure('${o.exhibitions}', o.exhibitions == 1 ? 'Exhibition' : 'Exhibitions'),
+                          gap(),
+                          figure('${o.demos}', o.demos == 1 ? 'Demo' : 'Demos'),
+                          gap(),
+                          figure('${o.leads}', o.leads == 1 ? 'Lead' : 'Leads'),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(10, 6, 4, 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('Charts',
+                            style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Colors.white)),
+                        Icon(Icons.chevron_right_rounded, size: 18, color: Colors.white),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// Title-less explanation row above an overview chart: one sentence plus ⓘ.
