@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:sssbuddy/components/app_motion.dart';
 import 'package:sssbuddy/core/notifications/local_notifications.dart';
 import 'package:sssbuddy/utils/network_utils.dart';
@@ -22,7 +23,14 @@ void main() async {
 }
 
 class AppRoot extends StatefulWidget  {
-  const AppRoot({super.key});
+  const AppRoot({super.key, this.overrides = const []});
+
+  /// Provider overrides (tests only: e.g. a fake repository).
+  final List<Override> overrides;
+
+  /// Rebuilds the app from the splash with fresh state (new ProviderScope
+  /// and a new Navigator). Don't push routes on the old navigator after
+  /// calling this: they would be thrown away with it.
   static void restartApp(BuildContext context) {
     context.findAncestorStateOfType<_AppRootState>()?.restartApp();
   }
@@ -35,12 +43,14 @@ class _AppRootState extends State<AppRoot> {
   void restartApp() {
     setState(() {
       _key = UniqueKey();
+      appNavigatorKey = GlobalKey<NavigatorState>();
     });
   }
   @override
   Widget build(BuildContext context) {
     return ProviderScope(
       key: _key,
+      overrides: widget.overrides,
       child: const MyApp(),
     );
   }

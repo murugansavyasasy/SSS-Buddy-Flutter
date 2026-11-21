@@ -9,7 +9,6 @@ import '../main.dart';
 import '../viewModel/changepassword_view_model.dart';
 import 'dashboard.dart';
 import '../viewModel/login_view_model.dart';
-import 'login.dart';
 import '../components/form_width.dart';
 
 class ChangePassword extends ConsumerStatefulWidget {
@@ -160,11 +159,9 @@ class _ChangePasswordState extends ConsumerState<ChangePassword> {
           newpasswordcontroller.clear();
           confrimpasswordcontroller.clear();
           await SecureStorage.clearLoginData();
+          if (!context.mounted) return;
+          // Restarts from the splash, which opens the login screen.
           AppRoot.restartApp(context);
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (_) => const LoginScreen()),
-                (route) => false,
-          );
         }
             : null,
       );

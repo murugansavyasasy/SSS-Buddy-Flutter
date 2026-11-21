@@ -7,7 +7,11 @@ import '../../utils/app_logger.dart';
 import '../../utils/routes/routes_name.dart';
 
 /// Used to open a screen when the user taps a notification.
-final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
+///
+/// Replaced on every [AppRoot] restart (logout): a GlobalKey reused across
+/// the restart would carry the old Navigator, and its screens bound to the
+/// old ProviderScope, into the new app.
+GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
 
 /// Shared local-notification plugin for chat pushes and follow-up reminders.
 ///
