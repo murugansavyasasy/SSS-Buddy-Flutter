@@ -32,7 +32,8 @@ class _Repo implements ExhibitionRepository {
   @override
   Future<List<DemoTemplate>> fetchTemplates(String exhibitionId) async => const [];
   @override
-  Future<ExhibitionDemo> fetchDemo(String demoId) async => _demos.first;
+  Future<ExhibitionDemo> fetchDemo(String demoId) async =>
+      _demos.firstWhere((d) => d.id == demoId, orElse: () => _demos.first);
   @override
   dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
 }
@@ -230,7 +231,7 @@ void main() {
       await t.scrollUntilVisible(find.text('Demos & leads by day'), 300,
           scrollable: find.byType(Scrollable).first);
       await _settle(t);
-      expect(find.text('Demo → lead conversion'), findsOneWidget);
+      expect(find.text('Lead rate'), findsOneWidget);
       // Switch the trend to running totals.
       await t.tap(find.text('Running total'));
       await _settle(t);

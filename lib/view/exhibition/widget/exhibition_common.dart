@@ -110,6 +110,14 @@ const double exRadiusCard = 18;
 const double exRadiusControl = 14;
 
 /// Diagonal brand gradient for hero tiles, avatars and the FAB.
+/// Deep diagonal gradient for summary / hero cards (overview, insights,
+/// exhibition header).
+const exDeepGradient = LinearGradient(
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+  colors: [Color(0xFF1E3A8A), exBrandBold, exHeaderBase],
+);
+
 const exHeroGradient = LinearGradient(
   begin: Alignment.topLeft,
   end: Alignment.bottomRight,

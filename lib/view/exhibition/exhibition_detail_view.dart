@@ -577,7 +577,7 @@ class _Header extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: active
-              ? const [Color(0xFF1E3A8A), exBrandBold, Color(0xFF0891B2)]
+              ? const [Color(0xFF1E3A8A), exBrandBold, exHeaderBase]
               : const [Color(0xFF334155), Color(0xFF475569), Color(0xFF64748B)],
         ),
       ),
@@ -774,7 +774,7 @@ class _Header extends StatelessWidget {
   }
 }
 
-/// "42% of demos became leads · See insights ›" under the counters.
+/// "7 leads from 16 demos · 44% lead rate ›" under the counters.
 class _ConversionLink extends StatelessWidget {
   final int demos;
   final int leads;
@@ -783,7 +783,6 @@ class _ConversionLink extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final v = (leads / demos).clamp(0.0, 1.0);
     final pct = (leads * 100 / demos).round();
     return Material(
       color: const Color(0xFFFFF6EF),
@@ -798,13 +797,12 @@ class _ConversionLink extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
           child: Row(
             children: [
-              ExRingGauge(
-                value: v,
-                size: 46,
-                color: exChartLead,
-                track: const Color(0xFFFBDCCB),
-                center: Text('$pct%',
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: exInk)),
+              Container(
+                width: 50,
+                height: 50,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+                child: ExDemoLeadBars(demos: demos, leads: leads, height: 30, labels: false, barWidth: 11),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -813,8 +811,8 @@ class _ConversionLink extends StatelessWidget {
                   children: [
                     Text(exConversionWords(demos, leads),
                         style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: exInk)),
-                    const Text('Tap to see charts and insights',
-                        style: TextStyle(fontSize: 12, color: exSubtle)),
+                    Text('$pct% lead rate · tap for charts and insights',
+                        style: const TextStyle(fontSize: 12, color: exSubtle)),
                   ],
                 ),
               ),

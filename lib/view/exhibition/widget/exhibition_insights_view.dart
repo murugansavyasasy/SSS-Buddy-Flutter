@@ -140,7 +140,7 @@ class ExhibitionInsightsView extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// At a glance: conversion ring + the key facts in words
+// At a glance: lead-rate ring + the key facts in words
 // ─────────────────────────────────────────────────────────────────────────
 
 /// Per-number call results plus how many demo details are still loading
@@ -160,36 +160,9 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final busy = calls.loading > 0;
     final pct = (i.conversion * 100).round();
     final white70 = Colors.white.withValues(alpha: 0.78);
-    Widget stat(String value, String label) => Expanded(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(value,
-                      maxLines: 1,
-                      style: const TextStyle(
-                          fontFamily: exFont, fontSize: 17, fontWeight: FontWeight.w800, color: Colors.white)),
-                ),
-                const SizedBox(height: 2),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(label, maxLines: 1, style: TextStyle(fontSize: 11.5, color: white70)),
-                ),
-              ],
-            ),
-          ),
-        );
     final facts = <(IconData, String)>[
       if (i.bestDay != null)
         (
@@ -199,6 +172,9 @@ class _SummaryCard extends StatelessWidget {
         ),
       if (i.busiestHour != null)
         (Icons.schedule_rounded, 'Most visitors: ${_hourRange(i.busiestHour!)}'),
+      if (!busy && calls.results.total > 0)
+        (Icons.call_rounded,
+            'Calls answered: ${calls.results.answered} of ${calls.results.total}'),
       if (i.team.isNotEmpty && i.team.first.demos > 0)
         (Icons.military_tech_rounded, 'Top performer: ${i.team.first.name} (${_plural(i.team.first.demos, 'demo')})'),
     ];
@@ -206,11 +182,7 @@ class _SummaryCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF1E3A8A), exBrandBold, Color(0xFF0891B2)],
-        ),
+        gradient: exDeepGradient,
         borderRadius: BorderRadius.circular(exRadiusCard + 2),
         boxShadow: exBrandGlow,
       ),
@@ -229,9 +201,9 @@ class _SummaryCard extends StatelessWidget {
                 width: 32,
                 height: 32,
                 child: IconButton(
-                  tooltip: 'What is conversion?',
+                  tooltip: 'What is lead rate?',
                   padding: EdgeInsets.zero,
-                  onPressed: () => showExChartHelp(context, title: 'Demo → lead conversion', help: _conversionHelp),
+                  onPressed: () => showExChartHelp(context, title: 'Lead rate', help: _conversionHelp),
                   icon: Icon(Icons.info_outline_rounded, size: 19, color: white70),
                 ),
               ),
@@ -239,43 +211,36 @@ class _SummaryCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              ExRingGauge(
-                value: i.conversion.clamp(0.0, 1.0),
-                center: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    ExCountUp(pct,
-                        style: const TextStyle(
-                            fontFamily: exFont, fontSize: 28, height: 1, fontWeight: FontWeight.w800, color: Colors.white)),
-                    Text('% converted', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: white70)),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 16),
+              ExDemoLeadBars(demos: i.demos, leads: i.leads, onDark: true, height: 128, barWidth: 38),
+              const SizedBox(width: 20),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Demo → lead conversion',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white)),
-                    const SizedBox(height: 4),
+                    Text('Lead rate', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: white70)),
+                    const SizedBox(height: 2),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        ExCountUp(pct,
+                            style: const TextStyle(
+                                fontFamily: exFont, fontSize: 40, height: 1, fontWeight: FontWeight.w800, color: Colors.white)),
+                        const Padding(
+                          padding: EdgeInsets.only(bottom: 4, left: 2),
+                          child: Text('%',
+                              style: TextStyle(fontFamily: exFont, fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
                     Text(exConversionWords(i.demos, i.leads),
                         style: const TextStyle(
-                            fontFamily: exFont, fontSize: 18, height: 1.25, fontWeight: FontWeight.w700, color: Colors.white)),
+                            fontFamily: exFont, fontSize: 16, height: 1.25, fontWeight: FontWeight.w700, color: Colors.white)),
                   ],
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              stat('${i.demos}', 'Demos given'),
-              const SizedBox(width: 8),
-              stat('${i.leads}', 'Leads captured'),
-              const SizedBox(width: 8),
-              stat(calls.loading > 0 ? '…' : '${calls.results.answered}', 'Calls answered'),
             ],
           ),
           if (facts.isNotEmpty) ...[
@@ -303,13 +268,14 @@ class _SummaryCard extends StatelessWidget {
 }
 
 const _conversionHelp = ExChartHelp(
-  what: 'How many of the demos you gave turned into a lead (a school that showed interest and whose details you captured).',
+  what: 'How many demos were given at this exhibition and how many leads were captured. A lead is a school that showed interest and whose details you saved.',
   howToRead: [
-    'The ring fills up to the conversion percentage. A full ring would mean every demo became a lead.',
-    'Conversion = leads ÷ demos. 10 demos and 4 leads = 40%.',
-    '"Calls answered" counts demos whose voice call the visitor picked up.',
+    'The white bar is demos given; the orange bar is leads captured.',
+    'Lead rate = leads ÷ demos. 40 demos and 10 leads = 25%.',
+    'Leads are captured for the exhibition, not always for a demo, so this compares the two totals.',
+    '"Calls answered" counts every demo call that was picked up.',
   ],
-  why: 'A low percentage means many visitors heard the demo but did not become leads. Ask the team to capture details right after a good conversation.',
+  why: 'A low lead rate means many demos were given but few schools left their details. Capture the lead right after a good conversation.',
 );
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -351,7 +317,7 @@ class _TrendCardState extends State<_TrendCard> {
         howToRead: [
           'Tap or slide your finger on the chart to see the exact numbers for a day.',
           'A line going up means a busier day; a dip means fewer visitors.',
-          'When the orange line stays close to the blue line, most demos are turning into leads.',
+          'When the orange line stays close to the blue line, you are capturing almost as many leads as demos.',
           '"Running total" adds the days together so you can see the overall growth.',
         ],
         why: 'Shows which days brought the most interest, so you can plan staff and follow-ups for the next exhibition.',

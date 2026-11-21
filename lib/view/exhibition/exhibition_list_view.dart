@@ -708,7 +708,7 @@ class ExhibitionCard extends StatelessWidget {
   }
 }
 
-/// "▮▮▮▯ 42% of demos became leads" at the foot of a card.
+/// "▮▮▮▯ 38% lead rate" at the foot of a card.
 class _ConversionStrip extends StatelessWidget {
   final int demos;
   final int leads;
@@ -721,7 +721,7 @@ class _ConversionStrip extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
       child: Semantics(
-        label: '$pct percent of demos became leads',
+        label: '$pct percent lead rate, $leads leads from $demos demos',
         excludeSemantics: true,
         child: Row(
           children: [
@@ -756,7 +756,7 @@ class _ConversionStrip extends StatelessWidget {
             Text.rich(
               TextSpan(children: [
                 TextSpan(text: '$pct%', style: const TextStyle(fontWeight: FontWeight.w800, color: exInk)),
-                const TextSpan(text: ' of demos became leads'),
+                const TextSpan(text: ' lead rate'),
               ]),
               style: const TextStyle(fontSize: 12, color: exSubtle),
             ),

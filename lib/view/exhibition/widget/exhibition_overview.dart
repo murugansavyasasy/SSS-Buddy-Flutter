@@ -45,11 +45,7 @@ class _ExhibitionsOverviewCardState extends State<ExhibitionsOverviewCard> {
           // ── Gradient summary ──
           Container(
             decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF1E3A8A), exBrandBold, Color(0xFF0891B2)],
-              ),
+              gradient: exDeepGradient,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -110,8 +106,6 @@ class _ExhibitionsOverviewCardState extends State<ExhibitionsOverviewCard> {
                       _kpi('${o.demos}', 'Demos'),
                       const SizedBox(width: 8),
                       _kpi('${o.leads}', 'Leads'),
-                      const SizedBox(width: 8),
-                      _kpi('${(o.conversion * 100).round()}%', 'Converted'),
                     ],
                   ),
                 ),
@@ -285,8 +279,7 @@ class _TopShowsView extends StatelessWidget {
     final maxV = top.fold<int>(1, (m, e) => e.demoCount > m ? e.demoCount : m);
     Exhibition? best;
     for (final e in top) {
-      if (e.demoCount == 0) continue;
-      if (best == null || e.leadCount / e.demoCount > best.leadCount / best.demoCount) best = e;
+      if (e.leadCount > 0 && (best == null || e.leadCount > best.leadCount)) best = e;
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -298,9 +291,9 @@ class _TopShowsView extends StatelessWidget {
             what: 'Your busiest exhibitions, ranked by the number of demos given.',
             howToRead: [
               'The blue bar is demos given; the thin orange bar is leads captured.',
-              '"% converted" is how many of those demos became leads.',
+              'Open an exhibition and check its Insights to see how many of its visitors became leads.',
             ],
-            why: 'Busy is not always best: a show with fewer demos but a higher % converted may be worth more.',
+            why: 'Busy is not always best: a show with fewer demos but more leads may be worth more.',
           ),
         ),
         const SizedBox(height: 6),
@@ -314,15 +307,13 @@ class _TopShowsView extends StatelessWidget {
             second: e.leadCount,
             secondColor: exChartLead,
             valueLabel: '${e.demoCount} ${e.demoCount == 1 ? 'demo' : 'demos'}',
-            caption: '${e.leadCount} ${e.leadCount == 1 ? 'lead' : 'leads'}'
-                '${e.demoCount > 0 ? ' · ${(e.leadCount * 100 / e.demoCount).round()}% converted' : ''}',
+            caption: '${e.leadCount} ${e.leadCount == 1 ? 'lead' : 'leads'}',
             onTap: () => onOpen(e),
           ),
         if (best != null && top.length > 1) ...[
           const SizedBox(height: 8),
           ExTakeaway(
-            text: 'Best conversion: ${best.name} '
-                '(${(best.leadCount * 100 / best.demoCount).round()}% of demos became leads).',
+            text: 'Most leads: ${best.name} (${exConversionWords(best.demoCount, best.leadCount)}).',
             color: exChartDemo,
           ),
         ],
