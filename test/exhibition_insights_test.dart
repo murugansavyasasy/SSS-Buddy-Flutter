@@ -56,6 +56,89 @@ void main() {
     expect(i.conversion, 0);
   });
 
+  test('hours, best day and team come from demos and leads', () {
+    ExhibitionDemo by(int id, DateTime at, String who) => ExhibitionDemo.fromJson({
+          'id': id,
+          'status': 'completed',
+          'createdAt': at.toIso8601String(),
+          'createdByName': who,
+        });
+    final i = computeExhibitionInsights(
+      demos: [by(1, d1, 'Ravi'), by(2, d2, ' ravi '), by(3, d3, 'Priya'), by(4, d3, '42')],
+      leads: [
+        ExhibitionLead.fromJson({'id': 1, 'schoolName': 'A', 'createdAt': d2.toIso8601String(), 'createdByName': 'Priya'}),
+        ExhibitionLead.fromJson({'id': 2, 'schoolName': 'B', 'createdAt': d2.toIso8601String(), 'createdByName': 'Kavin'}),
+      ],
+      startDate: DateTime(2027, 9, 10),
+      endDate: DateTime(2027, 9, 11),
+    );
+    expect(i.hours.length, 24);
+    expect((i.hours[11], i.hours[15], i.hours[9]), (2, 2, 0));
+    expect(i.bestDay!.day, DateTime(2027, 9, 11));
+    // Names match ignoring case/spaces; numeric ids are not people.
+    expect(i.team.map((p) => (p.name, p.demos, p.leads)),
+        [('Ravi', 2, 0), ('Priya', 1, 1), ('Kavin', 0, 1)]);
+  });
+
+  test('overview trend: oldest first, last 8 dated exhibitions', () {
+    final items = [
+      for (var k = 0; k < 10; k++)
+        Exhibition.fromJson({
+          'id': k,
+          'name': 'E$k',
+          'startDate': DateTime(2027, 1, 10 - k).toIso8601String(),
+        }),
+      Exhibition.fromJson({'id': 99, 'name': 'Undated'}),
+    ];
+    final o = computeExhibitionsOverview(items);
+    expect(o.trend.length, ExhibitionsOverview.trendN);
+    expect(o.trend.first.id, '7');
+    expect(o.trend.last.id, '0');
+  });
+
+  test('call status parsing: negatives and final outcomes win', () {
+    final cases = {
+      'answered': CallStatus.answered,
+      'Not answered': CallStatus.failed,
+      'NO_ANSWER': CallStatus.failed,
+      'unanswered': CallStatus.failed,
+      'Missed': CallStatus.failed,
+      'Busy': CallStatus.failed,
+      'Call Failed': CallStatus.failed,
+      'Call completed': CallStatus.completed,
+      'completed': CallStatus.completed,
+      'Connected': CallStatus.answered,
+      'Ringing': CallStatus.ringing,
+      'calling': CallStatus.calling,
+      'In-Progress': CallStatus.calling,
+      'queued': CallStatus.queued,
+      '': CallStatus.queued,
+    };
+    for (final e in cases.entries) {
+      expect(parseCallStatus(e.key), e.value, reason: e.key);
+    }
+  });
+
+  test('call results count every number dialled, not one per demo', () {
+    final c = countCallResults([
+      // 5 numbers: 2 answered, 3 failed (overall status says "completed").
+      ExhibitionDemo.fromJson({
+        'id': 1,
+        'status': 'completed',
+        'recipients': [
+          {'mobile': '9800000001', 'callStatus': 'answered'},
+          {'mobile': '9800000002', 'callStatus': 'Completed'},
+          {'mobile': '9800000003', 'callStatus': 'failed'},
+          {'mobile': '9800000004', 'callStatus': 'Not answered'},
+          {'mobile': '9800000005', 'callStatus': 'busy'},
+        ],
+      }),
+      // Numbers not loaded: falls back to the demo status.
+      ExhibitionDemo.fromJson({'id': 2, 'status': 'queued'}),
+    ]);
+    expect((c.answered, c.failed, c.pending, c.total, c.demosWithoutNumbers), (2, 3, 1, 6, 1));
+  });
+
   test('no demos: empty, no division by zero', () {
     final i = computeExhibitionInsights(demos: const [], leads: const []);
     expect(i.isEmpty, isTrue);

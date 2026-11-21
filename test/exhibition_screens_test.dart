@@ -207,8 +207,13 @@ void main() {
     await t.pumpWidget(_app(const ExhibitionListView()));
     await _settle(t);
     expect(find.text('Overview'), findsOneWidget);
-    expect(find.text('Lead interest'), findsOneWidget);
+    expect(find.text('Trend'), findsOneWidget);
     await _shot(t, 'ex_list_ipad_full');
+    // Every overview chart renders without layout errors.
+    for (final tab in ['Top shows', 'Lead interest']) {
+      await t.tap(find.text(tab));
+      await _settle(t);
+    }
   });
 
   for (final (name, size) in [
@@ -222,11 +227,16 @@ void main() {
       await _settle(t);
       await t.tap(find.text('Insights'));
       await _settle(t);
-      await t.scrollUntilVisible(find.text('Activity by day'), 300,
+      await t.scrollUntilVisible(find.text('Demos & leads by day'), 300,
           scrollable: find.byType(Scrollable).first);
       await _settle(t);
       expect(find.text('Demo → lead conversion'), findsOneWidget);
-      expect(find.text('Lead interest'), findsOneWidget);
+      // Switch the trend to running totals.
+      await t.tap(find.text('Running total'));
+      await _settle(t);
+      await t.scrollUntilVisible(find.text('Lead quality'), 300,
+          scrollable: find.byType(Scrollable).first);
+      await _settle(t);
       await _shot(t, 'ex_insights_$name');
       // Tap a day: the legend shows that day's numbers.
       await t.tapAt(t.getCenter(find.byType(CustomPaint).last));

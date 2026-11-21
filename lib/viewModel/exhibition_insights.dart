@@ -10,6 +10,14 @@ class DayActivity {
   const DayActivity(this.day, this.demos, this.leads);
 }
 
+/// One team member's activity at an exhibition.
+class PersonActivity {
+  final String name;
+  final int demos;
+  final int leads;
+  const PersonActivity(this.name, this.demos, this.leads);
+}
+
 class ExhibitionInsights {
   final int demos;
   final int leads;
@@ -33,6 +41,15 @@ class ExhibitionInsights {
   final int failed;
   final int pending;
 
+  /// Demos per hour of day (24 entries, index = hour).
+  final List<int> hours;
+
+  /// Day with the most demos + leads (null with fewer than two days).
+  final DayActivity? bestDay;
+
+  /// Demos given / leads captured per person, most demos first.
+  final List<PersonActivity> team;
+
   const ExhibitionInsights({
     required this.demos,
     required this.leads,
@@ -45,6 +62,9 @@ class ExhibitionInsights {
     required this.reached,
     required this.failed,
     required this.pending,
+    this.hours = const [],
+    this.bestDay,
+    this.team = const [],
   });
 
   static const maxDays = 14;
@@ -144,7 +164,47 @@ ExhibitionInsights computeExhibitionInsights({
     }
   }
 
+  // ── Best day ──
+  DayActivity? best;
+  if (days.length > 1) {
+    for (final d in days) {
+      if (d.demos + d.leads > 0 &&
+          (best == null || d.demos + d.leads > best.demos + best.leads)) {
+        best = d;
+      }
+    }
+  }
+
+  // ── Team ──
+  String norm(String s) => s.trim().replaceAll(RegExp(r'\s+'), ' ');
+  final names = <String, String>{}; // lower-case key → display name
+  final teamDemos = <String, int>{}, teamLeads = <String, int>{};
+  void add(Map<String, int> m, String raw) {
+    final name = norm(raw);
+    if (name.isEmpty || RegExp(r'^\d+$').hasMatch(name)) return; // ids aren't names
+    final key = name.toLowerCase();
+    names.putIfAbsent(key, () => name);
+    m.update(key, (v) => v + 1, ifAbsent: () => 1);
+  }
+  for (final d in demos) {
+    add(teamDemos, d.createdBy);
+  }
+  for (final l in leads) {
+    add(teamLeads, l.capturedBy);
+  }
+  final team = [
+    for (final k in names.keys) PersonActivity(names[k]!, teamDemos[k] ?? 0, teamLeads[k] ?? 0),
+  ]..sort((a, b) {
+      final c = b.demos.compareTo(a.demos);
+      if (c != 0) return c;
+      final l = b.leads.compareTo(a.leads);
+      return l != 0 ? l : a.name.compareTo(b.name);
+    });
+
   return ExhibitionInsights(
+    hours: [for (var h = 0; h < 24; h++) byHour[h] ?? 0],
+    bestDay: best,
+    team: team,
     demos: demos.length,
     leads: leads.length,
     conversion: demos.isEmpty ? 0 : leads.length / demos.length,
@@ -177,6 +237,10 @@ class ExhibitionsOverview {
   /// rows of the lead-interest chart.
   final List<Exhibition> topByLeads;
 
+  /// Exhibitions in date order (oldest first, at most [trendN]): the points
+  /// of the show-by-show trend line.
+  final List<Exhibition> trend;
+
   const ExhibitionsOverview({
     required this.exhibitions,
     required this.active,
@@ -185,9 +249,11 @@ class ExhibitionsOverview {
     required this.conversion,
     required this.top,
     required this.topByLeads,
+    this.trend = const [],
   });
 
   static const topN = 5;
+  static const trendN = 8;
 }
 
 ExhibitionsOverview computeExhibitionsOverview(List<Exhibition> items) {
@@ -207,7 +273,13 @@ ExhibitionsOverview computeExhibitionsOverview(List<Exhibition> items) {
       final c = b.leadCount.compareTo(a.leadCount);
       return c != 0 ? c : b.demoCount.compareTo(a.demoCount);
     });
+  final dated = items.where((e) => (e.startDate ?? e.createdAt) != null).toList()
+    ..sort((a, b) => (a.startDate ?? a.createdAt)!.compareTo((b.startDate ?? b.createdAt)!));
+  final trend = dated.length > ExhibitionsOverview.trendN
+      ? dated.sublist(dated.length - ExhibitionsOverview.trendN)
+      : dated;
   return ExhibitionsOverview(
+    trend: trend,
     exhibitions: items.length,
     active: active,
     demos: demos,
@@ -234,4 +306,59 @@ ExhibitionsOverview computeExhibitionsOverview(List<Exhibition> items) {
     }
   }
   return (excellent: ex, good: gd, average: av, notSet: ns);
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Call results, per number dialled
+// ─────────────────────────────────────────────────────────────────────────
+
+/// Demo call results counted per number dialled (visitor and attendees),
+/// not per demo: a demo to 5 numbers with 2 answered and 3 failed counts
+/// as 2 answered + 3 not answered.
+class CallResults {
+  final int answered;
+  final int failed;
+  final int pending;
+
+  /// Demos counted by their overall status because their numbers weren't
+  /// available (detail not loaded or failed to load).
+  final int demosWithoutNumbers;
+
+  const CallResults({
+    required this.answered,
+    required this.failed,
+    required this.pending,
+    this.demosWithoutNumbers = 0,
+  });
+
+  int get total => answered + failed + pending;
+}
+
+CallResults countCallResults(List<ExhibitionDemo> demos) {
+  var answered = 0, failed = 0, pending = 0, without = 0;
+  void add(CallStatus s) {
+    switch (s) {
+      case CallStatus.answered:
+      case CallStatus.completed:
+        answered++;
+      case CallStatus.failed:
+        failed++;
+      case CallStatus.queued:
+      case CallStatus.ringing:
+      case CallStatus.calling:
+        pending++;
+    }
+  }
+
+  for (final d in demos) {
+    if (d.recipients.isEmpty) {
+      without++;
+      add(d.status);
+    } else {
+      for (final r in d.recipients) {
+        add(r.status);
+      }
+    }
+  }
+  return CallResults(answered: answered, failed: failed, pending: pending, demosWithoutNumbers: without);
 }

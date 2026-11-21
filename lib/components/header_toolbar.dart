@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sssbuddy/Values/Colors/app_colors.dart';
 import 'package:sssbuddy/main.dart';
 import 'glass_card.dart';
-import '../View/login.dart';
 import '../core/chat/chat_notification_service.dart';
 import '../core/followup/followup_reminders.dart';
 import '../core/storage/secure_storage.dart';
@@ -80,15 +79,17 @@ class HeaderToolbar extends ConsumerWidget {
               ),
             ),
             ElevatedButton(
-              onPressed: () => {
-                ChatNotificationService.instance.unregister(),
-                FollowUpReminders.instance.cancelAll(),
-                SecureStorage.clearLoginData(),
-                AppRoot.restartApp(context),
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                  (route) => false,
-                ),
+              onPressed: () async {
+                Navigator.of(dialogContext).pop();
+                // Finish clearing before the restart, or the splash could
+                // still find the saved login and sign the user back in.
+                await Future.wait([
+                  ChatNotificationService.instance.unregister(),
+                  FollowUpReminders.instance.cancelAll(),
+                ].map((f) => f.catchError((_) {})));
+                await SecureStorage.clearLoginData();
+                if (!context.mounted) return;
+                AppRoot.restartApp(context);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,

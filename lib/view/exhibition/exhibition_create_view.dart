@@ -208,10 +208,10 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
 
 
   // MARK: Steps
-  // One question per screen: Name → Place → Dates → Team → Notes → Review.
+  // One question per screen: Name → Place → Dates → Attendees → Notes → Review.
 
   static const _review = 5;
-  static const _stepNames = ['Name', 'Place', 'Dates', 'Team', 'Notes', 'Review'];
+  static const _stepNames = ['Name', 'Place', 'Dates', 'Attendees', 'Notes', 'Review'];
 
   /// Edit opens on the summary (everything is filled in already).
   late int _step = _editing ? _review : 0;
@@ -775,7 +775,7 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
                         icon: Icons.groups_rounded,
                         color: exAccentTeam,
                         background: exAccentTeamBg,
-                        label: 'Team',
+                        label: 'Attendees',
                         value: team,
                         onEdit: _saving ? null : () => _goTo(3),
                       ),

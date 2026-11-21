@@ -334,15 +334,23 @@ class CreateExhibitionRequest {
 
 enum CallStatus { queued, ringing, calling, answered, completed, failed }
 
+/// Maps a backend call status to [CallStatus]. Final outcomes are checked
+/// before "in progress" words, and negatives before "answer", so
+/// "Not answered" is failed and "Call completed" is completed (not calling).
 CallStatus parseCallStatus(String s) {
-  final v = s.toLowerCase();
-  if (v.contains('fail') || v.contains('busy') || v.contains('no answer') || v.contains('error')) {
+  // "NO_ANSWER", "not-answered", "Call  Completed" → plain spaced words.
+  final v = s.toLowerCase().replaceAll(RegExp(r'[_\-]+'), ' ').replaceAll(RegExp(r'\s+'), ' ').trim();
+  bool any(List<String> words) => words.any(v.contains);
+  if (any([
+    'fail', 'busy', 'error', 'no answer', 'noanswer', 'not answer', 'unanswer', 'not picked',
+    'no response', 'missed', 'reject', 'declin', 'cancel', 'unreach', 'not reach', 'switched off',
+  ])) {
     return CallStatus.failed;
   }
+  if (any(['answer', 'connect', 'picked'])) return CallStatus.answered;
+  if (any(['complete', 'success', 'done', 'delivered'])) return CallStatus.completed;
   if (v.contains('ring')) return CallStatus.ringing;
-  if (v.contains('call') || v.contains('progress') || v.contains('dial')) return CallStatus.calling;
-  if (v.contains('answer')) return CallStatus.answered;
-  if (v.contains('complete') || v.contains('success') || v.contains('done')) return CallStatus.completed;
+  if (any(['call', 'progress', 'dial', 'initiat'])) return CallStatus.calling;
   return CallStatus.queued;
 }
 
