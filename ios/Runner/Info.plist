@@ -37,17 +37,19 @@
 		<true/>
 	</dict>
 	<key>NSCameraUsageDescription</key>
-	<string>This app requires camera access to capture photos</string>
+	<string>SSS Score uses the camera to take photos of visiting cards, receipts and cheques for leads and collections.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>SSS Score saves photos you choose to share, such as lead attachments, to your photo library.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>We need gallery access select photos</string>
+	<string>SSS Score lets you choose photos from your library to attach to leads, collections and chats.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>We use your location to provide trip and location-based features in the app.</string>
+	<string>SSS Score records your route during a trip, including when the app is in the background, so your school visits and travel distance are logged.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>
 	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>This app requires location access to enable trip features</string>
+	<string>SSS Score uses your location to record your trip route and school visits.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>We use the microphone to record voice notes within the app.</string>
     <key>NSContactsUsageDescription</key>
