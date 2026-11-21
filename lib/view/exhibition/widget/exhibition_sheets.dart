@@ -491,7 +491,8 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
       TextEditingController(text: widget.lead?.contactNumber ?? widget.prefillNumber ?? '');
   late final _email = TextEditingController(text: widget.lead?.contactEmail ?? '');
   late final _notes = TextEditingController(text: widget.lead?.notes ?? '');
-  late InterestLevel _level = widget.lead?.interestLevel ?? InterestLevel.good;
+  /// New leads start at Excellent; edits keep the saved level.
+  late InterestLevel _level = widget.lead?.interestLevel ?? InterestLevel.excellent;
 
   bool get _editing => widget.lead != null;
   bool _tried = false;
