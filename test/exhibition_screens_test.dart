@@ -12,6 +12,7 @@ import 'package:sssbuddy/values/app_theme.dart';
 import 'package:sssbuddy/view/exhibition/exhibition_create_view.dart';
 import 'package:sssbuddy/view/exhibition/exhibition_detail_view.dart';
 import 'package:sssbuddy/view/exhibition/exhibition_list_view.dart';
+import 'package:sssbuddy/view/exhibition/showcase/school_chimes_showcase.dart';
 import 'package:sssbuddy/view/exhibition/give_demo_view.dart';
 import 'package:sssbuddy/view/exhibition/widget/exhibition_common.dart';
 import 'package:sssbuddy/view/exhibition/widget/exhibition_sheets.dart';
@@ -201,6 +202,63 @@ void main() {
     await t.pump(const Duration(milliseconds: 50));
     expect(opacityOf(second), 1.0);
   });
+
+  testWidgets('"Give demo" pill opens the School Chimes showcase, not Give Demo', (t) async {
+    _size(t, const Size(390, 1600));
+    await t.pumpWidget(_app(ExhibitionDetailView(exhibitionId: '7', initial: _exs.first)));
+    await _settle(t);
+    await t.scrollUntilVisible(find.text('Give demo'), 300, scrollable: find.byType(Scrollable).first);
+    await t.tap(find.text('Give demo'));
+    await _settle(t);
+    expect(find.byType(SchoolChimesShowcase), findsOneWidget);
+    expect(find.byType(GiveDemoView), findsNothing);
+    await t.pumpWidget(const SizedBox()); // stop the slideshow timer
+  });
+
+  testWidgets('"Give first demo" opens the School Chimes showcase', (t) async {
+    _size(t, const Size(390, 1600));
+    await t.pumpWidget(ProviderScope(
+      overrides: [
+        exhibitionRepositoryProvider.overrideWithValue(_Repo()),
+        userSessionProvider.overrideWith(() => _Session()),
+        exhibitionDemosProvider.overrideWith((ref, id) async => const <ExhibitionDemo>[]),
+      ],
+      child: MaterialApp(
+        theme: AppTheme.light,
+        home: ExhibitionDetailView(exhibitionId: '7', initial: _exs.first),
+      ),
+    ));
+    await _settle(t);
+    await t.scrollUntilVisible(find.text('Give first demo'), 300, scrollable: find.byType(Scrollable).first);
+    await t.tap(find.text('Give first demo'));
+    await _settle(t);
+    expect(find.byType(SchoolChimesShowcase), findsOneWidget);
+    await t.pumpWidget(const SizedBox()); // stop the slideshow timer
+  });
+
+  for (final (name, size) in [('320', const Size(320, 640)), ('390', const Size(390, 844)), ('ipad', const Size(1024, 1366))]) {
+    testWidgets('School Chimes showcase · every slide fits · $name', (t) async {
+      _size(t, size);
+      var demo = 0, lead = 0;
+      await t.pumpWidget(MaterialApp(
+        theme: AppTheme.light,
+        home: SchoolChimesShowcase(onGiveDemo: () => demo++, onCaptureLead: () => lead++),
+      ));
+      await _settle(t);
+      expect(find.byTooltip('Pause slideshow'), findsOneWidget); // auto-play on
+      for (var k = 0; k < 5; k++) {
+        await _shot(t, 'showcase_${name}_$k');
+        await t.drag(find.byType(PageView), Offset(-size.width * 0.8, 0));
+        await _settle(t);
+      }
+      // Swiping by hand turned auto-play off.
+      expect(find.byTooltip('Play slideshow'), findsOneWidget);
+      await t.tap(find.text("I'm interested").last);
+      await t.tap(find.text('Hear a voice demo').last);
+      expect((demo, lead), (1, 1));
+      await t.pumpWidget(const SizedBox()); // stop the slideshow timer
+    });
+  }
 
   testWidgets('list overview · phone shows a strip, tap opens the charts', (t) async {
     _size(t, const Size(390, 844));

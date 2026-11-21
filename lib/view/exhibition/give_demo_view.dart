@@ -8,6 +8,8 @@ import 'package:just_audio/just_audio.dart';
 import '../../auth/model/ExhibitionModel.dart';
 import '../../provider/user_session_provider.dart';
 import '../../viewModel/exhibition_viewmodel.dart';
+import 'showcase/sc_spotlight.dart';
+import 'showcase/showcase_content.dart';
 import 'widget/exhibition_common.dart';
 import 'widget/demo_audio.dart';
 import 'widget/exhibition_sheets.dart';
@@ -414,10 +416,33 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
                           child: ExMaxWidth(
                             maxWidth: exFormMaxWidth,
                             // Steps slide in from the side they come from.
-                            child: ExStepSwitcher(step: _step, child: _stepBody(wide)),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                // Phones: School Chimes banner on top (visitors
+                                // won't scroll to find it).
+                                if (!wide) ...[
+                                  ScSpotlightBanner(spot: scGiveDemoSpotlights[_step]),
+                                  const SizedBox(height: 22),
+                                ],
+                                ExStepSwitcher(step: _step, child: _stepBody(wide)),
+                              ],
+                            ),
                           ),
                         ),
                       ),
+                      // iPad: one School Chimes solution beside each step.
+                      if (wide)
+                        Container(
+                          width: 380,
+                          decoration: const BoxDecoration(
+                            border: Border(left: BorderSide(color: exBorder)),
+                          ),
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.fromLTRB(24, 32, 28, 24),
+                            child: ScSpotlightCard(spot: scGiveDemoSpotlights[_step]),
+                          ),
+                        ),
                     ],
                   ),
                 ),

@@ -2143,50 +2143,61 @@ class ExQuestion extends StatelessWidget {
     this.optional = false,
   });
 
+  /// Icon on the left of the title (saves a whole row of height), title
+  /// and subtitle beside it.
   @override
-  Widget build(BuildContext context) => Column(
+  Widget build(BuildContext context) => Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ExPopIn(
             child: Container(
-              width: 60,
-              height: 60,
+              width: 52,
+              height: 52,
               decoration: BoxDecoration(
                 color: background,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(17),
               ),
-              child: Icon(icon, size: 30, color: color),
+              child: Icon(icon, size: 27, color: color),
             ),
           ),
-          const SizedBox(height: 18),
-          ExAppear(
-            index: 1,
-            offset: 10,
-            child: Text.rich(
-              TextSpan(
-                text: title,
-                children: [
-                  if (optional)
-                    const TextSpan(
-                      text: '  optional',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: exSubtle),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Centre a one-line title on the icon.
+                const SizedBox(height: 2),
+                ExAppear(
+                  index: 1,
+                  offset: 10,
+                  child: Text.rich(
+                    TextSpan(
+                      text: title,
+                      children: [
+                        if (optional)
+                          const TextSpan(
+                            text: '  optional',
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: exSubtle),
+                          ),
+                      ],
                     ),
+                    style: const TextStyle(
+                        fontSize: 23, height: 1.2, fontWeight: FontWeight.w700, color: exInk),
+                  ),
+                ),
+                if (subtitle != null && subtitle!.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  ExAppear(
+                    index: 2,
+                    offset: 10,
+                    child: Text(subtitle!,
+                        style: const TextStyle(
+                            fontSize: 15.5, height: 1.35, fontWeight: FontWeight.w500, color: exSubtle)),
+                  ),
                 ],
-              ),
-              style: const TextStyle(
-                  fontSize: 26, height: 1.2, fontWeight: FontWeight.w700, color: exInk),
+              ],
             ),
           ),
-          if (subtitle != null && subtitle!.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            ExAppear(
-              index: 2,
-              offset: 10,
-              child: Text(subtitle!,
-                  style: const TextStyle(
-                      fontSize: 16, height: 1.35, fontWeight: FontWeight.w500, color: exSubtle)),
-            ),
-          ],
         ],
       );
 }

@@ -15,6 +15,8 @@ import '../../../auth/model/ExhibitionModel.dart';
 import '../../../components/demo_video_whatsapp.dart';
 import '../../../core/aws/s3_upload_service.dart';
 import '../../../viewModel/exhibition_viewmodel.dart';
+import '../showcase/sc_spotlight.dart';
+import '../showcase/showcase_content.dart';
 import 'exhibition_common.dart';
 import 'demo_audio.dart';
 import 'voice_recorder_panel.dart';
@@ -1109,6 +1111,14 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    // A School Chimes solution on top for the visitor to read
+                    // while their details are entered (not when editing).
+                    if (!_editing) ...[
+                      ScSpotlightBanner(
+                        spot: scCaptureLeadSpotlights[_step.clamp(0, scCaptureLeadSpotlights.length - 1)],
+                      ),
+                      const SizedBox(height: 22),
+                    ],
                     ExStepSwitcher(step: _step, child: body),
                     if (_error != null) ...[
                       const SizedBox(height: 16),
