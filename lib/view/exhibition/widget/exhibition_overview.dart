@@ -1,22 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../auth/model/ExhibitionModel.dart';
 import '../../../viewModel/exhibition_insights.dart';
 import '../../../viewModel/exhibition_viewmodel.dart';
+import 'exhibition_charts.dart';
 import 'exhibition_common.dart';
 
-/// Overview card at the top of the Exhibitions list: totals for the
-/// exhibitions shown (follows search / status filter) and the lead
-/// interest mix of the top exhibitions by leads. Tap a row to open it.
-///
-/// Same validated series colours as the Insights tab: demos `#2A78D6`,
-/// leads `#EB6834`.
-const _demoC = Color(0xFF2A78D6);
-const _leadC = Color(0xFFEB6834);
-const _track = Color(0xFFF0F3F8);
-
+/// Overview card at the top of the Exhibitions list: a gradient summary of
+/// the exhibitions shown (follows search / status filter), then one chart at
+/// a time: show-by-show trend, top shows, or lead quality. Each chart says
+/// in words what it shows and has an ⓘ sheet on how to read it.
 class ExhibitionsOverviewCard extends StatefulWidget {
   final List<Exhibition> items;
   final ValueChanged<Exhibition> onOpen;
@@ -29,78 +25,130 @@ class ExhibitionsOverviewCard extends StatefulWidget {
 
 class _ExhibitionsOverviewCardState extends State<ExhibitionsOverviewCard> {
   bool _open = true;
+  int _view = 0; // 0 = trend, 1 = top shows, 2 = lead quality
 
   @override
   Widget build(BuildContext context) {
     final o = computeExhibitionsOverview(widget.items);
+    final hasCharts = o.top.isNotEmpty;
+    final white70 = Colors.white.withValues(alpha: 0.8);
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(exRadiusCard),
+        borderRadius: BorderRadius.circular(exRadiusCard + 2),
         boxShadow: exCardShadow,
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header (tap to collapse the chart).
-          InkWell(
-            borderRadius: BorderRadius.circular(exRadiusCard),
-            onTap: o.topByLeads.isEmpty
-                ? null
-                : () {
-                    HapticFeedback.selectionClick();
-                    setState(() => _open = !_open);
-                  },
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 10, 4),
-              child: Row(
-                children: [
-                  Container(
-                    width: 34,
-                    height: 34,
-                    decoration: BoxDecoration(
-                      gradient: exHeroGradient,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.insights_rounded, color: Colors.white, size: 19),
-                  ),
-                  const SizedBox(width: 10),
-                  const Expanded(child: Text('Overview', style: exHeadingSm)),
-                  if (o.topByLeads.isNotEmpty)
-                    AnimatedRotation(
-                      turns: _open ? 0 : -0.25,
-                      duration: const Duration(milliseconds: 200),
-                      child: const Icon(Icons.expand_more_rounded, color: exSubtle),
-                    ),
-                ],
+          // ── Gradient summary ──
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF1E3A8A), exBrandBold, Color(0xFF0891B2)],
               ),
             ),
-          ),
-          // KPIs
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _kpi('${o.exhibitions}', o.active > 0 ? '${o.active} active' : 'Exhibitions'),
-                _divider(),
-                _kpi('${o.demos}', 'Demos', dot: _demoC),
-                _divider(),
-                _kpi('${o.leads}', 'Leads', dot: _leadC),
-                _divider(),
-                _kpi('${(o.conversion * 100).round()}%', 'Conversion'),
+                InkWell(
+                  onTap: !hasCharts
+                      ? null
+                      : () {
+                          HapticFeedback.selectionClick();
+                          setState(() => _open = !_open);
+                        },
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 14, 10, 0),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.16),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.insights_rounded, color: Colors.white, size: 19),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Overview',
+                                  style: TextStyle(
+                                      fontFamily: exFont,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white)),
+                              Text(exConversionWords(o.demos, o.leads),
+                                  maxLines: 2,
+                                  style: TextStyle(fontSize: 12.5, height: 1.3, color: white70)),
+                            ],
+                          ),
+                        ),
+                        if (hasCharts)
+                          AnimatedRotation(
+                            turns: _open ? 0 : -0.25,
+                            duration: const Duration(milliseconds: 200),
+                            child: Icon(Icons.expand_more_rounded, color: white70),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
+                  child: Row(
+                    children: [
+                      _kpi('${o.exhibitions}', o.active > 0 ? '${o.active} active' : 'Exhibitions'),
+                      const SizedBox(width: 8),
+                      _kpi('${o.demos}', 'Demos'),
+                      const SizedBox(width: 8),
+                      _kpi('${o.leads}', 'Leads'),
+                      const SizedBox(width: 8),
+                      _kpi('${(o.conversion * 100).round()}%', 'Converted'),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
-          // Top exhibitions chart
+          // ── One chart at a time ──
           AnimatedSize(
             duration: const Duration(milliseconds: 260),
             curve: Curves.easeOutCubic,
             alignment: Alignment.topCenter,
-            child: !_open || o.topByLeads.isEmpty
+            child: !_open || !hasCharts
                 ? const SizedBox(width: double.infinity)
                 : Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-                    child: _InterestChart(top: o.topByLeads, onOpen: widget.onOpen),
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        ExChartSwitch(
+                          options: const ['Trend', 'Top shows', 'Lead interest'],
+                          selected: _view,
+                          onChanged: (v) => setState(() => _view = v),
+                        ),
+                        const SizedBox(height: 14),
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 220),
+                          child: KeyedSubtree(
+                            key: ValueKey(_view),
+                            child: switch (_view) {
+                              0 => _TrendView(o: o, onOpen: widget.onOpen),
+                              1 => _TopShowsView(o: o, onOpen: widget.onOpen),
+                              _ => _InterestChart(top: o.topByLeads, onOpen: widget.onOpen),
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
           ),
         ],
@@ -108,46 +156,179 @@ class _ExhibitionsOverviewCardState extends State<ExhibitionsOverviewCard> {
     );
   }
 
-  Widget _divider() => Container(
-        width: 1,
-        height: 30,
-        margin: const EdgeInsets.symmetric(horizontal: 6),
-        color: exBorder,
-      );
-
-  Widget _kpi(String value, String label, {Color? dot}) => Expanded(
-        child: Column(
-          children: [
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: int.tryParse(value) == null
-                  ? Text(value, style: _kpiStyle)
-                  : ExCountUp(int.parse(value), style: _kpiStyle),
-            ),
-            const SizedBox(height: 3),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (dot != null) ...[
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(color: dot, borderRadius: BorderRadius.circular(2)),
-                    ),
-                    const SizedBox(width: 4),
-                  ],
-                  Text(label, style: const TextStyle(fontSize: 12, color: exSubtle)),
-                ],
+  Widget _kpi(String value, String label) => Expanded(
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.14),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            children: [
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: int.tryParse(value) == null
+                    ? Text(value, style: _kpiStyle)
+                    : ExCountUp(int.parse(value), style: _kpiStyle),
               ),
-            ),
-          ],
+              const SizedBox(height: 3),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(label,
+                    style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.8))),
+              ),
+            ],
+          ),
         ),
       );
 
   static const _kpiStyle =
-      TextStyle(fontFamily: exFont, fontSize: 21, height: 1.1, fontWeight: FontWeight.w800, color: exInk);
+      TextStyle(fontFamily: exFont, fontSize: 20, height: 1.1, fontWeight: FontWeight.w800, color: Colors.white);
+}
+
+/// Title-less explanation row above an overview chart: one sentence plus ⓘ.
+class _Explain extends StatelessWidget {
+  final String text;
+  final String title;
+  final ExChartHelp help;
+  const _Explain({required this.text, required this.title, required this.help});
+
+  @override
+  Widget build(BuildContext context) => Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: Text(text, style: exBodyMd.copyWith(fontSize: 13, height: 1.35))),
+          SizedBox(
+            width: 32,
+            height: 32,
+            child: IconButton(
+              tooltip: 'How to read this chart',
+              padding: EdgeInsets.zero,
+              onPressed: () => showExChartHelp(context, title: title, help: help),
+              icon: const Icon(Icons.info_outline_rounded, size: 19, color: exSubtle),
+            ),
+          ),
+        ],
+      );
+}
+
+/// Show-by-show line chart: one point per exhibition, oldest on the left.
+class _TrendView extends StatelessWidget {
+  final ExhibitionsOverview o;
+  final ValueChanged<Exhibition> onOpen;
+  const _TrendView({required this.o, required this.onOpen});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = o.trend;
+    const help = ExChartHelp(
+      what: 'Each point on the lines is one exhibition, in date order: the oldest on the left, the newest on the right.',
+      howToRead: [
+        'Blue line = demos given at that exhibition; orange line = leads captured.',
+        'Tap or slide on the chart to see the exhibition name and its numbers.',
+        'Lines going up to the right mean recent exhibitions are doing better.',
+      ],
+      why: 'Shows whether your exhibitions are improving over time and which shows were worth the effort.',
+    );
+    if (t.length < 2) {
+      return const ExTakeaway(text: 'The trend line appears once there are two or more exhibitions.');
+    }
+    final last = t.last, prev = t[t.length - 2];
+    final diff = last.demoCount - prev.demoCount;
+    final takeaway = diff == 0
+        ? '${last.name} had the same number of demos as the show before it.'
+        : '${last.name} had ${diff.abs()} ${diff.abs() == 1 ? 'demo' : 'demos'} '
+            '${diff > 0 ? 'more' : 'fewer'} than ${prev.name}.';
+    // Add the year when the shows span more than one.
+    final years = {for (final e in t) (e.startDate ?? e.createdAt)?.year};
+    final fmt = DateFormat(years.length > 1 ? "MMM ''yy" : 'd MMM');
+    String short(Exhibition e) {
+      final d = e.startDate ?? e.createdAt;
+      return d == null ? '' : fmt.format(d);
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _Explain(
+          text: 'Demos and leads at each exhibition, oldest to newest.',
+          title: 'Exhibition trend',
+          help: help,
+        ),
+        const SizedBox(height: 8),
+        const ExLegend(items: [(exChartDemo, 'Demos'), (exChartLead, 'Leads')]),
+        const SizedBox(height: 8),
+        ExLineChart(
+          height: 190,
+          series: [
+            ExLineSeries('Demos', exChartDemo, [for (final e in t) e.demoCount.toDouble()]),
+            ExLineSeries('Leads', exChartLead, [for (final e in t) e.leadCount.toDouble()]),
+          ],
+          xLabels: [for (final e in t) short(e)],
+          tooltipTitles: [for (final e in t) e.name],
+        ),
+        const SizedBox(height: 12),
+        ExTakeaway(text: takeaway, color: exChartDemo),
+      ],
+    );
+  }
+}
+
+/// Exhibitions ranked by demos, with leads and conversion.
+class _TopShowsView extends StatelessWidget {
+  final ExhibitionsOverview o;
+  final ValueChanged<Exhibition> onOpen;
+  const _TopShowsView({required this.o, required this.onOpen});
+
+  @override
+  Widget build(BuildContext context) {
+    final top = o.top;
+    final maxV = top.fold<int>(1, (m, e) => e.demoCount > m ? e.demoCount : m);
+    Exhibition? best;
+    for (final e in top) {
+      if (e.demoCount == 0) continue;
+      if (best == null || e.leadCount / e.demoCount > best.leadCount / best.demoCount) best = e;
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _Explain(
+          text: 'Exhibitions with the most demos. Tap one to open it.',
+          title: 'Top shows',
+          help: ExChartHelp(
+            what: 'Your busiest exhibitions, ranked by the number of demos given.',
+            howToRead: [
+              'The blue bar is demos given; the thin orange bar is leads captured.',
+              '"% converted" is how many of those demos became leads.',
+            ],
+            why: 'Busy is not always best: a show with fewer demos but a higher % converted may be worth more.',
+          ),
+        ),
+        const SizedBox(height: 6),
+        for (final (k, e) in top.indexed)
+          ExRankRow(
+            rank: k + 1,
+            label: e.name,
+            value: e.demoCount,
+            max: maxV,
+            color: exChartDemo,
+            second: e.leadCount,
+            secondColor: exChartLead,
+            valueLabel: '${e.demoCount} ${e.demoCount == 1 ? 'demo' : 'demos'}',
+            caption: '${e.leadCount} ${e.leadCount == 1 ? 'lead' : 'leads'}'
+                '${e.demoCount > 0 ? ' · ${(e.leadCount * 100 / e.demoCount).round()}% converted' : ''}',
+            onTap: () => onOpen(e),
+          ),
+        if (best != null && top.length > 1) ...[
+          const SizedBox(height: 8),
+          ExTakeaway(
+            text: 'Best conversion: ${best.name} '
+                '(${(best.leadCount * 100 / best.demoCount).round()}% of demos became leads).',
+            color: exChartDemo,
+          ),
+        ],
+      ],
+    );
+  }
 }
 
 /// Lead interest per exhibition (top 5 by leads): one stacked bar each,
@@ -170,6 +351,9 @@ class _InterestChart extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (top.isEmpty) {
+      return const ExTakeaway(text: 'No leads captured yet. Lead interest appears after the first lead.');
+    }
     final asyncs = [for (final e in top) ref.watch(exhibitionLeadsProvider(e.id))];
     final loaded = asyncs.every((a) => a.hasValue);
     _Mix? total;
@@ -199,14 +383,20 @@ class _InterestChart extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Divider(height: 1, color: exBorder),
-        const SizedBox(height: 12),
-        const Text('Lead interest',
-            style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: exInk)),
-        const SizedBox(height: 2),
-        Text(
-          top.length == 1 ? 'Top exhibition by leads' : 'Top ${top.length} exhibitions by leads',
-          style: exBodySm,
+        _Explain(
+          text: top.length == 1
+              ? 'How interested the leads of your top exhibition are.'
+              : 'How interested the leads of your top ${top.length} exhibitions are.',
+          title: 'Lead interest',
+          help: const ExChartHelp(
+            what: 'Each bar is one exhibition\'s leads, split by the interest level picked when the lead was captured.',
+            howToRead: [
+              'Darker orange = more interested (Excellent), lighter = Average, grey = not set.',
+              'The first bar adds all of them together.',
+              'Tap an exhibition to open it.',
+            ],
+            why: 'An exhibition with many Excellent leads is worth following up first, and worth attending again.',
+          ),
         ),
         const SizedBox(height: 10),
         Wrap(
@@ -330,7 +520,7 @@ class _MixRow extends StatelessWidget {
                 child: SizedBox(
                   height: bold ? 14 : 10,
                   child: m == null || parts.isEmpty
-                      ? Container(color: _track)
+                      ? Container(color: exChartTrack)
                       : Row(
                           children: [
                             for (final (k, p) in parts.indexed) ...[

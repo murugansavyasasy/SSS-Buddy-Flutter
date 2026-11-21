@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -10,6 +11,7 @@ import 'exhibition_create_view.dart';
 import 'give_demo_view.dart';
 import 'widget/demo_audio.dart';
 import 'widget/exhibition_common.dart';
+import 'widget/exhibition_charts.dart';
 import 'widget/exhibition_insights_view.dart';
 import 'widget/exhibition_sheets.dart';
 
@@ -221,6 +223,7 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
             ex.isCreatedBy(userId: user.userId, userName: user.employeeName);
         final header = _Header(
           ex: ex,
+          inset: embedded || wide ? 22 : 16,
           onGiveDemo: () => _giveDemo(ex),
           // Only the creator can edit or delete the exhibition.
           onEdit: isOwner ? () => _editExhibition(ex) : null,
@@ -284,14 +287,14 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
                     padding: EdgeInsets.only(top: embedded ? 4 : 20),
                     child: ExAppear(
                       child: Container(
-                      padding: EdgeInsets.all(embedded || wide ? 22 : 16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(exRadiusCard + 4),
-                        boxShadow: exCardShadow,
+                        clipBehavior: Clip.antiAlias,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(exRadiusCard + 4),
+                          boxShadow: exCardShadow,
+                        ),
+                        child: header,
                       ),
-                      child: header,
-                    ),
                     ),
                   ),
                 ),
@@ -520,6 +523,9 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
 
 class _Header extends StatelessWidget {
   final Exhibition ex;
+
+  /// Inner padding of the header card.
+  final double inset;
   final VoidCallback onGiveDemo;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
@@ -533,6 +539,7 @@ class _Header extends StatelessWidget {
 
   const _Header({
     required this.ex,
+    required this.inset,
     required this.onGiveDemo,
     this.onEdit,
     this.onDelete,
@@ -547,81 +554,93 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     final dates = exDateRange(ex.startDate, ex.endDate);
     final active = ex.status == ExhibitionStatus.active;
+    final white80 = Colors.white.withValues(alpha: 0.85);
+    Widget info(IconData icon, String text) => Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 1),
+              child: Icon(icon, size: 17, color: white80),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(text,
+                  style: const TextStyle(fontSize: 14.5, height: 1.3, fontWeight: FontWeight.w600, color: Colors.white)),
+            ),
+          ],
+        );
+    final hero = Container(
+      width: double.infinity,
+      padding: EdgeInsets.fromLTRB(inset, inset, inset, inset + 2),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: active
+              ? const [Color(0xFF1E3A8A), exBrandBold, Color(0xFF0891B2)]
+              : const [Color(0xFF334155), Color(0xFF475569), Color(0xFF64748B)],
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              ExPill(
+                label: ex.status.label,
+                background: Colors.white.withValues(alpha: 0.18),
+                foreground: Colors.white,
+                dot: active,
+                icon: active ? null : Icons.check_circle_rounded,
+              ),
+              const Spacer(),
+              if (onEdit != null)
+                _EditButton(
+                  tooltip: 'Edit exhibition',
+                  color: Colors.white,
+                  background: Colors.white.withValues(alpha: 0.16),
+                  onPressed: onEdit!,
+                ),
+              if (onDelete != null) ...[
+                const SizedBox(width: 8),
+                _EditButton(
+                  tooltip: 'Delete exhibition',
+                  icon: Icons.delete_outline_rounded,
+                  color: Colors.white,
+                  background: Colors.white.withValues(alpha: 0.16),
+                  onPressed: onDelete!,
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 14),
+          // Title gets the full width so long names wrap between words.
+          Text(ex.name,
+              style: exHeadingLg.copyWith(
+                  fontSize: 23, height: 1.25, fontWeight: FontWeight.w700, color: Colors.white)),
+          const SizedBox(height: 12),
+          info(Icons.location_on_rounded, ex.place.isEmpty ? 'Venue not set' : ex.place),
+          const SizedBox(height: 6),
+          info(Icons.event_rounded, dates),
+        ],
+      ),
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Brand tile with the show icon.
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                gradient: active ? exHeroGradient : null,
-                color: active ? null : exNeutralBg,
-                borderRadius: BorderRadius.circular(exRadiusControl + 2),
-                boxShadow: active ? exBrandGlow : null,
-              ),
-              child: Icon(Icons.storefront_rounded,
-                  size: 26, color: active ? Colors.white : exInk),
-            ),
-            const SizedBox(width: 14),
-            // Title gets the full width (Edit / Delete sit on the status
-            // row) so long names wrap between words, not inside them.
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(ex.name,
-                      style: exHeadingLg.copyWith(
-                          fontSize: 22, height: 1.25, fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      ExStatusBadge(status: ex.status),
-                      const Spacer(),
-                      if (onEdit != null)
-                        _EditButton(tooltip: 'Edit exhibition', onPressed: onEdit!),
-                      if (onDelete != null) ...[
-                        const SizedBox(width: 8),
-                        _EditButton(
-                          tooltip: 'Delete exhibition',
-                          icon: Icons.delete_outline_rounded,
-                          color: exDanger,
-                          background: exDangerBg,
-                          onPressed: onDelete!,
-                        ),
-                      ],
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
+        hero,
+        Padding(
+          padding: EdgeInsets.fromLTRB(inset, 0, inset, inset),
+          child: _body(context),
         ),
-        const SizedBox(height: 16),
-        // Where and when; long venues wrap so nothing is cut off.
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          decoration: BoxDecoration(
-            color: exPageBg,
-            borderRadius: BorderRadius.circular(exRadiusControl),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _InfoLine(
-                icon: Icons.location_on_rounded,
-                text: ex.place.isEmpty ? 'Venue not set' : ex.place,
-              ),
-              const SizedBox(height: 8),
-              _InfoLine(icon: Icons.event_rounded, text: dates),
-            ],
-          ),
-        ),
-        const SizedBox(height: 14),
+      ],
+    );
+  }
+
+  Widget _body(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [        const SizedBox(height: 14),
         // Counters
         Row(
           children: [
@@ -651,13 +670,19 @@ class _Header extends StatelessWidget {
               child: ExMetricTile(
                 icon: Icons.groups_rounded,
                 value: '${ex.attendees.isNotEmpty ? ex.attendees.length : ex.attendeeCount}',
-                label: 'Team',
+                label: (ex.attendees.isNotEmpty ? ex.attendees.length : ex.attendeeCount) == 1
+                    ? 'Attendee'
+                    : 'Attendees',
                 color: exAccentTeam,
                 background: exAccentTeamBg,
               ),
             ),
           ],
         ),
+        if (demoCount > 0) ...[
+          const SizedBox(height: 10),
+          _ConversionLink(demos: demoCount, leads: leadCount, onTap: () => onShowTab(2)),
+        ],
         if (ex.notes.trim().isNotEmpty) ...[
           const SizedBox(height: 14),
           ExNoteBox(text: ex.notes.trim(), icon: true),
@@ -749,35 +774,57 @@ class _Header extends StatelessWidget {
   }
 }
 
-/// Icon + text line in the header's where/when panel.
-class _InfoLine extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  const _InfoLine({required this.icon, required this.text});
+/// "42% of demos became leads · See insights ›" under the counters.
+class _ConversionLink extends StatelessWidget {
+  final int demos;
+  final int leads;
+  final VoidCallback onTap;
+  const _ConversionLink({required this.demos, required this.leads, required this.onTap});
 
   @override
-  Widget build(BuildContext context) => Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, size: 16, color: exBrandBold),
+  Widget build(BuildContext context) {
+    final v = (leads / demos).clamp(0.0, 1.0);
+    final pct = (leads * 100 / demos).round();
+    return Material(
+      color: const Color(0xFFFFF6EF),
+      borderRadius: BorderRadius.circular(exRadiusControl),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(exRadiusControl),
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+          child: Row(
+            children: [
+              ExRingGauge(
+                value: v,
+                size: 46,
+                color: exChartLead,
+                track: const Color(0xFFFBDCCB),
+                center: Text('$pct%',
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: exInk)),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(exConversionWords(demos, leads),
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: exInk)),
+                    const Text('Tap to see charts and insights',
+                        style: TextStyle(fontSize: 12, color: exSubtle)),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right_rounded, color: exSubtle),
+            ],
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(text,
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: exInk)),
-            ),
-          ),
-        ],
-      );
+        ),
+      ),
+    );
+  }
 }
 
 // MARK: - Tabs

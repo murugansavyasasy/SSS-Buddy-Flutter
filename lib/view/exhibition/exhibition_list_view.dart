@@ -8,6 +8,7 @@ import '../../auth/model/ExhibitionModel.dart';
 import '../../viewModel/exhibition_viewmodel.dart';
 import 'exhibition_create_view.dart';
 import 'exhibition_detail_view.dart';
+import 'widget/exhibition_charts.dart';
 import 'widget/exhibition_overview.dart';
 import 'widget/exhibition_common.dart';
 
@@ -676,7 +677,7 @@ class ExhibitionCard extends StatelessWidget {
                   _Counter(
                     icon: Icons.groups_rounded,
                     value: e.attendeeCount,
-                    label: 'Team', // matches the detail screen; 'Attendees' crowded the divider
+                    label: e.attendeeCount == 1 ? 'Attendee' : 'Attendees',
                     color: exAccentTeam,
                     background: exAccentTeamBg,
                   ),
@@ -700,7 +701,67 @@ class ExhibitionCard extends StatelessWidget {
               ),
             ),
           ),
+          if (e.demoCount > 0) _ConversionStrip(demos: e.demoCount, leads: e.leadCount),
         ],
+      ),
+    );
+  }
+}
+
+/// "▮▮▮▯ 42% of demos became leads" at the foot of a card.
+class _ConversionStrip extends StatelessWidget {
+  final int demos;
+  final int leads;
+  const _ConversionStrip({required this.demos, required this.leads});
+
+  @override
+  Widget build(BuildContext context) {
+    final v = (leads / demos).clamp(0.0, 1.0);
+    final pct = (leads * 100 / demos).round();
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+      child: Semantics(
+        label: '$pct percent of demos became leads',
+        excludeSemantics: true,
+        child: Row(
+          children: [
+            Expanded(
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(begin: exReduceMotion(context) ? v : 0, end: v),
+                duration: const Duration(milliseconds: 800),
+                curve: Curves.easeOutCubic,
+                builder: (_, t, __) => ClipRRect(
+                  borderRadius: BorderRadius.circular(3),
+                  child: SizedBox(
+                    height: 6,
+                    child: Stack(
+                      children: [
+                        Container(color: exChartTrack),
+                        FractionallySizedBox(
+                          widthFactor: t,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(colors: [Color(0xFFF09466), exChartLead]),
+                              borderRadius: BorderRadius.circular(3),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Text.rich(
+              TextSpan(children: [
+                TextSpan(text: '$pct%', style: const TextStyle(fontWeight: FontWeight.w800, color: exInk)),
+                const TextSpan(text: ' of demos became leads'),
+              ]),
+              style: const TextStyle(fontSize: 12, color: exSubtle),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -768,16 +829,18 @@ class _Counter extends StatelessWidget {
         child: Semantics(
           label: '$value $label',
           excludeSemantics: true,
-          child: Row(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                width: 30,
-                height: 30,
+                width: 28,
+                height: 28,
                 decoration: BoxDecoration(color: background, shape: BoxShape.circle),
                 child: Icon(icon, size: 16, color: color),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Flexible(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -786,15 +849,20 @@ class _Counter extends StatelessWidget {
                     ExCountUp(value,
                         style: const TextStyle(
                             fontSize: 16, height: 1.1, fontWeight: FontWeight.w700, color: exInk)),
-                    Text(label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            fontSize: 11, fontWeight: FontWeight.w600, color: exSubtle)),
+                    // Shrink rather than cut "Attendees" on narrow phones.
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(label,
+                          maxLines: 1,
+                          style: const TextStyle(
+                              fontSize: 11, fontWeight: FontWeight.w600, color: exSubtle)),
+                    ),
                   ],
                 ),
               ),
             ],
+          ),
           ),
         ),
       );
