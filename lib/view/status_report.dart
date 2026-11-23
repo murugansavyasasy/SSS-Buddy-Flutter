@@ -52,7 +52,7 @@ class StatusReport extends ConsumerWidget {
         body: Column(
           children: [
             ToolbarLayout(
-              title: "Status Report Menu",
+              title: "Status Report",
               navigateTo: const Dashboard(),
             ),
             Expanded(
