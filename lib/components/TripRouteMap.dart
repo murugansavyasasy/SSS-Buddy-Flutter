@@ -115,14 +115,36 @@ List<RouteStop> buildRouteStops(List<Overalltripdetailsmodel> trips) {
   return stops;
 }
 
-/// True when [s] is a trip END within [meters] of any trip START pin, e.g.
-/// a member who starts and ends the day at home. Such pins are nudged aside
-/// on the map so the home flag is not hidden under the END pin.
-bool endSitsOnStart(RouteStop s, List<RouteStop> stops, {double meters = 40}) {
-  if (s.kind != StopKind.end) return false;
+/// Pins closer than [meters] to each other would hide one another: two
+/// visits to the same school, a trip that ends at home, etc. For each stop
+/// (same order as [stops]) returns its slot in that spot's row: 0 when the
+/// pin is alone, otherwise spread around the spot in stop order
+/// (-0.5, 0.5 for two pins; -1, 0, 1 for three…), so the map shows as many
+/// pins as there are records.
+List<double> pinSlots(List<RouteStop> stops, {double meters = 40}) {
   const d = Distance();
-  return stops.any((o) =>
-      o.kind == StopKind.start && d.as(LengthUnit.Meter, o.point, s.point) <= meters);
+  final anchors = <LatLng>[];
+  final group = <int>[];
+  for (final s in stops) {
+    var g = anchors.indexWhere(
+        (a) => d.as(LengthUnit.Meter, a, s.point) <= meters);
+    if (g < 0) {
+      anchors.add(s.point);
+      g = anchors.length - 1;
+    }
+    group.add(g);
+  }
+  final size = List<int>.filled(anchors.length, 0);
+  for (final g in group) {
+    size[g]++;
+  }
+  final seen = List<int>.filled(anchors.length, 0);
+  final slots = <double>[];
+  for (final g in group) {
+    slots.add(seen[g] - (size[g] - 1) / 2);
+    seen[g]++;
+  }
+  return slots;
 }
 
 /// For each stop (in order), the index of the nearest point on [line],
@@ -243,6 +265,7 @@ class TripRouteMapState extends State<TripRouteMap> {
   final MapController _map = MapController();
   bool _ready = false;
   List<RouteStop> _stops = [];
+  List<double> _slots = []; // side-by-side slot of each pin, see pinSlots
   String _stopsKey = '';
   List<LatLng>? _road;
   bool _routing = false;
@@ -278,6 +301,7 @@ class TripRouteMapState extends State<TripRouteMap> {
         .join('|');
     if (key == _stopsKey) return;
     _stops = stops;
+    _slots = pinSlots(stops);
     _stopsKey = key;
     _road = null;
     _routing = false;
@@ -511,16 +535,20 @@ class TripRouteMapState extends State<TripRouteMap> {
       point: s.point,
       width: 34,
       height: 46,
-      // Pin tip sits on the lat/long; an END on top of the home flag leans
-      // right so both pins stay visible and tappable.
-      alignment: endSitsOnStart(s, _stops)
-          ? const Alignment(1.6, -1)
-          : Alignment.topCenter,
+      // Pin tip sits on the lat/long. Pins sharing a spot (two visits to
+      // one school, END at the home START…) stand side by side in stop
+      // order so every record keeps its own visible, tappable pin.
+      alignment: Alignment(_slotOf(s) * 2.2, -1),
       child: GestureDetector(
         onTap: widget.compact ? widget.onTap : () => _showStop(s, color),
         child: _Pin(color: color, label: s.label, icon: _stopIcon(s)),
       ),
     );
+  }
+
+  double _slotOf(RouteStop s) {
+    final i = _stops.indexOf(s);
+    return i >= 0 && i < _slots.length ? _slots[i] : 0;
   }
 
   Future<String> _addressFor(LatLng p) {

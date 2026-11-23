@@ -100,18 +100,28 @@ void main() {
     expect(stats.duration, '5h 13m'); // from trip start/end, not "--"
   });
 
-  test('END at the home START is flagged so the map keeps the flag visible', () {
+  test('pins at the same spot stand side by side, one per record', () {
     const home = LatLng(13.0827, 80.2707);
     const school = LatLng(13.1000, 80.2900);
-    const start = RouteStop(point: home, kind: StopKind.start, label: 'S', title: 'Trip started');
-    const visit = RouteStop(point: school, kind: StopKind.visit, label: '1', title: 'School');
-    const endHome = RouteStop(
-        point: LatLng(13.08280, 80.27075), kind: StopKind.end, label: 'E', title: 'Trip ended');
-    const endAway = RouteStop(point: school, kind: StopKind.end, label: 'E', title: 'Trip ended');
-    final stops = [start, visit, endHome];
-    expect(endSitsOnStart(endHome, stops), isTrue);
-    expect(endSitsOnStart(endAway, [start, visit, endAway]), isFalse);
-    expect(endSitsOnStart(start, stops), isFalse);
-    expect(endSitsOnStart(visit, stops), isFalse);
+    const other = LatLng(13.1500, 80.2500);
+    RouteStop at(LatLng p, StopKind k, String l) =>
+        RouteStop(point: p, kind: k, label: l, title: l);
+    final stops = [
+      at(home, StopKind.start, 'S'),
+      at(school, StopKind.visit, '1'),
+      at(const LatLng(13.10005, 80.29003), StopKind.visit, '2'), // same school
+      at(other, StopKind.visit, '3'),
+      at(const LatLng(13.08280, 80.27075), StopKind.end, 'E'), // back home
+    ];
+    // S|E share home, 1|2 share the school, 3 is alone.
+    expect(pinSlots(stops), [-0.5, -0.5, 0.5, 0.0, 0.5]);
+
+    final three = [
+      at(school, StopKind.visit, '1'),
+      at(school, StopKind.visit, '2'),
+      at(school, StopKind.visit, '3'),
+    ];
+    expect(pinSlots(three), [-1.0, 0.0, 1.0]);
+    expect(pinSlots([at(school, StopKind.visit, '1')]), [0.0]);
   });
 }
