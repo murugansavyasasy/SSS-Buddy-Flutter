@@ -121,15 +121,23 @@ const demoVideoLanguages = <String, List<String>>{
 
 /// From the Management Videos list (GET api/mobile/GetVideos), the first
 /// video whose name mentions each language, in [demoVideoLanguages] order.
-/// Languages with no matching video are left out.
-List<DemoVideoLink> pickDemoVideoLinks(List<Managementvideosmodel> videos) => [
+/// A non-empty link in [fixed] (e.g. {'English': url}) is used for that
+/// language instead. Languages with no link are left out.
+List<DemoVideoLink> pickDemoVideoLinks(
+  List<Managementvideosmodel> videos, {
+  Map<String, String> fixed = const {},
+}) =>
+    [
       for (final lang in demoVideoLanguages.entries)
-        for (final v in videos
-            .where((v) =>
-                v.videoURL.trim().isNotEmpty &&
-                lang.value.any((w) => v.videoName.toLowerCase().contains(w)))
-            .take(1))
-          (label: lang.key, url: v.videoURL.trim()),
+        if ((fixed[lang.key] ?? '').trim().isNotEmpty)
+          (label: lang.key, url: fixed[lang.key]!.trim())
+        else
+          for (final v in videos
+              .where((v) =>
+                  v.videoURL.trim().isNotEmpty &&
+                  lang.value.any((w) => v.videoName.toLowerCase().contains(w)))
+              .take(1))
+            (label: lang.key, url: v.videoURL.trim()),
     ];
 
 /// Link that opens a chat with [number] and a prefilled message carrying

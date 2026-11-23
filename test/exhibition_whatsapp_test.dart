@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sssbuddy/auth/model/ExhibitionModel.dart';
 import 'package:sssbuddy/auth/model/ManagementVideosModel.dart';
+import 'package:sssbuddy/components/open_in_browser.dart';
 
 Managementvideosmodel _v(String name, String url) =>
     Managementvideosmodel(videoName: name, videoURL: url, videoType: 'youtube');
@@ -32,6 +33,20 @@ void main() {
       ]);
       expect(links, [(label: 'Hindi', url: 'https://youtu.be/hi')]);
       expect(pickDemoVideoLinks(const []), isEmpty);
+    });
+
+    test('fixed English link wins over Management Videos, others still picked', () {
+      const en = 'https://www.youtube.com/watch?v=fzYarCgUUgw';
+      final links = pickDemoVideoLinks([
+        _v('SSS Score - English', 'https://youtu.be/en'),
+        _v('TAMIL demo', 'https://youtu.be/ta'),
+      ], fixed: {'English': en});
+      expect(links, [(label: 'English', url: en), (label: 'Tamil', url: 'https://youtu.be/ta')]);
+      // Videos didn't load: English is still sent.
+      expect(pickDemoVideoLinks(const [], fixed: {'English': en}), [(label: 'English', url: en)]);
+      // Empty fixed link falls back to Management Videos.
+      expect(pickDemoVideoLinks([_v('English', 'https://youtu.be/en')], fixed: {'English': ''}).single.url,
+          'https://youtu.be/en');
     });
   });
 
@@ -91,5 +106,15 @@ void main() {
       expect(uri.queryParameters['phone'], '919876543210');
       expect(uri.queryParameters['text'], contains('https://youtu.be/a'));
     });
+  });
+
+  test('WhatsApp Web opens in Safari first on iOS, then Chrome, then default', () {
+    final web = Uri.parse('https://web.whatsapp.com/send?phone=919876543210&text=Hi%20there');
+    expect(browserCandidates(web, isIOS: true).map((u) => u.toString()), [
+      'x-safari-https://web.whatsapp.com/send?phone=919876543210&text=Hi%20there',
+      'googlechromes://web.whatsapp.com/send?phone=919876543210&text=Hi%20there',
+      web.toString(),
+    ]);
+    expect(browserCandidates(web, isIOS: false), [web]);
   });
 }

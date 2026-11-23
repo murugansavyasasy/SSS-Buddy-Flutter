@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../auth/model/ExhibitionModel.dart';
+import '../auth/model/ManagementVideosModel.dart';
 import '../repository/app_url.dart';
+import 'open_in_browser.dart';
 import '../viewModel/exhibition_viewmodel.dart';
 import '../viewModel/management_videos_viewmodel.dart';
 
@@ -15,16 +17,21 @@ bool get demoVideoEnabled => AppUrl.exhibitionDemoVideoUrl.trim().isNotEmpty;
 bool canSendDemoVideoTo(String number) =>
     demoVideoEnabled && isValidIndianMobile(normalizeIndianMobile(number));
 
-/// English, Tamil, Hindi and Kannada videos from the Management Videos
-/// module; the single `AppUrl.exhibitionDemoVideoUrl` link when none load.
+/// English (`AppUrl.demoVideoEnglishUrl`), then Tamil, Hindi and Kannada
+/// videos from the Management Videos module; the single
+/// `AppUrl.exhibitionDemoVideoUrl` link when there is none at all.
 Future<List<DemoVideoLink>> demoVideoLinks(BuildContext context) async {
+  final fixed = {'English': AppUrl.demoVideoEnglishUrl};
+  var all = const <Managementvideosmodel>[];
   try {
-    final all = await ProviderScope.containerOf(context, listen: false)
+    all = await ProviderScope.containerOf(context, listen: false)
         .read(managementVideosProvider.future)
         .timeout(const Duration(seconds: 15));
-    final picked = pickDemoVideoLinks(all);
-    if (picked.isNotEmpty) return picked;
-  } catch (_) {}
+  } catch (_) {
+    // Videos didn't load: still send the fixed English link.
+  }
+  final picked = pickDemoVideoLinks(all, fixed: fixed);
+  if (picked.isNotEmpty) return picked;
   return [(label: '', url: AppUrl.exhibitionDemoVideoUrl)];
 }
 
@@ -48,6 +55,8 @@ Future<bool> launchDemoVideoWhatsApp(
     greeting: greeting,
     web: !hasApp,
   );
+  // No WhatsApp app: WhatsApp Web, in Safari first on iOS, then Chrome.
+  if (!hasApp) return openInBrowser(uri);
   try {
     return await launchUrl(uri, mode: LaunchMode.externalApplication);
   } catch (_) {
