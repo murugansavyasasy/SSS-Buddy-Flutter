@@ -490,6 +490,7 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
   late final _number =
       TextEditingController(text: widget.lead?.contactNumber ?? widget.prefillNumber ?? '');
   late final _email = TextEditingController(text: widget.lead?.contactEmail ?? '');
+  late final _designation = TextEditingController(text: widget.lead?.contactDesignation ?? '');
   late final _notes = TextEditingController(text: widget.lead?.notes ?? '');
   /// New leads start at Excellent; edits keep the saved level.
   late InterestLevel _level = widget.lead?.interestLevel ?? InterestLevel.excellent;
@@ -509,7 +510,7 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
 
   @override
   void dispose() {
-    for (final c in [_school, _city, _contact, _number, _email, _notes]) {
+    for (final c in [_school, _city, _contact, _designation, _number, _email, _notes]) {
       c.dispose();
     }
     super.dispose();
@@ -735,6 +736,7 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
         contactName: _contact.text.trim(),
         contactNumber: normalizeIndianMobile(_number.text.trim()),
         contactEmail: _email.text.trim(),
+        contactDesignation: _designation.text.trim(),
         notes: _notes.text.trim(),
         interestLevel: _level,
         attachments: attachments,
@@ -798,7 +800,10 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
   }
 
   bool get _contactEmpty =>
-      _contact.text.trim().isEmpty && _number.text.trim().isEmpty && _email.text.trim().isEmpty;
+      _contact.text.trim().isEmpty &&
+      _designation.text.trim().isEmpty &&
+      _number.text.trim().isEmpty &&
+      _email.text.trim().isEmpty;
 
   String get _nextLabel => switch (_step) {
         _reviewStep => _editing ? 'Update Lead' : 'Save Lead',
@@ -837,7 +842,6 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
           hint: 'School name',
           icon: Icons.apartment_rounded,
           errorText: schoolError,
-          autofocus: !_editing && _school.text.isEmpty,
           textCapitalization: TextCapitalization.words,
           textInputAction: TextInputAction.next,
           onChanged: _rebuildIfTried,
@@ -914,6 +918,15 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
           ),
           const SizedBox(height: 14),
           ExBigInput(
+            controller: _designation,
+            hint: 'Designation (e.g. Principal)',
+            icon: Icons.work_outline_rounded,
+            textCapitalization: TextCapitalization.words,
+            textInputAction: TextInputAction.next,
+            onChanged: (_) => setState(() {}),
+          ),
+          const SizedBox(height: 14),
+          ExBigInput(
             controller: _number,
             hint: '10-digit mobile',
             prefixText: '+91  ',
@@ -977,7 +990,7 @@ class _CaptureLeadSheetState extends ConsumerState<_CaptureLeadSheet> {
   Widget _reviewStepView() {
     final (bg, fg) = interestLevelColors(_level);
     final contact = [
-      _contact.text.trim(),
+      [_contact.text.trim(), _designation.text.trim()].where((s) => s.isNotEmpty).join(', '),
       if (_number.text.trim().isNotEmpty) formatIndianMobile(_number.text.trim()),
       _email.text.trim(),
     ].where((s) => s.isNotEmpty).join(' · ');

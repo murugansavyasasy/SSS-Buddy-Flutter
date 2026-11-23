@@ -119,4 +119,14 @@ void main() {
       expect(parseInterestLevel(v), isNull);
     }
   });
+
+  test('lead contact designation round trip', () {
+    final l = ExhibitionLead.fromJson({'id': '3', 'schoolName': 'X', 'contactDesignation': 'Principal'});
+    expect(l.contactDesignation, 'Principal');
+    expect(ExhibitionLead.fromJson({'id': '4', 'schoolName': 'Y', 'Designation': 'Correspondent'}).contactDesignation,
+        'Correspondent');
+    expect(const CaptureLeadRequest(schoolName: 'X', contactDesignation: 'Principal').toJson()['contactDesignation'],
+        'Principal');
+    expect(const CaptureLeadRequest(schoolName: 'X').toJson()['contactDesignation'], '');
+  });
 }

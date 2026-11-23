@@ -545,6 +545,7 @@ class ExhibitionLead {
   final String contactName;
   final String contactNumber;
   final String contactEmail;
+  final String contactDesignation;
   final String notes;
   final String capturedBy;
   final DateTime? createdAt;
@@ -563,6 +564,7 @@ class ExhibitionLead {
     this.contactName = '',
     this.contactNumber = '',
     this.contactEmail = '',
+    this.contactDesignation = '',
     this.notes = '',
     this.capturedBy = '',
     this.createdAt,
@@ -584,6 +586,8 @@ class ExhibitionLead {
         contactNumber: normalizeIndianMobile(
             _str(j, ['contactNumber', 'ContactNumber', 'contactMobile', 'phone'])),
         contactEmail: _str(j, ['contactEmail', 'ContactEmail', 'email']),
+        contactDesignation:
+            _str(j, ['contactDesignation', 'ContactDesignation', 'designation', 'Designation']),
         notes: _str(j, ['notes', 'Notes']),
         capturedBy: _str(j, ['createdByName', 'capturedBy', 'createdBy', 'CreatedBy']),
         capturedById: _str(j, ['createdById', 'CreatedById', 'capturedById', 'createdByUserId', 'userId']),
@@ -630,6 +634,7 @@ class CaptureLeadRequest {
   final String contactName;
   final String contactNumber;
   final String contactEmail;
+  final String contactDesignation;
   final String notes;
   final InterestLevel interestLevel;
 
@@ -645,6 +650,7 @@ class CaptureLeadRequest {
     this.contactName = '',
     this.contactNumber = '',
     this.contactEmail = '',
+    this.contactDesignation = '',
     this.notes = '',
     this.interestLevel = InterestLevel.good,
     this.attachments = const [],
@@ -657,6 +663,7 @@ class CaptureLeadRequest {
         'contactName': contactName,
         'contactNumber': contactNumber,
         'contactEmail': contactEmail,
+        'contactDesignation': contactDesignation,
         'notes': notes,
         'interestLevel': interestLevel.apiValue,
         'mediaUrl': attachments.isEmpty ? '' : attachments.first,

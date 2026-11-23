@@ -1326,7 +1326,7 @@ class _LeadCard extends StatelessWidget {
     final l = lead;
     final hasCall = l.contactNumber.isNotEmpty;
     final hasMail = l.contactEmail.isNotEmpty;
-    final hasContact = l.contactName.isNotEmpty || hasCall || hasMail;
+    final hasContact = l.contactName.isNotEmpty || l.contactDesignation.isNotEmpty || hasCall || hasMail;
     final initial = l.schoolName.trim().isEmpty ? '?' : l.schoolName.trim()[0].toUpperCase();
     final level = l.interestLevel;
     final accent = level == null ? exBrandBold : interestLevelColors(level).$2;
@@ -1449,6 +1449,12 @@ class _LeadCard extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
                                     fontSize: 15, fontWeight: FontWeight.w700, color: exInk)),
+                            if (l.contactDesignation.isNotEmpty)
+                              Text(l.contactDesignation,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                      fontSize: 12.5, fontWeight: FontWeight.w600, color: exSubtle)),
                             if (hasCall)
                               Text(formatIndianMobile(l.contactNumber),
                                   maxLines: 1,

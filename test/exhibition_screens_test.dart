@@ -378,6 +378,8 @@ void main() {
       )));
       await t.tap(find.text('lead'));
       await _settle(t);
+      // No field is focused (keyboard stays down) until the user taps one.
+      expect(find.byWidgetPredicate((w) => w is EditableText && w.focusNode.hasFocus), findsNothing);
       await _shot(t, 'ex_lead_sheet_$name');
       Navigator.of(t.element(find.text('lead'))).popUntil((r) => r.isFirst);
       await _settle(t);
