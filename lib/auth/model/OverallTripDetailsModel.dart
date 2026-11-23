@@ -275,6 +275,9 @@ class VisitDetail {
   String? remarks;
   String? address;
 
+  /// When the visit was recorded, as sent by the API (null if not sent).
+  String? visit_time;
+
   VisitDetail({
     this.school_latitude,
     this.school_longitude,
@@ -283,7 +286,27 @@ class VisitDetail {
     this.reason_of_visit,
     this.remarks,
     this.address,
+    this.visit_time,
   });
+
+  /// Keys the API may use for the time a visit was recorded.
+  static const _timeKeys = [
+    'visit_time', 'visit_date_time', 'visit_datetime', 'visited_at', 'visited_time',
+    'VisitTime', 'VisitDateTime', 'visit_date', 'VisitDate',
+    'created_at', 'created_on', 'created_date', 'created_time',
+    'CreatedAt', 'CreatedOn', 'CreatedDate', 'time',
+  ];
+
+  static String? _timeFrom(Map<String, dynamic> json) {
+    for (final k in _timeKeys) {
+      final v = json[k]?.toString().trim() ?? '';
+      if (v.isNotEmpty && v.toLowerCase() != 'null') return v;
+    }
+    return null;
+  }
+
+  /// Parsed [visit_time]; null when the API didn't send one.
+  DateTime? get visitDateTime => Overalltripdetailsmodel._parseApiDate(visit_time);
 
   factory VisitDetail.fromJson(
       Map<String, dynamic> json,
@@ -308,6 +331,7 @@ class VisitDetail {
       json["remarks"]?.toString(),
 
       address: null,
+      visit_time: _timeFrom(json),
     );
   }
 

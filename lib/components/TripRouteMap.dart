@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:intl/intl.dart' show DateFormat;
 import 'package:latlong2/latlong.dart' show Distance, LatLng, LengthUnit;
 import 'package:vector_map_tiles/vector_map_tiles.dart'
     show Style, VectorTileLayer, VectorTileLayerMode;
@@ -92,6 +93,8 @@ List<RouteStop> buildRouteStops(List<Overalltripdetailsmodel> trips) {
         title: (v.school_name ?? '').trim().isEmpty
             ? 'Visit $visitNo'
             : v.school_name!.trim(),
+        time: v.visit_time?.trim(),
+        at: v.visitDateTime,
         details: [
           if ((v.person_name ?? '').trim().isNotEmpty) 'Met: ${v.person_name}',
           if ((v.reason_of_visit ?? '').trim().isNotEmpty)
@@ -531,17 +534,29 @@ class TripRouteMapState extends State<TripRouteMap> {
 
   Marker _pinMarker(RouteStop s) {
     final color = _stopColor(s);
+    // Full map: the record's time sits in a chip above its pin.
+    final time = widget.compact || s.at == null ? null : stopTimeLabel(s.at!);
+    final width = time == null ? 34.0 : 64.0;
     return Marker(
       point: s.point,
-      width: 34,
-      height: 46,
+      width: width,
+      height: time == null ? 46 : 68,
       // Pin tip sits on the lat/long. Pins sharing a spot (two visits to
       // one school, END at the home START…) stand side by side in stop
-      // order so every record keeps its own visible, tappable pin.
+      // order so every record keeps its own visible, tappable pin
+      // (x offset scales with width: ~70 px apart with time chips, 37 without).
       alignment: Alignment(_slotOf(s) * 2.2, -1),
       child: GestureDetector(
         onTap: widget.compact ? widget.onTap : () => _showStop(s, color),
-        child: _Pin(color: color, label: s.label, icon: _stopIcon(s)),
+        child: time == null
+            ? _Pin(color: color, label: s.label, icon: _stopIcon(s))
+            : Column(
+                children: [
+                  _TimeChip(text: time, color: color),
+                  const SizedBox(height: 2),
+                  _Pin(color: color, label: s.label, icon: _stopIcon(s)),
+                ],
+              ),
       ),
     );
   }
@@ -628,11 +643,25 @@ class TripRouteMapState extends State<TripRouteMap> {
                     Text(s.title,
                         style: const TextStyle(
                             fontSize: 16, fontWeight: FontWeight.w700)),
-                    if ((s.time ?? '').isNotEmpty) ...[
+                    if (s.at != null || (s.time ?? '').isNotEmpty) ...[
                       const SizedBox(height: 4),
-                      Text(s.time!,
-                          style: TextStyle(
-                              fontSize: 13, color: Colors.grey.shade600)),
+                      Row(
+                        children: [
+                          Icon(Icons.schedule_rounded,
+                              size: 15, color: Colors.grey.shade600),
+                          const SizedBox(width: 5),
+                          Flexible(
+                            child: Text(
+                              s.at != null
+                                  ? '${s.kind == StopKind.visit ? 'Recorded at' : 'At'} '
+                                      '${DateFormat('h:mm a · d MMM yyyy').format(s.at!)}'
+                                  : s.time!,
+                              style: TextStyle(
+                                  fontSize: 13, color: Colors.grey.shade700),
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                     for (final d in s.details) ...[
                       const SizedBox(height: 4),
@@ -807,6 +836,38 @@ class TripRouteMapState extends State<TripRouteMap> {
 // ─────────────────────────────────────────────
 // Pin widgets
 // ─────────────────────────────────────────────
+
+/// "10:42 AM": the time shown above a pin on the full map.
+String stopTimeLabel(DateTime at) => DateFormat('h:mm a').format(at);
+
+/// Small white chip with a pin's time, outlined in the pin colour.
+class _TimeChip extends StatelessWidget {
+  final String text;
+  final Color color;
+  const _TimeChip({required this.text, required this.color});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        height: 20,
+        padding: const EdgeInsets.symmetric(horizontal: 5),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color, width: 1.2),
+          boxShadow: const [
+            BoxShadow(color: Color(0x33000000), blurRadius: 3, offset: Offset(0, 1)),
+          ],
+        ),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(text,
+              maxLines: 1,
+              style: TextStyle(
+                  fontSize: 10.5, fontWeight: FontWeight.w800, color: color)),
+        ),
+      );
+}
 
 class _Pin extends StatelessWidget {
   final Color color;

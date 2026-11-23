@@ -184,7 +184,8 @@ class _TripTimelineViewState extends State<TripTimelineView> {
       final s = _stops[i];
       DateTime? time = s.at;
       var approx = false;
-      if (s.kind == StopKind.visit && onTrack != null) {
+      // The visit's recorded time wins; otherwise estimate arrival from GPS.
+      if (s.kind == StopKind.visit && time == null && onTrack != null) {
         final p = track[onTrack[i]];
         if (d.as(LengthUnit.Meter, p.latLng, s.point) <= _arrivalRadiusM) {
           time = p.time;

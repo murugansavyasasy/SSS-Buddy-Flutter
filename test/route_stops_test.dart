@@ -124,4 +124,19 @@ void main() {
     expect(pinSlots(three), [-1.0, 0.0, 1.0]);
     expect(pinSlots([at(school, StopKind.visit, '1')]), [0.0]);
   });
+
+  test('visits carry the time they were recorded, when the API sends it', () {
+    final t = trip(1, 'Nov  5 2026  9:00AM', [
+      {'school_name': 'A', 'school_latitude': '13.05', 'school_longitude': '80.22', 'visit_time': '2026-11-05 10:42:00'},
+      {'school_name': 'B', 'school_latitude': '13.06', 'school_longitude': '80.23', 'CreatedOn': 'Nov  5 2026 11:15AM'},
+      {'school_name': 'C', 'school_latitude': '13.07', 'school_longitude': '80.24'},
+    ]);
+    final stops = buildRouteStops([t]);
+    expect(stops[0].at, isNotNull); // trip start
+    expect(stops[1].at, DateTime(2026, 11, 5, 10, 42));
+    expect(stopTimeLabel(stops[1].at!), '10:42 AM');
+    expect(stops[2].at?.hour, 11);
+    expect(stops[2].at?.minute, 15);
+    expect(stops[3].at, isNull); // no time sent: pin shows without a time
+  });
 }
