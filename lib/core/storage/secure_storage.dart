@@ -1,4 +1,5 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SecureStorage {
   static const FlutterSecureStorage _storage = FlutterSecureStorage();
@@ -8,6 +9,21 @@ class SecureStorage {
   static const String loginResponseKey = "loginResponse";
   static const String tripStartedKey = "tripStarted";
   static const String tripStartDateKey = "tripStartDate";
+
+  /// SharedPreferences flag. SharedPreferences is wiped on uninstall, but the
+  /// iOS Keychain (used by flutter_secure_storage) is not.
+  static const String _installMarkerKey = "hasLaunchedBefore";
+
+  /// Call once at startup, before reading any stored login. If the install
+  /// marker is missing this is a fresh install (or reinstall), so any login
+  /// left in the Keychain by a previous install is cleared.
+  static Future<void> clearIfFreshInstall() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(_installMarkerKey) ?? false) return;
+    await _storage.deleteAll();
+    await prefs.setBool(_installMarkerKey, true);
+  }
+
   static Future<void> saveLoginData(
     String employeeId,
     String password,
