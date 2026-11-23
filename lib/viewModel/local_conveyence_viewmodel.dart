@@ -104,14 +104,6 @@ class LocalConveyenceViewmodel
         return false;
       }
 
-      print("========== FILE CHECK ==========");
-      print("Expense ID: $idLocalExpense");
-      print("Name Value: $nameValue");
-      print("File Path: ${pdfFile.path}");
-      print("File Name: ${pdfFile.path.split('/').last}");
-      print("File Exists: ${await pdfFile.exists()}");
-      print("File Size: ${await pdfFile.length()} bytes");
-
       final repo = ref.read(repositoryProvider);
 
       final fileName = pdfFile.path.split('/').last;
@@ -126,23 +118,9 @@ class LocalConveyenceViewmodel
         ),
       });
 
-      print("========== FORMDATA ==========");
-
-      for (final field in formData.fields) {
-        print("${field.key}: ${field.value}");
-      }
-
-      for (final file in formData.files) {
-        print("${file.key}: ${file.value.filename}");
-      }
-
-      print("🚀 Uploading file...");
-
       final success = await repo.uploadExpenseFile(
         body: formData,
       );
-
-      print("📥 Upload result: $success");
 
       return success;
     } catch (e, stackTrace) {

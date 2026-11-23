@@ -55,11 +55,6 @@ class LoginViewModel extends AsyncNotifier<LoginData?> {
       // Global variable store
       globalUserId = user.userId.toString();
 
-      print("✅ User ID: ${user.userId}");
-      print("✅ Name: ${user.name}");
-      print("✅ Token: ${user.token}");
-      print("✅ roleCode: '${user.roleCode}', roleName: '${user.roleName}', roleSlug: '${user.roleSlug}'");
-
       state = AsyncData(user);
       return true;
     } catch (e, stack) {
