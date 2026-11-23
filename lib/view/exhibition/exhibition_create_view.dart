@@ -122,17 +122,30 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
       _start == null ||
       _end == null ||
       _endBeforeStart ||
+      _startInPast ||
       _attendees.isEmpty;
 
   bool get _endBeforeStart => _start != null && _end != null && _end!.isBefore(_start!);
 
+  static DateTime get _today {
+    final n = DateTime.now();
+    return DateTime(n.year, n.month, n.day);
+  }
+
+  /// A new exhibition can't start before today. An edit keeps its saved
+  /// (possibly past) dates.
+  bool get _startInPast => !_editing && _start != null && _start!.isBefore(_today);
+
   Future<void> _pickDate(bool isStart) async {
     final now = DateTime.now();
-    final initial = (isStart ? _start : _end) ?? _start ?? now;
-    // Widen the range so an older / far-off saved date can still open.
-    var first = DateTime(now.year - 2);
+    var initial = (isStart ? _start : _end) ?? _start ?? now;
+    // New exhibition: no past dates (the end can't go before the start).
+    // Edit: widen the range so an older / far-off saved date can still open.
+    var first = _editing ? DateTime(now.year - 2) : _today;
+    if (!_editing && !isStart && _start != null && _start!.isAfter(first)) first = _start!;
     var last = DateTime(now.year + 3);
-    if (initial.isBefore(first)) first = DateTime(initial.year);
+    if (_editing && initial.isBefore(first)) first = DateTime(initial.year);
+    if (initial.isBefore(first)) initial = first;
     if (initial.isAfter(last)) last = DateTime(initial.year, 12, 31);
     final picked = await showDatePicker(
       context: context,
@@ -215,7 +228,7 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
   bool _stepValid(int step) => switch (step) {
         0 => _name.text.trim().isNotEmpty,
         1 => _venue.text.trim().isNotEmpty,
-        2 => _start != null && _end != null && !_endBeforeStart,
+        2 => _start != null && _end != null && !_endBeforeStart && !_startInPast,
         3 => _attendees.isNotEmpty,
         _ => true,
       };
@@ -512,7 +525,13 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
   // 3 · Dates
   Widget _datesStep() {
     final show = _showErrors(2);
-    final startError = show && _start == null ? 'Start date is required' : null;
+    final startError = !show
+        ? null
+        : _start == null
+            ? 'Start date is required'
+            : _startInPast
+                ? "Start date can't be in the past"
+                : null;
     final endError = !show
         ? null
         : _end == null

@@ -273,6 +273,40 @@ void main() {
 
   // ── Edit form: prefill and save ──────────────────────────────────────
 
+  group('Create exhibition dates', () {
+    Future<DatePickerDialog> openStartPicker(WidgetTester t, Widget form) async {
+      await _phone(t);
+      await t.pumpWidget(_app(_FakeRepo(_detail), form));
+      await t.pumpAndSettle();
+      final row = find.ancestor(of: find.text('DATES'), matching: find.byType(ExSummaryRow));
+      if (row.evaluate().isNotEmpty) {
+        await t.ensureVisible(row);
+        await t.tap(row);
+      } else {
+        await t.enterText(find.byType(TextField).first, 'Expo');
+        await t.tap(find.text('Next'));
+        await t.pumpAndSettle();
+        await t.enterText(find.byType(TextField).first, 'Hall');
+        await t.tap(find.text('Next'));
+      }
+      await t.pumpAndSettle();
+      await t.tap(find.text('STARTS'));
+      await t.pumpAndSettle();
+      return t.widget<DatePickerDialog>(find.byType(DatePickerDialog));
+    }
+
+    testWidgets('new exhibition: the start picker starts at today', (t) async {
+      final d = await openStartPicker(t, const ExhibitionCreateView());
+      final n = DateTime.now();
+      expect(d.firstDate, DateTime(n.year, n.month, n.day));
+    });
+
+    testWidgets('edit keeps an older saved start date selectable', (t) async {
+      final d = await openStartPicker(t, ExhibitionCreateView(initial: _listRow));
+      expect(d.firstDate.isBefore(DateTime(2027, 9, 10)), isTrue);
+    });
+  });
+
   group('Edit exhibition form', () {
     testWidgets('opens with every field from detail + list row', (t) async {
       await _phone(t);
