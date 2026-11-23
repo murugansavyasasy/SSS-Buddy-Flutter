@@ -23,7 +23,18 @@ class LocalConveyenceCard extends StatelessWidget {
   });
 
   _StatusStyle _statusStyle(String status) {
-    switch (status.toLowerCase()) {
+    final st = status.trim().toLowerCase();
+    // Longer API texts ("Waiting for approval from …") use the closest style.
+    final key = st.contains('reject')
+        ? 'rejected'
+        : st.contains('waiting') || st.contains('pending')
+            ? 'pending'
+            : st.contains('paid')
+                ? 'paid'
+                : st.contains('approved')
+                    ? 'approved'
+                    : st;
+    switch (key) {
       case 'paid':
         return _StatusStyle(
           color: const Color(0xFF059669),
@@ -76,6 +87,16 @@ class LocalConveyenceCard extends StatelessWidget {
     final hasFile = item.FilePath != null && item.FilePath.isNotEmpty;
     final userType = VimsUserTypeId ?? "";
     final approved = item.IsApproved;
+    // Short statuses sit at the right of the header; long ones ("Waiting for
+    // approval from …") get their own line under the name so they aren't cut.
+    final longStatus = item.Status.trim().length > 12;
+    final badge = _StatusBadge(
+      label: item.Status.trim(),
+      color: style.color,
+      bg: style.bg,
+      icon: style.icon,
+      wrap: longStatus,
+    );
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -152,18 +173,17 @@ class LocalConveyenceCard extends StatelessWidget {
                             ),
                           ],
                         ),
+                        if (longStatus) ...[
+                          const SizedBox(height: 6),
+                          badge,
+                        ],
                       ],
                     ),
                   ),
-                  const SizedBox(width: 8),
-
-
-                  _StatusBadge(
-                    label: item.Status,
-                    color: style.color,
-                    bg: style.bg,
-                    icon: style.icon,
-                  ),
+                  if (!longStatus) ...[
+                    const SizedBox(width: 8),
+                    badge,
+                  ],
                 ],
               ),
             ),
@@ -355,21 +375,25 @@ class _StatusBadge extends StatelessWidget {
   final Color bg;
   final IconData icon;
 
+  /// Long label on its own line: full text, wrapping as needed.
+  final bool wrap;
+
   const _StatusBadge({
     required this.label,
     required this.color,
     required this.bg,
     required this.icon,
+    this.wrap = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(maxWidth: 130),
+      constraints: wrap ? null : const BoxConstraints(maxWidth: 130),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(wrap ? 12 : 30),
         border: Border.all(color: color.withOpacity(0.25), width: 1),
       ),
       child: Row(
@@ -380,8 +404,8 @@ class _StatusBadge extends StatelessWidget {
           Flexible(
             child: Text(
               label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+              maxLines: wrap ? null : 1,
+              overflow: wrap ? null : TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
