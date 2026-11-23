@@ -17,11 +17,11 @@ bool get demoVideoEnabled => AppUrl.exhibitionDemoVideoUrl.trim().isNotEmpty;
 bool canSendDemoVideoTo(String number) =>
     demoVideoEnabled && isValidIndianMobile(normalizeIndianMobile(number));
 
-/// English (`AppUrl.demoVideoEnglishUrl`), then Tamil, Hindi and Kannada
-/// videos from the Management Videos module; the single
-/// `AppUrl.exhibitionDemoVideoUrl` link when there is none at all.
+/// The fixed English video (`AppUrl.demoVideoEnglishUrl`) plus the English,
+/// Tamil, Hindi and Kannada videos fetched from the Management Videos
+/// module; the single `AppUrl.exhibitionDemoVideoUrl` link when there is none.
 Future<List<DemoVideoLink>> demoVideoLinks(BuildContext context) async {
-  final fixed = {'English': AppUrl.demoVideoEnglishUrl};
+  final extra = <DemoVideoLink>[(label: 'English', url: AppUrl.demoVideoEnglishUrl)];
   var all = const <Managementvideosmodel>[];
   try {
     all = await ProviderScope.containerOf(context, listen: false)
@@ -30,7 +30,7 @@ Future<List<DemoVideoLink>> demoVideoLinks(BuildContext context) async {
   } catch (_) {
     // Videos didn't load: still send the fixed English link.
   }
-  final picked = pickDemoVideoLinks(all, fixed: fixed);
+  final picked = pickDemoVideoLinks(all, extra: extra);
   if (picked.isNotEmpty) return picked;
   return [(label: '', url: AppUrl.exhibitionDemoVideoUrl)];
 }

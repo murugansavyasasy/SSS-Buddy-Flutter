@@ -120,25 +120,35 @@ const demoVideoLanguages = <String, List<String>>{
 };
 
 /// From the Management Videos list (GET api/mobile/GetVideos), the first
-/// video whose name mentions each language, in [demoVideoLanguages] order.
-/// A non-empty link in [fixed] (e.g. {'English': url}) is used for that
-/// language instead. Languages with no link are left out.
+/// video whose name mentions each language, in [demoVideoLanguages] order,
+/// after the [extra] links (e.g. a fixed English video), which are always
+/// sent too. Languages with no matching video are left out; a URL already
+/// in the list is not repeated.
 List<DemoVideoLink> pickDemoVideoLinks(
   List<Managementvideosmodel> videos, {
-  Map<String, String> fixed = const {},
-}) =>
-    [
-      for (final lang in demoVideoLanguages.entries)
-        if ((fixed[lang.key] ?? '').trim().isNotEmpty)
-          (label: lang.key, url: fixed[lang.key]!.trim())
-        else
-          for (final v in videos
-              .where((v) =>
-                  v.videoURL.trim().isNotEmpty &&
-                  lang.value.any((w) => v.videoName.toLowerCase().contains(w)))
-              .take(1))
-            (label: lang.key, url: v.videoURL.trim()),
-    ];
+  List<DemoVideoLink> extra = const [],
+}) {
+  final out = <DemoVideoLink>[];
+  final seen = <String>{};
+  void add(String label, String url) {
+    final u = url.trim();
+    if (u.isNotEmpty && seen.add(u)) out.add((label: label, url: u));
+  }
+
+  for (final e in extra) {
+    add(e.label, e.url);
+  }
+  for (final lang in demoVideoLanguages.entries) {
+    for (final v in videos
+        .where((v) =>
+            v.videoURL.trim().isNotEmpty &&
+            lang.value.any((w) => v.videoName.toLowerCase().contains(w)))
+        .take(1)) {
+      add(lang.key, v.videoURL);
+    }
+  }
+  return out;
+}
 
 /// Link that opens a chat with [number] and a prefilled message carrying
 /// the demo [videos]: the WhatsApp app, or WhatsApp Web in the browser when

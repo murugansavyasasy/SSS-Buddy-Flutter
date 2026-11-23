@@ -7,7 +7,7 @@ class AppUrl {
   /// Leave empty to hide the WhatsApp buttons.
   static String exhibitionDemoVideoUrl = "https://youtu.be/EWGegeBltjw";
 
-  /// English demo video sent on WhatsApp. Always used for English, ahead of
-  /// any English video in Management Videos. Empty = take English from there.
+  /// English demo video always sent on WhatsApp, first, in addition to the
+  /// videos fetched from Management Videos. Empty = send only those.
   static String demoVideoEnglishUrl = "https://www.youtube.com/watch?v=fzYarCgUUgw";
 }

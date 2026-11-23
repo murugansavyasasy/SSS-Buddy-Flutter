@@ -35,18 +35,22 @@ void main() {
       expect(pickDemoVideoLinks(const []), isEmpty);
     });
 
-    test('fixed English link wins over Management Videos, others still picked', () {
+    test('extra English link is sent first, plus every fetched video', () {
       const en = 'https://www.youtube.com/watch?v=fzYarCgUUgw';
+      const extra = [(label: 'English', url: en)];
       final links = pickDemoVideoLinks([
         _v('SSS Score - English', 'https://youtu.be/en'),
         _v('TAMIL demo', 'https://youtu.be/ta'),
-      ], fixed: {'English': en});
-      expect(links, [(label: 'English', url: en), (label: 'Tamil', url: 'https://youtu.be/ta')]);
-      // Videos didn't load: English is still sent.
-      expect(pickDemoVideoLinks(const [], fixed: {'English': en}), [(label: 'English', url: en)]);
-      // Empty fixed link falls back to Management Videos.
-      expect(pickDemoVideoLinks([_v('English', 'https://youtu.be/en')], fixed: {'English': ''}).single.url,
-          'https://youtu.be/en');
+      ], extra: extra);
+      expect(links, [
+        (label: 'English', url: en),
+        (label: 'English', url: 'https://youtu.be/en'),
+        (label: 'Tamil', url: 'https://youtu.be/ta'),
+      ]);
+      // Videos didn't load: the extra link is still sent.
+      expect(pickDemoVideoLinks(const [], extra: extra), extra);
+      // Same URL fetched again is not repeated.
+      expect(pickDemoVideoLinks([_v('English', en)], extra: extra), extra);
     });
   });
 
