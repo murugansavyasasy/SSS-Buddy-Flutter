@@ -7,6 +7,7 @@ import '../Values/Strings/strings_value.dart';
 import '../Components/CustomPasswordField.dart';
 import '../Components/CustomButton.dart';
 import '../Components/CustomTextField.dart';
+import '../core/feature_flags.dart';
 import '../utils/routes/routes_name.dart';
 import '../viewModel/login_view_model.dart';
 import '../components/form_width.dart';
@@ -200,7 +201,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (success) {
       Navigator.pushReplacementNamed(
         context,
-        RoutesName.dashboard,
+        homeRouteFor(ref.read(loginProvider).value?.roleCode),
       );
       return;
     }

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../core/feature_flags.dart';
 import '../repository/app_url.dart';
 import '../utils/routes/routes_name.dart';
 import '../viewModel/auth_view_model.dart';
@@ -92,7 +93,7 @@ class Splash extends ConsumerWidget {
 
     Navigator.pushReplacementNamed(
       context,
-      loggedIn ? RoutesName.dashboard : RoutesName.login,
+      loggedIn ? homeRouteFor(ref.read(loginProvider).value?.roleCode) : RoutesName.login,
     );
   }
   Future<void> openStore() async {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sssbuddy/auth/model/Menuitem.dart';
+import 'package:sssbuddy/core/feature_flags.dart';
 
 List<MenuItem> getMenuItems({
   required String vimsUserType,
@@ -116,6 +117,18 @@ List<MenuItem> getMenuItems({
         ),
       );
     }
+  }
+
+  // Team Work hub for the team lead (Chanthru only; see core/feature_flags.dart).
+  if (kTeamWorkEnabled && schoolUserType.trim().toLowerCase() == "admin") {
+    menus.add(
+      MenuItem(
+        id: 25,
+        title: "Team Work",
+        icon: Icons.groups_rounded,
+        color: const Color(0xFF7C3AED),
+      ),
+    );
   }
 
   if (schoolUserType.trim().toLowerCase() == "admin") {

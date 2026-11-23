@@ -80,4 +80,15 @@ class AppEndpoint {
   static String ticketAssign(String id) => "api/mobile/tickets/$id/assign";
   static const ticketAssignees = "api/mobile/tickets/assignees";
   static const ticketDeviceToken = "api/mobile/tickets/device-token";
+
+  // Team Work (see docs/TEAMWORK_API.md)
+  static const teamProjects = "api/mobile/team/projects";
+  static String teamProjectById(String id) => "api/mobile/team/projects/$id";
+  static const teamTasks = "api/mobile/team/tasks";
+  static String teamTaskById(String id) => "api/mobile/team/tasks/$id";
+  static String teamTaskStatus(String id) => "api/mobile/team/tasks/$id/status";
+  static String teamTaskAssign(String id) => "api/mobile/team/tasks/$id/assign";
+  static String teamTaskNotes(String id) => "api/mobile/team/tasks/$id/notes";
+  static const teamMembers = "api/mobile/team/members";
+  static const teamAnnouncements = "api/mobile/team/announcements";
 }

@@ -30,6 +30,16 @@ class RoutesName {
   static const String ticketform = "ticket_form";
   static const String ticketdetail = "ticket_detail";
   static const String leaderboard = "leaderboard";
+  // Team Work (Chanthru only, see core/feature_flags.dart)
+  static const String devDashboard = "dev_dashboard";
+  static const String tasks = "team_tasks";
+  static const String taskForm = "team_task_form";
+  static const String taskDetail = "team_task_detail";
+  static const String projects = "team_projects";
+  static const String projectForm = "team_project_form";
+  static const String projectDetail = "team_project_detail";
+  static const String announcements = "team_announcements";
+  static const String devLeaderboard = "dev_leaderboard";
   static const String exhibitions = "exhibitions";
   static const String alert = "alert";
   static const String otp = "otp";

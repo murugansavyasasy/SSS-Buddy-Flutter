@@ -568,6 +568,9 @@ class Dashboard extends ConsumerWidget {
                                 case 23:
                                   Navigator.pushNamed(context, RoutesName.exhibitions);
                                   break;
+                                case 25:
+                                  Navigator.pushNamed(context, RoutesName.devDashboard);
+                                  break;
 
                               }
                             },

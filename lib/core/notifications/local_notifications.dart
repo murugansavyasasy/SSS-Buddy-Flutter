@@ -16,7 +16,7 @@ GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
 /// Shared local-notification plugin for chat pushes and follow-up reminders.
 ///
 /// Payload format: `chat:<chatId>`, `followup:<followUpId>[:<extra>]` or
-/// `ticket:<ticketId>`.
+/// `ticket:<ticketId>`, `task:<taskId>` or `announcement:<id>`.
 class LocalNotifications {
   LocalNotifications._();
 
@@ -40,6 +40,13 @@ class LocalNotifications {
     'ticket_updates',
     'Ticket updates',
     description: 'When a ticket you raised is completed',
+    importance: Importance.high,
+  );
+
+  static const teamChannel = AndroidNotificationChannel(
+    'team_updates',
+    'Team updates',
+    description: 'Tasks assigned to you and team announcements',
     importance: Importance.high,
   );
 
@@ -75,6 +82,7 @@ class LocalNotifications {
       await android?.createNotificationChannel(chatChannel);
       await android?.createNotificationChannel(followUpChannel);
       await android?.createNotificationChannel(ticketChannel);
+      await android?.createNotificationChannel(teamChannel);
 
       final launch = await plugin.getNotificationAppLaunchDetails();
       if (launch?.didNotificationLaunchApp ?? false) {
@@ -134,6 +142,13 @@ class LocalNotifications {
         break;
       case 'ticket':
         nav.pushNamed(RoutesName.ticketdetail, arguments: rest);
+        break;
+      case 'task':
+        nav.pushNamed(RoutesName.taskDetail, arguments: rest);
+        break;
+      case 'announcement':
+        if (activeScreen == 'announcements') return;
+        nav.pushNamed(RoutesName.announcements);
         break;
     }
   }

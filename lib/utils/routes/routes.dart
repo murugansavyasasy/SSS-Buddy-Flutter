@@ -41,6 +41,15 @@ import '../../view/zero_activity.dart';
 import '../../view/ticket/ticket_detail_view.dart';
 import '../../view/ticket/ticket_form_view.dart';
 import '../../view/ticket/ticket_list_view.dart';
+import '../../view/teamwork/announcement_list_view.dart';
+import '../../view/teamwork/dev_dashboard_view.dart';
+import '../../view/teamwork/dev_leaderboard_view.dart';
+import '../../view/teamwork/project_detail_view.dart';
+import '../../view/teamwork/project_form_view.dart';
+import '../../view/teamwork/project_list_view.dart';
+import '../../view/teamwork/task_detail_view.dart';
+import '../../view/teamwork/task_form_view.dart';
+import '../../view/teamwork/task_list_view.dart';
 
 class Routes {
   /// True on iPad-sized screens (shortest side ≥ 600 pt).
@@ -141,6 +150,33 @@ class Routes {
 
       case RoutesName.leaderboard:
         return MaterialPageRoute(builder: (context) => const LeaderboardView());
+
+      case RoutesName.devDashboard:
+        return MaterialPageRoute(settings: settings, builder: (context) => const DevDashboardView());
+
+      case RoutesName.tasks:
+        return MaterialPageRoute(builder: (context) => TaskListView(filter: settings.arguments as String?));
+
+      case RoutesName.taskForm:
+        return MaterialPageRoute<bool>(builder: (context) => TaskFormView(projectId: settings.arguments as String?));
+
+      case RoutesName.taskDetail:
+        return MaterialPageRoute(builder: (context) => TaskDetailView(taskId: '${settings.arguments ?? ''}'));
+
+      case RoutesName.projects:
+        return MaterialPageRoute(builder: (context) => const ProjectListView());
+
+      case RoutesName.projectForm:
+        return MaterialPageRoute<bool>(builder: (context) => ProjectFormView(projectId: settings.arguments as String?));
+
+      case RoutesName.projectDetail:
+        return MaterialPageRoute(builder: (context) => ProjectDetailView(projectId: '${settings.arguments ?? ''}'));
+
+      case RoutesName.announcements:
+        return MaterialPageRoute(builder: (context) => const AnnouncementListView());
+
+      case RoutesName.devLeaderboard:
+        return MaterialPageRoute(builder: (context) => const DevLeaderboardView());
 
       case RoutesName.tickets:
         return MaterialPageRoute(builder: (context) => const TicketListView());
