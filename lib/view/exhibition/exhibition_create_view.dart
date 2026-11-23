@@ -27,11 +27,13 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
   late DateTime? _start = widget.initial?.startDate;
   late DateTime? _end = widget.initial?.endDate;
 
-  /// Added attendees, shown as chips; the two fields below add one more.
-  late final List<Attendee> _attendees = [...?widget.initial?.attendees];
-  final _attName = TextEditingController();
-  final _attMobile = TextEditingController();
-  String? _attError;
+  /// Picked attendees (SCORE users only), shown as chips. Older typed
+  /// entries without a user id can't be sent, so they are left out.
+  late final List<Attendee> _attendees = [
+    ...?widget.initial?.attendees.where((a) => a.isLinked),
+  ];
+  late int _droppedTyped = widget.initial?.attendees.where((a) => !a.isLinked).length ?? 0;
+  final _attSearch = TextEditingController();
 
   bool get _editing => widget.initial != null;
 
@@ -78,7 +80,8 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
     _status = ex.status;
     _attendees
       ..clear()
-      ..addAll(ex.attendees);
+      ..addAll(ex.attendees.where((a) => a.isLinked));
+    _droppedTyped = ex.attendees.where((a) => !a.isLinked).length;
   }
 
   /// Kept as-is on edit (there is no status picker); new ones start Active.
@@ -94,36 +97,22 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
     _venue.dispose();
     _city.dispose();
     _notes.dispose();
-    _attName.dispose();
-    _attMobile.dispose();
+    _attSearch.dispose();
     super.dispose();
   }
 
-  /// Adds the typed name + number as a chip. Returns false (and shows the
-  /// reason) when the number is missing, invalid or already added.
-  bool _addAttendee() {
-    final m = _attMobile.text.trim();
-    final n = _attName.text.trim();
-    String? err;
-    if (m.isEmpty) {
-      err = 'Enter a mobile number';
-    } else if (!isValidIndianMobile(m)) {
-      err = 'Enter a 10-digit mobile number';
-    } else if (_attendees.any((a) => a.mobile == m)) {
-      err = 'This number is already added';
-    }
-    if (err != null) {
-      setState(() => _attError = err);
-      return false;
-    }
+  bool _isPicked(AttendeeOption o) => _attendees.any((a) => a.userId == o.id);
+
+  void _togglePick(AttendeeOption o) {
+    if (_saving) return;
     HapticFeedback.selectionClick();
     setState(() {
-      _attendees.add(Attendee(name: n.isEmpty ? 'Attendee' : n, mobile: m));
-      _attName.clear();
-      _attMobile.clear();
-      _attError = null;
+      if (_isPicked(o)) {
+        _attendees.removeWhere((a) => a.userId == o.id);
+      } else {
+        _attendees.add(o.toAttendee());
+      }
     });
-    return true;
   }
 
   /// Everything except City and Notes is mandatory.
@@ -168,11 +157,7 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
       _tried = true;
       _serverError = null;
     });
-    // A number still in the fields (Add not tapped) is added now; an
-    // invalid one blocks saving.
-    final pending = _attMobile.text.trim().isNotEmpty || _attName.text.trim().isNotEmpty;
-    final attendeeOk = !pending || _addAttendee();
-    if (!attendeeOk || _hasErrors) return;
+    if (_hasErrors) return;
 
     final attendees = List<Attendee>.of(_attendees);
 
@@ -245,14 +230,6 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
 
   void _next() {
     FocusScope.of(context).unfocus();
-    if (_step == 3) {
-      // A number still in the fields (Add not tapped) is added now.
-      final pending = _attMobile.text.trim().isNotEmpty || _attName.text.trim().isNotEmpty;
-      if (pending && !_addAttendee()) {
-        setState(() => _triedSteps.add(3));
-        return;
-      }
-    }
     if (!_stepValid(_step)) {
       HapticFeedback.mediumImpact();
       setState(() => _triedSteps.add(_step));
@@ -597,9 +574,10 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
     );
   }
 
-  // 4 · Team
+  // 4 · Team (picked from SCORE users; never typed)
   Widget _teamStep() {
-    final error = _showErrors(3) && _attendees.isEmpty ? 'Add at least one attendee' : null;
+    final error = _showErrors(3) && _attendees.isEmpty ? 'Pick at least one attendee' : null;
+    final options = ref.watch(exhibitionAttendeeOptionsProvider);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -608,54 +586,7 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
           color: exAccentTeam,
           background: exAccentTeamBg,
           title: "Who's at the stall?",
-          subtitle: 'They get a call on every demo, so they hear what visitors hear.',
-        ),
-        _gap(28),
-        ExBigInput(
-          controller: _attName,
-          icon: Icons.person_outline_rounded,
-          hint: 'Name',
-          textCapitalization: TextCapitalization.words,
-          textInputAction: TextInputAction.next,
-        ),
-        _gap(12),
-        ExBigInput(
-          controller: _attMobile,
-          icon: Icons.phone_iphone_rounded,
-          prefixText: '+91  ',
-          hint: '10-digit mobile',
-          keyboardType: TextInputType.phone,
-          textInputAction: TextInputAction.done,
-          inputFormatters: [
-            const ExAsciiDigitsFormatter(),
-            FilteringTextInputFormatter.digitsOnly,
-            LengthLimitingTextInputFormatter(10),
-          ],
-          errorText: _attError,
-          onChanged: (_) {
-            if (_attError != null) setState(() => _attError = null);
-          },
-          onSubmitted: (_) => _addAttendee(),
-        ),
-        _gap(12),
-        ExAppear(
-          index: 4,
-          child: SizedBox(
-            height: 52,
-            child: FilledButton.icon(
-              onPressed: _saving ? null : _addAttendee,
-              style: FilledButton.styleFrom(
-                backgroundColor: exAccentTeamBg,
-                foregroundColor: exAccentTeam,
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(exRadiusControl)),
-                textStyle:
-                    const TextStyle(fontFamily: exFont, fontSize: 16, fontWeight: FontWeight.w700),
-              ),
-              icon: const Icon(Icons.person_add_alt_1_rounded, size: 20),
-              label: const Text('Add to team'),
-            ),
-          ),
+          subtitle: 'Pick SCORE users. They get a call on every demo, so they hear what visitors hear.',
         ),
         _gap(20),
         if (_attendees.isEmpty)
@@ -670,7 +601,7 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
                 Icon(Icons.group_add_outlined, size: 24, color: error != null ? exDanger : exSubtle),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text(error ?? 'No one added yet.',
+                  child: Text(error ?? 'No one picked yet.',
                       style: exBodyMd.copyWith(
                           color: error != null ? exDanger : exSubtle,
                           fontWeight: FontWeight.w600)),
@@ -692,10 +623,10 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
             children: [
               for (final a in _attendees)
                 ExPopIn(
-                  key: ValueKey(a.mobile),
+                  key: ValueKey('att-${a.userId}'),
                   child: ExPersonChip(
                     name: a.name,
-                    number: formatIndianMobile(a.mobile),
+                    number: a.mobile.isEmpty ? 'No mobile in SCORE' : formatIndianMobile(a.mobile),
                     onRemove: () {
                       if (!_saving) setState(() => _attendees.remove(a));
                     },
@@ -704,7 +635,120 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
             ],
           ),
         ],
+        if (_droppedTyped > 0) ...[
+          _gap(12),
+          Text(
+            '$_droppedTyped typed ${_droppedTyped == 1 ? 'entry is' : 'entries are'} not SCORE '
+            'users and will be removed on save. Pick them from the list below.',
+            style: exBodyMd.copyWith(color: exSubtle),
+          ),
+        ],
+        _gap(20),
+        ExBigInput(
+          controller: _attSearch,
+          icon: Icons.search_rounded,
+          hint: 'Search name, employee ID or role',
+          textInputAction: TextInputAction.search,
+          onChanged: (_) => setState(() {}),
+        ),
+        _gap(12),
+        options.when(
+          loading: () => const Padding(
+            padding: EdgeInsets.symmetric(vertical: 28),
+            child: Center(child: CircularProgressIndicator()),
+          ),
+          error: (e, _) => ExStateView.error(
+            e,
+            title: "Couldn't load SCORE users",
+            message: e.toString(),
+            onRetry: () => ref.invalidate(exhibitionAttendeeOptionsProvider),
+          ),
+          data: (all) {
+            final q = _attSearch.text.trim().toLowerCase();
+            final list = q.isEmpty
+                ? all
+                : all
+                    .where((o) =>
+                        o.name.toLowerCase().contains(q) ||
+                        o.employeeId.toLowerCase().contains(q) ||
+                        o.roleName.toLowerCase().contains(q))
+                    .toList();
+            if (list.isEmpty) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: Text(all.isEmpty ? 'No SCORE users available.' : 'No one matches "${_attSearch.text.trim()}".',
+                    textAlign: TextAlign.center, style: exBodyMd.copyWith(color: exSubtle)),
+              );
+            }
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [for (final o in list) _optionTile(o)],
+            );
+          },
+        ),
       ],
+    );
+  }
+
+  Widget _optionTile(AttendeeOption o) {
+    final picked = _isPicked(o);
+    final sub = [
+      if (o.roleName.isNotEmpty) o.roleName,
+      if (o.employeeId.isNotEmpty) 'ID ${o.employeeId}',
+    ].join(' · ');
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: picked ? exTint : Colors.white,
+        borderRadius: BorderRadius.circular(exRadiusControl),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(exRadiusControl),
+          onTap: () => _togglePick(o),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(exRadiusControl),
+              border: Border.all(color: picked ? exIndicator : exBorder),
+            ),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 18,
+                  backgroundColor: exAccentTeamBg,
+                  child: Text(exInitials(o.name),
+                      style: const TextStyle(
+                          fontFamily: exFont, fontSize: 12, fontWeight: FontWeight.w700, color: exAccentTeam)),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(o.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: exHeadingSm),
+                      if (sub.isNotEmpty)
+                        Text(sub, maxLines: 1, overflow: TextOverflow.ellipsis, style: exBodyMd.copyWith(color: exSubtle)),
+                      Text(
+                        o.hasPhone && o.phone.isNotEmpty
+                            ? formatIndianMobile(o.phone)
+                            : 'No mobile in SCORE · won\'t be called',
+                        maxLines: 2,
+                        style: exBodyMd.copyWith(
+                            color: o.hasPhone ? exSubtle : exDanger, fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(
+                  picked ? Icons.check_circle_rounded : Icons.add_circle_outline_rounded,
+                  color: picked ? exSuccess : exSubtle,
+                  size: 26,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 

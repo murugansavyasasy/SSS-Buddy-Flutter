@@ -125,8 +125,8 @@ void main() {
     expect(l.contactDesignation, 'Principal');
     expect(ExhibitionLead.fromJson({'id': '4', 'schoolName': 'Y', 'Designation': 'Correspondent'}).contactDesignation,
         'Correspondent');
-    expect(const CaptureLeadRequest(schoolName: 'X', contactDesignation: 'Principal').toJson()['contactDesignation'],
+    expect(const CaptureLeadRequest(schoolName: 'X', contactDesignation: 'Principal').toJson()['designation'],
         'Principal');
-    expect(const CaptureLeadRequest(schoolName: 'X').toJson()['contactDesignation'], '');
+    expect(const CaptureLeadRequest(schoolName: 'X').toJson()['designation'], '');
   });
 }

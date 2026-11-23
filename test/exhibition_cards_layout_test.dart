@@ -61,6 +61,7 @@ final _leads = [
     'contactName': 'Mrs. Lakshmi Narayanan',
     'contactNumber': '9876543210',
     'contactEmail': 'principal.svmhss.kanchipuram@example.com',
+    'designation': 'Principal',
     'notes': 'Wants a follow-up demo for the management next week.',
     'interestLevel': 'Excellent',
     'createdByName': 'Venkataravi C R',
@@ -116,11 +117,12 @@ void main() {
       await t.tap(find.textContaining('Leads').first);
       await t.pumpAndSettle();
       expect(t.takeException(), isNull);
-      for (var k = 0; k < 8 && find.text('Send demo video on WhatsApp').evaluate().isEmpty; k++) {
+      for (var k = 0; k < 8 && find.byTooltip('Send demo video on WhatsApp').evaluate().isEmpty; k++) {
         await t.drag(find.byType(Scrollable).first, const Offset(0, -300));
         await t.pumpAndSettle();
       }
-      expect(find.text('Send demo video on WhatsApp'), findsOneWidget);
+      expect(find.byTooltip('Send demo video on WhatsApp'), findsOneWidget);
+      expect(find.text('Principal'), findsOneWidget);
       if (const bool.fromEnvironment('SHOTS')) {
         await expectLater(find.byType(MaterialApp),
             matchesGoldenFile('shots/leads_${width.toInt()}.png'));

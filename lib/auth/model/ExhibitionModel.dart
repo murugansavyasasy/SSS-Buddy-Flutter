@@ -202,15 +202,62 @@ class Attendee {
   final String name;
   final String mobile;
 
-  const Attendee({required this.name, required this.mobile});
+  /// SCORE user id. Empty for an older typed entry that is not a SCORE user.
+  final String userId;
+  final String roleName;
+
+  const Attendee({required this.name, required this.mobile, this.userId = '', this.roleName = ''});
 
   factory Attendee.fromJson(Map<String, dynamic> j) => Attendee(
         name: _str(j, ['name', 'Name', 'attendeeName', 'memberName']),
         mobile: normalizeIndianMobile(
             _str(j, ['mobile', 'Mobile', 'mobileNumber', 'phone', 'number'])),
+        userId: _str(j, ['userId', 'UserId']),
+        roleName: _str(j, ['roleName', 'RoleName']),
       );
 
+  /// True when this attendee is a SCORE user (can be sent as an id).
+  bool get isLinked => userId.isNotEmpty;
+
   Map<String, dynamic> toJson() => {'name': name, 'mobile': mobile};
+}
+
+/// One active SCORE user offered as a travelling-team member
+/// (GET /exhibitions/attendee-options). Attendees are picked, never typed.
+class AttendeeOption {
+  final String id;
+  final String name;
+  final String employeeId;
+  final String roleName;
+  final String phone;
+
+  /// False when the user has no mobile in SCORE yet; they will not be
+  /// called on demos until they add one.
+  final bool hasPhone;
+
+  const AttendeeOption({
+    required this.id,
+    required this.name,
+    this.employeeId = '',
+    this.roleName = '',
+    this.phone = '',
+    this.hasPhone = false,
+  });
+
+  factory AttendeeOption.fromJson(Map<String, dynamic> j) {
+    final phone = normalizeIndianMobile(_str(j, ['phone', 'mobile', 'Mobile', 'mobileNumber']));
+    final has = _pick(j, ['hasPhone', 'HasPhone']);
+    return AttendeeOption(
+      id: _str(j, ['id', 'Id', 'userId', 'UserId']),
+      name: _str(j, ['name', 'Name', 'userName']),
+      employeeId: _str(j, ['employeeId', 'EmployeeId']),
+      roleName: _str(j, ['roleName', 'RoleName']),
+      phone: phone,
+      hasPhone: has is bool ? has : (has == null ? phone.isNotEmpty : '$has' == '1' || '$has' == 'true'),
+    );
+  }
+
+  Attendee toAttendee() => Attendee(name: name, mobile: phone, userId: id, roleName: roleName);
 }
 
 class Exhibition {
@@ -346,7 +393,11 @@ class CreateExhibitionRequest {
         'endDate': _d(endDate),
         'status': status.apiValue,
         'notes': notes,
-        'attendees': attendees.map((a) => a.toJson()).toList(),
+        // SCORE user ids only; typed names/numbers are rejected by the API.
+        'attendeeUserIds': [
+          for (final a in attendees)
+            if (a.isLinked) int.tryParse(a.userId) ?? a.userId,
+        ],
       };
 }
 
@@ -681,7 +732,7 @@ class CaptureLeadRequest {
         'contactName': contactName,
         'contactNumber': contactNumber,
         'contactEmail': contactEmail,
-        'contactDesignation': contactDesignation,
+        'designation': contactDesignation,
         'notes': notes,
         'interestLevel': interestLevel.apiValue,
         'mediaUrl': attachments.isEmpty ? '' : attachments.first,

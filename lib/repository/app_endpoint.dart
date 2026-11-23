@@ -60,6 +60,8 @@ class AppEndpoint {
   // Exhibitions (trade-show voice demos + leads)
   static const exhibitions = "api/mobile/exhibitions";
   static String exhibitionById(String id) => "api/mobile/exhibitions/$id";
+  /// Active SCORE users to pick the travelling team from (leaders only).
+  static const exhibitionAttendeeOptions = "api/mobile/exhibitions/attendee-options";
   static String exhibitionDemos(String id) => "api/mobile/exhibitions/$id/demos";
   static String exhibitionLeads(String id) => "api/mobile/exhibitions/$id/leads";
   static String exhibitionVoiceTemplates(String id) =>

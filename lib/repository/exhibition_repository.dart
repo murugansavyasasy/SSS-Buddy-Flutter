@@ -117,6 +117,16 @@ class ExhibitionRepository {
         return Exhibition.fromJson(extractObject(res.data, ['exhibition']));
       });
 
+  /// SCORE users that can be added as attendees. Leaders only (others 403).
+  Future<List<AttendeeOption>> fetchAttendeeOptions() => _guard(() async {
+        final res = await _dio.get(AppEndpoint.exhibitionAttendeeOptions, options: await _options());
+        _ensureOk(res);
+        return extractList(res.data, ['users', 'attendees'])
+            .map(AttendeeOption.fromJson)
+            .where((o) => o.id.isNotEmpty)
+            .toList();
+      });
+
   /// Returns the created exhibition (or a minimal one if the API only returns an id).
   Future<Exhibition> createExhibition(CreateExhibitionRequest req) => _guard(() async {
         final res = await _dio.post(

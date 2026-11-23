@@ -76,8 +76,6 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
   final List<String> _numbers = [];
   String? _numberError;
   String? _dupNote;
-  bool _step2Error = false;
-  bool _nameError = false;
 
   // Step 3
   bool _sending = false;
@@ -133,8 +131,6 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
     // step that still needs input.
     _step = _template == null
         ? 0
-        : (_numbers.isEmpty || _visitorName.text.isEmpty)
-        ? 1
         : 2;
   }
 
@@ -238,7 +234,6 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
       }
     }
     setState(() {
-      _step2Error = false;
       _numberError = bad.isEmpty
           ? null
           : bad.length == 1
@@ -286,22 +281,13 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
         _step = 1;
       });
     } else if (_step == 1) {
-      // Visitor name is required.
-      final noName = _visitorName.text.trim().isEmpty;
-      if (noName) setState(() => _nameError = true);
+      // Name and numbers are optional (visitorNumbers may be sent empty).
+      // A typed number not yet added is added now; an invalid one blocks.
       if (_numberInput.text.trim().isNotEmpty) {
         _addNumbers([_numberInput.text]);
         if (_numberError != null) return;
       }
-      if (_numbers.isEmpty) {
-        setState(() => _step2Error = true);
-        return;
-      }
-      if (noName) return;
-      setState(() {
-        _step2Error = false;
-        _step = 2;
-      });
+      setState(() => _step = 2);
     }
   }
 
@@ -318,7 +304,7 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
   // MARK: Send
 
   Future<void> _send() async {
-    if (_sending || _numbers.isEmpty) return;
+    if (_sending) return;
     final repo = ref.read(exhibitionRepositoryProvider);
     final total = _numbers.length + _team.length;
     setState(() {
@@ -511,7 +497,7 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
         nextIcon: _step < 2 ? Icons.arrow_forward_rounded : Icons.phone_in_talk_rounded,
         loading: _sending,
         loadingLabel: _sendPhase,
-        onNext: _step < 2 ? _next : (_numbers.isEmpty ? null : _send),
+        onNext: _step < 2 ? _next : _send,
       );
 
   /// Jump to a step from the review's Edit links.
@@ -717,25 +703,22 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
         const ExQuestion(
           icon: Icons.person_rounded,
           title: 'Who is the demo for?',
-          subtitle: 'Add their name and one or more numbers. Each number gets a call.',
+          subtitle: 'Both are optional. Each number added gets a call, along with the attendees.',
         ),
         const SizedBox(height: 28),
-        _fieldLabel('VISITOR NAME'),
+        _fieldLabel('VISITOR NAME (OPTIONAL)'),
         ExBigInput(
           controller: _visitorName,
           icon: Icons.badge_outlined,
           hint: 'e.g. Mrs. Lakshmi',
-          errorText: _nameError ? 'Visitor name is required' : null,
           textCapitalization: TextCapitalization.words,
           textInputAction: TextInputAction.next,
-          onChanged: (v) => setState(() {
-            if (v.trim().isNotEmpty) _nameError = false;
-          }),
+          onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: 22),
         Row(
           children: [
-            Expanded(child: _fieldLabel('MOBILE NUMBERS')),
+            Expanded(child: _fieldLabel('MOBILE NUMBERS (OPTIONAL)')),
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: ExPill(
@@ -796,7 +779,10 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
         ],
         const SizedBox(height: 16),
         if (_numbers.isEmpty)
-          const _DashedNote(text: 'No numbers added yet.')
+          _DashedNote(
+              text: _team.isEmpty
+                  ? 'No visitor numbers added.'
+                  : 'No visitor numbers. Only the attendees will be called.')
         else
           Wrap(
             spacing: 8,
@@ -809,10 +795,6 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
                 ),
             ],
           ),
-        if (_step2Error) ...[
-          const SizedBox(height: 16),
-          const ExInlineNote(message: 'Add at least one visitor number to initiate the demo call.'),
-        ],
         const SizedBox(height: 24),
         _TeamCard(team: _team),
       ],
@@ -859,7 +841,9 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
                       child: ExSummaryRow(
                         icon: Icons.person_rounded,
                         label: 'Visitor',
-                        value: _visitorName.text.trim(),
+                        value: _visitorName.text.trim().isEmpty
+                            ? 'Not given'
+                            : _visitorName.text.trim(),
                         onEdit: _sending ? null : () => _goTo(1),
                       ),
                     ),
@@ -867,8 +851,11 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
                       'Visitor numbers (${_numbers.length})',
                       onEdit: _sending ? null : () => _goTo(1),
                       _numbers.isEmpty
-                          ? Text('None added. Go back to add a visitor number.',
-                              style: exBodyMd.copyWith(color: exDanger))
+                          ? Text(
+                              _team.isEmpty
+                                  ? 'None added.'
+                                  : 'None. Only the attendees will be called.',
+                              style: exBodyMd.copyWith(color: exSubtle))
                           : Wrap(
                               spacing: 8,
                               runSpacing: 8,

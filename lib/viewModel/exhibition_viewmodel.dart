@@ -19,6 +19,15 @@ Future<bool> isWhatsAppInstalled() async {
   }
 }
 
+/// SCORE users offered on the Create / Edit exhibition team step, by name.
+final exhibitionAttendeeOptionsProvider = FutureProvider.autoDispose<List<AttendeeOption>>(
+  retry: _noRetry,
+  (ref) async {
+    final items = await ref.read(exhibitionRepositoryProvider).fetchAttendeeOptions();
+    return [...items]..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+  },
+);
+
 /// All exhibitions, newest first. Search and the status chips filter this
 /// list on the device so they respond instantly at a busy stall.
 /// No automatic retry: at a stall with patchy Wi-Fi the user should see

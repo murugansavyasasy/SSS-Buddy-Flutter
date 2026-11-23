@@ -16,6 +16,10 @@ import 'widget/exhibition_charts.dart';
 import 'widget/exhibition_insights_view.dart';
 import 'widget/exhibition_sheets.dart';
 
+/// Delete exhibition button for the creator. Hidden for now; set to true to
+/// bring it back (tests switch it on to cover the flow). Edit stays visible.
+bool exhibitionDeleteEnabled = false;
+
 /// Phone route: "‹ Exhibitions" back row over the detail pane.
 class ExhibitionDetailView extends StatelessWidget {
   final String exhibitionId;
@@ -247,9 +251,9 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
           onShowcase: () => _openShowcase(ex),
           // Active shows only: a "Give a voice demo" line inside the card.
           onGiveDemo: ex.status == ExhibitionStatus.active ? () => _openShowcase(ex) : null,
-          // Only the creator can edit or delete the exhibition.
+          // Only the creator can edit or delete the exhibition (Delete hidden for now).
           onEdit: isOwner ? () => _editExhibition(ex) : null,
-          onDelete: isOwner ? () => _deleteExhibition(ex) : null,
+          onDelete: exhibitionDeleteEnabled && isOwner ? () => _deleteExhibition(ex) : null,
           loadingTeam: detail.isLoading && widget.initial != null && ex.attendees.isEmpty,
           demoCount: demos.value?.length ?? ex.demoCount,
           leadCount: leads.value?.length ?? ex.leadCount,
@@ -1326,10 +1330,11 @@ class _LeadCard extends StatelessWidget {
     final l = lead;
     final hasCall = l.contactNumber.isNotEmpty;
     final hasMail = l.contactEmail.isNotEmpty;
-    final hasContact = l.contactName.isNotEmpty || l.contactDesignation.isNotEmpty || hasCall || hasMail;
+    final hasPerson = l.contactName.isNotEmpty || l.contactDesignation.isNotEmpty;
+    final hasActions = hasCall || hasMail || onWhatsApp != null;
     final initial = l.schoolName.trim().isEmpty ? '?' : l.schoolName.trim()[0].toUpperCase();
     final level = l.interestLevel;
-    final accent = level == null ? exBrandBold : interestLevelColors(level).$2;
+    final (accentBg, accent) = level == null ? (exTint, exBrandBold) : interestLevelColors(level);
 
     return ExCard(
       highlighted: isNew,
@@ -1339,22 +1344,21 @@ class _LeadCard extends StatelessWidget {
         children: [
           // School, city, interest level
           Padding(
-            padding: EdgeInsets.fromLTRB(16, 16, onEdit != null ? 10 : 16, 0),
+            padding: EdgeInsets.fromLTRB(16, 16, onEdit != null ? 8 : 16, 0),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: 52,
-                  height: 52,
+                  width: 46,
+                  height: 46,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    gradient: exHeroGradient,
-                    borderRadius: BorderRadius.circular(exRadiusControl + 2),
-                    boxShadow: exBrandGlow,
+                    color: accentBg,
+                    borderRadius: BorderRadius.circular(exRadiusControl),
+                    border: Border.all(color: accent.withValues(alpha: 0.25)),
                   ),
                   child: Text(initial,
-                      style: const TextStyle(
-                          fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white)),
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: accent)),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -1365,20 +1369,37 @@ class _LeadCard extends StatelessWidget {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: exHeadingSm.copyWith(
-                              fontSize: 17, height: 1.25, fontWeight: FontWeight.w700)),
+                              fontSize: 16.5, height: 1.25, fontWeight: FontWeight.w700)),
                       if (l.city.isNotEmpty) ...[
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 3),
                         Row(
                           children: [
-                            const Icon(Icons.location_on_rounded, size: 15, color: exBrand),
-                            const SizedBox(width: 4),
+                            const Icon(Icons.location_on_rounded, size: 14, color: exSubtle),
+                            const SizedBox(width: 3),
                             Expanded(
                               child: Text(l.city,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
-                                      fontSize: 14, fontWeight: FontWeight.w500, color: exSubtle)),
+                                      fontSize: 13.5, fontWeight: FontWeight.w500, color: exSubtle)),
                             ),
+                          ],
+                        ),
+                      ],
+                      if (level != null || l.demoVisitorName.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: [
+                            if (level != null) ExInterestTag(level: level),
+                            if (l.demoVisitorName.isNotEmpty)
+                              ExStatChip(
+                                icon: Icons.graphic_eq_rounded,
+                                text: 'Demo: ${l.demoVisitorName}',
+                                color: exBrandBold,
+                                background: exTint,
+                              ),
                           ],
                         ),
                       ],
@@ -1386,35 +1407,17 @@ class _LeadCard extends StatelessWidget {
                   ),
                 ),
                 if (onEdit != null) ...[
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
                   _EditButton(tooltip: 'Edit lead', onPressed: onEdit!),
                 ],
               ],
             ),
           ),
-          if (level != null || l.demoVisitorName.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  if (level != null) ExInterestTag(level: level),
-                  if (l.demoVisitorName.isNotEmpty)
-                    ExStatChip(
-                      icon: Icons.graphic_eq_rounded,
-                      text: 'Demo: ${l.demoVisitorName}',
-                      color: exBrandBold,
-                      background: exTint,
-                    ),
-                ],
-              ),
-            ),
-          // Contact person with quick actions
-          if (hasContact)
+          // Contact person: name + designation, then number / email rows
+          if (hasPerson || hasCall || hasMail)
             Container(
               margin: const EdgeInsets.fromLTRB(12, 14, 12, 0),
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
               decoration: BoxDecoration(
                 color: exPageBg,
                 borderRadius: BorderRadius.circular(exRadiusControl),
@@ -1422,83 +1425,56 @@ class _LeadCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: accent.withValues(alpha: 0.35), width: 1.5),
-                        ),
-                        child: l.contactName.isEmpty
-                            ? Icon(Icons.person_rounded, size: 20, color: accent)
-                            : Text(exInitials(l.contactName),
-                                style: TextStyle(
-                                    fontSize: 13, fontWeight: FontWeight.w700, color: accent)),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(l.contactName.isEmpty ? 'Contact' : l.contactName,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                    fontSize: 15, fontWeight: FontWeight.w700, color: exInk)),
-                            if (l.contactDesignation.isNotEmpty)
-                              Text(l.contactDesignation,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                      fontSize: 12.5, fontWeight: FontWeight.w600, color: exSubtle)),
-                            if (hasCall)
-                              Text(formatIndianMobile(l.contactNumber),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                      color: Color(0xFF3F4A5A))),
-                            if (hasMail)
-                              Text(l.contactEmail,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                      fontSize: 13, fontWeight: FontWeight.w500, color: exSubtle)),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (hasCall || hasMail) ...[
-                    const SizedBox(height: 12),
+                  if (hasPerson)
                     Row(
                       children: [
-                        if (hasCall)
-                          Expanded(
-                            child: _LeadAction(
-                              icon: Icons.call_rounded,
-                              label: 'Call',
-                              filled: true,
-                              onTap: () => PhoneCall.dial('+91${l.contactNumber}'),
-                            ),
+                        Container(
+                          width: 36,
+                          height: 36,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: accent.withValues(alpha: 0.35), width: 1.5),
                           ),
-                        if (hasCall && hasMail) const SizedBox(width: 10),
-                        if (hasMail)
-                          Expanded(
-                            child: _LeadAction(
-                              icon: Icons.mail_rounded,
-                              label: 'Email',
-                              onTap: () => launchUrl(Uri(scheme: 'mailto', path: l.contactEmail)),
-                            ),
+                          child: l.contactName.isEmpty
+                              ? Icon(Icons.person_rounded, size: 18, color: accent)
+                              : Text(exInitials(l.contactName),
+                                  style: TextStyle(
+                                      fontSize: 12, fontWeight: FontWeight.w700, color: accent)),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (l.contactName.isNotEmpty)
+                                Text(l.contactName,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                        fontSize: 15, fontWeight: FontWeight.w700, color: exInk)),
+                              if (l.contactDesignation.isNotEmpty) ...[
+                                const SizedBox(height: 3),
+                                _DesignationPill(text: l.contactDesignation),
+                              ],
+                            ],
                           ),
+                        ),
                       ],
                     ),
-                  ],
+                  if (hasCall)
+                    _ContactLine(
+                      icon: Icons.phone_rounded,
+                      text: formatIndianMobile(l.contactNumber),
+                      top: hasPerson ? 10 : 0,
+                    ),
+                  if (hasMail)
+                    _ContactLine(
+                      icon: Icons.mail_outline_rounded,
+                      text: l.contactEmail,
+                      top: hasPerson || hasCall ? 6 : 0,
+                    ),
                 ],
               ),
             ),
@@ -1545,62 +1521,138 @@ class _LeadCard extends StatelessWidget {
                 ),
               ),
             ),
-          // Demo video on WhatsApp, full width so the label stays readable.
-          if (onWhatsApp != null)
+          // Call / Email / WhatsApp video in one row
+          if (hasActions)
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-              child: ExSecondaryButton(
-                label: 'Send demo video on WhatsApp',
-                icon: Icons.ondemand_video_rounded,
-                color: exSuccess,
-                height: 46,
-                onPressed: onWhatsApp,
+              child: Row(
+                children: [
+                  if (hasCall)
+                    Expanded(
+                      child: _LeadAction(
+                        icon: Icons.call_rounded,
+                        label: 'Call',
+                        filled: true,
+                        onTap: () => PhoneCall.dial('+91${l.contactNumber}'),
+                      ),
+                    ),
+                  if (hasMail) ...[
+                    if (hasCall) const SizedBox(width: 8),
+                    Expanded(
+                      child: _LeadAction(
+                        icon: Icons.mail_rounded,
+                        label: 'Email',
+                        onTap: () => launchUrl(Uri(scheme: 'mailto', path: l.contactEmail)),
+                      ),
+                    ),
+                  ],
+                  if (onWhatsApp != null) ...[
+                    if (hasCall || hasMail) const SizedBox(width: 8),
+                    Expanded(
+                      child: _LeadAction(
+                        icon: Icons.ondemand_video_rounded,
+                        label: 'WhatsApp',
+                        tooltip: 'Send demo video on WhatsApp',
+                        color: exSuccess,
+                        onTap: onWhatsApp!,
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
           // Who captured it and when
-          if (l.capturedBy.isNotEmpty || l.createdAt != null) ...[
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 14, 16, 0),
-              child: Divider(height: 1, color: exBorder),
-            ),
+          if (l.capturedBy.isNotEmpty || l.createdAt != null)
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
               child: Row(
                 children: [
                   if (l.capturedBy.isNotEmpty) ...[
                     Container(
-                      width: 24,
-                      height: 24,
+                      width: 22,
+                      height: 22,
                       alignment: Alignment.center,
                       decoration: const BoxDecoration(color: exAccentTeamBg, shape: BoxShape.circle),
                       child: Text(exInitials(l.capturedBy),
                           style: const TextStyle(
-                              fontSize: 9, fontWeight: FontWeight.w700, color: exAccentTeam)),
+                              fontSize: 8.5, fontWeight: FontWeight.w700, color: exAccentTeam)),
                     ),
                     const SizedBox(width: 6),
                     Expanded(
-                      child: Text('By ${l.capturedBy}',
+                      child: Text('Captured by ${l.capturedBy}',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: exBodySm.copyWith(fontSize: 13, fontWeight: FontWeight.w600)),
+                          style: exBodySm.copyWith(fontSize: 12.5, fontWeight: FontWeight.w600)),
                     ),
                   ] else
                     const Spacer(),
                   if (l.createdAt != null) ...[
                     const SizedBox(width: 8),
-                    const Icon(Icons.schedule_rounded, size: 14, color: exSubtle),
+                    const Icon(Icons.schedule_rounded, size: 13, color: exSubtle),
                     const SizedBox(width: 4),
-                    Text(exWhen(l.createdAt), style: exBodySm.copyWith(fontSize: 13)),
+                    Text(exWhen(l.createdAt), style: exBodySm.copyWith(fontSize: 12.5)),
                   ],
                 ],
               ),
-            ),
-          ] else
+            )
+          else
             const SizedBox(height: 14),
         ],
       ),
     );
   }
+}
+
+/// The contact's role (e.g. Principal) as a small tinted pill.
+class _DesignationPill extends StatelessWidget {
+  final String text;
+  const _DesignationPill({required this.text});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(color: exTint, borderRadius: BorderRadius.circular(20)),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.work_outline_rounded, size: 13, color: exBrandBold),
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text(text,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      fontSize: 12.5, fontWeight: FontWeight.w700, color: exBrandBold)),
+            ),
+          ],
+        ),
+      );
+}
+
+/// One icon + text line in the contact panel (number, email).
+class _ContactLine extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final double top;
+  const _ContactLine({required this.icon, required this.text, this.top = 0});
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: EdgeInsets.only(top: top),
+        child: Row(
+          children: [
+            SizedBox(width: 36, child: Icon(icon, size: 16, color: exSubtle)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(text,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w500, color: Color(0xFF3F4A5A))),
+            ),
+          ],
+        ),
+      );
 }
 
 /// Labelled quick action: Call is filled green, Email is tonal blue.
@@ -1610,17 +1662,23 @@ class _LeadAction extends StatelessWidget {
   final VoidCallback onTap;
   final bool filled;
 
+  /// Outline/text colour for an unfilled action (default brand blue).
+  final Color? color;
+  final String? tooltip;
+
   const _LeadAction({
     required this.icon,
     required this.label,
     required this.onTap,
     this.filled = false,
+    this.color,
+    this.tooltip,
   });
 
   @override
   Widget build(BuildContext context) {
-    final fg = filled ? Colors.white : exBrandBold;
-    return Material(
+    final fg = filled ? Colors.white : (color ?? exBrandBold);
+    final button = Material(
       color: filled ? exSuccess : Colors.white,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
@@ -1628,10 +1686,12 @@ class _LeadAction extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         child: Container(
           height: 44,
-          padding: const EdgeInsets.symmetric(horizontal: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 8),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: filled ? null : Border.all(color: exIndicator),
+            border: filled
+                ? null
+                : Border.all(color: color == null ? exIndicator : color!.withValues(alpha: 0.45)),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -1650,6 +1710,7 @@ class _LeadAction extends StatelessWidget {
         ),
       ),
     );
+    return tooltip == null ? button : Tooltip(message: tooltip!, child: button);
   }
 }
 

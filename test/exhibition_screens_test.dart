@@ -203,6 +203,33 @@ void main() {
     expect(opacityOf(second), 1.0);
   });
 
+  group('Give Demo · visitor name and number are optional', () {
+    Future<void> continueFromVisitor(WidgetTester t, Exhibition ex) async {
+      _size(t, const Size(390, 844));
+      await t.pumpWidget(_app(GiveDemoView(exhibition: ex, initialStep: 1)));
+      await _settle(t);
+      expect(find.text('VISITOR NAME (OPTIONAL)'), findsOneWidget);
+      await t.tap(find.text('Continue'));
+      await _settle(t);
+    }
+
+    testWidgets('with attendees: no name, no number → review, only attendees called', (t) async {
+      await continueFromVisitor(t, _exs.first);
+      expect(find.text('Ready to call?'), findsOneWidget);
+      expect(find.text('Not given'), findsOneWidget);
+      expect(find.text('None. Only the attendees will be called.'), findsOneWidget);
+      expect(t.takeException(), isNull);
+    });
+
+    testWidgets('no attendees and no number → still goes to review (empty list is sent)', (t) async {
+      final noTeam = Exhibition.fromJson({'id': 9, 'name': 'Solo stall'});
+      await continueFromVisitor(t, noTeam);
+      expect(find.text('Ready to call?'), findsOneWidget);
+      expect(find.text('None added.'), findsOneWidget);
+      expect(t.takeException(), isNull);
+    });
+  });
+
   testWidgets('"Give demo" pill opens the School Chimes showcase, not Give Demo', (t) async {
     _size(t, const Size(390, 1600));
     await t.pumpWidget(_app(ExhibitionDetailView(exhibitionId: '7', initial: _exs.first)));

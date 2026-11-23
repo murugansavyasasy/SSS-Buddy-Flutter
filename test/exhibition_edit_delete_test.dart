@@ -10,6 +10,7 @@ import 'package:sssbuddy/core/network/DioClient.dart';
 import 'package:sssbuddy/provider/user_session_provider.dart';
 import 'package:sssbuddy/repository/exhibition_repository.dart';
 import 'package:sssbuddy/view/exhibition/exhibition_create_view.dart';
+import 'package:sssbuddy/view/exhibition/widget/exhibition_common.dart';
 import 'package:sssbuddy/view/exhibition/exhibition_detail_view.dart';
 import 'package:sssbuddy/viewModel/exhibition_viewmodel.dart';
 
@@ -89,6 +90,12 @@ class _FakeRepo implements ExhibitionRepository {
   Future<List<ExhibitionLead>> fetchLeads(String exhibitionId) async => const [];
   @override
   Future<List<DemoTemplate>> fetchTemplates(String exhibitionId) async => const [];
+  @override
+  Future<List<AttendeeOption>> fetchAttendeeOptions() async => const [
+    AttendeeOption(id: '18', name: 'Ravi', employeeId: '1502', roleName: 'Sales Manager', phone: '9876543210', hasPhone: true),
+    AttendeeOption(id: '24', name: 'Priya', employeeId: '1517', roleName: 'Sales Executive', phone: '9876500000', hasPhone: true),
+    AttendeeOption(id: '31', name: 'Karthik S', employeeId: '1600', roleName: 'Sales Executive'),
+  ];
 
   @override
   dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
@@ -139,8 +146,8 @@ final _detail = Exhibition.fromJson({
   'demoCount': 12,
   'notes': 'Hall 3, Stall 42',
   'attendees': [
-    {'id': 11, 'name': 'Ravi', 'mobile': '9876543210'},
-    {'id': 12, 'name': 'Priya', 'mobile': '9876500000'},
+    {'id': 11, 'userId': 18, 'name': 'Ravi', 'mobile': '9876543210', 'linked': true},
+    {'id': 12, 'userId': 24, 'name': 'Priya', 'mobile': '9876500000', 'linked': true},
   ],
 });
 
@@ -180,7 +187,11 @@ void main() {
           endDate: DateTime(2027, 9, 12),
           status: ExhibitionStatus.completed,
           notes: 'Hall 3',
-          attendees: const [Attendee(name: 'Ravi', mobile: '9876543210')],
+          attendees: const [
+            Attendee(name: 'Ravi', mobile: '9876543210', userId: '18'),
+            // A typed entry (no SCORE user id) is never sent.
+            Attendee(name: 'Old', mobile: '9000000000'),
+          ],
         ),
       );
       final o = adapter.calls.single;
@@ -195,10 +206,30 @@ void main() {
         'endDate': '2027-09-12',
         'status': 'completed',
         'notes': 'Hall 3',
-        'attendees': [
-          {'name': 'Ravi', 'mobile': '9876543210'},
-        ],
+        'attendeeUserIds': [18],
       });
+    });
+
+    test('attendee options = GET /exhibitions/attendee-options, parsed', () async {
+      adapter.reply = (_) => {
+        'status': 'success',
+        'data': [
+          {'id': 18, 'name': 'Murugan N', 'employeeId': '1502', 'roleName': 'Sales Manager', 'phone': '9003769500', 'hasPhone': true},
+          {'id': 24, 'name': 'Priya K', 'employeeId': '1517', 'roleName': 'Sales Executive', 'phone': null, 'hasPhone': false},
+        ],
+      };
+      final opts = await repo.fetchAttendeeOptions();
+      final o = adapter.calls.single;
+      expect(o.method, 'GET');
+      expect(o.path, 'api/mobile/exhibitions/attendee-options');
+      expect(o.headers['Authorization'], 'Bearer tkn');
+      expect(opts.map((e) => e.id), ['18', '24']);
+      expect(opts.first.hasPhone, isTrue);
+      expect(opts.first.phone, '9003769500');
+      expect(opts.last.hasPhone, isFalse);
+      expect(opts.last.phone, '');
+      final a = opts.first.toAttendee();
+      expect((a.userId, a.name, a.isLinked), ('18', 'Murugan N', true));
     });
 
     test('delete = DELETE /exhibitions/:id with bearer', () async {
@@ -308,11 +339,31 @@ void main() {
       expect(body['endDate'], '2027-09-12');
       expect(body['notes'], 'Hall 3, Stall 42');
       expect(body['status'], 'completed', reason: 'edit must not reset status to active');
-      expect(body['attendees'], [
-        {'name': 'Ravi', 'mobile': '9876543210'},
-        {'name': 'Priya', 'mobile': '9876500000'},
-      ]);
+      expect(body['attendeeUserIds'], [18, 24]);
+      expect(body.containsKey('attendees'), isFalse, reason: 'typed attendees are rejected by the API');
       expect(popped, isTrue);
+    });
+
+    testWidgets('team step picks SCORE users (no typed fields) and sends their ids', (t) async {
+      await _phone(t);
+      final repo = _FakeRepo(_detail);
+      await t.pumpWidget(_app(repo, ExhibitionCreateView(initial: _listRow)));
+      await t.pumpAndSettle();
+      final row = find.ancestor(of: find.text('ATTENDEES'), matching: find.byType(ExSummaryRow));
+      await t.ensureVisible(row);
+      await t.tap(row);
+      await t.pumpAndSettle();
+
+      expect(find.text('10-digit mobile'), findsNothing, reason: 'attendees are never typed');
+      expect(find.text('Karthik S'), findsOneWidget);
+      expect(find.textContaining("won't be called"), findsOneWidget);
+      await t.enterText(find.byType(TextField).first, 'karth');
+      await t.pumpAndSettle();
+      expect(find.text('Priya'), findsOneWidget, reason: 'picked chip stays; option is filtered out');
+      await t.tap(find.text('Karthik S'));
+      await t.pumpAndSettle();
+      expect(find.textContaining('On the team · 3'), findsOneWidget);
+      expect(t.takeException(), isNull);
     });
 
     testWidgets('detail fails → error + Retry, no Save button; Retry loads', (t) async {
@@ -334,6 +385,10 @@ void main() {
   // ── Detail screen: Edit / Delete buttons ─────────────────────────────
 
   group('Exhibition detail Edit / Delete', () {
+    // Hidden in the app for now; switched on here to keep the flow covered.
+    setUp(() => exhibitionDeleteEnabled = true);
+    tearDown(() => exhibitionDeleteEnabled = false);
+
     Future<_FakeRepo> open(WidgetTester t, {UserSession? user}) async {
       await _phone(t);
       final repo = _FakeRepo(_detail);
@@ -367,6 +422,13 @@ void main() {
       await open(t, user: _user());
       expect(find.byTooltip('Edit exhibition'), findsOneWidget);
       expect(find.byTooltip('Delete exhibition'), findsOneWidget);
+    });
+
+    testWidgets('Delete hidden for now: the creator sees Edit only', (t) async {
+      exhibitionDeleteEnabled = false;
+      await open(t, user: _user());
+      expect(find.byTooltip('Edit exhibition'), findsOneWidget);
+      expect(find.byTooltip('Delete exhibition'), findsNothing);
     });
 
     testWidgets('someone else sees neither', (t) async {
