@@ -135,7 +135,8 @@ final _listRow = Exhibition.fromJson({
 });
 
 // The detail (#39 shape): team + notes, no creator / lead count.
-final _detail = Exhibition.fromJson({
+final _detail = Exhibition.fromJson(_detailJson);
+const _detailJson = <String, dynamic>{
   'id': 7,
   'name': 'DIDAC India 2027',
   'venue': 'Bombay Exhibition Centre',
@@ -149,7 +150,7 @@ final _detail = Exhibition.fromJson({
     {'id': 11, 'userId': 18, 'name': 'Ravi', 'mobile': '9876543210', 'linked': true},
     {'id': 12, 'userId': 24, 'name': 'Priya', 'mobile': '9876500000', 'linked': true},
   ],
-});
+};
 
 Widget _app(_FakeRepo repo, Widget home, {UserSession? user}) => ProviderScope(
   overrides: [
@@ -301,9 +302,26 @@ void main() {
       expect(d.firstDate, DateTime(n.year, n.month, n.day));
     });
 
-    testWidgets('edit keeps an older saved start date selectable', (t) async {
+    testWidgets('edit: the start picker also starts at today', (t) async {
       final d = await openStartPicker(t, ExhibitionCreateView(initial: _listRow));
-      expect(d.firstDate.isBefore(DateTime(2027, 9, 10)), isTrue);
+      final n = DateTime.now();
+      expect(d.firstDate, DateTime(n.year, n.month, n.day));
+    });
+
+    testWidgets('edit: an exhibition that already started saves with its date unchanged', (t) async {
+      await _phone(t);
+      final past = Exhibition.fromJson({
+        ..._detailJson,
+        'startDate': '2024-01-10',
+        'endDate': '2024-01-12',
+      });
+      final repo = _FakeRepo(past);
+      await t.pumpWidget(_app(repo, ExhibitionCreateView(initial: past)));
+      await t.pumpAndSettle();
+      await t.ensureVisible(find.text('Update Exhibition'));
+      await t.tap(find.text('Update Exhibition'));
+      await t.pumpAndSettle();
+      expect(repo.updates.single.$2.toJson()['startDate'], '2024-01-10');
     });
   });
 

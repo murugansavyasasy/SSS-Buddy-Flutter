@@ -76,6 +76,7 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
     _city.text = ex.city;
     _notes.text = ex.notes;
     _start = ex.startDate;
+    _savedStart = ex.startDate;
     _end = ex.endDate;
     _status = ex.status;
     _attendees
@@ -132,19 +133,23 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
     return DateTime(n.year, n.month, n.day);
   }
 
-  /// A new exhibition can't start before today. An edit keeps its saved
-  /// (possibly past) dates.
-  bool get _startInPast => !_editing && _start != null && _start!.isBefore(_today);
+  /// Start date as saved (edit only), so an exhibition already under way
+  /// can still be saved without moving its start.
+  late DateTime? _savedStart = widget.initial?.startDate;
+
+  /// No past start date: on create, and on edit when the start is changed.
+  bool get _startInPast =>
+      _start != null &&
+      _start!.isBefore(_today) &&
+      !(_savedStart != null && DateUtils.isSameDay(_start, _savedStart));
 
   Future<void> _pickDate(bool isStart) async {
     final now = DateTime.now();
     var initial = (isStart ? _start : _end) ?? _start ?? now;
-    // New exhibition: no past dates (the end can't go before the start).
-    // Edit: widen the range so an older / far-off saved date can still open.
-    var first = _editing ? DateTime(now.year - 2) : _today;
-    if (!_editing && !isStart && _start != null && _start!.isAfter(first)) first = _start!;
+    // No past dates on create or edit; the end can't go before the start.
+    var first = _today;
+    if (!isStart && _start != null && _start!.isAfter(first)) first = _start!;
     var last = DateTime(now.year + 3);
-    if (_editing && initial.isBefore(first)) first = DateTime(initial.year);
     if (initial.isBefore(first)) initial = first;
     if (initial.isAfter(last)) last = DateTime(initial.year, 12, 31);
     final picked = await showDatePicker(
