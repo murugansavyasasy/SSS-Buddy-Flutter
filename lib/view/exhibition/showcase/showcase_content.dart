@@ -176,6 +176,9 @@ class ScSpotlight {
   final String line;
   final List<(IconData, String)> points;
 
+  /// [ScModule.title]s lit up in the ERP panel's module list for this topic.
+  final List<String> modules;
+
   const ScSpotlight({
     required this.icon,
     required this.color,
@@ -183,6 +186,7 @@ class ScSpotlight {
     required this.headline,
     required this.line,
     required this.points,
+    this.modules = const [],
   });
 }
 
@@ -197,6 +201,7 @@ const scSpotCommunication = ScSpotlight(
     (Icons.call_received_rounded, 'See who answered and who missed it'),
     (Icons.campaign_rounded, 'Circulars, events and homework alongside'),
   ],
+  modules: ['Voice calls', 'Messages'],
 );
 
 const scSpotExams = ScSpotlight(
@@ -210,6 +215,7 @@ const scSpotExams = ScSpotlight(
     (Icons.description_rounded, 'Progress cards ready to share with parents'),
     (Icons.monitor_heart_rounded, 'Academic health report for each class'),
   ],
+  modules: ['Exams', 'Certificates'],
 );
 
 const scSpotFees = ScSpotlight(
@@ -223,6 +229,7 @@ const scSpotFees = ScSpotlight(
     (Icons.receipt_long_rounded, 'Advance, pending and consolidated reports'),
     (Icons.query_stats_rounded, 'Collection tracked class by class'),
   ],
+  modules: ['Fees', 'Transport', 'Hostel'],
 );
 
 const scSpotAdmissions = ScSpotlight(
@@ -236,6 +243,7 @@ const scSpotAdmissions = ScSpotlight(
     (Icons.payments_rounded, 'Admission and pre-joining fees set up'),
     (Icons.person_add_alt_1_rounded, 'Enquiry becomes a student in a few taps'),
   ],
+  modules: ['Admissions', 'Students'],
 );
 
 const scSpotAttendance = ScSpotlight(
@@ -249,6 +257,7 @@ const scSpotAttendance = ScSpotlight(
     (Icons.sms_rounded, 'Parents informed when their child is absent'),
     (Icons.bar_chart_rounded, 'Reports by class, day and month'),
   ],
+  modules: ['Attendance', 'Staff & payroll'],
 );
 
 const scSpotParents = ScSpotlight(
@@ -262,6 +271,7 @@ const scSpotParents = ScSpotlight(
     (Icons.forum_rounded, 'Parents raise concerns, the school resolves them'),
     (Icons.groups_rounded, 'Parent-teacher meetings planned and recorded'),
   ],
+  modules: ['Homework', 'Messages', 'Parent concerns'],
 );
 
 const scSpotReports = ScSpotlight(
@@ -275,6 +285,7 @@ const scSpotReports = ScSpotlight(
     (Icons.query_stats_rounded, 'Fee, attendance, academic and usage reports'),
     (Icons.auto_awesome_rounded, 'AI-enabled: routine work done for you'),
   ],
+  modules: ['Reports'],
 );
 
 const scSpotWhy = ScSpotlight(
@@ -288,7 +299,25 @@ const scSpotWhy = ScSpotlight(
     (Icons.record_voice_over_rounded, 'Voice calls parents actually hear'),
     (Icons.support_agent_rounded, 'Our team sets it up with your school\'s data'),
   ],
+  modules: ['Voice calls', 'Reports'],
 );
+
+const scSpotErp = ScSpotlight(
+  icon: Icons.hub_rounded,
+  color: scIndigo,
+  kicker: 'School ERP',
+  headline: 'One ERP for the whole school',
+  line: 'From admission to annual reports, School Chimes runs every part of school life in one AI-enabled system.',
+  points: [
+    (Icons.apps_rounded, 'Students, fees, exams, transport and more in one place'),
+    (Icons.groups_rounded, 'Built for management, teachers, office staff and parents'),
+    (Icons.record_voice_over_rounded, 'Voice calls, SMS, WhatsApp and app built in'),
+  ],
+  modules: ['Students', 'Fees', 'Exams', 'Voice calls'],
+);
+
+/// Create Exhibition steps: Name → Place → Dates → Attendees → Notes → Review.
+const scCreateExhibitionSpotlights = [scSpotErp, scSpotFees, scSpotAttendance, scSpotExams, scSpotParents, scSpotWhy];
 
 /// Give Demo steps: Voice → Visitor → Review.
 const scGiveDemoSpotlights = [scSpotCommunication, scSpotExams, scSpotFees];

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:sssbuddy/components/app_motion.dart';
 import 'package:sssbuddy/core/notifications/local_notifications.dart';
+import 'package:sssbuddy/core/storage/secure_storage.dart';
 import 'package:sssbuddy/utils/network_utils.dart';
 import 'package:sssbuddy/utils/routes/routes.dart';
 import 'package:sssbuddy/utils/routes/routes_name.dart';
@@ -18,6 +19,9 @@ void main() async {
   ]);
 
   await LocalNotifications.instance.init();
+
+  // Uninstall doesn't clear the iOS Keychain; drop a previous install's login.
+  await SecureStorage.clearIfFreshInstall();
 
   runApp(const AppRoot());
 }

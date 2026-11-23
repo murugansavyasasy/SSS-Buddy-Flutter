@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/model/ExhibitionModel.dart';
 import '../../viewModel/exhibition_viewmodel.dart';
+import 'showcase/sc_spotlight.dart';
+import 'showcase/showcase_content.dart';
 import 'widget/exhibition_common.dart';
 
 /// POST /api/mobile/exhibitions. Pops with the created [Exhibition].
@@ -360,13 +362,43 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
                             ),
                           ),
                           Expanded(
-                            child: SingleChildScrollView(
-                              padding: EdgeInsets.fromLTRB(wide ? 24 : 20, 24, wide ? 24 : 20, 24),
-                              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                              child: ExMaxWidth(
-                                maxWidth: exFormMaxWidth,
-                                child: ExStepSwitcher(step: _step, child: _stepBody()),
-                              ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Expanded(
+                                  child: SingleChildScrollView(
+                                    padding: EdgeInsets.fromLTRB(wide ? 24 : 20, 24, wide ? 24 : 20, 24),
+                                    keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                                    child: ExMaxWidth(
+                                      maxWidth: exFormMaxWidth,
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                                        children: [
+                                          // Phones: School Chimes ERP banner above the step.
+                                          if (!wide) ...[
+                                            ScSpotlightBanner(spot: _spotlight),
+                                            const SizedBox(height: 22),
+                                          ],
+                                          ExStepSwitcher(step: _step, child: _stepBody()),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                // iPad: one School Chimes ERP solution beside each step.
+                                if (wide)
+                                  Container(
+                                    width: 380,
+                                    decoration: const BoxDecoration(
+                                      color: scSoft,
+                                      border: Border(left: BorderSide(color: exBorder)),
+                                    ),
+                                    child: SingleChildScrollView(
+                                      padding: const EdgeInsets.fromLTRB(20, 22, 22, 24),
+                                      child: ScErpPanel(spot: _spotlight),
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
                         ],
@@ -390,6 +422,10 @@ class _ExhibitionCreateViewState extends ConsumerState<ExhibitionCreateView> {
       ),
     );
   }
+
+  /// School Chimes ERP topic shown with the current step.
+  ScSpotlight get _spotlight =>
+      scCreateExhibitionSpotlights[_step.clamp(0, scCreateExhibitionSpotlights.length - 1)];
 
   String get _nextLabel {
     if (_step == _review) return _editing ? 'Update Exhibition' : 'Create Exhibition';

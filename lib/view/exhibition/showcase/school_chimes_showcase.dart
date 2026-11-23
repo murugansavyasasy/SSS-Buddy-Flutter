@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../widget/exhibition_common.dart';
+import 'sc_spotlight.dart';
 import 'showcase_content.dart';
 
 /// Full-screen School Chimes presentation for visitors at the stall.
@@ -511,74 +512,10 @@ class _HeroSlide extends StatelessWidget {
 class _ModulesSlide extends StatelessWidget {
   const _ModulesSlide();
 
-  void _open(BuildContext context, ScModule m) {
-    HapticFeedback.selectionClick();
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(26))),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 14, 24, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(color: scIndigo.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(2)),
-                ),
-              ),
-              const SizedBox(height: 18),
-              Row(
-                children: [
-                  Container(
-                    width: 52,
-                    height: 52,
-                    decoration: BoxDecoration(color: m.color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(16)),
-                    child: Icon(m.icon, size: 28, color: m.color),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(m.title,
-                            style: const TextStyle(fontFamily: exFont, fontSize: 22, fontWeight: FontWeight.w800, color: scInk)),
-                        Text(m.line, style: const TextStyle(fontSize: 14.5, color: scMuted)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 18),
-              for (final p in m.points)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(Icons.check_circle_rounded, size: 21, color: m.color),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(p, style: const TextStyle(fontSize: 16, height: 1.4, color: scInk)),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) => LayoutBuilder(builder: (context, box) {
         final cols = box.maxWidth >= 820 ? 6 : box.maxWidth >= 560 ? 4 : 3;
-        const gap = 10.0;
+        final gap = box.maxWidth >= 560 ? 14.0 : 10.0;
         final w = (box.maxWidth - gap * (cols - 1)) / cols;
         return Column(
           mainAxisSize: MainAxisSize.min,
@@ -591,47 +528,31 @@ class _ModulesSlide extends StatelessWidget {
                 sub: 'Tap any module to see what it does.',
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
+            _Rise(
+              index: 1,
+              child: Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _HighlightChip(icon: Icons.apps_rounded, label: '${scModules.length} modules', color: scIndigo),
+                  const _HighlightChip(icon: Icons.login_rounded, label: 'One login', color: scCoral),
+                  const _HighlightChip(icon: Icons.groups_rounded, label: 'Every role', color: Color(0xFF1E9E6A)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 22),
             Wrap(
               spacing: gap,
               runSpacing: gap,
               children: [
                 for (final (k, m) in scModules.indexed)
                   _Rise(
-                    index: 1 + k ~/ cols,
+                    index: 2 + k ~/ cols,
                     child: SizedBox(
                       width: w,
-                      child: Material(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(18),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(18),
-                          onTap: () => _open(context, m),
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(8, 14, 8, 12),
-                            child: Column(
-                              children: [
-                                Container(
-                                  width: 44,
-                                  height: 44,
-                                  decoration: BoxDecoration(
-                                    color: m.color.withValues(alpha: 0.12),
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                  child: Icon(m.icon, size: 23, color: m.color),
-                                ),
-                                const SizedBox(height: 8),
-                                FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Text(m.title,
-                                      maxLines: 1,
-                                      style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: scInk)),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
+                      child: _ModuleTile(module: m, showLine: w >= 130, onTap: () => showScModuleSheet(context, m)),
                     ),
                   ),
               ],
@@ -639,6 +560,134 @@ class _ModulesSlide extends StatelessWidget {
           ],
         );
       });
+}
+
+/// Small pill under the modules title ("18 modules", "One login" …).
+class _HighlightChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  const _HighlightChip({required this.icon, required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(color: color.withValues(alpha: 0.18)),
+          boxShadow: [BoxShadow(color: color.withValues(alpha: 0.08), blurRadius: 10, offset: const Offset(0, 4))],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: 6),
+            Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: color)),
+          ],
+        ),
+      );
+}
+
+/// One module tile: tinted gradient card, gradient icon badge, and a short
+/// description when there is room. Shrinks slightly while pressed.
+class _ModuleTile extends StatefulWidget {
+  final ScModule module;
+  final bool showLine;
+  final VoidCallback onTap;
+  const _ModuleTile({required this.module, required this.showLine, required this.onTap});
+
+  @override
+  State<_ModuleTile> createState() => _ModuleTileState();
+}
+
+class _ModuleTileState extends State<_ModuleTile> {
+  bool _down = false;
+
+  void _press(bool v) {
+    if (_down != v) setState(() => _down = v);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final m = widget.module;
+    final c = m.color;
+    final badge = widget.showLine ? 52.0 : 46.0;
+    return AnimatedScale(
+      scale: _down ? 0.95 : 1,
+      duration: const Duration(milliseconds: 120),
+      curve: Curves.easeOut,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Colors.white, Color.lerp(Colors.white, c, 0.07)!],
+          ),
+          border: Border.all(color: c.withValues(alpha: 0.14)),
+          boxShadow: [
+            BoxShadow(color: c.withValues(alpha: _down ? 0.06 : 0.13), blurRadius: _down ? 8 : 18, offset: Offset(0, _down ? 3 : 8)),
+          ],
+        ),
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(20),
+            splashColor: c.withValues(alpha: 0.08),
+            highlightColor: Colors.transparent,
+            onTap: widget.onTap,
+            onHighlightChanged: _press,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(8, widget.showLine ? 18 : 14, 8, widget.showLine ? 16 : 12),
+              child: Column(
+                children: [
+                  Container(
+                    width: badge,
+                    height: badge,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(badge * 0.32),
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color.lerp(c, Colors.white, 0.18)!, c],
+                      ),
+                      boxShadow: [BoxShadow(color: c.withValues(alpha: 0.35), blurRadius: 10, offset: const Offset(0, 4))],
+                    ),
+                    child: Icon(m.icon, size: badge * 0.5, color: Colors.white),
+                  ),
+                  SizedBox(height: widget.showLine ? 12 : 9),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(m.title,
+                        maxLines: 1,
+                        style: TextStyle(
+                            fontFamily: exFont,
+                            fontSize: widget.showLine ? 15 : 13.5,
+                            fontWeight: FontWeight.w800,
+                            color: scInk)),
+                  ),
+                  if (widget.showLine) ...[
+                    const SizedBox(height: 3),
+                    // Fixed two-line box so every tile in a row is the same height.
+                    SizedBox(
+                      height: 32,
+                      child: Text(m.line,
+                          maxLines: 2,
+                          textAlign: TextAlign.center,
+                          overflow: TextOverflow.ellipsis,
+                          textScaler: TextScaler.noScaling,
+                          style: const TextStyle(fontSize: 12, height: 1.3, color: scMuted)),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────
