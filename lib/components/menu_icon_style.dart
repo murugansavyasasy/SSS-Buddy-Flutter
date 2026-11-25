@@ -28,6 +28,7 @@ const Map<int, (IconData, Color)> _menuStyles = {
   22: (Icons.military_tech_rounded, Color(0xFFD99A12)), // Leaderboard
   23: (Icons.storefront_rounded, Color(0xFF3F5BD8)), // Exhibitions
   24: (Icons.confirmation_number_rounded, Color(0xFF12A37F)), // Tickets
+  25: (Icons.receipt_long_rounded, Color(0xFF4F6693)), // Payment Submissions
 };
 
 IconData menuIcon(MenuItem m) => _menuStyles[m.id]?.$1 ?? m.icon;

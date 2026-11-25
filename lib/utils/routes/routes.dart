@@ -35,6 +35,7 @@ import '../../view/feedback.dart';
 import '../../view/important_info.dart';
 import '../../view/otp_screen.dart';
 import '../../view/reset_password_screen.dart';
+import '../../view/payment_submission/payment_submissions_view.dart';
 import '../../view/root_tracker.dart';
 import '../../view/server_status.dart';
 import '../../view/zero_activity.dart';
@@ -141,6 +142,9 @@ class Routes {
 
       case RoutesName.exhibitions:
         return MaterialPageRoute(builder: (context) => const ExhibitionListView());
+
+      case RoutesName.paymentSubmissions:
+        return MaterialPageRoute(builder: (context) => const PaymentSubmissionsView());
 
       case RoutesName.followups:
         return MaterialPageRoute(builder: (context) => const FollowUpListView());

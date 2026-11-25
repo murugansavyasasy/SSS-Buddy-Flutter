@@ -28,6 +28,7 @@ class RoutesName {
   static const String followupform = "followup_form";
   static const String leaderboard = "leaderboard";
   static const String exhibitions = "exhibitions";
+  static const String paymentSubmissions = "payment_submissions";
   static const String alert = "alert";
   static const String otp = "otp";
   static const String feedback = "feedback";

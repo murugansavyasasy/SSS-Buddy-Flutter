@@ -19,6 +19,7 @@ import '../viewModel/chat_viewmodel.dart';
 import '../viewModel/followup_viewmodel.dart';
 import '../viewModel/demolist_view_model.dart';
 import '../viewModel/login_view_model.dart';
+import '../viewModel/payment_submission_viewmodel.dart';
 import '../viewModel/schoollist_view_model.dart';
 
 /// Home leaderboard card is hidden for now; set to true to show it again.
@@ -79,11 +80,13 @@ class Dashboard extends ConsumerWidget {
       (_) => LocalNotifications.instance.flushPending(),
     );
 
+    // Payment Submissions only once the server confirms the role may use it.
+    final paymentAccess = ref.watch(paymentSubmissionAccessProvider).value ?? false;
     final menus = loginData.when(
       data: (data) => getMenuItems(
         vimsUserType: data?.roleName ?? "",
         schoolUserType: data?.roleCode ?? "",
-      ),
+      ).where((m) => m.id != 25 || paymentAccess).toList(),
       loading: () => <MenuItem>[],
       error: (_, __) => <MenuItem>[],
     );
@@ -560,6 +563,9 @@ class Dashboard extends ConsumerWidget {
                                   break;
                                 case 23:
                                   Navigator.pushNamed(context, RoutesName.exhibitions);
+                                  break;
+                                case 25:
+                                  Navigator.pushNamed(context, RoutesName.paymentSubmissions);
                                   break;
 
                               }

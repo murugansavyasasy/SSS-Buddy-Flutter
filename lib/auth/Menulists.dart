@@ -94,6 +94,13 @@ List<MenuItem> getMenuItems({
         icon: Icons.payment,
         color: Colors.pink,
       ),
+      // Shown only when the role has PAYMENT_SUBMISSIONS (checked in the dashboard).
+      MenuItem(
+        id: 25,
+        title: "Payment Submissions",
+        icon: Icons.receipt_long_rounded,
+        color: Color(0xFF4F6693),
+      ),
       MenuItem(
         id: 12,
         title: "Important Info",

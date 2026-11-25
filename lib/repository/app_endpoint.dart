@@ -57,6 +57,15 @@ class AppEndpoint {
   static const graditServerList = "api/insights/gradit/list-server";
   static const graditServerUpdateFlag = "api/insights/gradit/update-server-flag";
 
+  // Payment submissions (payment proof against a pending proforma)
+  static const paymentSubmissions = "api/mobile/payment-submissions";
+  static const paymentSubmissionCustomers = "api/mobile/payment-submissions/customers";
+  static String paymentSubmissionProformas(int customerId) =>
+      "api/mobile/payment-submissions/customers/$customerId/proformas";
+  static const paymentSubmissionExtract = "api/mobile/payment-submissions/extract";
+  static String paymentSubmissionById(int id) => "api/mobile/payment-submissions/$id";
+  static String paymentSubmissionWithdraw(int id) => "api/mobile/payment-submissions/$id/withdraw";
+
   // Exhibitions (trade-show voice demos + leads)
   static const exhibitions = "api/mobile/exhibitions";
   static String exhibitionById(String id) => "api/mobile/exhibitions/$id";
