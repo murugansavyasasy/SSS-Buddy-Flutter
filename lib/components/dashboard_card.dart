@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import 'PillStat.dart';
@@ -85,7 +86,10 @@ class _DashboardCardState extends State<DashboardCard> with SingleTickerProvider
       child: SoftCard(
         gradient: homePastelGradient(widget.color),
         borderColor: widget.color.withValues(alpha: 0.18),
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+        // Browser text renders slightly taller; trim padding on Web only.
+        padding: kIsWeb
+            ? const EdgeInsets.fromLTRB(16, 12, 16, 10)
+            : const EdgeInsets.fromLTRB(16, 14, 16, 14),
         child: Stack(
           clipBehavior: Clip.none,
           children: [

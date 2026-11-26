@@ -82,10 +82,15 @@ Future<String> _download(String url) async {
 
 /// Stable file name for a URL (FNV-1a, 64-bit).
 String _hash(String s) {
-  var h = 0xcbf29ce484222325;
+  var h = BigInt.parse('cbf29ce484222325', radix: 16);
+
+  final prime = BigInt.parse('100000001b3', radix: 16);
+  final mask = BigInt.parse('ffffffffffffffff', radix: 16);
+
   for (final c in s.codeUnits) {
-    h ^= c;
-    h = (h * 0x100000001b3) & 0xFFFFFFFFFFFFFFFF;
+    h ^= BigInt.from(c);
+    h = (h * prime) & mask;
   }
-  return h.toUnsigned(64).toRadixString(16);
+
+  return h.toRadixString(16);
 }

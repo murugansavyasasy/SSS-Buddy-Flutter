@@ -3,11 +3,13 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:just_audio/just_audio.dart';
 
 import '../../../core/audio/voice_audio.dart';
+import '../../../core/aws/s3_upload_service.dart';
 import 'demo_audio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -92,13 +94,18 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
     _posSub = _player.positionStream.listen((p) {
       if (mounted) setState(() => _position = p);
     });
-    if (widget.initialPath != null && File(widget.initialPath!).existsSync()) {
+    if (widget.initialPath != null &&
+        (kIsWeb || File(widget.initialPath!).existsSync())) {
       _path = widget.initialPath;
       _elapsed = widget.initialDuration;
       _state = _RecState.recorded;
-      _player.setFilePath(_path!).catchError((_) => null);
+      _load(_path!).catchError((_) => null);
     }
   }
+
+  /// On Web a recording is a blob: URL, not a file on disk.
+  Future<Duration?> _load(String path) =>
+      kIsWeb ? _player.setUrl(path) : _player.setFilePath(path);
 
   @override
   void dispose() {
@@ -127,9 +134,11 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
       }
       await _player.stop();
       await _deleteFile();
-      final dir = await getTemporaryDirectory();
       // Fixed local name; the timestamp is added only to the S3 object name.
-      final path = '${dir.path}/exhibition_demo.m4a';
+      // path_provider is not available on Web; the web recorder ignores the path.
+      final path = kIsWeb
+          ? 'exhibition_demo.m4a'
+          : '${(await getTemporaryDirectory()).path}/exhibition_demo.m4a';
 
       await _recorder.start(
         // M4A / AAC-LC mono voice with noise suppression; see voiceRecordConfig.
@@ -205,7 +214,7 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
       _position = Duration.zero;
     });
     try {
-      await _player.setFilePath(path);
+      await _load(path);
     } catch (_) {}
     widget.onChanged(path, _elapsed);
   }
@@ -220,7 +229,10 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
         type: FileType.custom,
         allowedExtensions: pickableAudioExtensions,
       );
-      final picked = result.where((f) => f.path != null).firstOrNull;
+      // Web picks have no file path, only bytes.
+      final picked = kIsWeb
+          ? result.firstOrNull
+          : result.where((f) => f.path != null).firstOrNull;
       if (picked == null || !mounted) return;
       final dot = picked.name.lastIndexOf('.');
       final ext = dot < 0 ? '' : picked.name.substring(dot + 1).toLowerCase();
@@ -229,12 +241,23 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
         return;
       }
       // Check the file first, so a bad pick keeps the current audio.
-      final dir = await getTemporaryDirectory();
-      final check = await File(picked.path!).copy('${dir.path}/exhibition_demo_check.$ext');
+      // On Web there is no temp folder: the bytes become a data: URL that
+      // carries the file's type (read again when uploading).
+      final dir = kIsWeb ? null : await getTemporaryDirectory();
+      final check = kIsWeb
+          ? null
+          : await File(picked.path!).copy('${dir!.path}/exhibition_demo_check.$ext');
+      final source = kIsWeb
+          ? Uri.dataFromBytes(
+              await picked.readAsBytes(),
+              mimeType: S3UploadService.contentTypeFor(picked.name),
+            ).toString()
+          : check!.path;
       Duration length = Duration.zero;
       final probe = AudioPlayer();
       try {
-        length = await probe.setFilePath(check.path) ?? Duration.zero;
+        length = await (kIsWeb ? probe.setUrl(source) : probe.setFilePath(source)) ??
+            Duration.zero;
       } catch (_) {
       } finally {
         await probe.dispose();
@@ -247,25 +270,27 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
         problem = 'Audio is ${exDuration(length)} long. It must be 3 minutes or shorter.';
       }
       if (problem != null) {
-        await check.delete().catchError((_) => check);
+        if (check != null) await check.delete().catchError((_) => check);
         if (mounted) exToast(context, problem, error: true);
         return;
       }
       await _player.stop();
       await _deleteFile();
-      final copy = await check.rename('${dir.path}/exhibition_demo_upload.$ext');
-      await _player.setFilePath(copy.path);
+      final path = kIsWeb
+          ? source
+          : (await check!.rename('${dir!.path}/exhibition_demo_upload.$ext')).path;
+      await _load(path);
       if (!mounted) return;
       HapticFeedback.lightImpact();
       setState(() {
-        _path = copy.path;
+        _path = path;
         _pickedName = picked.name;
         _elapsed = length > _maxLength ? _maxLength : length;
         _position = Duration.zero;
         _levels.clear();
         _state = _RecState.recorded;
       });
-      widget.onChanged(copy.path, length > _maxLength ? _maxLength : length);
+      widget.onChanged(path, length > _maxLength ? _maxLength : length);
     } catch (e) {
       if (mounted) exToast(context, 'Could not open the audio file. $e', error: true);
     } finally {
@@ -278,7 +303,7 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
     if (_playing) {
       await _player.pause();
     } else {
-      if (_player.audioSource == null) await _player.setFilePath(_path!);
+      if (_player.audioSource == null) await _load(_path!);
       await exPreparePlayback();
       _player.play();
     }
@@ -286,7 +311,7 @@ class _VoiceRecorderPanelState extends State<VoiceRecorderPanel> {
 
   Future<void> _deleteFile() async {
     final p = _path;
-    if (p == null) return;
+    if (p == null || kIsWeb) return;
     try {
       final f = File(p);
       if (await f.exists()) await f.delete();

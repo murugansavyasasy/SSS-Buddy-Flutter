@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -146,7 +147,6 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> with Widg
 
   Future<void> _startRecording() async {
     try {
-      final dir = await getApplicationDocumentsDirectory();
       final id = List.generate(
         10,
         (_) => 'abcdefghijklmnopqrstuvwxyz0123456789'[Random().nextInt(36)],
@@ -184,10 +184,12 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> with Widg
         }
       });
 
-      await _audioRecorder.start(
-        voiceRecordConfig,
-        path: '${dir.path}/$id.m4a',
-      );
+      // path_provider is not available on Web; the web recorder ignores the path.
+      final path = kIsWeb
+          ? '$id.m4a'
+          : '${(await getApplicationDocumentsDirectory()).path}/$id.m4a';
+
+      await _audioRecorder.start(voiceRecordConfig, path: path);
     } catch (e) {
       debugPrint("Recording error: $e");
     }
@@ -195,7 +197,13 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> with Widg
 
   Future<void> _loadDuration(String path) async {
     try {
-      await _audioPlayer.setFilePath(path);
+      final d = kIsWeb
+          ? await _audioPlayer.setUrl(path)
+          : await _audioPlayer.setFilePath(path);
+      // Browser recordings often carry no duration; use the recorded time.
+      if (kIsWeb && (d == null || d == Duration.zero) && mounted) {
+        setState(() => _duration = Duration(seconds: _elapsedSeconds));
+      }
     } catch (e) {
       debugPrint("Duration load error: $e");
     }
@@ -273,7 +281,9 @@ class _RecordVoiceScreenState extends ConsumerState<RecordVoiceScreen> with Widg
       try {
 
         if (_audioPlayer.audioSource == null) {
-          await _audioPlayer.setFilePath(_audioPath!);
+          kIsWeb
+              ? await _audioPlayer.setUrl(_audioPath!)
+              : await _audioPlayer.setFilePath(_audioPath!);
         }
 
         await prepareVoicePlayback();

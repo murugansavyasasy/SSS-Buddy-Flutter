@@ -3,6 +3,8 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:http/http.dart' as http;
 
 import '../auth/model/ExhibitionModel.dart';
 import '../core/aws/s3_upload_service.dart';
@@ -24,8 +26,31 @@ class ExhibitionRepository {
     String path, {
     String bucketPath = 'exhibitions/demos',
     void Function(double progress)? onProgress,
-  }) =>
-      _s3.uploadFile(
+  }) async {
+    if (kIsWeb) {
+      // No file on disk on Web: a recording is a blob: URL (M4A, see
+      // voiceRecordConfig); a picked file is a data: URL carrying its type.
+      final uri = Uri.parse(path);
+      final ext = switch (uri.data?.mimeType) {
+        'audio/mpeg' => 'mp3',
+        'audio/wav' => 'wav',
+        _ => 'm4a',
+      };
+      final name = 'exhibition_demo.$ext';
+      final type = S3UploadService.contentTypeFor(name);
+      final data = await _s3.getPresignedUrl(
+        fileName: S3UploadService.scoreFileName(name),
+        bucketPath: bucketPath,
+        fileType: type,
+      );
+      await _client.s3Put(
+        presignedUrl: data.presignedUrl!,
+        fileBytes: uri.data?.contentAsBytes() ?? await http.readBytes(uri),
+        contentType: type,
+      );
+      return data.fileUrl!;
+    }
+    return _s3.uploadFile(
         file: File(path),
         fileName: S3UploadService.scoreFileName(path),
         bucketPath: bucketPath,
@@ -36,6 +61,7 @@ class ExhibitionRepository {
                 if (total > 0) onProgress(sent / total);
               },
       );
+  }
 
   Dio get _dio => _client.dio;
 

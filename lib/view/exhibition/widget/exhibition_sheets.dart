@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -2033,7 +2034,8 @@ class _AddTemplateSheetState extends ConsumerState<_AddTemplateSheet> {
     _title.dispose();
     _description.dispose();
     final p = _path;
-    if (p != null) File(p).delete().catchError((_) => File(p));
+    // On Web the voice is a blob:/data: URL, not a file on disk.
+    if (p != null && !kIsWeb) File(p).delete().catchError((_) => File(p));
     super.dispose();
   }
 

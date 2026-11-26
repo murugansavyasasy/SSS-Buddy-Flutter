@@ -1,6 +1,6 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart' show XFile;
 import 'package:sssbuddy/auth/model/RecordCollectionPaymentResponse.dart';
 import '../provider/app_providers.dart';
 
@@ -27,7 +27,7 @@ class RecordCollectionPaymentViewmodel
     required String depositedBranch,
     required String depositedBy,
     required String depositedDate,
-    File? imageFile, // optional — if null, empty file is sent like Java does
+    XFile? imageFile, // optional — if null, empty file is sent like Java does
   }) async {
     state = const AsyncLoading();
     try {

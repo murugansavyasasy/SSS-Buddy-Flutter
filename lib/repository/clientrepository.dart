@@ -1,7 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart' show compute;
+import 'package:flutter/foundation.dart' show compute, kIsWeb;
+import 'package:image_picker/image_picker.dart' show XFile;
 import 'package:sssbuddy/auth/model/CreatedemoResponse.dart';
 import 'package:sssbuddy/auth/model/UsageCount.dart';
 import 'package:sssbuddy/repository/app_endpoint.dart';
@@ -663,7 +664,7 @@ class ClientRepository {
     required String depositedBranch,
     required String depositedBy,
     required String depositedDate,
-    File? imageFile,
+    XFile? imageFile,
   }) async {
 
     final List<Map<String, dynamic>> infoArray = [
@@ -691,7 +692,13 @@ class ClientRepository {
 
     MultipartFile chequeUpload;
 
-    if (imageFile != null && await imageFile.exists()) {
+    if (imageFile != null && kIsWeb) {
+      // No file system on Web: send the picked image's bytes.
+      chequeUpload = MultipartFile.fromBytes(
+        await imageFile.readAsBytes(),
+        filename: imageFile.name,
+      );
+    } else if (imageFile != null && await File(imageFile.path).exists()) {
       chequeUpload = await MultipartFile.fromFile(
         imageFile.path,
         filename: imageFile.path.split('/').last,

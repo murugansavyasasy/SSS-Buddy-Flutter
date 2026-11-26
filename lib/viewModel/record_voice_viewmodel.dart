@@ -2,7 +2,9 @@
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
 
 import '../auth/model/InitiateDemoCallRequest.dart';
 import '../auth/model/UploadState.dart';
@@ -45,6 +47,9 @@ class RecordVoiceViewModel extends AsyncNotifier<UploadState> {
 
     final repo = ref.read(repositoryProvider);
     final loginId = user.userId.toString();
+    // On Web the recorder returns a blob: URL with no extension; the web
+    // recording uses the same M4A/AAC config, so name it as .m4a.
+    final namePath = kIsWeb ? 'voice.m4a' : audioPath;
 
 
     if (_presignedUrl == null || _fileUrl == null) {
@@ -59,9 +64,9 @@ class RecordVoiceViewModel extends AsyncNotifier<UploadState> {
         // own file type.
         final uploadResponse = await repo.getPresignedUrl(
           bucket: AwsKey.SCHOOL_CHIMES_COMMUNICATION,
-          fileName: S3UploadService.scoreFileName(audioPath),
+          fileName: S3UploadService.scoreFileName(namePath),
           bucketPath: bucketPath,
-          fileType: S3UploadService.contentTypeFor(audioPath),
+          fileType: S3UploadService.contentTypeFor(namePath),
         );
 
         _presignedUrl = uploadResponse.data?.presignedUrl;
@@ -86,16 +91,18 @@ class RecordVoiceViewModel extends AsyncNotifier<UploadState> {
     try {
       state = AsyncData(const UploadState(step: UploadStep.uploadingToS3));
 
-      final fileBytes = await File(audioPath).readAsBytes();
+      final fileBytes = kIsWeb
+          ? await http.readBytes(Uri.parse(audioPath))
+          : await File(audioPath).readAsBytes();
       final uploaded = await repo.uploadToS3(
         presignedUrl: _presignedUrl!,
         fileBytes: fileBytes,
-        contentType: S3UploadService.contentTypeFor(audioPath),
+        contentType: S3UploadService.contentTypeFor(namePath),
       );
 
       if (!uploaded) throw Exception("Upload returned a failure status.");
 
-      try {
+      if (!kIsWeb) try {
         final file = File(audioPath);
         if (await file.exists()) {
           await file.delete();

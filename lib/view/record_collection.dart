@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -133,7 +134,7 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
   final _pdcChequeBranchCtrl = TextEditingController();
 
   // ── Image ─────────────────────────────────────────────────────────────────
-  File? _selectedImage;
+  XFile? _selectedImage;
   final ImagePicker _imagePicker = ImagePicker();
 
   // ── Today's date string for ReceivedDate field ────────────────────────────
@@ -292,7 +293,7 @@ class _RecordCollectionState extends ConsumerState<RecordCollection> {
 
       if (file != null) {
         setState(() {
-          _selectedImage = File(file.path);
+          _selectedImage = file;
         });
       }
     } catch (e) {
@@ -1567,7 +1568,7 @@ class _SubmitBar extends StatelessWidget {
 
 /// Camera / gallery buttons, or the chosen photo with Replace and Remove.
 class _ImagePickerTile extends StatelessWidget {
-  final File? selectedImage;
+  final XFile? selectedImage;
   final VoidCallback onCamera;
   final VoidCallback onGallery;
   final VoidCallback onReplace;
@@ -1589,7 +1590,10 @@ class _ImagePickerTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         child: Stack(
           children: [
-            Image.file(img, width: double.infinity, height: 190, fit: BoxFit.cover),
+            // Image.file is not supported on Web; the picked path there is a blob URL.
+            kIsWeb
+                ? Image.network(img.path, width: double.infinity, height: 190, fit: BoxFit.cover)
+                : Image.file(File(img.path), width: double.infinity, height: 190, fit: BoxFit.cover),
             Positioned(
               left: 0,
               right: 0,

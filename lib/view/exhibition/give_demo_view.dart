@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -140,7 +141,7 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
     _visitorName.dispose();
     _numberInput.dispose();
     final p = _recordingPath;
-    if (p != null) {
+    if (p != null && !kIsWeb) {
       File(p).delete().catchError((_) => File(p));
     }
     super.dispose();
@@ -203,7 +204,8 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
     try {
       await _preview.stop();
       if (path != null) {
-        await _preview.setFilePath(path);
+        // On Web the recording is a blob: URL, not a file on disk.
+        kIsWeb ? await _preview.setUrl(path) : await _preview.setFilePath(path);
       } else {
         await _openVoice(url);
       }
@@ -323,7 +325,7 @@ class _GiveDemoViewState extends ConsumerState<GiveDemoView> {
         );
       } else {
         final path = _recordingPath!;
-        if (!await File(path).exists()) {
+        if (!kIsWeb && !await File(path).exists()) {
           throw Exception('The recording file is missing. Please record again.');
         }
         demoId = await repo.sendRecordedDemo(

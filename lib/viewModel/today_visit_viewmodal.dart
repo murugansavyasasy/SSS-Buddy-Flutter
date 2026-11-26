@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
@@ -111,7 +112,8 @@ class TodayVisitViewmodel extends AsyncNotifier<TripState?> {
   }
 
   LocationSettings _locationSettings() {
-    if (Platform.isAndroid) {
+    // dart:io Platform throws on Web; the browser uses the plain settings below.
+    if (!kIsWeb && Platform.isAndroid) {
       return AndroidSettings(
         accuracy: LocationAccuracy.high,
         distanceFilter: 10,
@@ -125,7 +127,7 @@ class TodayVisitViewmodel extends AsyncNotifier<TripState?> {
         ),
       );
     }
-    if (Platform.isIOS) {
+    if (!kIsWeb && Platform.isIOS) {
       return AppleSettings(
         accuracy: LocationAccuracy.high,
         distanceFilter: 10,
