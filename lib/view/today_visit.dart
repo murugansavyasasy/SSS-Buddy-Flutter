@@ -600,6 +600,17 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
                   setState(() => isTripStarted = true);
                 } else {
                   setState(() => isTripStarted = false);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text(
+                          "Couldn't start trip. Check location and try again."),
+                      backgroundColor: dangerColor,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  );
                 }
               },
               child: const Text(

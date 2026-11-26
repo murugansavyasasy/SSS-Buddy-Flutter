@@ -7,11 +7,13 @@ import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 
+import '../auth/model/OverallTripDetailsModel.dart';
 import '../auth/model/TodayVisitModal.dart';
 import '../auth/model/TrackPointModel.dart';
 import '../core/location/trip_track_store.dart';
 import '../provider/app_providers.dart';
 import '../repository/clientrepository.dart';
+import '../utils/app_logger.dart';
 import 'login_view_model.dart';
 
 /// HIDDEN: uploading trip GPS points to `SaveTripLocations` is switched off.
@@ -270,10 +272,21 @@ class TodayVisitViewmodel extends AsyncNotifier<TripState?> {
       return null;
     }
 
-    // ✅ Permission granted
-    return await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-    );
+    // ✅ Permission granted. Without a time limit this never returns when
+    // no fix is available (e.g. a simulator with Location set to None),
+    // leaving START / END spinning forever.
+    try {
+      return await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 15),
+        ),
+      );
+    } on TimeoutException {
+      final last = await Geolocator.getLastKnownPosition();
+      if (last == null) AppLogger.error("getLocationSafely: no GPS fix in 15 s");
+      return last;
+    }
   }
 
   /// Start trip tracking from a given point.
@@ -370,8 +383,13 @@ class TodayVisitViewmodel extends AsyncNotifier<TripState?> {
     return total;
   }
 
-  /// True if the logged-in user has a trip started today whose end_time is
-  /// still null (trip not ended). Throws if the API call fails.
+  /// True if the logged-in user's latest trip started today hasn't ended.
+  /// Throws if the API call fails.
+  ///
+  /// Only the latest trip counts, so an older trip left open today doesn't
+  /// keep START hidden after the current trip is ended. The trip is open when
+  /// end_time is missing, or is before start_time (a restarted trip whose
+  /// row still carries the previous end_time).
   Future<bool> hasOpenTripToday() async {
     final loginData = ref.read(loginProvider).value;
     if (loginData == null) throw Exception("User not logged in");
@@ -380,18 +398,45 @@ class TodayVisitViewmodel extends AsyncNotifier<TripState?> {
         .read(repositoryProvider)
         .getoveralldetails(loginData.token, loginData.userId.toString());
 
-    final now = DateTime.now();
-    return trips.any((trip) {
+    final latest = latestTripToday(trips, DateTime.now());
+    return latest != null && isTripOpen(latest);
+  }
+
+  /// The trip with the latest start_time on [now]'s date (ties: higher
+  /// trip_id), or null if none started that day.
+  static Overalltripdetailsmodel? latestTripToday(
+    List<Overalltripdetailsmodel> trips,
+    DateTime now,
+  ) {
+    Overalltripdetailsmodel? latest;
+    for (final trip in trips) {
       final start = trip.startDateTime;
-      final isToday = start != null &&
-          start.year == now.year &&
-          start.month == now.month &&
-          start.day == now.day;
-      final endTime = trip.end_time?.trim();
-      final isOpen =
-          endTime == null || endTime.isEmpty || endTime.toLowerCase() == "null";
-      return isToday && isOpen;
-    });
+      if (start == null ||
+          start.year != now.year ||
+          start.month != now.month ||
+          start.day != now.day) {
+        continue;
+      }
+      final best = latest?.startDateTime;
+      if (best == null ||
+          start.isAfter(best) ||
+          (start == best && trip.trip_id > latest!.trip_id)) {
+        latest = trip;
+      }
+    }
+    return latest;
+  }
+
+  /// A trip is still running when it has no end_time, or its end_time is a
+  /// placeholder (before 2000) or earlier than its start_time.
+  static bool isTripOpen(Overalltripdetailsmodel trip) {
+    final raw = trip.end_time?.trim();
+    if (raw == null || raw.isEmpty || raw.toLowerCase() == "null") return true;
+    final end = trip.endDateTime;
+    if (end == null) return false; // unparseable but present: treat as ended
+    if (end.year < 2000) return true;
+    final start = trip.startDateTime;
+    return start != null && end.isBefore(start);
   }
 
   /// Manage trip: start or end
