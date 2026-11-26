@@ -14,6 +14,23 @@ import '../provider/app_providers.dart';
 import '../repository/clientrepository.dart';
 import 'login_view_model.dart';
 
+/// HIDDEN: uploading trip GPS points to `SaveTripLocations` is switched off.
+///
+/// Why: the backend hasn't implemented `/api/mobile/SaveTripLocations` yet
+/// (see `AppEndpoint.saveTripLocations`), so every upload failed and was
+/// retried every ~2 minutes during a trip, wasting network and logging errors.
+///
+/// While this is off:
+/// - Points are still saved on the phone (`TripTrackStore`, kept 7 days), so
+///   the user's own route in Root Tracker still works.
+/// - Managers can't see a team member's route (`GetTripLocations` has nothing
+///   on the server), and routes are lost on reinstall or after 7 days.
+///
+/// To re-enable once the API is live: set this to true. `_uploadedCount`
+/// isn't advanced while it's off, so points still stored on the phone are
+/// uploaded on the next sync.
+const bool kUploadTripLocations = false;
+
 /// Model representing the current trip state
 class TripState {
   final bool isTripStarted;
@@ -165,6 +182,8 @@ class TodayVisitViewmodel extends AsyncNotifier<TripState?> {
       }
     }
 
+    // Upload hidden until the backend API is live – see kUploadTripLocations.
+    if (!kUploadTripLocations) return;
     if (_uploading || _uploadedCount >= trackLog.length) return;
     final pending = trackLog.sublist(_uploadedCount);
     final due = force ||

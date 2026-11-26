@@ -39,6 +39,8 @@ class AppEndpoint {
   static const manageTrip = "/api/mobile/ManageTripDetails";
   static const updateDailyVisit = "/api/mobile/UpdateDailyVisitWithLocation";
   // Root Tracker — GPS breadcrumbs of a running trip (backend to implement)
+  // HIDDEN: not called while kUploadTripLocations (today_visit_viewmodal.dart)
+  // is false, because the backend API isn't live yet.
   static const saveTripLocations = "/api/mobile/SaveTripLocations";
   static String getTripLocations(String userId, String date) =>
       "api/mobile/GetTripLocations?UserId=$userId&Date=$date";
