@@ -271,16 +271,21 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
   bool _endingTrip = false;
   bool _recordingVisit = false;
 
+  /// Message of the full-screen loader; null hides it.
+  String? _loaderText;
+
   /// END DAY: no form validation, just confirm and stop the trip.
   Future<void> _handleEndDay() async {
     if (_endingTrip) return;
     if (!await _confirmEndDay() || !mounted) return;
     _endingTrip = true;
+    setState(() => _loaderText = "Ending your trip…");
     final bool success;
     try {
       success = await ref.read(todayVisitProvider.notifier).manageTrip("stop");
     } finally {
       _endingTrip = false;
+      if (mounted) setState(() => _loaderText = null);
     }
     if (!mounted) return;
     if (success) {
@@ -340,7 +345,9 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Stack(
+      children: [
+    Scaffold(
       backgroundColor: AppColors.primary,
       body: Column(
         children: [
@@ -473,6 +480,9 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
           ),
         ],
       ),
+    ),
+        if (_loaderText != null) _TripLoader(text: _loaderText!),
+      ],
     );
   }
 
@@ -588,12 +598,18 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
                 ),
               ),
               onPressed: () async {
-                setState(() => isStartingTrip = true);
+                setState(() {
+                  isStartingTrip = true;
+                  _loaderText = "Starting your trip…";
+                });
                 final success = await ref
                     .read(todayVisitProvider.notifier)
                     .manageTrip("start");
                 if (!mounted) return;
-                setState(() => isStartingTrip = false);
+                setState(() {
+                  isStartingTrip = false;
+                  _loaderText = null;
+                });
                 if (success) {
                   final today = _formattedToday();
                   await SecureStorage.saveTripData(true, today);
@@ -943,6 +959,7 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
           if (_recordingVisit) return;
           if (!await _confirmRecordVisit() || !mounted) return;
           _recordingVisit = true;
+          setState(() => _loaderText = "Recording your visit…");
           try {
             final success = await ref
                 .read(todayVisitProvider.notifier)
@@ -989,6 +1006,7 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
             );
           } finally {
             _recordingVisit = false;
+            if (mounted) setState(() => _loaderText = null);
           }
         }
             : null,
@@ -1021,6 +1039,77 @@ class _TodayVisitPageState extends ConsumerState<TodayVisitPage> {
           ),
         ),
         onPressed: isTripStarted ? () => _handleEndDay() : null,
+      ),
+    );
+  }
+}
+
+/// Full-screen loader for Start / Record Visit / End Day: dims the page,
+/// blocks taps, and shows a card with a spinner and [text].
+class _TripLoader extends StatelessWidget {
+  final String text;
+  const _TripLoader({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0, end: 1),
+        duration: const Duration(milliseconds: 200),
+        builder: (context, t, child) => Opacity(opacity: t, child: child),
+        child: Stack(
+          children: [
+            const ModalBarrier(dismissible: false, color: Color(0x66000000)),
+            Center(
+              child: Material(
+                color: Colors.white,
+                elevation: 8,
+                borderRadius: BorderRadius.circular(20),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(32, 28, 32, 24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const SizedBox(
+                        width: 60,
+                        height: 60,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            SizedBox.expand(
+                              child: CircularProgressIndicator(
+                                strokeWidth: 4,
+                                color: AppColors.primary,
+                                backgroundColor: Color(0xFFE6EAF2),
+                              ),
+                            ),
+                            Icon(Icons.directions_car_rounded,
+                                color: AppColors.primary, size: 26),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      Text(
+                        text,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        "Please wait…",
+                        style: TextStyle(fontSize: 13, color: AppColors.subtle),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
