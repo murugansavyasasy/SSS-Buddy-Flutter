@@ -72,6 +72,55 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
   String? _expandedDemoId;
   bool _highlightNewestLead = false;
 
+  // Search on the Demos and Leads tabs; each tab keeps its own query.
+  final _demoSearch = TextEditingController();
+  final _leadSearch = TextEditingController();
+  final _demoSearchFocus = FocusNode();
+  final _leadSearchFocus = FocusNode();
+  String _demoQuery = '';
+  String _leadQuery = '';
+
+  @override
+  void dispose() {
+    _demoSearch.dispose();
+    _leadSearch.dispose();
+    _demoSearchFocus.dispose();
+    _leadSearchFocus.dispose();
+    super.dispose();
+  }
+
+  /// Search field above a Demos / Leads list.
+  Widget _searchSliver(double pad,
+          {required TextEditingController controller,
+          required FocusNode focusNode,
+          required String hint,
+          required ValueChanged<String> onChanged}) =>
+      SliverToBoxAdapter(
+        child: _padded(
+          pad,
+          Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: ExSearchBox(
+              controller: controller,
+              focusNode: focusNode,
+              hint: hint,
+              onChanged: onChanged,
+            ),
+          ),
+        ),
+      );
+
+  /// "No matches" for a search that finds nothing.
+  Widget _noMatchSliver(String message, VoidCallback onClear) => SliverToBoxAdapter(
+        child: ExStateView(
+          icon: Icons.search_off_rounded,
+          title: 'No matches',
+          message: message,
+          actionLabel: 'Clear search',
+          onAction: onClear,
+        ),
+      );
+
   String get _id => widget.exhibitionId;
 
   void _refresh() => refreshExhibition(ref, _id);
@@ -123,8 +172,10 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
       ),
     );
     if (res == null || !mounted) return;
+    _demoSearch.clear();
     setState(() {
       _tab = 0;
+      _demoQuery = '';
       _newDemoId = res.demoId.isEmpty ? null : res.demoId;
     });
     _refresh();
@@ -163,8 +214,10 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
       prefillNumber: number,
     );
     if (!saved || !mounted) return;
+    _leadSearch.clear();
     setState(() {
       _tab = 1;
+      _leadQuery = '';
       _highlightNewestLead = true;
     });
     _refresh();
@@ -375,13 +428,13 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
       ],
       data: (raw) {
         // Show "Lead captured" for demos whose lead the server didn't link.
-        final items =
+        final all =
             demosWithLeads(raw, ref.watch(exhibitionLeadsProvider(_id)).value ?? const []);
         // Download every demo voice now, so expanding a demo plays at once.
-        for (final d in items) {
+        for (final d in all) {
           if (d.audioUrl.isNotEmpty) ref.read(localAudioProvider(d.audioUrl));
         }
-        if (items.isEmpty) {
+        if (all.isEmpty) {
           return [
             SliverToBoxAdapter(
               child: ex.status == ExhibitionStatus.active
@@ -402,7 +455,25 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
             ),
           ];
         }
+        final search = _searchSliver(
+          pad,
+          controller: _demoSearch,
+          focusNode: _demoSearchFocus,
+          hint: 'Search visitor, number or given by',
+          onChanged: (q) => setState(() => _demoQuery = q.trim()),
+        );
+        final items = all.where((d) => d.matches(_demoQuery)).toList();
+        if (items.isEmpty) {
+          return [
+            search,
+            _noMatchSliver('No demo matches "$_demoQuery".', () {
+              _demoSearch.clear();
+              setState(() => _demoQuery = '');
+            }),
+          ];
+        }
         return [
+          search,
           SliverToBoxAdapter(
             child: _padded(
               pad,
@@ -474,8 +545,8 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
           ),
         ),
       ],
-      data: (items) {
-        if (items.isEmpty) {
+      data: (all) {
+        if (all.isEmpty) {
           return [
             SliverToBoxAdapter(
               child: ExStateView(
@@ -488,10 +559,30 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
             ),
           ];
         }
+        final search = _searchSliver(
+          pad,
+          controller: _leadSearch,
+          focusNode: _leadSearchFocus,
+          hint: 'Search school, contact, number or city',
+          onChanged: (q) => setState(() => _leadQuery = q.trim()),
+        );
+        final items = all.where((l) => l.matches(_leadQuery)).toList();
+        if (items.isEmpty) {
+          return [
+            addButton,
+            search,
+            _noMatchSliver('No lead matches "$_leadQuery".', () {
+              _leadSearch.clear();
+              setState(() => _leadQuery = '');
+            }),
+          ];
+        }
+        final newestId = all.first.id;
         final perRow = twoCols ? 2 : 1;
         final rows = (items.length + perRow - 1) ~/ perRow;
         return [
           addButton,
+          search,
           SliverList.separated(
             itemCount: rows,
             separatorBuilder: (_, __) => const SizedBox(height: 12),
@@ -501,7 +592,7 @@ class _ExhibitionDetailPaneState extends ConsumerState<ExhibitionDetailPane> {
                     index: i,
                     child: _LeadCard(
                     lead: items[i],
-                    isNew: _highlightNewestLead && i == 0,
+                    isNew: _highlightNewestLead && items[i].id == newestId,
                     onWhatsApp: canWhatsApp &&
                             isValidIndianMobile(normalizeIndianMobile(items[i].contactNumber))
                         ? () => sendDemoVideoOnWhatsApp(

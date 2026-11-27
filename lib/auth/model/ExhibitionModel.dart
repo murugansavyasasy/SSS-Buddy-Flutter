@@ -505,6 +505,13 @@ class ExhibitionDemo {
 
   String get displayName => visitorName.trim().isEmpty ? 'Unnamed visitor' : visitorName.trim();
 
+  /// Search on the Demos tab: visitor, given by, and the called numbers / names.
+  bool matches(String query) => _matchesQuery(query, [
+        visitorName,
+        createdBy,
+        for (final r in recipients) ...[r.name, r.number],
+      ]);
+
   String? get firstVisitorNumber {
     for (final r in recipients) {
       if (!r.isTeam && r.number.isNotEmpty) return r.number;
@@ -539,6 +546,25 @@ class ExhibitionDemo {
           recipients: recipients,
           hasLead: true,
         );
+}
+
+/// True when every word of [query] appears in [fields] (case-insensitive).
+/// Phone-like words (digits, +, -) also match numbers stored without them.
+bool _matchesQuery(String query, Iterable<String> fields) {
+  final words = query.toLowerCase().split(RegExp(r'\s+')).where((w) => w.isNotEmpty);
+  if (words.isEmpty) return true;
+  final text = fields.join(' ').toLowerCase();
+  final nonDigit = RegExp(r'[^0-9]');
+  final phoneLike = RegExp(r'^[0-9+\-()]+$');
+  return words.every((w) {
+    if (text.contains(w)) return true;
+    var d = w.replaceAll(nonDigit, '');
+    // Numbers are stored without the country code.
+    if (d.length == 12 && d.startsWith('91')) d = d.substring(2);
+    return d.isNotEmpty &&
+        phoneLike.hasMatch(w) &&
+        fields.any((f) => f.replaceAll(nonDigit, '').contains(d));
+  });
 }
 
 String _nameKey(String s) => s.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
@@ -646,6 +672,19 @@ class ExhibitionLead {
 
   bool isCreatedBy({required String userId, required String userName}) =>
       _isCreator(capturedBy, capturedById, userId: userId, userName: userName);
+
+  /// Search on the Leads tab: school, city, contact details, captured by.
+  bool matches(String query) => _matchesQuery(query, [
+        schoolName,
+        city,
+        contactName,
+        contactNumber,
+        contactEmail,
+        contactDesignation,
+        capturedBy,
+        demoVisitorName,
+        notes,
+      ]);
 
   factory ExhibitionLead.fromJson(Map<String, dynamic> j) => ExhibitionLead(
         id: _str(j, ['id', 'Id', 'leadId', 'interestId', '_id']),

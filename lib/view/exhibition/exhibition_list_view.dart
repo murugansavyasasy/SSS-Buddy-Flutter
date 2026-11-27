@@ -155,8 +155,9 @@ class _ExhibitionListViewState extends ConsumerState<ExhibitionListView> {
 
   // MARK: Pieces
 
-  Widget _searchBox() => _SearchBox(
+  Widget _searchBox() => ExSearchBox(
         controller: _searchCtrl,
+        hint: 'Search name, city or venue',
         focusNode: _searchFocus,
         onChanged: (q) => setState(() => _query = q.trim().toLowerCase()),
       );
@@ -430,68 +431,6 @@ class _SplitScaffold extends StatelessWidget {
         child: AnnotatedRegion<SystemUiOverlayStyle>(
           value: exHeaderOverlay,
           child: Scaffold(backgroundColor: exHeaderBase, body: child),
-        ),
-      );
-}
-
-/// White search field with a soft shadow and a clear button.
-class _SearchBox extends StatelessWidget {
-  final TextEditingController controller;
-  final FocusNode focusNode;
-  final ValueChanged<String> onChanged;
-
-  const _SearchBox({
-    required this.controller,
-    required this.focusNode,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) => Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(exRadiusControl + 2),
-          boxShadow: exCardShadow,
-        ),
-        child: ValueListenableBuilder<TextEditingValue>(
-          valueListenable: controller,
-          builder: (_, v, __) => TextField(
-            controller: controller,
-            focusNode: focusNode,
-            onChanged: onChanged,
-            textInputAction: TextInputAction.search,
-            onSubmitted: (_) => focusNode.unfocus(),
-            onTapOutside: (_) => focusNode.unfocus(),
-            style: const TextStyle(fontSize: 16, color: exInk),
-            cursorColor: exBrandBold,
-            decoration: InputDecoration(
-              isDense: true,
-              filled: true,
-              fillColor: Colors.white,
-              hintText: 'Search name, city or venue',
-              hintStyle: const TextStyle(fontSize: 16, color: Color(0xFF9A9AA3)),
-              contentPadding: const EdgeInsets.symmetric(vertical: 15),
-              prefixIcon: const Icon(Icons.search_rounded, size: 22, color: exBrandBold),
-              prefixIconConstraints: const BoxConstraints(minWidth: 48, minHeight: 50),
-              suffixIcon: v.text.isEmpty
-                  ? null
-                  : IconButton(
-                      tooltip: 'Clear search',
-                      icon: const Icon(Icons.cancel_rounded, size: 20, color: exSubtle),
-                      onPressed: () {
-                        controller.clear();
-                        onChanged('');
-                      },
-                    ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(exRadiusControl + 2),
-                borderSide: BorderSide.none,
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(exRadiusControl + 2),
-                borderSide: const BorderSide(color: exBrand, width: 1.5),
-              ),
-            ),
-          ),
         ),
       );
 }
